@@ -288,7 +288,7 @@ async function init() {
   `);
 
   // Seed default pipeline stages for any workspace that has none
-  await pool.query(\`
+  await pool.query (`
     INSERT INTO pipeline_stages (workspace_id, name, color, sort_order)
     SELECT w.id, s.name, s.color, s.sort_order
     FROM workspaces w
