@@ -45,6 +45,9 @@ router.post("/register", async (req, res) => {
   if (!name || !email || !password) {
     return res.status(400).json({ error: "Name, email, and password are all required." });
   }
+  if (!EMAIL_RE.test(email.trim())) {
+    return res.status(400).json({ error: "Please enter a valid email address." });
+  }
   if (password.length < 6) {
     return res.status(400).json({ error: "Password must be at least 6 characters." });
   }
@@ -113,24 +116,32 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// Shared email format validator
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 // POST /api/auth/login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required." });
   }
+  if (!EMAIL_RE.test(email.trim())) {
+    return res.status(400).json({ error: "Please enter a valid email address." });
+  }
 
   const result = await db.query("SELECT * FROM users WHERE email = $1", [email.toLowerCase().trim()]);
   const row = result.rows[0];
-  if (!row || !row.password_hash) {
+  if (!row) {
+    return res.status(401).json({ error: "No account found for that email address.", code: "NO_ACCOUNT" });
+  }
+  if (!row.password_hash) {
     return res.status(401).json({
-      error: row
-        ? "This account uses Google sign-in — use the \"Continue with Google\" button instead."
-        : "Incorrect email or password.",
+      error: "This account uses Google sign-in — use the \"Continue with Google\" button instead.",
+      code: "GOOGLE_ONLY",
     });
   }
   if (!bcrypt.compareSync(password, row.password_hash)) {
-    return res.status(401).json({ error: "Incorrect email or password." });
+    return res.status(401).json({ error: "Incorrect password. Please try again.", code: "WRONG_PASSWORD" });
   }
 
   const user = { id: row.id, name: row.name, email: row.email, role: row.role, workspace_id: row.workspace_id };
@@ -140,7 +151,7 @@ router.post("/login", async (req, res) => {
 // GET /api/auth/me — includes theme + onboarding status, which aren't in the token
 router.get("/me", requireAuth, async (req, res) => {
   const result = await db.query(
-    "SELECT id, name, email, role, workspace_id, theme, has_seen_onboarding, password_hash FROM users WHERE id = $1",
+    "SELECT id, name, email, role, workspace_id, theme, has_seen_onboarding, password_hash, language FROM users WHERE id = $1",
     [req.user.id]
   );
   const row = result.rows[0];
@@ -387,6 +398,15 @@ router.post("/join", requireAuth, async (req, res) => {
     workspace_id: updated.workspace_id,
   };
   res.json({ token: signToken(user), user, workspace_name: target.name });
+});
+
+// PUT /api/auth/language — save UI language preference
+const VALID_LANGS = ["en", "pl", "es", "fr", "de"];
+router.put("/language", requireAuth, async (req, res) => {
+  const { language } = req.body || {};
+  if (!VALID_LANGS.includes(language)) return res.status(400).json({ error: "Unsupported language." });
+  await db.query("UPDATE users SET language = $1 WHERE id = $2", [language, req.user.id]);
+  res.json({ ok: true });
 });
 
 // GET /api/auth/workspace/ai-context

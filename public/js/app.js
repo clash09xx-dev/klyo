@@ -189,6 +189,7 @@ const els = {
   currencyError: $("currencyError"), saveCurrencyBtn: $("saveCurrencyBtn"),
   aiContextSection: $("aiContextSection"), aiContextInput: $("aiContextInput"),
   aiContextError: $("aiContextError"), saveAiContextBtn: $("saveAiContextBtn"),
+  appLangPicker: $("appLangPicker"),
 };
 
 const SEND_BTN_HTML = els.sendOfferBtn.innerHTML;
@@ -266,6 +267,10 @@ function showLimitOrError(err, fallbackEl) {
     els.userRole.textContent = user.role;
     applyTheme(user.theme || "signal");
     els.platformNavItem.classList.toggle("hidden", !user.is_platform_admin);
+    // Apply saved language (server preference takes priority)
+    KlyoI18n.initLang(user.language || null);
+    KlyoI18n.applyTranslations();
+    if (els.appLangPicker) els.appLangPicker.value = KlyoI18n.getLang();
   } catch {
     API.clearToken();
     window.location.href = "/login.html";
@@ -2376,6 +2381,11 @@ function wireEvents() {
   els.savePasswordBtn.addEventListener("click", handleSavePassword);
   els.saveCurrencyBtn.addEventListener("click", handleSaveCurrency);
   els.saveAiContextBtn.addEventListener("click", handleSaveAiContext);
+  els.appLangPicker.addEventListener("change", () => {
+    KlyoI18n.setLang(els.appLangPicker.value);
+    KlyoI18n.applyTranslations();
+    toast(KlyoI18n.t("settings.language") + " → " + KlyoI18n.LANG_NAMES[KlyoI18n.getLang()]);
+  });
   els.joinWorkspaceBtn.addEventListener("click", handleJoinWorkspace);
   els.settingsUpgradeBtn.addEventListener("click", () => {
     closeAppearanceModal();

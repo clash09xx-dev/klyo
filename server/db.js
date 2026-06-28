@@ -288,6 +288,9 @@ async function init() {
     CREATE INDEX IF NOT EXISTS idx_deals_contact ON deals(contact_id);
   `);
 
+  // UI language preference per user
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS language TEXT NOT NULL DEFAULT 'en';`);
+
   // AI context field for workspace
   await pool.query(`ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS ai_context TEXT;`);
 
