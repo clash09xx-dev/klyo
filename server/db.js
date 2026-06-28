@@ -246,6 +246,63 @@ async function init() {
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_contacts_last_name ON contacts(workspace_id, last_name);
   `);
+
+  // Workspace-level default currency
+  await pool.query(`
+    ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS default_currency TEXT NOT NULL DEFAULT 'USD';
+  `);
+
+  // Sales Opportunities (Deals) — pipeline stages + deal records
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pipeline_stages (
+      id           SERIAL PRIMARY KEY,
+      workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+      name         TEXT NOT NULL,
+      color        TEXT NOT NULL DEFAULT '#6b7280',
+      sort_order   INTEGER NOT NULL DEFAULT 0,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_pipeline_stages_workspace ON pipeline_stages(workspace_id, sort_order);
+
+    CREATE TABLE IF NOT EXISTS deals (
+      id                   SERIAL PRIMARY KEY,
+      workspace_id         INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+      title                TEXT NOT NULL,
+      contact_id           INTEGER REFERENCES contacts(id) ON DELETE SET NULL,
+      company_id           INTEGER REFERENCES companies(id) ON DELETE SET NULL,
+      product_id           INTEGER REFERENCES products(id) ON DELETE SET NULL,
+      stage_id             INTEGER REFERENCES pipeline_stages(id) ON DELETE SET NULL,
+      assigned_to          INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      value                NUMERIC(14,2),
+      currency             TEXT NOT NULL DEFAULT 'USD',
+      quantity             NUMERIC(12,2) NOT NULL DEFAULT 1,
+      expected_close_date  DATE,
+      notes                TEXT,
+      status               TEXT NOT NULL DEFAULT 'open',
+      created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_deals_workspace ON deals(workspace_id);
+    CREATE INDEX IF NOT EXISTS idx_deals_stage ON deals(stage_id);
+    CREATE INDEX IF NOT EXISTS idx_deals_contact ON deals(contact_id);
+  `);
+
+  // Seed default pipeline stages for any workspace that has none
+  await pool.query(\`
+    INSERT INTO pipeline_stages (workspace_id, name, color, sort_order)
+    SELECT w.id, s.name, s.color, s.sort_order
+    FROM workspaces w
+    CROSS JOIN (VALUES
+      ('Awareness',   '#6366f1', 0),
+      ('Contacted',   '#3b82f6', 1),
+      ('Offered',     '#f59e0b', 2),
+      ('Followed Up', '#f97316', 3),
+      ('Awaiting PO', '#10b981', 4)
+    ) AS s(name, color, sort_order)
+    WHERE NOT EXISTS (
+      SELECT 1 FROM pipeline_stages p WHERE p.workspace_id = w.id
+    );
+  \`);
 }
 
 module.exports = { pool, query, init };

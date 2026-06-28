@@ -17,6 +17,7 @@ let searchDebounce = null;
 
 let companies = [];
 let products = [];
+let workspaceDefaultCurrency = "USD";
 let allContactsCache = []; // every contact, unfiltered — used by pickers (quote builder, company panel)
 let currentCompanyPanelId = null;
 let currentQuoteLineItems = []; // [{ product_id, description, quantity, unit_price, discount_percent }]
@@ -123,6 +124,29 @@ const els = {
   // Reminders
   remindersView: $("remindersView"), remindersBody: $("remindersBody"), remindersEmptyState: $("remindersEmptyState"),
 
+  // Deals
+  dealsView: $("dealsView"), dealsBoard: $("dealsBoard"), dealsEmptyState: $("dealsEmptyState"),
+  dealStageFilter: $("dealStageFilter"), dealAssigneeFilter: $("dealAssigneeFilter"), dealStatusFilter: $("dealStatusFilter"),
+  addDealBtn: $("addDealBtn"), dealsEmptyAddBtn: $("dealsEmptyAddBtn"), manageStagesBtn: $("manageStagesBtn"),
+  dealModalOverlay: $("dealModalOverlay"), closeDealModalBtn: $("closeDealModalBtn"), dealForm: $("dealForm"),
+  dealId: $("dealId"), dealTitle: $("dealTitle"), dealContactSelect: $("dealContactSelect"),
+  dealCompanySelect: $("dealCompanySelect"), dealStageSelect: $("dealStageSelect"), dealAssignedSelect: $("dealAssignedSelect"),
+  dealProductSelect: $("dealProductSelect"), dealQty: $("dealQty"), dealValue: $("dealValue"),
+  dealCloseDate: $("dealCloseDate"), dealNotes: $("dealNotes"), dealFormError: $("dealFormError"),
+  dealSubmitBtn: $("dealSubmitBtn"), cancelDealBtn: $("cancelDealBtn"), dealModalTitle: $("dealModalTitle"),
+  dealPanelOverlay: $("dealPanelOverlay"), closeDealPanelBtn: $("closeDealPanelBtn"),
+  dealPanelTitle: $("dealPanelTitle"), dealPanelSub: $("dealPanelSub"), dealPanelStageBadge: $("dealPanelStageBadge"),
+  dealPanelDetails: $("dealPanelDetails"), dealPanelNotes: $("dealPanelNotes"), dealPanelNotesWrap: $("dealPanelNotesWrap"),
+  markDealWonBtn: $("markDealWonBtn"), markDealLostBtn: $("markDealLostBtn"), deleteDealBtn: $("deleteDealBtn"), editDealBtn: $("editDealBtn"),
+  stagesModalOverlay: $("stagesModalOverlay"), closeStagesModalBtn: $("closeStagesModalBtn"),
+  stagesList: $("stagesList"), newStageName: $("newStageName"), newStageColor: $("newStageColor"),
+  addStageBtn: $("addStageBtn"), stagesFormError: $("stagesFormError"),
+
+  // History
+  historyView: $("historyView"), historyTimeline: $("historyTimeline"), historyEmptyState: $("historyEmptyState"),
+  historyUserFilter: $("historyUserFilter"), historyTypeFilter: $("historyTypeFilter"),
+  historyCount: $("historyCount"), historyLoadMoreWrap: $("historyLoadMoreWrap"), historyLoadMoreBtn: $("historyLoadMoreBtn"),
+
   // Performance
   performanceCard: $("performanceCard"), performanceBody: $("performanceBody"),
   grantModalOverlay: $("grantModalOverlay"), closeGrantModalBtn: $("closeGrantModalBtn"),
@@ -144,6 +168,8 @@ const els = {
   settingsCurrentPlan: $("settingsCurrentPlan"), settingsUpgradeBtn: $("settingsUpgradeBtn"),
   settingsPlanDetail: $("settingsPlanDetail"), settingsCancelBtn: $("settingsCancelBtn"), settingsResumeBtn: $("settingsResumeBtn"),
   joinInviteCodeInput: $("joinInviteCodeInput"), joinWorkspaceBtn: $("joinWorkspaceBtn"), joinWorkspaceError: $("joinWorkspaceError"),
+  currencySettingsSection: $("currencySettingsSection"), workspaceCurrencySelect: $("workspaceCurrencySelect"),
+  currencyError: $("currencyError"), saveCurrencyBtn: $("saveCurrencyBtn"),
 };
 
 const SEND_BTN_HTML = els.sendOfferBtn.innerHTML;
@@ -229,7 +255,7 @@ function showLimitOrError(err, fallbackEl) {
 
   wireEvents();
 
-  await Promise.all([loadTeam(), loadThemes(), loadWorkspace(), loadBillingStatus(), loadCompanies(), loadProducts()]);
+  await Promise.all([loadTeam(), loadThemes(), loadWorkspace(), loadBillingStatus(), loadCompanies(), loadProducts(), loadWorkspaceCurrency()]);
   try {
     await Promise.all([loadStats(), loadContacts()]);
   } catch {
@@ -413,6 +439,7 @@ function openAppearanceModal() {
   els.newPasswordLabel.textContent = user.has_password ? "New password" : "Set a password";
   updateSettingsPlanDisplay();
   loadGmailStatus();
+  loadCurrencySettings();
   els.appearanceModalOverlay.classList.remove("hidden");
 }
 function closeAppearanceModal() {
@@ -479,6 +506,41 @@ async function handleSaveProfileName() {
     els.profileNameError.textContent = err.message;
   } finally {
     els.saveProfileNameBtn.disabled = false;
+  }
+}
+
+async function loadWorkspaceCurrency() {
+  try {
+    const { workspace } = await API.get("/auth/workspace/settings");
+    workspaceDefaultCurrency = workspace.default_currency || "USD";
+  } catch { /* silent */ }
+}
+
+async function loadCurrencySettings() {
+  const user = API.getUser();
+  if (!user || user.role !== "admin") {
+    els.currencySettingsSection.classList.add("hidden");
+    return;
+  }
+  els.currencySettingsSection.classList.remove("hidden");
+  try {
+    const { workspace } = await API.get("/auth/workspace/settings");
+    workspaceDefaultCurrency = workspace.default_currency || "USD";
+    els.workspaceCurrencySelect.value = workspaceDefaultCurrency;
+  } catch { /* silent */ }
+}
+
+async function handleSaveCurrency() {
+  els.currencyError.textContent = "";
+  const currency = els.workspaceCurrencySelect.value;
+  els.saveCurrencyBtn.disabled = true;
+  try {
+    await API.put("/auth/workspace/currency", { currency });
+    toast(`Default currency set to ${currency}`);
+  } catch (err) {
+    els.currencyError.textContent = err.message;
+  } finally {
+    els.saveCurrencyBtn.disabled = false;
   }
 }
 
@@ -922,6 +984,13 @@ async function loadTeam() {
   const { team: t } = await API.get("/auth/team");
   team = t;
   populateOwnerOptions(els.filterOwner, { placeholder: "All owners" });
+  // Populate history + deals user filters
+  els.historyUserFilter.innerHTML =
+    '<option value="">All team members</option>' +
+    team.map((u) => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
+  els.dealAssigneeFilter.innerHTML =
+    '<option value="">All owners</option>' +
+    team.map((u) => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
   els.teamBody.innerHTML = team
     .map((u) => `<tr><td>${escapeHtml(u.name)}</td><td class="mono">${escapeHtml(u.email)}</td><td>${capitalize(u.role)}</td></tr>`)
     .join("");
@@ -1019,6 +1088,8 @@ const VIEW_COPY = {
   companies: { title: "Companies", sub: "Businesses you work with, and who the decision-makers are at each one." },
   quotes: { title: "Quotes", sub: "Tailored, line-item offers — built for one customer at a time." },
   reminders: { title: "Reminders", sub: "Purchases due for a follow-up, calibration, or check-up." },
+  deals: { title: "Deals", sub: "Track every sales opportunity through your pipeline to close." },
+  history: { title: "History", sub: "Every action taken in this workspace — who did what and when." },
   team: { title: "Team", sub: "Everyone with access to this workspace." },
   platform: { title: "Platform", sub: "Every workspace using Klyo — yours alone to see." },
 };
@@ -1029,6 +1100,8 @@ function switchView(view) {
   els.companiesView.classList.toggle("hidden", view !== "companies");
   els.quotesView.classList.toggle("hidden", view !== "quotes");
   els.remindersView.classList.toggle("hidden", view !== "reminders");
+  els.dealsView.classList.toggle("hidden", view !== "deals");
+  els.historyView.classList.toggle("hidden", view !== "history");
   els.teamView.classList.toggle("hidden", view !== "team");
   els.platformView.classList.toggle("hidden", view !== "platform");
   els.searchBoxWrap.style.display = view === "pipeline" ? "" : "none";
@@ -1042,6 +1115,8 @@ function switchView(view) {
   if (view === "quotes") loadQuotes();
   if (view === "reminders") loadReminders();
   if (view === "team") loadPerformance();
+  if (view === "deals") loadDeals();
+  if (view === "history") loadHistory(true);
   if (view === "platform") loadPlatformDashboard();
 }
 
@@ -1640,6 +1715,7 @@ async function saveQuote(alsoSend) {
     company_id: contact?.company_id || null,
     title: els.quoteTitleInput.value.trim() || "Quote",
     intro_message: els.quoteIntroInput.value.trim(),
+    currency: workspaceDefaultCurrency,
     line_items: currentQuoteLineItems,
     recipient_ids: els.quoteRecipientsField.classList.contains("hidden") ? [] : collectQuoteRecipientIds(),
   };
@@ -1878,6 +1954,77 @@ async function handleSendReminder(purchaseId, btn) {
 }
 
 /* ---------- team performance ---------- */
+/* ---------- history view ---------- */
+let historyOffset = 0;
+const HISTORY_PAGE = 50;
+
+function activityTypeLabel(type) {
+  return {
+    contact_created: "Contact added",
+    contact_updated: "Contact updated",
+    status_change: "Stage changed",
+    offer_drafted: "AI offer drafted",
+    offer_sent: "Offer sent",
+    call_logged: "Call logged",
+    meeting_logged: "Meeting logged",
+    note_logged: "Note",
+  }[type] || type;
+}
+
+async function loadHistory(reset = false) {
+  if (reset) {
+    historyOffset = 0;
+    els.historyTimeline.innerHTML = "";
+  }
+
+  const user_id = els.historyUserFilter.value;
+  const type = els.historyTypeFilter.value;
+  const params = new URLSearchParams({ limit: HISTORY_PAGE, offset: historyOffset });
+  if (user_id) params.set("user_id", user_id);
+  if (type) params.set("type", type);
+
+  try {
+    const { entries, total } = await API.get(`/history?${params}`);
+
+    if (reset && entries.length === 0) {
+      els.historyEmptyState.classList.remove("hidden");
+      els.historyLoadMoreWrap.style.display = "none";
+      els.historyCount.textContent = "";
+      return;
+    }
+    els.historyEmptyState.classList.add("hidden");
+
+    const fragment = entries.map((e) => `
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div style="display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap;">
+            <div>
+              <span class="label" style="font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-faint);">${escapeHtml(activityTypeLabel(e.type))}</span>
+              ${e.contact_name ? `<span class="muted" style="font-size:12px; margin-left:8px;">· <a href="#" style="color:var(--text-dim)" data-open-contact="${e.contact_id}">${escapeHtml(e.contact_name)}</a></span>` : ""}
+            </div>
+            <span class="mono muted" style="font-size:11.5px; white-space:nowrap;">${formatDateTime(e.created_at)}</span>
+          </div>
+          <div style="font-size:13px; margin-top:3px;">${escapeHtml(e.description)}</div>
+          ${e.user_name ? `<div class="muted" style="font-size:11.5px; margin-top:2px;">${escapeHtml(e.user_name)}</div>` : ""}
+        </div>
+      </div>`).join("");
+    els.historyTimeline.insertAdjacentHTML("beforeend", fragment);
+
+    // Wire contact links
+    els.historyTimeline.querySelectorAll("[data-open-contact]").forEach((a) => {
+      a.addEventListener("click", (ev) => { ev.preventDefault(); openPanel(a.dataset.openContact); });
+    });
+
+    historyOffset += entries.length;
+    els.historyCount.textContent = `${Math.min(historyOffset, total)} of ${total} entries`;
+    const hasMore = historyOffset < total;
+    els.historyLoadMoreWrap.style.display = hasMore ? "" : "none";
+  } catch (err) {
+    toast(err.message, "error");
+  }
+}
+
 async function loadPerformance() {
   const user = API.getUser();
   if (!user || user.role !== "admin") {
@@ -1936,6 +2083,12 @@ function wireEvents() {
   });
 
   els.upgradeBtn.addEventListener("click", handleUpgradeClick);
+
+  // History filters
+  els.historyUserFilter.addEventListener("change", () => loadHistory(true));
+  els.historyTypeFilter.addEventListener("change", () => loadHistory(true));
+  els.historyLoadMoreBtn.addEventListener("click", () => loadHistory(false));
+
   els.copyInviteBtn.addEventListener("click", handleCopyInvite);
   els.regenInviteBtn.addEventListener("click", handleRegenInvite);
 
@@ -2039,6 +2192,7 @@ function wireEvents() {
   });
   els.saveProfileNameBtn.addEventListener("click", handleSaveProfileName);
   els.savePasswordBtn.addEventListener("click", handleSavePassword);
+  els.saveCurrencyBtn.addEventListener("click", handleSaveCurrency);
   els.joinWorkspaceBtn.addEventListener("click", handleJoinWorkspace);
   els.settingsUpgradeBtn.addEventListener("click", () => {
     closeAppearanceModal();
@@ -2135,3 +2289,384 @@ function wireEvents() {
   els.backToEditQuoteBtn.addEventListener("click", backToEditFromPreview);
   els.confirmSendQuoteBtn.addEventListener("click", confirmSendQuote);
 }
+
+/* ============================================================
+   DEALS — pipeline board + stage management
+   ============================================================ */
+
+let dealsCache = [];          // flat list from last fetch
+let dealsStagesCache = [];    // pipeline stages from last fetch
+let currentDealPanelId = null;
+
+// ---- data loaders ----
+
+async function loadDeals() {
+  try {
+    const stageRes = await api.get("/api/deals/stages");
+    dealsStagesCache = stageRes.stages || [];
+
+    const statusVal = els.dealStatusFilter.value;
+    const stageVal  = els.dealStageFilter.value;
+    const ownerVal  = els.dealAssigneeFilter.value;
+    let url = "/api/deals?";
+    if (stageVal)  url += `stage_id=${stageVal}&`;
+    if (ownerVal)  url += `assigned_to=${ownerVal}&`;
+    if (statusVal) url += `status=${statusVal}&`;
+
+    const res = await api.get(url);
+    dealsCache = res.deals || [];
+
+    renderDealsBoard();
+    refreshDealStageFilter();
+  } catch (err) {
+    toast(err.message, "error");
+  }
+}
+
+function refreshDealStageFilter() {
+  const cur = els.dealStageFilter.value;
+  els.dealStageFilter.innerHTML = '<option value="">All stages</option>';
+  dealsStagesCache.forEach(s => {
+    const o = document.createElement("option");
+    o.value = s.id; o.textContent = s.name;
+    if (String(s.id) === cur) o.selected = true;
+    els.dealStageFilter.appendChild(o);
+  });
+}
+
+// ---- board rendering ----
+
+function renderDealsBoard() {
+  els.dealsBoard.innerHTML = "";
+
+  const stageVal  = els.dealStageFilter.value;
+  const ownerVal  = els.dealAssigneeFilter.value;
+  const statusVal = els.dealStatusFilter.value;
+
+  // Build visible stage list (respect filter)
+  let visibleStages = dealsStagesCache.filter(s => !stageVal || String(s.id) === stageVal);
+
+  // Also include an "Unsorted" bucket for deals with no stage
+  const hasUnsorted = dealsCache.some(d => !d.stage_id && (!stageVal));
+  if (!stageVal && hasUnsorted) {
+    visibleStages = [...visibleStages, { id: null, name: "Unsorted", color: "#9ca3af" }];
+  }
+
+  const totalDeals = dealsCache.length;
+  els.dealsEmptyState.classList.toggle("hidden", totalDeals > 0 || dealsStagesCache.length > 0);
+  els.dealsBoard.style.display = (totalDeals === 0 && dealsStagesCache.length === 0) ? "none" : "";
+
+  visibleStages.forEach(stage => {
+    const stageDeals = dealsCache.filter(d => {
+      if (stage.id === null) return !d.stage_id;
+      return String(d.stage_id) === String(stage.id);
+    });
+
+    const col = document.createElement("div");
+    col.className = "deals-column";
+    col.dataset.stageId = stage.id ?? "";
+
+    const totalVal = stageDeals.reduce((sum, d) => sum + (parseFloat(d.value) || 0), 0);
+
+    col.innerHTML = `
+      <div class="deals-column-head">
+        <div class="deals-column-dot" style="background:${stage.color}"></div>
+        <div class="deals-column-name">${escHtml(stage.name)}</div>
+        <div class="deals-column-count">${stageDeals.length}</div>
+      </div>
+      <div class="deals-column-body">
+        ${stageDeals.map(d => dealCardHTML(d)).join("")}
+        ${totalVal > 0 ? `<div style="font-size:11px; color:var(--text-faint); text-align:center; padding:4px 0; border-top:1px solid var(--border-soft); margin-top:4px;">${fmtMoney(totalVal, workspaceDefaultCurrency)}</div>` : ""}
+      </div>
+    `;
+
+    // Click on card → open panel
+    col.querySelectorAll(".deal-card").forEach(card => {
+      card.addEventListener("click", () => openDealPanel(card.dataset.id));
+    });
+
+    els.dealsBoard.appendChild(col);
+  });
+
+  // If no stages at all show empty state
+  if (visibleStages.length === 0) {
+    els.dealsEmptyState.classList.remove("hidden");
+  }
+}
+
+function dealCardHTML(d) {
+  const cls = d.status === "won" ? " won" : d.status === "lost" ? " lost" : "";
+  const sub = [d.contact_name, d.company_name].filter(Boolean).join(" · ");
+  const valStr = d.value ? `<div class="deal-card-value">${fmtMoney(d.value, d.currency)}</div>` : "";
+  return `<div class="deal-card${cls}" data-id="${d.id}">
+    <div class="deal-card-title">${escHtml(d.title)}</div>
+    ${sub ? `<div class="deal-card-meta">${escHtml(sub)}</div>` : ""}
+    ${valStr}
+  </div>`;
+}
+
+function fmtMoney(val, currency) {
+  try {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency: currency || "USD", minimumFractionDigits: 0 }).format(val);
+  } catch { return `${currency || ""} ${val}`; }
+}
+
+function escHtml(str) {
+  return String(str || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ---- deal modal ----
+
+function openDealModal(deal) {
+  els.dealId.value = deal?.id || "";
+  els.dealModalTitle.textContent = deal ? "Edit deal" : "New deal";
+  els.dealSubmitBtn.textContent  = deal ? "Save changes" : "Add deal";
+  els.dealTitle.value      = deal?.title || "";
+  els.dealQty.value        = deal?.quantity ?? 1;
+  els.dealValue.value      = deal?.value || "";
+  els.dealCloseDate.value  = deal?.expected_close_date ? deal.expected_close_date.slice(0,10) : "";
+  els.dealNotes.value      = deal?.notes || "";
+  els.dealFormError.textContent = "";
+
+  // Populate stage select
+  els.dealStageSelect.innerHTML = '<option value="">No stage</option>';
+  dealsStagesCache.forEach(s => {
+    const o = document.createElement("option");
+    o.value = s.id; o.textContent = s.name;
+    if (deal && String(deal.stage_id) === String(s.id)) o.selected = true;
+    els.dealStageSelect.appendChild(o);
+  });
+
+  // Populate assigned select from team
+  els.dealAssignedSelect.innerHTML = '<option value="">Unassigned</option>';
+  team.forEach(u => {
+    const o = document.createElement("option");
+    o.value = u.id; o.textContent = u.name;
+    if (deal && String(deal.assigned_to) === String(u.id)) o.selected = true;
+    els.dealAssignedSelect.appendChild(o);
+  });
+
+  // Contacts — use allContactsCache (loaded on boot)
+  els.dealContactSelect.innerHTML = '<option value="">No contact</option>';
+  allContactsCache.forEach(c => {
+    const o = document.createElement("option");
+    o.value = c.id; o.textContent = c.full_name;
+    if (deal && String(deal.contact_id) === String(c.id)) o.selected = true;
+    els.dealContactSelect.appendChild(o);
+  });
+
+  // Companies
+  els.dealCompanySelect.innerHTML = '<option value="">No company</option>';
+  companies.forEach(co => {
+    const o = document.createElement("option");
+    o.value = co.id; o.textContent = co.name;
+    if (deal && String(deal.company_id) === String(co.id)) o.selected = true;
+    els.dealCompanySelect.appendChild(o);
+  });
+
+  // Products
+  els.dealProductSelect.innerHTML = '<option value="">No product</option>';
+  products.forEach(p => {
+    const o = document.createElement("option");
+    o.value = p.id; o.textContent = p.name;
+    if (deal && String(deal.product_id) === String(p.id)) o.selected = true;
+    els.dealProductSelect.appendChild(o);
+  });
+
+  els.dealModalOverlay.classList.remove("hidden");
+  els.dealTitle.focus();
+}
+
+function closeDealModal() {
+  els.dealModalOverlay.classList.add("hidden");
+}
+
+async function handleDealSubmit(e) {
+  e.preventDefault();
+  els.dealFormError.textContent = "";
+  const id = els.dealId.value;
+  const body = {
+    title:               els.dealTitle.value.trim(),
+    contact_id:          els.dealContactSelect.value || null,
+    company_id:          els.dealCompanySelect.value || null,
+    product_id:          els.dealProductSelect.value || null,
+    stage_id:            els.dealStageSelect.value || null,
+    assigned_to:         els.dealAssignedSelect.value || null,
+    value:               els.dealValue.value || null,
+    currency:            workspaceDefaultCurrency || "USD",
+    quantity:            els.dealQty.value || 1,
+    expected_close_date: els.dealCloseDate.value || null,
+    notes:               els.dealNotes.value.trim() || null,
+  };
+  try {
+    if (id) {
+      await api.put(`/api/deals/${id}`, body);
+    } else {
+      await api.post("/api/deals", body);
+    }
+    closeDealModal();
+    await loadDeals();
+    toast(id ? "Deal updated" : "Deal added");
+  } catch (err) {
+    els.dealFormError.textContent = err.message;
+  }
+}
+
+// ---- deal detail panel ----
+
+async function openDealPanel(dealId) {
+  try {
+    const res = await api.get(`/api/deals/${dealId}`);
+    const d = res.deal;
+    currentDealPanelId = d.id;
+
+    els.dealPanelTitle.textContent = d.title;
+    const sub = [d.contact_name, d.company_name].filter(Boolean).join(" · ") || "—";
+    els.dealPanelSub.textContent = sub;
+
+    // Stage badge
+    if (d.stage_name) {
+      els.dealPanelStageBadge.innerHTML = `<span class="status-badge" style="background:${d.stage_color}22; color:${d.stage_color}; border:1px solid ${d.stage_color}44;">${escHtml(d.stage_name)}</span>`;
+    } else {
+      els.dealPanelStageBadge.innerHTML = "";
+    }
+
+    // Detail grid
+    const rows = [
+      d.value        ? ["Value",    fmtMoney(d.value, d.currency)] : null,
+      d.assigned_name ? ["Owner",   escHtml(d.assigned_name)] : null,
+      d.expected_close_date ? ["Close",  new Date(d.expected_close_date).toLocaleDateString()] : null,
+      d.product_name  ? ["Product", escHtml(d.product_name)] : null,
+      d.quantity != null ? ["Qty",  escHtml(d.quantity)] : null,
+      ["Status",  `<span class="status-badge status-${d.status}">${d.status.charAt(0).toUpperCase()+d.status.slice(1)}</span>`],
+    ].filter(Boolean);
+
+    els.dealPanelDetails.innerHTML = rows.map(([k,v]) =>
+      `<div class="detail-row"><span class="detail-label">${k}</span><span class="detail-value">${v}</span></div>`
+    ).join("");
+
+    if (d.notes) {
+      els.dealPanelNotesWrap.classList.remove("hidden");
+      els.dealPanelNotes.textContent = d.notes;
+    } else {
+      els.dealPanelNotesWrap.classList.add("hidden");
+    }
+
+    els.markDealWonBtn.style.display  = d.status === "won"  ? "none" : "";
+    els.markDealLostBtn.style.display = d.status === "lost" ? "none" : "";
+
+    els.dealPanelOverlay.classList.remove("hidden");
+  } catch (err) {
+    toast(err.message, "error");
+  }
+}
+
+function closeDealPanel() {
+  els.dealPanelOverlay.classList.add("hidden");
+  currentDealPanelId = null;
+}
+
+async function handleMarkDeal(status) {
+  if (!currentDealPanelId) return;
+  try {
+    const d = dealsCache.find(x => String(x.id) === String(currentDealPanelId));
+    if (!d) return;
+    await api.put(`/api/deals/${currentDealPanelId}`, { ...d, status });
+    closeDealPanel();
+    await loadDeals();
+    toast(status === "won" ? "Deal marked won 🎉" : "Deal marked lost");
+  } catch (err) { toast(err.message, "error"); }
+}
+
+async function handleDeleteDeal() {
+  if (!currentDealPanelId || !confirm("Delete this deal?")) return;
+  try {
+    await api.delete(`/api/deals/${currentDealPanelId}`);
+    closeDealPanel();
+    await loadDeals();
+    toast("Deal deleted");
+  } catch (err) { toast(err.message, "error"); }
+}
+
+function handleEditDealFromPanel() {
+  const d = dealsCache.find(x => String(x.id) === String(currentDealPanelId));
+  if (!d) return;
+  closeDealPanel();
+  openDealModal(d);
+}
+
+// ---- stage management modal ----
+
+async function openStagesModal() {
+  await loadDeals(); // refresh cache
+  renderStagesList();
+  els.stagesModalOverlay.classList.remove("hidden");
+}
+
+function closeStagesModal() {
+  els.stagesModalOverlay.classList.add("hidden");
+}
+
+function renderStagesList() {
+  els.stagesList.innerHTML = "";
+  dealsStagesCache.forEach(s => {
+    const row = document.createElement("div");
+    row.className = "stage-manage-row";
+    row.dataset.stageId = s.id;
+    row.innerHTML = `
+      <div class="stage-dot-edit" style="background:${s.color}"></div>
+      <span class="stage-name">${escHtml(s.name)}</span>
+      <button class="btn btn-danger btn-sm" data-delete-stage="${s.id}" title="Delete stage">×</button>
+    `;
+    row.querySelector("[data-delete-stage]").addEventListener("click", async () => {
+      if (!confirm(`Delete stage "${s.name}"? Deals in this stage will become unsorted.`)) return;
+      try {
+        await api.delete(`/api/deals/stages/${s.id}`);
+        await loadDeals();
+        renderStagesList();
+        toast("Stage deleted");
+      } catch (err) { toast(err.message, "error"); }
+    });
+    els.stagesList.appendChild(row);
+  });
+}
+
+async function handleAddStage() {
+  const name = els.newStageName.value.trim();
+  if (!name) { els.stagesFormError.textContent = "Enter a stage name."; return; }
+  els.stagesFormError.textContent = "";
+  try {
+    await api.post("/api/deals/stages", { name, color: els.newStageColor.value });
+    els.newStageName.value = "";
+    await loadDeals();
+    renderStagesList();
+    toast("Stage added");
+  } catch (err) { els.stagesFormError.textContent = err.message; }
+}
+
+// ---- wire deals events ----
+(function wireDealEvents() {
+  els.addDealBtn.addEventListener("click", () => openDealModal(null));
+  els.dealsEmptyAddBtn.addEventListener("click", () => openDealModal(null));
+  els.cancelDealBtn.addEventListener("click", closeDealModal);
+  els.closeDealModalBtn.addEventListener("click", closeDealModal);
+  els.dealModalOverlay.addEventListener("click", e => { if (e.target === els.dealModalOverlay) closeDealModal(); });
+  els.dealForm.addEventListener("submit", handleDealSubmit);
+
+  els.closeDealPanelBtn.addEventListener("click", closeDealPanel);
+  els.dealPanelOverlay.addEventListener("click", e => { if (e.target === els.dealPanelOverlay) closeDealPanel(); });
+  els.markDealWonBtn.addEventListener("click", () => handleMarkDeal("won"));
+  els.markDealLostBtn.addEventListener("click", () => handleMarkDeal("lost"));
+  els.deleteDealBtn.addEventListener("click", handleDeleteDeal);
+  els.editDealBtn.addEventListener("click", handleEditDealFromPanel);
+
+  els.manageStagesBtn.addEventListener("click", openStagesModal);
+  els.closeStagesModalBtn.addEventListener("click", closeStagesModal);
+  els.stagesModalOverlay.addEventListener("click", e => { if (e.target === els.stagesModalOverlay) closeStagesModal(); });
+  els.addStageBtn.addEventListener("click", handleAddStage);
+  els.newStageName.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); handleAddStage(); } });
+
+  els.dealStageFilter.addEventListener("change", loadDeals);
+  els.dealAssigneeFilter.addEventListener("change", loadDeals);
+  els.dealStatusFilter.addEventListener("change", loadDeals);
+})();

@@ -223,6 +223,27 @@ router.get("/workspace", requireAuth, async (req, res) => {
   res.json({ workspace });
 });
 
+// GET /api/auth/workspace/settings — full workspace settings including currency
+router.get("/workspace/settings", requireAuth, async (req, res) => {
+  const result = await db.query(
+    "SELECT id, name, invite_code, plan, default_currency FROM workspaces WHERE id = $1",
+    [req.user.workspace_id]
+  );
+  const workspace = result.rows[0];
+  if (!workspace) return res.status(404).json({ error: "Workspace not found." });
+  if (req.user.role !== "admin") delete workspace.invite_code;
+  res.json({ workspace });
+});
+
+// PUT /api/auth/workspace/currency — admin-only, sets the default currency for new quotes
+router.put("/workspace/currency", requireAuth, async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Only the workspace admin can change this." });
+  const { currency } = req.body || {};
+  if (!currency || !currency.trim()) return res.status(400).json({ error: "Currency code is required." });
+  await db.query("UPDATE workspaces SET default_currency = $1 WHERE id = $2", [currency.trim().toUpperCase(), req.user.workspace_id]);
+  res.json({ currency: currency.trim().toUpperCase() });
+});
+
 // POST /api/auth/workspace/regenerate-invite — admin-only, in case a code leaks
 router.post("/workspace/regenerate-invite", requireAuth, async (req, res) => {
   if (req.user.role !== "admin") {
