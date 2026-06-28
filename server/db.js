@@ -226,6 +226,26 @@ async function init() {
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_contacts_company ON contacts(company_id);
   `);
+
+  // Split full_name into first_name + last_name (safe to re-run)
+  await pool.query(`
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS first_name TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS last_name  TEXT;
+  `);
+  await pool.query(`
+    UPDATE contacts
+    SET
+      first_name = CASE WHEN position(' ' IN full_name) > 0
+                        THEN trim(split_part(full_name, ' ', 1))
+                        ELSE trim(full_name) END,
+      last_name  = CASE WHEN position(' ' IN full_name) > 0
+                        THEN trim(substring(full_name FROM position(' ' IN full_name) + 1))
+                        ELSE NULL END
+    WHERE first_name IS NULL;
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_contacts_last_name ON contacts(workspace_id, last_name);
+  `);
 }
 
 module.exports = { pool, query, init };

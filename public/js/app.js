@@ -4,12 +4,8 @@
 // the AI offer composer, and the activity timeline.
 // ---------------------------------------------------------
 
-// Fire-and-forget visit counter for the Platform dashboard.
-fetch("/api/track-view", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ path: window.location.pathname }),
-}).catch(() => {});
+// (Tracking is intentionally NOT fired here — logged-in dashboard users
+// are not site visitors. Tracking happens on login.html for real visits.)
 
 /* ---------- state ---------- */
 let team = [];
@@ -63,7 +59,7 @@ const els = {
 
   contactModalOverlay: $("contactModalOverlay"), contactModalTitle: $("contactModalTitle"),
   contactForm: $("contactForm"), contactId: $("contactId"),
-  cFullName: $("cFullName"), cEmail: $("cEmail"), cPhone: $("cPhone"),
+  cFirstName: $("cFirstName"), cLastName: $("cLastName"), cEmail: $("cEmail"), cPhone: $("cPhone"),
   cTheme: $("cTheme"), cStatus: $("cStatus"), cOwner: $("cOwner"),
   cNotes: $("cNotes"), contactFormError: $("contactFormError"), contactSubmitBtn: $("contactSubmitBtn"),
 
@@ -80,10 +76,13 @@ const els = {
   deleteContactBtn: $("deleteContactBtn"), editContactBtn: $("editContactBtn"),
 
   cCompanySelect: $("cCompanySelect"), cTitle: $("cTitle"), cDecisionMaker: $("cDecisionMaker"),
+  newCompanyInlineWrap: $("newCompanyInlineWrap"), newCompanyInlineInput: $("newCompanyInlineInput"),
+  createInlineCompanyBtn: $("createInlineCompanyBtn"), cancelInlineCompanyBtn: $("cancelInlineCompanyBtn"),
 
   toastWrap: $("toastWrap"),
 
   // Companies
+  exportContactsBtn: $("exportContactsBtn"), exportCompaniesBtn: $("exportCompaniesBtn"),
   companiesView: $("companiesView"), companySearchInput: $("companySearchInput"), addCompanyBtn: $("addCompanyBtn"),
   companiesBody: $("companiesBody"), companiesEmptyState: $("companiesEmptyState"),
   companyModalOverlay: $("companyModalOverlay"), companyModalTitle: $("companyModalTitle"), companyForm: $("companyForm"),
@@ -144,6 +143,7 @@ const els = {
   passwordError: $("passwordError"), savePasswordBtn: $("savePasswordBtn"),
   settingsCurrentPlan: $("settingsCurrentPlan"), settingsUpgradeBtn: $("settingsUpgradeBtn"),
   settingsPlanDetail: $("settingsPlanDetail"), settingsCancelBtn: $("settingsCancelBtn"), settingsResumeBtn: $("settingsResumeBtn"),
+  joinInviteCodeInput: $("joinInviteCodeInput"), joinWorkspaceBtn: $("joinWorkspaceBtn"), joinWorkspaceError: $("joinWorkspaceError"),
 };
 
 const SEND_BTN_HTML = els.sendOfferBtn.innerHTML;
@@ -229,7 +229,7 @@ function showLimitOrError(err, fallbackEl) {
 
   wireEvents();
 
-  await Promise.all([loadTeam(), loadThemes(), loadWorkspace(), loadBillingStatus(), loadGmailStatus(), loadCompanies(), loadProducts()]);
+  await Promise.all([loadTeam(), loadThemes(), loadWorkspace(), loadBillingStatus(), loadCompanies(), loadProducts()]);
   try {
     await Promise.all([loadStats(), loadContacts()]);
   } catch {
@@ -412,6 +412,7 @@ function openAppearanceModal() {
   els.currentPasswordField.classList.toggle("hidden", !user.has_password);
   els.newPasswordLabel.textContent = user.has_password ? "New password" : "Set a password";
   updateSettingsPlanDisplay();
+  loadGmailStatus();
   els.appearanceModalOverlay.classList.remove("hidden");
 }
 function closeAppearanceModal() {
@@ -478,6 +479,26 @@ async function handleSaveProfileName() {
     els.profileNameError.textContent = err.message;
   } finally {
     els.saveProfileNameBtn.disabled = false;
+  }
+}
+
+async function handleJoinWorkspace() {
+  els.joinWorkspaceError.textContent = "";
+  const code = els.joinInviteCodeInput.value.trim().toUpperCase();
+  if (!code) { els.joinWorkspaceError.textContent = "Enter an invite code."; return; }
+
+  if (!confirm("Joining a new workspace will switch you out of your current one. Continue?")) return;
+
+  els.joinWorkspaceBtn.disabled = true;
+  try {
+    const { token, user, workspace_name } = await API.post("/auth/join", { invite_code: code });
+    API.setToken(token);
+    API.setUser(user);
+    toast(`Switched to workspace "${workspace_name}" — reloading…`);
+    setTimeout(() => window.location.reload(), 1500);
+  } catch (err) {
+    els.joinWorkspaceError.textContent = err.message;
+    els.joinWorkspaceBtn.disabled = false;
   }
 }
 
@@ -1034,7 +1055,8 @@ function openContactModal(contact) {
     els.contactModalTitle.textContent = "Edit contact";
     els.contactSubmitBtn.textContent = "Save changes";
     els.contactId.value = contact.id;
-    els.cFullName.value = contact.full_name || "";
+    els.cFirstName.value = contact.first_name || (contact.full_name ? contact.full_name.split(" ")[0] : "");
+    els.cLastName.value = contact.last_name || (contact.full_name && contact.full_name.includes(" ") ? contact.full_name.split(" ").slice(1).join(" ") : "");
     els.cEmail.value = contact.email || "";
     els.cPhone.value = contact.phone || "";
     els.cCompanySelect.value = contact.company_id || "";
@@ -1058,8 +1080,14 @@ async function handleContactSubmit(e) {
   e.preventDefault();
   els.contactFormError.textContent = "";
 
+  const firstName = els.cFirstName.value.trim();
+  const lastName = els.cLastName.value.trim();
+  if (!firstName) { els.contactFormError.textContent = "First name is required."; return; }
+
   const payload = {
-    full_name: els.cFullName.value.trim(),
+    first_name: firstName,
+    last_name: lastName || null,
+    full_name: [firstName, lastName].filter(Boolean).join(" "),
     email: els.cEmail.value.trim(),
     phone: els.cPhone.value.trim(),
     company_id: els.cCompanySelect.value ? Number(els.cCompanySelect.value) : null,
@@ -1070,7 +1098,6 @@ async function handleContactSubmit(e) {
     notes: els.cNotes.value.trim(),
     owner_id: els.cOwner.value ? Number(els.cOwner.value) : null,
   };
-  if (!payload.full_name) { els.contactFormError.textContent = "Full name is required."; return; }
 
   const id = els.contactId.value;
   els.contactSubmitBtn.disabled = true;
@@ -1278,7 +1305,9 @@ function populateCompanySelect() {
   if (!els.cCompanySelect) return;
   const current = els.cCompanySelect.value;
   els.cCompanySelect.innerHTML =
-    '<option value="">No company</option>' + companies.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+    '<option value="">No company</option>' +
+    companies.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("") +
+    '<option value="__new__">+ New company…</option>';
   if (current) els.cCompanySelect.value = current;
 }
 
@@ -1919,6 +1948,30 @@ function wireEvents() {
   els.filterOwner.addEventListener("change", () => { filters.owner_id = els.filterOwner.value; loadContacts(); });
 
   els.addContactBtn.addEventListener("click", () => openContactModal(null));
+  els.exportContactsBtn.addEventListener("click", () => {
+    const link = document.createElement("a");
+    link.href = `/api/contacts/export`;
+    link.setAttribute("download", "contacts.csv");
+    // Attach auth header via a fetch-then-blob approach
+    fetch("/api/contacts/export", { headers: { Authorization: `Bearer ${API.token()}` } })
+      .then((r) => r.blob())
+      .then((blob) => {
+        link.href = URL.createObjectURL(blob);
+        link.click();
+      })
+      .catch(() => toast("Export failed", "error"));
+  });
+  els.exportCompaniesBtn.addEventListener("click", () => {
+    fetch("/api/companies/export", { headers: { Authorization: `Bearer ${API.token()}` } })
+      .then((r) => r.blob())
+      .then((blob) => {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", "companies.csv");
+        link.click();
+      })
+      .catch(() => toast("Export failed", "error"));
+  });
   els.emptyAddBtn.addEventListener("click", () => openContactModal(null));
   document.querySelectorAll("[data-close-modal]").forEach((b) => b.addEventListener("click", closeContactModal));
   els.contactModalOverlay.addEventListener("click", (e) => { if (e.target === els.contactModalOverlay) closeContactModal(); });
@@ -1931,6 +1984,38 @@ function wireEvents() {
 
   document.querySelectorAll("[data-close-panel]").forEach((b) => b.addEventListener("click", closePanel));
   els.panelOverlay.addEventListener("click", (e) => { if (e.target === els.panelOverlay) closePanel(); });
+
+  // Inline company creation from contact modal
+  els.cCompanySelect.addEventListener("change", () => {
+    if (els.cCompanySelect.value === "__new__") {
+      els.newCompanyInlineWrap.classList.remove("hidden");
+      els.newCompanyInlineInput.focus();
+    } else {
+      els.newCompanyInlineWrap.classList.add("hidden");
+    }
+  });
+  els.cancelInlineCompanyBtn.addEventListener("click", () => {
+    els.newCompanyInlineWrap.classList.add("hidden");
+    els.cCompanySelect.value = "";
+  });
+  els.createInlineCompanyBtn.addEventListener("click", async () => {
+    const name = els.newCompanyInlineInput.value.trim();
+    if (!name) return;
+    els.createInlineCompanyBtn.disabled = true;
+    try {
+      const { company } = await API.post("/companies", { name });
+      companies.push(company);
+      populateCompanySelect();
+      els.cCompanySelect.value = company.id;
+      els.newCompanyInlineWrap.classList.add("hidden");
+      els.newCompanyInlineInput.value = "";
+      toast(`Company "${name}" created`);
+    } catch (err) {
+      toast(err.message, "error");
+    } finally {
+      els.createInlineCompanyBtn.disabled = false;
+    }
+  });
 
   els.generateOfferBtn.addEventListener("click", handleGenerateOffer);
   els.sendOfferBtn.addEventListener("click", handleSendOffer);
@@ -1954,6 +2039,7 @@ function wireEvents() {
   });
   els.saveProfileNameBtn.addEventListener("click", handleSaveProfileName);
   els.savePasswordBtn.addEventListener("click", handleSavePassword);
+  els.joinWorkspaceBtn.addEventListener("click", handleJoinWorkspace);
   els.settingsUpgradeBtn.addEventListener("click", () => {
     closeAppearanceModal();
     openPricingModal();

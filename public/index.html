@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Klyo</title>
+<title>Klyo – Dashboard</title>
+<meta name="robots" content="noindex" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%226%22 fill=%22%234fd8ff%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -79,6 +80,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.8-3.8"/></svg>
           <input id="searchInput" type="text" placeholder="Search name, email, phone, company…" />
         </div>
+        <button class="btn btn-ghost btn-sm" id="exportContactsBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
         <button class="btn btn-primary" id="addContactBtn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           New contact
@@ -167,23 +172,6 @@
           </div>
         </div>
 
-        <div class="table-card hidden" id="gmailCard" style="padding:18px; margin-bottom:16px;">
-          <div class="label" style="font-size:12px; color:var(--text-dim); margin-bottom:8px;">Email sending</div>
-          <p class="muted" style="font-size:13px; margin-bottom:10px;" id="gmailDescription">
-            Connect your Gmail account so offers send from your real address — no shared password involved.
-          </p>
-          <div style="display:flex; gap:10px; align-items:center;">
-            <button class="btn btn-primary btn-sm" id="connectGmailBtn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 6l8 7 8-7"/></svg>
-              Connect Gmail
-            </button>
-            <span class="hidden" id="gmailConnectedChip" style="display:flex; align-items:center; gap:10px;">
-              <span class="badge customer"><span class="ping"></span><span id="gmailConnectedEmail">—</span></span>
-              <button class="btn btn-sm btn-ghost" id="disconnectGmailBtn">Disconnect</button>
-            </span>
-          </div>
-        </div>
-
         <div class="table-card">
           <table>
             <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
@@ -217,6 +205,10 @@
             <input id="companySearchInput" type="text" placeholder="Search companies…" />
           </div>
           <div class="spacer"></div>
+          <button class="btn btn-ghost btn-sm" id="exportCompaniesBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </button>
           <button class="btn btn-primary btn-sm" id="addCompanyBtn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
             New company
@@ -394,9 +386,15 @@
     </div>
     <form id="contactForm">
       <input type="hidden" id="contactId" />
-      <div class="field">
-        <label for="cFullName">Full name</label>
-        <input id="cFullName" type="text" placeholder="Jamie Lawson" required />
+      <div class="field-row">
+        <div class="field">
+          <label for="cFirstName">First name</label>
+          <input id="cFirstName" type="text" placeholder="Jamie" required />
+        </div>
+        <div class="field">
+          <label for="cLastName">Last name</label>
+          <input id="cLastName" type="text" placeholder="Lawson" />
+        </div>
       </div>
       <div class="field-row">
         <div class="field">
@@ -412,6 +410,11 @@
         <div class="field">
           <label for="cCompanySelect">Company</label>
           <select id="cCompanySelect"><option value="">No company</option></select>
+          <div id="newCompanyInlineWrap" class="hidden" style="margin-top:6px; display:flex; gap:6px;">
+            <input id="newCompanyInlineInput" type="text" placeholder="New company name" style="flex:1;" />
+            <button type="button" class="btn btn-sm btn-primary" id="createInlineCompanyBtn">Create</button>
+            <button type="button" class="btn btn-sm btn-ghost" id="cancelInlineCompanyBtn">✕</button>
+          </div>
         </div>
         <div class="field">
           <label for="cTheme">Marketing theme</label>
@@ -726,6 +729,24 @@
       </button>
     </div>
 
+    <!-- Gmail card lives here in Settings (admin only — shown/hidden by JS) -->
+    <div class="hidden" id="gmailCard">
+      <div class="section-title" style="margin-top:0;">Email sending</div>
+      <p class="muted" style="font-size:12.5px; margin-bottom:10px;" id="gmailDescription">
+        Connect your Gmail account so offers send from your real address — no shared password involved.
+      </p>
+      <div style="display:flex; gap:10px; align-items:center; margin-bottom:6px;">
+        <button class="btn btn-primary btn-sm" id="connectGmailBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 6l8 7 8-7"/></svg>
+          Connect Gmail
+        </button>
+        <span class="hidden" id="gmailConnectedChip" style="display:flex; align-items:center; gap:10px;">
+          <span class="badge customer"><span class="ping"></span><span id="gmailConnectedEmail">—</span></span>
+          <button class="btn btn-sm btn-ghost" id="disconnectGmailBtn">Disconnect</button>
+        </span>
+      </div>
+    </div>
+
     <div class="section-title" style="margin-top:0;">Profile</div>
     <div class="field">
       <label for="profileNameInput">Your name</label>
@@ -774,7 +795,18 @@
       <button type="button" class="theme-swatch" data-theme-key="meadow"><span class="puck"></span><span>Meadow</span></button>
       <button type="button" class="theme-swatch" data-theme-key="nebula"><span class="puck"></span><span>Nebula</span></button>
       <button type="button" class="theme-swatch" data-theme-key="arctic"><span class="puck"></span><span>Arctic</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="slate"><span class="puck"></span><span>Slate</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="midnight"><span class="puck"></span><span>Midnight</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="sand"><span class="puck"></span><span>Sand</span></button>
     </div>
+
+    <div class="section-title">Join another organization</div>
+    <p class="muted" style="font-size:12.5px; margin-bottom:10px;">Have an invite code from a colleague? Enter it below to switch into their workspace. You'll leave your current workspace.</p>
+    <div style="display:flex; gap:8px; margin-bottom:6px;">
+      <input id="joinInviteCodeInput" type="text" placeholder="Invite code (e.g. A1B2C3D4E5)" style="flex:1; text-transform:uppercase; letter-spacing:0.05em;" />
+      <button class="btn btn-sm btn-primary" id="joinWorkspaceBtn">Join</button>
+    </div>
+    <div class="form-error" id="joinWorkspaceError"></div>
 
     <div class="section-title">Help</div>
     <button class="btn btn-ghost" id="replayTourBtn" style="width:100%;">Replay the welcome tour</button>

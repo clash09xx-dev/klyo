@@ -59,6 +59,34 @@ router.get("/", async (req, res) => {
   res.json({ contacts: result.rows });
 });
 
+// GET /api/contacts/export — download all contacts as CSV
+router.get("/export", async (req, res) => {
+  const result = await db.query(
+    `SELECT c.first_name, c.last_name, c.full_name, c.email, c.phone, c.title,
+            c.status, c.marketing_theme, c.notes, c.is_decision_maker,
+            co.name AS company_name, u.name AS owner_name, c.created_at
+     FROM contacts c
+     LEFT JOIN companies co ON co.id = c.company_id
+     LEFT JOIN users u ON u.id = c.owner_id
+     WHERE c.workspace_id = $1
+     ORDER BY c.last_name, c.first_name`,
+    [req.user.workspace_id]
+  );
+
+  const header = ["First Name","Last Name","Full Name","Email","Phone","Title","Company","Status","Marketing Theme","Decision Maker","Owner","Notes","Created At"];
+  const csvRows = [header, ...result.rows.map((r) => [
+    r.first_name, r.last_name, r.full_name, r.email, r.phone, r.title,
+    r.company_name, r.status, r.marketing_theme,
+    r.is_decision_maker ? "Yes" : "No",
+    r.owner_name, r.notes,
+    r.created_at ? new Date(r.created_at).toISOString() : "",
+  ].map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`))];
+
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", 'attachment; filename="contacts.csv"');
+  res.send(csvRows.map((r) => r.join(",")).join("\n"));
+});
+
 // GET /api/contacts/themes — distinct marketing themes in this workspace
 router.get("/themes", async (req, res) => {
   const result = await db.query(
@@ -70,13 +98,22 @@ router.get("/themes", async (req, res) => {
   res.json({ themes: result.rows.map((r) => r.marketing_theme) });
 });
 
+// Helper: derive full_name from first/last, or fall back to legacy full_name field
+function buildFullName(first, last, fallback) {
+  const f = (first || "").trim();
+  const l = (last || "").trim();
+  if (f || l) return [f, l].filter(Boolean).join(" ");
+  return (fallback || "").trim();
+}
+
 // POST /api/contacts — create
 router.post("/", async (req, res) => {
-  const { full_name, email, phone, company, marketing_theme, status, notes, owner_id, company_id, title, is_decision_maker } =
+  const { first_name, last_name, full_name, email, phone, company, marketing_theme, status, notes, owner_id, company_id, title, is_decision_maker } =
     req.body || {};
 
-  if (!full_name || !full_name.trim()) {
-    return res.status(400).json({ error: "Full name is required." });
+  const derivedFullName = buildFullName(first_name, last_name, full_name);
+  if (!derivedFullName) {
+    return res.status(400).json({ error: "First name is required." });
   }
 
   try {
@@ -87,13 +124,17 @@ router.post("/", async (req, res) => {
   }
 
   const finalStatus = VALID_STATUSES.includes(status) ? status : "lead";
+  const firstName = (first_name || "").trim() || derivedFullName.split(" ")[0];
+  const lastName = (last_name || "").trim() || (derivedFullName.includes(" ") ? derivedFullName.split(" ").slice(1).join(" ") : null);
 
   const result = await db.query(
-    `INSERT INTO contacts (workspace_id, full_name, email, phone, company, marketing_theme, status, notes, owner_id, company_id, title, is_decision_maker)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+    `INSERT INTO contacts (workspace_id, full_name, first_name, last_name, email, phone, company, marketing_theme, status, notes, owner_id, company_id, title, is_decision_maker)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
     [
       req.user.workspace_id,
-      full_name.trim(),
+      derivedFullName,
+      firstName || null,
+      lastName || null,
       email?.trim() || null,
       phone?.trim() || null,
       company?.trim() || null,
@@ -149,19 +190,25 @@ router.put("/:id", async (req, res) => {
   const existing = existingResult.rows[0];
   if (!existing) return res.status(404).json({ error: "Contact not found." });
 
-  const { full_name, email, phone, company, marketing_theme, status, notes, owner_id, company_id, title, is_decision_maker } =
+  const { first_name, last_name, full_name, email, phone, company, marketing_theme, status, notes, owner_id, company_id, title, is_decision_maker } =
     req.body || {};
-  if (!full_name || !full_name.trim()) {
-    return res.status(400).json({ error: "Full name is required." });
+
+  const derivedFullName = buildFullName(first_name, last_name, full_name);
+  if (!derivedFullName) {
+    return res.status(400).json({ error: "First name is required." });
   }
   const finalStatus = VALID_STATUSES.includes(status) ? status : existing.status;
+  const firstName = (first_name || "").trim() || derivedFullName.split(" ")[0];
+  const lastName = (last_name || "").trim() || (derivedFullName.includes(" ") ? derivedFullName.split(" ").slice(1).join(" ") : null);
 
   const updated = await db.query(
-    `UPDATE contacts SET full_name=$1, email=$2, phone=$3, company=$4, marketing_theme=$5, status=$6, notes=$7, owner_id=$8,
-       company_id=$9, title=$10, is_decision_maker=$11, updated_at=now()
-     WHERE id = $12 RETURNING *`,
+    `UPDATE contacts SET full_name=$1, first_name=$2, last_name=$3, email=$4, phone=$5, company=$6, marketing_theme=$7, status=$8, notes=$9, owner_id=$10,
+       company_id=$11, title=$12, is_decision_maker=$13, updated_at=now()
+     WHERE id = $14 RETURNING *`,
     [
-      full_name.trim(),
+      derivedFullName,
+      firstName || null,
+      lastName || null,
       email?.trim() || null,
       phone?.trim() || null,
       company?.trim() || null,

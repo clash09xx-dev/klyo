@@ -28,6 +28,29 @@ router.get("/", async (req, res) => {
   res.json({ companies: result.rows.map((r) => ({ ...r, contact_count: Number(r.contact_count) })) });
 });
 
+// GET /api/companies/export — download all companies as CSV
+router.get("/export", async (req, res) => {
+  const result = await db.query(
+    `SELECT c.name, c.industry, c.notes, COUNT(ct.id) AS contact_count, c.created_at
+     FROM companies c
+     LEFT JOIN contacts ct ON ct.company_id = c.id
+     WHERE c.workspace_id = $1
+     GROUP BY c.id
+     ORDER BY c.name`,
+    [req.user.workspace_id]
+  );
+
+  const header = ["Company Name","Industry","Contacts","Notes","Created At"];
+  const csvRows = [header, ...result.rows.map((r) => [
+    r.name, r.industry, r.contact_count, r.notes,
+    r.created_at ? new Date(r.created_at).toISOString() : "",
+  ].map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`))];
+
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", 'attachment; filename="companies.csv"');
+  res.send(csvRows.map((r) => r.join(",")).join("\n"));
+});
+
 // POST /api/companies — create
 router.post("/", async (req, res) => {
   const { name, industry, notes } = req.body || {};

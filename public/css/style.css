@@ -69,6 +69,31 @@
   --text: #e7f3f7; --text-dim: #87aab8; --text-faint: #557684;
   --accent-1: #8fe8ff; --accent-2: #c9d8ff;
 }
+/* ---- professional neutral themes ---- */
+[data-theme="slate"] {
+  /* Slate — cool charcoal, minimal chrome, blue-grey accent */
+  --bg: #101418; --bg-glow: #171d24; --bg-soft: #131720; --surface: #1c2330;
+  --surface-2: #22293850; --border: #2e3a4a; --border-soft: #253040;
+  --text: #d8e2ed; --text-dim: #8096aa; --text-faint: #526070;
+  --accent-1: #6cb4e4; --accent-2: #a0c4e8;
+  --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+}
+[data-theme="midnight"] {
+  /* Midnight — true dark, almost black, with warm white text and gold accent */
+  --bg: #0c0c0f; --bg-glow: #13131a; --bg-soft: #101014; --surface: #18181f;
+  --surface-2: #20202850; --border: #2a2a36; --border-soft: #222230;
+  --text: #eaeaea; --text-dim: #888899; --text-faint: #555566;
+  --accent-1: #e8c86e; --accent-2: #e89b6e;
+  --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+}
+[data-theme="sand"] {
+  /* Sand — warm parchment canvas (light mode), terracotta accent */
+  --bg: #f4ede3; --bg-glow: #ede3d5; --bg-soft: #ede5d8; --surface: #faf6f1;
+  --surface-2: #f0e9df88; --border: #d5c9ba; --border-soft: #e0d8cc;
+  --text: #2c2318; --text-dim: #7a6a58; --text-faint: #b0a090;
+  --accent-1: #b8512a; --accent-2: #d4804a;
+  --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+}
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -447,6 +472,9 @@ td.name-cell::before {
 .theme-swatch[data-theme-key="meadow"]  .puck { background: linear-gradient(135deg, #4ce6a8, #a8e64c); box-shadow: 0 0 0 3px #0a140f; }
 .theme-swatch[data-theme-key="nebula"]  .puck { background: linear-gradient(135deg, #d65cff, #5c7aff); box-shadow: 0 0 0 3px #110a1a; }
 .theme-swatch[data-theme-key="arctic"]  .puck { background: linear-gradient(135deg, #8fe8ff, #c9d8ff); box-shadow: 0 0 0 3px #08131a; }
+.theme-swatch[data-theme-key="slate"]    .puck { background: linear-gradient(135deg, #6cb4e4, #a0c4e8); box-shadow: 0 0 0 3px #101418; }
+.theme-swatch[data-theme-key="midnight"] .puck { background: linear-gradient(135deg, #e8c86e, #e89b6e); box-shadow: 0 0 0 3px #0c0c0f; }
+.theme-swatch[data-theme-key="sand"]     .puck { background: linear-gradient(135deg, #b85c3a, #d48a5c); box-shadow: 0 0 0 3px #f5f0ea; }
 
 /* ---------- onboarding tour ---------- */
 #tourOverlay { background: transparent; backdrop-filter: none; }

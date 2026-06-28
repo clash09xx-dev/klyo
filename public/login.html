@@ -3,7 +3,25 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Sign in · Klyo</title>
+<title>Klyo – CRM for Small Businesses</title>
+<meta name="description" content="Klyo is a simple, fast CRM for small businesses. Manage contacts, build quotes, send AI-drafted emails, and track your sales pipeline in one place." />
+<meta name="robots" content="index, follow" />
+<meta name="author" content="Klyo" />
+<link rel="canonical" href="https://klyolabs.com/" />
+
+<!-- Open Graph / Social -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://klyolabs.com/" />
+<meta property="og:title" content="Klyo – CRM for Small Businesses" />
+<meta property="og:description" content="Manage contacts, build quotes, send AI-drafted emails, and track your sales pipeline. Simple CRM built for small teams." />
+<meta property="og:site_name" content="Klyo" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Klyo – CRM for Small Businesses" />
+<meta name="twitter:description" content="Manage contacts, build quotes, send AI-drafted emails, and track your sales pipeline." />
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%226%22 fill=%22%234fd8ff%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css" />
@@ -80,14 +98,15 @@
 
 <script src="/js/api.js"></script>
 <script>
-  // Fire-and-forget visit counter for the Platform dashboard. Never
-  // blocks or errors visibly — a tracking hiccup should never affect
-  // someone actually trying to sign in.
-  fetch("/api/track-view", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path: window.location.pathname }),
-  }).catch(() => {});
+  // Fire-and-forget visit counter — only for real (not-yet-logged-in) visitors.
+  // Logged-in users hitting the login page directly don't count as site visits.
+  if (!localStorage.getItem("klyo_token")) {
+    fetch("/api/track-view", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: window.location.pathname }),
+    }).catch(() => {});
+  }
 
   let mode = "login";       // "login" | "register"
   let signupMode = "create"; // "create" | "join" (only relevant when mode === "register")

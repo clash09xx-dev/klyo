@@ -186,7 +186,7 @@ router.put("/password", requireAuth, async (req, res) => {
 
 // PUT /api/auth/theme — save the signed-in user's chosen color theme
 router.put("/theme", requireAuth, async (req, res) => {
-  const VALID_THEMES = ["signal", "ember", "meadow", "nebula", "arctic"];
+  const VALID_THEMES = ["signal", "ember", "meadow", "nebula", "arctic", "slate", "midnight", "sand"];
   const { theme } = req.body || {};
   if (!VALID_THEMES.includes(theme)) {
     return res.status(400).json({ error: "That's not a valid theme." });
@@ -320,6 +320,52 @@ router.get("/google/callback", async (req, res) => {
     console.error("Google sign-in failed:", err.message);
     res.redirect(`${appUrl}/login.html?google_error=failed`);
   }
+});
+
+// POST /api/auth/join — switch a logged-in user into a different workspace
+// using an invite code. Useful when someone already has an account but wants
+// to join a colleague's workspace without signing up again.
+router.post("/join", requireAuth, async (req, res) => {
+  const { invite_code } = req.body || {};
+  if (!invite_code || !invite_code.trim()) {
+    return res.status(400).json({ error: "Enter an invite code." });
+  }
+
+  const ws = await db.query("SELECT id, name FROM workspaces WHERE invite_code = $1", [
+    invite_code.trim().toUpperCase(),
+  ]);
+  if (!ws.rows.length) {
+    return res.status(400).json({ error: "That invite code doesn't match any workspace." });
+  }
+  const target = ws.rows[0];
+
+  if (target.id === req.user.workspace_id) {
+    return res.status(400).json({ error: "You're already in that workspace." });
+  }
+
+  try {
+    await assertWithinLimit(target.id, "seats");
+  } catch (err) {
+    if (err instanceof LimitExceededError) {
+      return res.status(403).json({ error: err.message, code: "LIMIT_EXCEEDED" });
+    }
+    throw err;
+  }
+
+  // Move the user to the new workspace as a member.
+  const result = await db.query(
+    "UPDATE users SET workspace_id = $1, role = 'member' WHERE id = $2 RETURNING *",
+    [target.id, req.user.id]
+  );
+  const updated = result.rows[0];
+  const user = {
+    id: updated.id,
+    name: updated.name,
+    email: updated.email,
+    role: updated.role,
+    workspace_id: updated.workspace_id,
+  };
+  res.json({ token: signToken(user), user, workspace_name: target.name });
 });
 
 module.exports = router;
