@@ -64,6 +64,39 @@ app.use("/api", trackingRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
+// --- Public quote view (no auth required) ---
+const { renderQuoteHTML } = require("./services/quoteRenderer");
+app.get("/q/:token", async (req, res) => {
+  try {
+    const db = require("./db");
+    const result = await db.query(
+      `SELECT q.*, c.full_name AS contact_name, c.email AS contact_email,
+              co.name AS company_name, w.name AS workspace_name
+       FROM quotes q
+       JOIN contacts c ON c.id = q.contact_id
+       LEFT JOIN companies co ON co.id = q.company_id
+       JOIN workspaces w ON w.id = q.workspace_id
+       WHERE q.public_token = $1`,
+      [req.params.token]
+    );
+    if (!result.rows.length) return res.status(404).send("<h2>Quote not found or link has expired.</h2>");
+    const quote = result.rows[0];
+
+    const itemsResult = await db.query(
+      "SELECT * FROM quote_line_items WHERE quote_id = $1 ORDER BY sort_order",
+      [quote.id]
+    );
+    quote.line_items = itemsResult.rows;
+
+    const html = renderQuoteHTML(quote, req.query.print === "1");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.send(html);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Something went wrong.");
+  }
+});
+
 // --- Front-end ---
 const publicDir = path.join(__dirname, "..", "public");
 app.use(express.static(publicDir));

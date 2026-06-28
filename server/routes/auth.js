@@ -4,7 +4,7 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../db");
-const { requireAuth } = require("../middleware/auth");
+const { requireAuth, requireAdmin } = require("../middleware/auth");
 const { assertWithinLimit, LimitExceededError } = require("../services/limits");
 const { isConfigured: isGoogleConfigured, getSigninConsentUrl, getGoogleProfile } = require("../services/google");
 
@@ -387,6 +387,56 @@ router.post("/join", requireAuth, async (req, res) => {
     workspace_id: updated.workspace_id,
   };
   res.json({ token: signToken(user), user, workspace_name: target.name });
+});
+
+// GET /api/auth/workspace/ai-context
+router.get("/workspace/ai-context", requireAuth, async (req, res) => {
+  const result = await db.query("SELECT ai_context FROM workspaces WHERE id = $1", [req.user.workspace_id]);
+  res.json({ ai_context: result.rows[0]?.ai_context || "" });
+});
+
+// PUT /api/auth/workspace/ai-context — admin only
+router.put("/workspace/ai-context", requireAuth, requireAdmin, async (req, res) => {
+  const { ai_context } = req.body || {};
+  await db.query("UPDATE workspaces SET ai_context = $1 WHERE id = $2", [ai_context?.trim() || null, req.user.workspace_id]);
+  res.json({ ok: true });
+});
+
+// PUT /api/auth/team/:id/role — admin only, change a member's role
+const VALID_ROLES = ["viewer", "editor", "member", "admin"];
+router.put("/team/:id/role", requireAuth, requireAdmin, async (req, res) => {
+  const { role } = req.body || {};
+  if (!VALID_ROLES.includes(role)) return res.status(400).json({ error: "Invalid role." });
+
+  // Can't demote yourself
+  if (Number(req.params.id) === req.user.id) {
+    return res.status(400).json({ error: "You can't change your own role." });
+  }
+
+  // Target must be in same workspace
+  const existing = await db.query(
+    "SELECT id, role FROM users WHERE id = $1 AND workspace_id = $2",
+    [req.params.id, req.user.workspace_id]
+  );
+  if (!existing.rows.length) return res.status(404).json({ error: "User not found." });
+
+  await db.query("UPDATE users SET role = $1 WHERE id = $2", [role, req.params.id]);
+  res.json({ ok: true });
+});
+
+// DELETE /api/auth/team/:id — admin removes a member from the workspace
+router.delete("/team/:id", requireAuth, requireAdmin, async (req, res) => {
+  if (Number(req.params.id) === req.user.id) {
+    return res.status(400).json({ error: "You can't remove yourself." });
+  }
+  const existing = await db.query(
+    "SELECT id FROM users WHERE id = $1 AND workspace_id = $2",
+    [req.params.id, req.user.workspace_id]
+  );
+  if (!existing.rows.length) return res.status(404).json({ error: "User not found." });
+
+  await db.query("DELETE FROM users WHERE id = $1", [req.params.id]);
+  res.json({ ok: true });
 });
 
 module.exports = router;

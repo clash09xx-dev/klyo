@@ -118,8 +118,8 @@ router.post("/", async (req, res) => {
   const { computed, subtotal, total, discountTotal } = computeTotals(line_items);
 
   const quoteResult = await db.query(
-    `INSERT INTO quotes (workspace_id, contact_id, company_id, created_by, title, intro_message, subtotal, discount_total, total)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+    `INSERT INTO quotes (workspace_id, contact_id, company_id, created_by, title, intro_message, subtotal, discount_total, total, public_token)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, encode(gen_random_bytes(18), 'hex')) RETURNING id`,
     [
       req.user.workspace_id,
       contact_id,

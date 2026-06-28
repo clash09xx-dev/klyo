@@ -187,6 +187,8 @@ const els = {
   joinInviteCodeInput: $("joinInviteCodeInput"), joinWorkspaceBtn: $("joinWorkspaceBtn"), joinWorkspaceError: $("joinWorkspaceError"),
   currencySettingsSection: $("currencySettingsSection"), workspaceCurrencySelect: $("workspaceCurrencySelect"),
   currencyError: $("currencyError"), saveCurrencyBtn: $("saveCurrencyBtn"),
+  aiContextSection: $("aiContextSection"), aiContextInput: $("aiContextInput"),
+  aiContextError: $("aiContextError"), saveAiContextBtn: $("saveAiContextBtn"),
 };
 
 const SEND_BTN_HTML = els.sendOfferBtn.innerHTML;
@@ -457,6 +459,7 @@ function openAppearanceModal() {
   updateSettingsPlanDisplay();
   loadGmailStatus();
   loadCurrencySettings();
+  loadAiContext();
   els.appearanceModalOverlay.classList.remove("hidden");
 }
 function closeAppearanceModal() {
@@ -558,6 +561,31 @@ async function handleSaveCurrency() {
     els.currencyError.textContent = err.message;
   } finally {
     els.saveCurrencyBtn.disabled = false;
+  }
+}
+
+async function loadAiContext() {
+  const user = API.getUser();
+  const isAdmin = user?.role === "admin";
+  els.aiContextSection.classList.toggle("hidden", !isAdmin);
+  if (!isAdmin) return;
+  try {
+    const { ai_context } = await API.get("/auth/workspace/ai-context");
+    els.aiContextInput.value = ai_context || "";
+    els.aiContextError.textContent = "";
+  } catch { /* non-critical */ }
+}
+
+async function handleSaveAiContext() {
+  els.aiContextError.textContent = "";
+  els.saveAiContextBtn.disabled = true;
+  try {
+    await API.put("/auth/workspace/ai-context", { ai_context: els.aiContextInput.value.trim() });
+    toast("AI context saved");
+  } catch (err) {
+    els.aiContextError.textContent = err.message;
+  } finally {
+    els.saveAiContextBtn.disabled = false;
   }
 }
 
@@ -1011,9 +1039,47 @@ async function loadTeam() {
   els.taskAssigneeFilter.innerHTML =
     '<option value="">All members</option>' +
     team.map((u) => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
-  els.teamBody.innerHTML = team
-    .map((u) => `<tr><td>${escapeHtml(u.name)}</td><td class="mono">${escapeHtml(u.email)}</td><td>${capitalize(u.role)}</td></tr>`)
-    .join("");
+  const me = API.getUser();
+  const isAdmin = me?.role === "admin";
+
+  els.teamBody.innerHTML = team.map((u) => {
+    const isSelf = u.id === me?.id;
+    const roleCell = isAdmin && !isSelf
+      ? `<select class="team-role-select" data-user-id="${u.id}" style="font-size:12.5px; padding:4px 6px;">
+           <option value="viewer"  ${u.role === "viewer"  ? "selected" : ""}>Viewer</option>
+           <option value="editor"  ${u.role === "editor"  ? "selected" : ""}>Editor</option>
+           <option value="member"  ${u.role === "member"  ? "selected" : ""}>Member</option>
+           <option value="admin"   ${u.role === "admin"   ? "selected" : ""}>Admin</option>
+         </select>`
+      : `<span>${capitalize(u.role)}${isSelf ? " (you)" : ""}</span>`;
+    const removeBtn = isAdmin && !isSelf
+      ? `<button class="line-remove-btn team-remove-btn" data-user-id="${u.id}" title="Remove from workspace">×</button>`
+      : "";
+    return `<tr><td>${escapeHtml(u.name)}</td><td class="mono" style="font-size:12.5px;">${escapeHtml(u.email)}</td><td>${roleCell}</td><td>${removeBtn}</td></tr>`;
+  }).join("");
+
+  // Wire role selects
+  els.teamBody.querySelectorAll(".team-role-select").forEach(sel => {
+    sel.addEventListener("change", async () => {
+      try {
+        await API.put(`/auth/team/${sel.dataset.userId}/role`, { role: sel.value });
+        toast("Role updated");
+      } catch (err) { toast(err.message, "error"); sel.value = team.find(u => u.id == sel.dataset.userId)?.role || "member"; }
+    });
+  });
+
+  // Wire remove buttons
+  els.teamBody.querySelectorAll(".team-remove-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const u = team.find(x => String(x.id) === btn.dataset.userId);
+      if (!u || !confirm(`Remove ${u.name} from this workspace?`)) return;
+      try {
+        await API.del(`/auth/team/${btn.dataset.userId}`);
+        toast(`${u.name} removed`);
+        await loadTeam();
+      } catch (err) { toast(err.message, "error"); }
+    });
+  });
 }
 
 async function loadThemes() {
@@ -1914,6 +1980,13 @@ async function openQuotePanel(id) {
   els.quotePanelTotal.textContent = `$${Number(quote.total).toFixed(2)}`;
   els.quotePanelOverlay.dataset.quoteId = quote.id;
 
+  // Print / PDF link
+  const printLink = document.getElementById("quotePrintLink");
+  if (printLink) {
+    printLink.href = quote.public_token ? `/q/${quote.public_token}` : "#";
+    printLink.style.display = quote.public_token ? "" : "none";
+  }
+
   const isDraft = quote.status === "draft";
   const isSent = quote.status === "sent";
   els.editQuoteBtn.classList.toggle("hidden", !isDraft);
@@ -2302,6 +2375,7 @@ function wireEvents() {
   els.saveProfileNameBtn.addEventListener("click", handleSaveProfileName);
   els.savePasswordBtn.addEventListener("click", handleSavePassword);
   els.saveCurrencyBtn.addEventListener("click", handleSaveCurrency);
+  els.saveAiContextBtn.addEventListener("click", handleSaveAiContext);
   els.joinWorkspaceBtn.addEventListener("click", handleJoinWorkspace);
   els.settingsUpgradeBtn.addEventListener("click", () => {
     closeAppearanceModal();

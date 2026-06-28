@@ -287,8 +287,19 @@ async function init() {
     CREATE INDEX IF NOT EXISTS idx_deals_contact ON deals(contact_id);
   `);
 
+  // AI context field for workspace
+  await pool.query(`ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS ai_context TEXT;`);
+
   // Products: category field
   await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS category TEXT;`);
+
+  // Quotes: public shareable token for print/PDF view
+  await pool.query(`ALTER TABLE quotes ADD COLUMN IF NOT EXISTS public_token TEXT UNIQUE;`);
+  // Backfill existing quotes
+  await pool.query(`
+    UPDATE quotes SET public_token = encode(gen_random_bytes(18), 'hex')
+    WHERE public_token IS NULL
+  `);
 
   // Task assignment
   await pool.query(`

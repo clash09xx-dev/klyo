@@ -23,4 +23,22 @@ function requireAuth(req, res, next) {
   }
 }
 
-module.exports = { requireAuth };
+// Role hierarchy: viewer < editor < member < admin
+// "member" is treated as "editor" for legacy compatibility
+const ROLE_LEVEL = { viewer: 0, editor: 1, member: 1, admin: 2 };
+
+function requireRole(minRole) {
+  return (req, res, next) => {
+    const userLevel = ROLE_LEVEL[req.user?.role] ?? -1;
+    const minLevel  = ROLE_LEVEL[minRole] ?? 99;
+    if (userLevel < minLevel) {
+      return res.status(403).json({ error: "You don't have permission to do that." });
+    }
+    next();
+  };
+}
+
+const requireAdmin  = requireRole("admin");
+const requireEditor = requireRole("editor"); // editors + members + admins
+
+module.exports = { requireAuth, requireAdmin, requireEditor, requireRole, ROLE_LEVEL };

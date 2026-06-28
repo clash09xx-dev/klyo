@@ -268,7 +268,9 @@ router.post("/:id/offers/generate", async (req, res) => {
 
   try {
     const { instructions } = req.body || {};
-    const draft = await generateOfferEmail(contact, instructions, req.user.name);
+    const wsResult = await db.query("SELECT ai_context FROM workspaces WHERE id = $1", [req.user.workspace_id]);
+    const aiContext = wsResult.rows[0]?.ai_context || null;
+    const draft = await generateOfferEmail(contact, instructions, req.user.name, aiContext);
 
     const result = await db.query(
       `INSERT INTO offers (workspace_id, contact_id, created_by, subject, body, ai_generated, status)

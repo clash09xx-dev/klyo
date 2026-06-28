@@ -19,7 +19,7 @@ function getClient() {
  * @param {string} instructions - optional free-text guidance from the user (e.g. "mention 15% discount")
  * @param {string} senderName - the signed-in user's name, used as the email sign-off
  */
-async function generateOfferEmail(contact, instructions, senderName) {
+async function generateOfferEmail(contact, instructions, senderName, workspaceContext) {
   const openai = getClient();
   if (!openai) {
     throw new Error(
@@ -40,6 +40,8 @@ async function generateOfferEmail(contact, instructions, senderName) {
   const userPrompt = [
     "Write a short, warm, persuasive outreach/offer email to this client.",
     "",
+    workspaceContext ? `About the sender's business (use this to match tone, industry, and style):\n${workspaceContext}` : null,
+    "",
     contextLines,
     "",
     instructions ? `Specific instructions from the sender: ${instructions}` : "No extra instructions were given — use good judgement based on the context above.",
@@ -48,7 +50,7 @@ async function generateOfferEmail(contact, instructions, senderName) {
     "",
     "Keep the body under 160 words, plain text (no markdown), friendly and specific rather than generic.",
     'Respond ONLY with strict JSON in this exact shape: {"subject": "...", "body": "..."} and nothing else.',
-  ].join("\n");
+  ].filter(l => l !== null).join("\n");
 
   const completion = await openai.chat.completions.create({
     model,
