@@ -8,22 +8,34 @@ const router = express.Router();
 router.use(requireAuth);
 router.use(requirePaidAccess);
 
-// GET /api/products — the catalog quotes are built from
+// GET /api/products — optionally filter by ?category=
 router.get("/", async (req, res) => {
-  const result = await db.query("SELECT * FROM products WHERE workspace_id = $1 ORDER BY name", [
-    req.user.workspace_id,
-  ]);
+  const { category } = req.query;
+  let sql = "SELECT * FROM products WHERE workspace_id = $1";
+  const params = [req.user.workspace_id];
+  if (category) { params.push(category); sql += ` AND category = $${params.length}`; }
+  sql += " ORDER BY COALESCE(category,'') ASC, name ASC";
+  const result = await db.query(sql, params);
   res.json({ products: result.rows });
+});
+
+// GET /api/products/categories — distinct category list for this workspace
+router.get("/categories", async (req, res) => {
+  const result = await db.query(
+    "SELECT DISTINCT category FROM products WHERE workspace_id = $1 AND category IS NOT NULL ORDER BY category",
+    [req.user.workspace_id]
+  );
+  res.json({ categories: result.rows.map(r => r.category) });
 });
 
 // POST /api/products
 router.post("/", async (req, res) => {
-  const { name, description, unit_price, unit_label, service_interval_months } = req.body || {};
+  const { name, description, unit_price, unit_label, service_interval_months, category } = req.body || {};
   if (!name || !name.trim()) return res.status(400).json({ error: "Product name is required." });
 
   const result = await db.query(
-    `INSERT INTO products (workspace_id, name, description, unit_price, unit_label, service_interval_months)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+    `INSERT INTO products (workspace_id, name, description, unit_price, unit_label, service_interval_months, category)
+     VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
     [
       req.user.workspace_id,
       name.trim(),
@@ -31,6 +43,31 @@ router.post("/", async (req, res) => {
       Number(unit_price) || 0,
       unit_label?.trim() || "unit",
       service_interval_months ? Number(service_interval_months) : null,
+      category?.trim() || null,
+    ]
+  );
+  res.status(201).json({ product: result.rows[0] });
+});
+
+// POST /api/products/:id/duplicate — clone a product
+router.post("/:id/duplicate", async (req, res) => {
+  const src = await db.query("SELECT * FROM products WHERE id = $1 AND workspace_id = $2", [
+    req.params.id, req.user.workspace_id,
+  ]);
+  if (!src.rows.length) return res.status(404).json({ error: "Product not found." });
+  const p = src.rows[0];
+
+  const result = await db.query(
+    `INSERT INTO products (workspace_id, name, description, unit_price, unit_label, service_interval_months, category)
+     VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+    [
+      req.user.workspace_id,
+      `${p.name} (copy)`,
+      p.description,
+      p.unit_price,
+      p.unit_label,
+      p.service_interval_months,
+      p.category,
     ]
   );
   res.status(201).json({ product: result.rows[0] });
@@ -39,23 +76,24 @@ router.post("/", async (req, res) => {
 // PUT /api/products/:id
 router.put("/:id", async (req, res) => {
   const existing = await db.query("SELECT id FROM products WHERE id = $1 AND workspace_id = $2", [
-    req.params.id,
-    req.user.workspace_id,
+    req.params.id, req.user.workspace_id,
   ]);
   if (!existing.rows.length) return res.status(404).json({ error: "Product not found." });
 
-  const { name, description, unit_price, unit_label, service_interval_months } = req.body || {};
+  const { name, description, unit_price, unit_label, service_interval_months, category } = req.body || {};
   if (!name || !name.trim()) return res.status(400).json({ error: "Product name is required." });
 
   const result = await db.query(
-    `UPDATE products SET name=$1, description=$2, unit_price=$3, unit_label=$4, service_interval_months=$5
-     WHERE id=$6 RETURNING *`,
+    `UPDATE products SET name=$1, description=$2, unit_price=$3, unit_label=$4,
+       service_interval_months=$5, category=$6
+     WHERE id=$7 RETURNING *`,
     [
       name.trim(),
       description?.trim() || null,
       Number(unit_price) || 0,
       unit_label?.trim() || "unit",
       service_interval_months ? Number(service_interval_months) : null,
+      category?.trim() || null,
       req.params.id,
     ]
   );
@@ -65,8 +103,7 @@ router.put("/:id", async (req, res) => {
 // DELETE /api/products/:id
 router.delete("/:id", async (req, res) => {
   const existing = await db.query("SELECT id FROM products WHERE id = $1 AND workspace_id = $2", [
-    req.params.id,
-    req.user.workspace_id,
+    req.params.id, req.user.workspace_id,
   ]);
   if (!existing.rows.length) return res.status(404).json({ error: "Product not found." });
 

@@ -576,7 +576,7 @@ td.name-cell::before {
 .quote-status-badge.declined { color: var(--lost); background: color-mix(in srgb, var(--lost) 10%, transparent); }
 
 /* ---------- products / catalog manager ---------- */
-.product-row { display: grid; grid-template-columns: 1.4fr 80px 90px 100px 28px; gap: 8px; align-items: center; padding: 8px; border-bottom: 1px solid var(--border-soft); }
+.product-row { display: grid; grid-template-columns: 1.6fr 70px 70px 90px 110px 28px 28px; gap: 6px; align-items: center; padding: 8px; border-bottom: 1px solid var(--border-soft); }
 .product-row input, .product-row select { padding: 6px 8px; font-size: 12.5px; width: 100%; }
 
 /* ---------- performance table ---------- */
@@ -644,3 +644,4 @@ td.name-cell::before {
 .priority-medium { background: color-mix(in srgb, #f59e0b 12%, transparent); color: #b45309; }
 .priority-low    { background: color-mix(in srgb, var(--text-faint) 12%, transparent); color: var(--text-faint); }
 .due-overdue { color: var(--lost); font-weight: 600; }
+.product-cat-badge { font-size: 10.5px; color: var(--text-faint); background: var(--bg-soft); border-radius: 99px; padding: 1px 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

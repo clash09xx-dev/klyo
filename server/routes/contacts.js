@@ -303,4 +303,133 @@ router.post("/:id/activity", async (req, res) => {
   res.status(201).json({ ok: true });
 });
 
+// GET /api/contacts/:id/timeline — unified communication + activity timeline
+router.get("/:id/timeline", async (req, res) => {
+  const { id } = req.params;
+  const wid = req.user.workspace_id;
+
+  // Verify contact belongs to workspace
+  const check = await db.query("SELECT id FROM contacts WHERE id = $1 AND workspace_id = $2", [id, wid]);
+  if (!check.rows.length) return res.status(404).json({ error: "Contact not found." });
+
+  // Activity log entries
+  const acts = await db.query(
+    `SELECT al.id, al.type, al.description, al.created_at, u.name AS actor
+     FROM activity_log al
+     LEFT JOIN users u ON u.id = al.user_id
+     WHERE al.contact_id = $1 AND al.workspace_id = $2
+     ORDER BY al.created_at DESC LIMIT 50`,
+    [id, wid]
+  );
+
+  // Offers sent to this contact
+  const offers = await db.query(
+    `SELECT o.id, o.subject, o.status, o.sent_at, o.created_at, u.name AS actor
+     FROM offers o
+     LEFT JOIN users u ON u.id = o.created_by
+     WHERE o.contact_id = $1 AND o.workspace_id = $2
+     ORDER BY o.created_at DESC LIMIT 20`,
+    [id, wid]
+  );
+
+  // Quotes for this contact
+  const quotes = await db.query(
+    `SELECT q.id, q.title, q.status, q.total, q.currency, q.sent_at, q.accepted_at, q.created_at, u.name AS actor
+     FROM quotes q
+     LEFT JOIN users u ON u.id = q.created_by
+     WHERE q.contact_id = $1 AND q.workspace_id = $2
+     ORDER BY q.created_at DESC LIMIT 20`,
+    [id, wid]
+  );
+
+  // Deals linked to this contact
+  const deals = await db.query(
+    `SELECT d.id, d.title, d.status, d.value, d.currency, d.created_at, u.name AS actor
+     FROM deals d
+     LEFT JOIN users u ON u.id = d.assigned_to
+     WHERE d.contact_id = $1 AND d.workspace_id = $2
+     ORDER BY d.created_at DESC LIMIT 10`,
+    [id, wid]
+  );
+
+  // Merge and sort all events by date descending
+  const events = [
+    ...acts.rows.map(r => ({ kind: "activity", date: r.created_at, actor: r.actor, type: r.type, description: r.description, ref_id: r.id })),
+    ...offers.rows.map(r => ({ kind: "offer", date: r.sent_at || r.created_at, actor: r.actor, subject: r.subject, status: r.status, ref_id: r.id })),
+    ...quotes.rows.map(r => ({ kind: "quote", date: r.sent_at || r.created_at, actor: r.actor, title: r.title, status: r.status, total: r.total, currency: r.currency, ref_id: r.id })),
+    ...deals.rows.map(r => ({ kind: "deal", date: r.created_at, actor: r.actor, title: r.title, status: r.status, value: r.value, currency: r.currency, ref_id: r.id })),
+  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  res.json({ events });
+});
+
+// POST /api/contacts/import — bulk import from CSV text body
+// Expects JSON: { csv: "...raw csv string..." }
+// Columns (first row = headers, case-insensitive):
+//   first_name, last_name, full_name, email, phone, company, status, notes, marketing_theme
+router.post("/import", async (req, res) => {
+  const { csv } = req.body || {};
+  if (!csv || typeof csv !== "string") return res.status(400).json({ error: "Send { csv: '...' } in the request body." });
+
+  const lines = csv.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return res.status(400).json({ error: "CSV must have a header row and at least one data row." });
+
+  // Parse simple CSV (handles quoted fields with commas)
+  function parseCSVLine(line) {
+    const result = [];
+    let cur = "";
+    let inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQuote = !inQuote; continue; }
+      if (ch === "," && !inQuote) { result.push(cur.trim()); cur = ""; continue; }
+      cur += ch;
+    }
+    result.push(cur.trim());
+    return result;
+  }
+
+  const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().replace(/\s+/g, "_"));
+  const col = (name) => headers.indexOf(name);
+
+  const VALID_STATUSES = ["lead", "contacted", "negotiating", "customer", "lost"];
+  let imported = 0;
+  let skipped  = 0;
+  const errors = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const row = parseCSVLine(lines[i]);
+    try {
+      const firstName = col("first_name") >= 0 ? row[col("first_name")] || "" : "";
+      const lastName  = col("last_name")  >= 0 ? row[col("last_name")]  || "" : "";
+      let fullName    = col("full_name")  >= 0 ? row[col("full_name")]  || "" : "";
+      if (!fullName) {
+        fullName = [firstName, lastName].filter(Boolean).join(" ");
+      }
+      if (!fullName) { skipped++; errors.push(`Row ${i + 1}: no name — skipped`); continue; }
+
+      const email  = col("email")  >= 0 ? row[col("email")]  || null : null;
+      const phone  = col("phone")  >= 0 ? row[col("phone")]  || null : null;
+      const company = col("company") >= 0 ? row[col("company")] || null : null;
+      const notes  = col("notes")  >= 0 ? row[col("notes")]  || null : null;
+      const theme  = col("marketing_theme") >= 0 ? row[col("marketing_theme")] || null : null;
+      let status   = col("status") >= 0 ? row[col("status")] || "lead" : "lead";
+      if (!VALID_STATUSES.includes(status)) status = "lead";
+
+      await db.query(
+        `INSERT INTO contacts (workspace_id, full_name, first_name, last_name, email, phone, company, notes, marketing_theme, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+         ON CONFLICT DO NOTHING`,
+        [req.user.workspace_id, fullName, firstName || null, lastName || null, email, phone, company, notes, theme, status]
+      );
+      imported++;
+    } catch (err) {
+      skipped++;
+      errors.push(`Row ${i + 1}: ${err.message}`);
+    }
+  }
+
+  res.json({ imported, skipped, errors: errors.slice(0, 10) });
+});
+
 module.exports = router;

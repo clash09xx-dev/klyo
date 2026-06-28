@@ -287,6 +287,9 @@ async function init() {
     CREATE INDEX IF NOT EXISTS idx_deals_contact ON deals(contact_id);
   `);
 
+  // Products: category field
+  await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS category TEXT;`);
+
   // Task assignment
   await pool.query(`
     CREATE TABLE IF NOT EXISTS tasks (

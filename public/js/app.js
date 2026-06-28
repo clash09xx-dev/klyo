@@ -73,7 +73,7 @@ const els = {
   sendOfferBtn: $("sendOfferBtn"), discardDraftBtn: $("discardDraftBtn"),
   panelQuotesList: $("panelQuotesList"), newQuoteForContactBtn: $("newQuoteForContactBtn"),
   activityLogForm: $("activityLogForm"), activityLogType: $("activityLogType"), activityLogDescription: $("activityLogDescription"),
-  panelTimeline: $("panelTimeline"),
+  panelTimeline: $("panelTimeline"), panelTimelineEmpty: $("panelTimelineEmpty"),
   deleteContactBtn: $("deleteContactBtn"), editContactBtn: $("editContactBtn"),
 
   cCompanySelect: $("cCompanySelect"), cTitle: $("cTitle"), cDecisionMaker: $("cDecisionMaker"),
@@ -84,6 +84,7 @@ const els = {
 
   // Companies
   exportContactsBtn: $("exportContactsBtn"), exportCompaniesBtn: $("exportCompaniesBtn"),
+  importContactsBtn: $("importContactsBtn"), importContactsFile: $("importContactsFile"),
   companiesView: $("companiesView"), companySearchInput: $("companySearchInput"), addCompanyBtn: $("addCompanyBtn"),
   companiesBody: $("companiesBody"), companiesEmptyState: $("companiesEmptyState"),
   companyModalOverlay: $("companyModalOverlay"), companyModalTitle: $("companyModalTitle"), companyForm: $("companyForm"),
@@ -97,7 +98,10 @@ const els = {
 
   // Products / catalog
   productsModalOverlay: $("productsModalOverlay"), closeProductsModalBtn: $("closeProductsModalBtn"),
-  productsList: $("productsList"), newProductName: $("newProductName"), newProductPrice: $("newProductPrice"),
+  productsList: $("productsList"), productsCount: $("productsCount"),
+  productCategoryFilter: $("productCategoryFilter"),
+  newProductName: $("newProductName"), newProductPrice: $("newProductPrice"),
+  newProductCategory: $("newProductCategory"),
   newProductUnit: $("newProductUnit"), newProductInterval: $("newProductInterval"), addProductBtn: $("addProductBtn"),
   productFormError: $("productFormError"), manageProductsBtn: $("manageProductsBtn"),
 
@@ -1253,7 +1257,7 @@ async function openPanel(id) {
   els.generateOfferBtn.classList.remove("loading");
   els.generateOfferBtn.textContent = "Generate with AI";
 
-  renderTimeline(activity);
+  loadContactTimeline(id);
   els.panelOverlay.classList.remove("hidden");
 }
 
@@ -1285,17 +1289,64 @@ function closePanel() {
   currentDraftOfferId = null;
 }
 
-function renderTimeline(activity) {
-  if (!activity.length) {
-    els.panelTimeline.innerHTML = '<p class="muted" style="font-size:13px;">No activity yet.</p>';
+async function loadContactTimeline(contactId) {
+  els.panelTimeline.innerHTML = '<p class="muted" style="font-size:12.5px; padding:8px 0;">Loading…</p>';
+  try {
+    const { events } = await API.get(`/contacts/${contactId}/timeline`);
+    renderTimeline(events);
+  } catch {
+    renderTimeline([]);
+  }
+}
+
+function timelineIcon(kind, type) {
+  if (kind === "offer")    return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>`;
+  if (kind === "quote")    return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>`;
+  if (kind === "deal")     return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3 6.5L22 9.3l-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2 2 9.3l7-.8z"/></svg>`;
+  if (type === "call_logged")    return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.9v3a2 2 0 01-2.18 2A19.8 19.8 0 013.1 4.18 2 2 0 015.09 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.09 9.91a16 16 0 006.99 7l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.9z"/></svg>`;
+  if (type === "meeting_logged") return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>`;
+  return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>`;
+}
+
+function timelineLabel(ev) {
+  if (ev.kind === "offer") {
+    const status = ev.status === "sent" ? "Offer sent" : ev.status === "draft" ? "Offer drafted" : `Offer (${ev.status})`;
+    return `${status}${ev.subject ? ` — <em>${escapeHtml(ev.subject)}</em>` : ""}`;
+  }
+  if (ev.kind === "quote") {
+    const status = ev.status === "sent" ? "Quote sent" : ev.status === "accepted" ? "Quote accepted ✓" : ev.status === "declined" ? "Quote declined" : `Quote (${ev.status})`;
+    const val = ev.total ? ` · ${ev.currency || ""} ${Number(ev.total).toFixed(2)}` : "";
+    return `${status}${ev.title ? ` — <em>${escapeHtml(ev.title)}</em>` : ""}${val}`;
+  }
+  if (ev.kind === "deal") {
+    return `Deal created — <em>${escapeHtml(ev.title)}</em>${ev.value ? ` · ${ev.currency || ""} ${Number(ev.value).toFixed(0)}` : ""}`;
+  }
+  return escapeHtml(ev.description || "");
+}
+
+function renderTimeline(events) {
+  const panelEmpty = document.getElementById("panelTimelineEmpty");
+  if (!events.length) {
+    els.panelTimeline.innerHTML = "";
+    if (panelEmpty) panelEmpty.classList.remove("hidden");
     return;
   }
-  els.panelTimeline.innerHTML = activity
-    .map((a) => `<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-body"><p>${escapeHtml(a.description)}</p><time>${formatDateTime(a.created_at)}</time></div></div>`)
-    .join("");
+  if (panelEmpty) panelEmpty.classList.add("hidden");
+  els.panelTimeline.innerHTML = events.map(ev => {
+    const actor = ev.actor ? `<span class="muted" style="font-size:11px; margin-left:4px;">by ${escapeHtml(ev.actor)}</span>` : "";
+    return `<div class="timeline-item">
+      <div class="timeline-dot" style="display:flex; align-items:center; justify-content:center; color:var(--accent-1);">${timelineIcon(ev.kind, ev.type)}</div>
+      <div class="timeline-body">
+        <p>${timelineLabel(ev)}${actor}</p>
+        <time>${formatDateTime(ev.date)}</time>
+      </div>
+    </div>`;
+  }).join("");
 }
+
 function prependTimelineEntry(text) {
-  if (els.panelTimeline.querySelector(".muted")) els.panelTimeline.innerHTML = "";
+  const panelEmpty = document.getElementById("panelTimelineEmpty");
+  if (panelEmpty) panelEmpty.classList.add("hidden");
   const div = document.createElement("div");
   div.className = "timeline-item";
   div.innerHTML = `<div class="timeline-dot"></div><div class="timeline-body"><p>${escapeHtml(text)}</p><time>${formatDateTime(new Date().toISOString())}</time></div>`;
@@ -1340,7 +1391,7 @@ async function handleSendOffer() {
     toast(`Offer sent to ${currentPanelContact.email}`);
     els.draftBox.classList.remove("show");
     currentDraftOfferId = null;
-    prependTimelineEntry(`${API.getUser().name} sent the offer "${offer.subject}" to ${currentPanelContact.email}.`);
+    if (currentPanelContactId) loadContactTimeline(currentPanelContactId);
     loadStats();
   } catch (err) {
     toast(err.message, "error");
@@ -1489,23 +1540,31 @@ async function loadProducts() {
 }
 
 function renderProductsList() {
-  els.productsList.innerHTML = products.length
-    ? products
-        .map(
-          (p) => `
+  const filterText = (els.productCategoryFilter?.value || "").toLowerCase().trim();
+  const visible = filterText
+    ? products.filter(p => (p.category || "").toLowerCase().includes(filterText) || p.name.toLowerCase().includes(filterText))
+    : products;
+
+  if (els.productsCount) els.productsCount.textContent = `${visible.length} item${visible.length === 1 ? "" : "s"}`;
+
+  els.productsList.innerHTML = visible.length
+    ? visible.map(p => `
     <div class="product-row">
-      <span>${escapeHtml(p.name)}</span>
-      <span class="mono">$${Number(p.unit_price).toFixed(2)}</span>
-      <span class="muted">${escapeHtml(p.unit_label)}</span>
-      <span class="muted">${p.service_interval_months ? `every ${p.service_interval_months}mo` : "—"}</span>
+      <span style="font-weight:500;">${escapeHtml(p.name)}${p.description ? `<div class="muted" style="font-size:11px;">${escapeHtml(p.description)}</div>` : ""}</span>
+      <span class="mono" style="font-size:12.5px;">$${Number(p.unit_price).toFixed(2)}</span>
+      <span class="muted" style="font-size:12px;">${escapeHtml(p.unit_label)}</span>
+      <span class="muted" style="font-size:12px;">${p.service_interval_months ? `every ${p.service_interval_months}mo` : "—"}</span>
+      <span>${p.category ? `<span class="product-cat-badge">${escapeHtml(p.category)}</span>` : ""}</span>
+      <button class="line-remove-btn" data-dup-id="${p.id}" title="Duplicate" style="font-size:15px; opacity:.6;">⎘</button>
       <button class="line-remove-btn" data-product-id="${p.id}" title="Delete">×</button>
-    </div>`
-        )
-        .join("")
+    </div>`).join("")
     : '<p class="muted" style="font-size:13px;">No products yet — add your first one below.</p>';
 
   els.productsList.querySelectorAll("[data-product-id]").forEach((btn) => {
     btn.addEventListener("click", () => handleDeleteProduct(btn.dataset.productId));
+  });
+  els.productsList.querySelectorAll("[data-dup-id]").forEach((btn) => {
+    btn.addEventListener("click", () => handleDuplicateProduct(btn.dataset.dupId));
   });
 }
 
@@ -1526,11 +1585,13 @@ async function handleAddProduct() {
       unit_price: els.newProductPrice.value,
       unit_label: els.newProductUnit.value.trim() || "unit",
       service_interval_months: els.newProductInterval.value || null,
+      category: els.newProductCategory?.value.trim() || null,
     });
     els.newProductName.value = "";
     els.newProductPrice.value = "";
     els.newProductUnit.value = "";
     els.newProductInterval.value = "";
+    if (els.newProductCategory) els.newProductCategory.value = "";
     await loadProducts();
     renderProductsList();
     populateLineItemProductOptions();
@@ -1538,6 +1599,16 @@ async function handleAddProduct() {
   } catch (err) {
     els.productFormError.textContent = err.message;
   }
+}
+
+async function handleDuplicateProduct(id) {
+  try {
+    await API.post(`/products/${id}/duplicate`, {});
+    await loadProducts();
+    renderProductsList();
+    populateLineItemProductOptions();
+    toast("Product duplicated");
+  } catch (err) { toast(err.message, "error"); }
 }
 
 async function handleDeleteProduct(id) {
@@ -2083,7 +2154,7 @@ async function handleActivityLogSubmit(e) {
   try {
     await API.post(`/contacts/${currentPanelContactId}/activity`, { type: els.activityLogType.value, description });
     els.activityLogDescription.value = "";
-    prependTimelineEntry(description);
+    loadContactTimeline(currentPanelContactId);
     toast("Logged");
   } catch (err) {
     toast(err.message, "error");
@@ -2144,6 +2215,25 @@ function wireEvents() {
       })
       .catch(() => toast("Export failed", "error"));
   });
+  // CSV import
+  els.importContactsBtn.addEventListener("click", () => els.importContactsFile.click());
+  els.importContactsFile.addEventListener("change", async () => {
+    const file = els.importContactsFile.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const res = await API.post("/contacts/import", { csv: text });
+      toast(`Imported ${res.imported} contact${res.imported === 1 ? "" : "s"}${res.skipped ? `, ${res.skipped} skipped` : ""}`);
+      if (res.errors?.length) console.warn("Import row errors:", res.errors);
+      await loadContacts();
+      await loadStats();
+    } catch (err) {
+      toast(err.message, "error");
+    } finally {
+      els.importContactsFile.value = "";
+    }
+  });
+
   els.emptyAddBtn.addEventListener("click", () => openContactModal(null));
   document.querySelectorAll("[data-close-modal]").forEach((b) => b.addEventListener("click", closeContactModal));
   els.contactModalOverlay.addEventListener("click", (e) => { if (e.target === els.contactModalOverlay) closeContactModal(); });
@@ -2269,6 +2359,7 @@ function wireEvents() {
   els.closeProductsModalBtn.addEventListener("click", closeProductsModal);
   els.productsModalOverlay.addEventListener("click", (e) => { if (e.target === els.productsModalOverlay) closeProductsModal(); });
   els.addProductBtn.addEventListener("click", handleAddProduct);
+  if (els.productCategoryFilter) els.productCategoryFilter.addEventListener("input", renderProductsList);
 
   // Quotes
   els.addQuoteBtn.addEventListener("click", () => { openQuoteModal(null); populateLineItemProductOptions(); });
