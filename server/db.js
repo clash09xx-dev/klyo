@@ -288,21 +288,21 @@ async function init() {
   `);
 
   // Seed default pipeline stages for any workspace that has none
-  await pool.query (`
-    INSERT INTO pipeline_stages (workspace_id, name, color, sort_order)
-    SELECT w.id, s.name, s.color, s.sort_order
-    FROM workspaces w
-    CROSS JOIN (VALUES
-      ('Awareness',   '#6366f1', 0),
-      ('Contacted',   '#3b82f6', 1),
-      ('Offered',     '#f59e0b', 2),
-      ('Followed Up', '#f97316', 3),
-      ('Awaiting PO', '#10b981', 4)
-    ) AS s(name, color, sort_order)
-    WHERE NOT EXISTS (
-      SELECT 1 FROM pipeline_stages p WHERE p.workspace_id = w.id
-    );
-  \`);
+  await pool.query(
+    `INSERT INTO pipeline_stages (workspace_id, name, color, sort_order)
+     SELECT w.id, s.name, s.color, s.sort_order
+     FROM workspaces w
+     CROSS JOIN (VALUES
+       ('Awareness',   '#6366f1', 0),
+       ('Contacted',   '#3b82f6', 1),
+       ('Offered',     '#f59e0b', 2),
+       ('Followed Up', '#f97316', 3),
+       ('Awaiting PO', '#10b981', 4)
+     ) AS s(name, color, sort_order)
+     WHERE NOT EXISTS (
+       SELECT 1 FROM pipeline_stages p WHERE p.workspace_id = w.id
+     )`
+  );
 }
 
 module.exports = { pool, query, init };
