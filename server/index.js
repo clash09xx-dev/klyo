@@ -30,6 +30,7 @@ const discountsRoutes = require("./routes/discounts");
 const remindersRoutes = require("./routes/reminders");
 const teamStatsRoutes = require("./routes/team-stats");
 const platformRoutes = require("./routes/platform");
+const trackingRoutes = require("./routes/tracking");
 
 const app = express();
 app.use(cors());
@@ -53,6 +54,7 @@ app.use("/api/discounts", discountsRoutes);
 app.use("/api/reminders", remindersRoutes);
 app.use("/api/team-stats", teamStatsRoutes);
 app.use("/api/platform", platformRoutes);
+app.use("/api", trackingRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

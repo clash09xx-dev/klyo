@@ -4,6 +4,13 @@
 // the AI offer composer, and the activity timeline.
 // ---------------------------------------------------------
 
+// Fire-and-forget visit counter for the Platform dashboard.
+fetch("/api/track-view", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ path: window.location.pathname }),
+}).catch(() => {});
+
 /* ---------- state ---------- */
 let team = [];
 let filters = { search: "", status: "", theme: "", owner_id: "" };
@@ -127,6 +134,7 @@ const els = {
   platformNavItem: $("platformNavItem"), platformView: $("platformView"),
   platTotalWorkspaces: $("platTotalWorkspaces"), platActive: $("platActive"), platTrial: $("platTrial"), platMrr: $("platMrr"),
   platSecondaryStats: $("platSecondaryStats"), platWorkspacesBody: $("platWorkspacesBody"), platUsersBody: $("platUsersBody"),
+  platViewsToday: $("platViewsToday"), platViews7d: $("platViews7d"), platViews30d: $("platViews30d"), platViewsTotal: $("platViewsTotal"),
 
   // Profile / password settings
   profileNameInput: $("profileNameInput"), profileEmailDisplay: $("profileEmailDisplay"),
@@ -503,11 +511,17 @@ async function handleSavePassword() {
 /* ---------- platform (developer) dashboard ---------- */
 async function loadPlatformDashboard() {
   try {
-    const [overview, { workspaces }, { users: platformUsers }] = await Promise.all([
+    const [overview, { workspaces }, { users: platformUsers }, views] = await Promise.all([
       API.get("/platform/overview"),
       API.get("/platform/workspaces"),
       API.get("/platform/users"),
+      API.get("/platform/page-views"),
     ]);
+
+    els.platViewsToday.textContent = views.today;
+    els.platViews7d.textContent = views.last_7_days;
+    els.platViews30d.textContent = views.last_30_days;
+    els.platViewsTotal.textContent = views.all_time;
 
     els.platTotalWorkspaces.textContent = overview.workspaces.total;
     els.platActive.textContent = overview.workspaces.active;

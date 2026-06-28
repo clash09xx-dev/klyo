@@ -195,6 +195,13 @@ async function init() {
     CREATE INDEX IF NOT EXISTS idx_discounts_workspace ON customer_discounts(workspace_id);
     CREATE INDEX IF NOT EXISTS idx_purchases_workspace ON purchases(workspace_id);
     CREATE INDEX IF NOT EXISTS idx_purchases_due ON purchases(next_service_due_at);
+
+    CREATE TABLE IF NOT EXISTS page_views (
+      id         SERIAL PRIMARY KEY,
+      path       TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_page_views_created ON page_views(created_at);
   `);
 
   // Safe to re-run: only adds columns that don't already exist yet, so

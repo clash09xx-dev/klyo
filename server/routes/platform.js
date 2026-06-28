@@ -138,4 +138,27 @@ router.post("/workspaces/:id/revoke", async (req, res) => {
   res.json({ ok: true });
 });
 
+// GET /api/platform/page-views — the simple built-in visit counter
+router.get("/page-views", async (req, res) => {
+  const [today, week, month, total, byPath] = await Promise.all([
+    db.query("SELECT COUNT(*) AS n FROM page_views WHERE created_at >= now() - interval '1 day'"),
+    db.query("SELECT COUNT(*) AS n FROM page_views WHERE created_at >= now() - interval '7 days'"),
+    db.query("SELECT COUNT(*) AS n FROM page_views WHERE created_at >= now() - interval '30 days'"),
+    db.query("SELECT COUNT(*) AS n FROM page_views"),
+    db.query(
+      `SELECT path, COUNT(*) AS n FROM page_views
+       WHERE created_at >= now() - interval '30 days'
+       GROUP BY path ORDER BY n DESC LIMIT 10`
+    ),
+  ]);
+
+  res.json({
+    today: Number(today.rows[0].n),
+    last_7_days: Number(week.rows[0].n),
+    last_30_days: Number(month.rows[0].n),
+    all_time: Number(total.rows[0].n),
+    by_path: byPath.rows.map((r) => ({ path: r.path, count: Number(r.n) })),
+  });
+});
+
 module.exports = router;

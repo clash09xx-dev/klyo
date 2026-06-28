@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css" />
+<!-- Cloudflare Web Analytics — see public/login.html for setup notes. -->
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "YOUR_TOKEN_HERE"}'></script>
 </head>
 <body>
 
@@ -301,6 +303,26 @@
         </div>
         <div class="filter-bar">
           <span class="muted" id="platSecondaryStats">—</span>
+        </div>
+
+        <div class="section-title">Site visits <span class="muted" style="text-transform:none; letter-spacing:0; font-size:11px;">(built-in counter — approximate, not bot-filtered)</span></div>
+        <div class="stat-grid" style="margin-bottom:20px;">
+          <div class="stat-card">
+            <div class="label"><span class="dot"></span>Today</div>
+            <div class="value" id="platViewsToday">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label"><span class="dot" style="background:var(--accent-2)"></span>Last 7 days</div>
+            <div class="value" id="platViews7d">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label"><span class="dot" style="background:var(--customer)"></span>Last 30 days</div>
+            <div class="value" id="platViews30d">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label"><span class="dot" style="background:var(--lead)"></span>All time</div>
+            <div class="value" id="platViewsTotal">0</div>
+          </div>
         </div>
 
         <div class="section-title">Workspaces</div>

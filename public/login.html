@@ -7,6 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css" />
+<!-- Cloudflare Web Analytics — sign up free at cloudflare.com/web-analytics,
+     add this site via "JavaScript snippet" (no DNS change needed), then
+     replace YOUR_TOKEN_HERE below with the token it gives you. -->
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "YOUR_TOKEN_HERE"}'></script>
 </head>
 <body>
 
@@ -76,6 +80,15 @@
 
 <script src="/js/api.js"></script>
 <script>
+  // Fire-and-forget visit counter for the Platform dashboard. Never
+  // blocks or errors visibly — a tracking hiccup should never affect
+  // someone actually trying to sign in.
+  fetch("/api/track-view", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: window.location.pathname }),
+  }).catch(() => {});
+
   let mode = "login";       // "login" | "register"
   let signupMode = "create"; // "create" | "join" (only relevant when mode === "register")
 
