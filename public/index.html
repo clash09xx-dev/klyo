@@ -90,20 +90,20 @@
       <div style="display:flex; gap:12px; align-items:center;">
         <div class="search-box" id="searchBoxWrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.8-3.8"/></svg>
-          <input id="searchInput" type="text" placeholder="Search name, email, phone, company…" />
+          <input id="searchInput" type="text" data-i18n-placeholder="ui.search_contacts" placeholder="Search name, email, phone, company…" />
         </div>
         <button class="btn btn-ghost btn-sm" id="importContactsBtn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3" transform="rotate(180 12 9)"/></svg>
-          Import CSV
+          <span data-i18n="ui.import_csv">Import CSV</span>
         </button>
         <input type="file" id="importContactsFile" accept=".csv,text/csv" style="display:none;" />
         <button class="btn btn-ghost btn-sm" id="exportContactsBtn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Export CSV
+          <span data-i18n="ui.export_csv">Export CSV</span>
         </button>
         <button class="btn btn-primary" id="addContactBtn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          New contact
+          <span data-i18n="ui.new_contact">New contact</span>
         </button>
       </div>
     </header>
@@ -121,35 +121,35 @@
       <section id="pipelineView">
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="label"><span class="dot"></span>Total contacts</div>
+            <div class="label"><span class="dot"></span><span data-i18n="ui.stat_total">Total contacts</span></div>
             <div class="value" id="statTotal">0</div>
             <svg class="spark" id="sparkTotal" width="90" height="28"></svg>
           </div>
           <div class="stat-card">
-            <div class="label"><span class="dot" style="background:var(--lead)"></span>Leads</div>
+            <div class="label"><span class="dot" style="background:var(--lead)"></span><span data-i18n="ui.stat_leads">Leads</span></div>
             <div class="value" id="statLeads">0</div>
           </div>
           <div class="stat-card">
-            <div class="label"><span class="dot" style="background:var(--negotiating)"></span>In negotiation</div>
+            <div class="label"><span class="dot" style="background:var(--negotiating)"></span><span data-i18n="ui.stat_negotiating">In negotiation</span></div>
             <div class="value" id="statNegotiating">0</div>
           </div>
           <div class="stat-card" id="offersStatCard">
-            <div class="label"><span class="dot" style="background:var(--customer)"></span>Offers sent (30d)</div>
+            <div class="label"><span class="dot" style="background:var(--customer)"></span><span data-i18n="ui.stat_offers">Offers sent (30d)</span></div>
             <div class="value" id="statOffers">0</div>
           </div>
         </div>
 
         <div class="filter-bar">
           <select id="filterStatus">
-            <option value="">All stages</option>
-            <option value="lead">Lead</option>
-            <option value="contacted">Contacted</option>
-            <option value="negotiating">Negotiating</option>
-            <option value="customer">Customer</option>
-            <option value="lost">Lost</option>
+            <option value="" data-i18n="ui.all_stages">All stages</option>
+            <option value="lead" data-i18n="ui.stage_lead">Lead</option>
+            <option value="contacted" data-i18n="ui.stage_contacted">Contacted</option>
+            <option value="negotiating" data-i18n="ui.stage_negotiating">Negotiating</option>
+            <option value="customer" data-i18n="ui.stage_customer">Customer</option>
+            <option value="lost" data-i18n="ui.stage_lost">Lost</option>
           </select>
-          <select id="filterTheme"><option value="">All themes</option></select>
-          <select id="filterOwner"><option value="">All owners</option></select>
+          <select id="filterTheme"><option value="" data-i18n="ui.all_themes">All themes</option></select>
+          <select id="filterOwner"><option value="" data-i18n="ui.all_owners">All owners</option></select>
           <div class="spacer"></div>
           <span class="muted" id="resultCount"></span>
         </div>
@@ -158,21 +158,21 @@
           <table id="contactsTable">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Contact</th>
-                <th>Company</th>
-                <th>Theme</th>
-                <th>Stage</th>
-                <th>Owner</th>
+                <th data-i18n="ui.col_name">Name</th>
+                <th data-i18n="ui.col_contact">Contact</th>
+                <th data-i18n="ui.col_company">Company</th>
+                <th data-i18n="ui.col_theme">Theme</th>
+                <th data-i18n="ui.col_stage">Stage</th>
+                <th data-i18n="ui.col_owner">Owner</th>
               </tr>
             </thead>
             <tbody id="contactsBody"></tbody>
           </table>
           <div class="empty-state hidden" id="emptyState">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 7 4-14 3 9 2-5h5"/></svg>
-            <h3>No contacts yet</h3>
-            <p>Add your first client to start tracking leads, sending AI-drafted offers, and watching the pipeline move.</p>
-            <button class="btn btn-primary" id="emptyAddBtn">Add a contact</button>
+            <h3 data-i18n="ui.empty_contacts">No contacts yet</h3>
+            <p data-i18n="ui.empty_contacts_sub">Add your first client to start tracking leads, sending AI-drafted offers, and watching the pipeline move.</p>
+            <button class="btn btn-primary" id="emptyAddBtn" data-i18n="ui.empty_add_contact">Add a contact</button>
           </div>
         </div>
       </section>
@@ -180,32 +180,32 @@
       <!-- TEAM VIEW -->
       <section id="teamView" class="hidden">
         <div class="table-card hidden" id="inviteCard" style="padding:18px; margin-bottom:16px;">
-          <div class="label" style="font-size:12px; color:var(--text-dim); margin-bottom:8px;">Invite teammates</div>
-          <p class="muted" style="font-size:13px; margin-bottom:10px;">Share this code — anyone who signs up with it joins your workspace instead of creating a new one.</p>
+          <div class="label" style="font-size:12px; color:var(--text-dim); margin-bottom:8px;" data-i18n="ui.invite_teammates">Invite teammates</div>
+          <p class="muted" style="font-size:13px; margin-bottom:10px;" data-i18n="ui.invite_sub">Share this code — anyone who signs up with it joins your workspace instead of creating a new one.</p>
           <div style="display:flex; gap:10px; align-items:center;">
             <code class="mono" id="inviteCodeValue" style="font-size:16px; padding:8px 12px; background:var(--bg-soft); border:1px solid var(--border-soft); border-radius:var(--radius-sm);">—</code>
-            <button class="btn btn-sm" id="copyInviteBtn">Copy</button>
-            <button class="btn btn-sm btn-ghost" id="regenInviteBtn">Regenerate</button>
+            <button class="btn btn-sm" id="copyInviteBtn" data-i18n="ui.copy">Copy</button>
+            <button class="btn btn-sm btn-ghost" id="regenInviteBtn" data-i18n="ui.regenerate">Regenerate</button>
           </div>
         </div>
 
         <div class="table-card">
           <table>
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th style="width:40px;"></th></tr></thead>
+            <thead><tr><th data-i18n="ui.col_name">Name</th><th data-i18n="ui.col_email">Email</th><th data-i18n="ui.col_role">Role</th><th style="width:40px;"></th></tr></thead>
             <tbody id="teamBody"></tbody>
           </table>
         </div>
 
         <div class="hidden" id="performanceCard" style="margin-top:16px;">
           <div class="filter-bar">
-            <div class="section-title" style="margin:0; flex:1;">Performance (last 30 days)</div>
+            <div class="section-title" style="margin:0; flex:1;" data-i18n="ui.perf_title">Performance (last 30 days)</div>
           </div>
           <div class="table-card">
             <table>
               <thead>
                 <tr>
-                  <th>Teammate</th><th>Leads</th><th>Offers</th><th>Quotes</th><th>Quotes won</th>
-                  <th>Calls</th><th>Meetings</th><th>Clients contacted</th>
+                  <th data-i18n="ui.col_teammate">Teammate</th><th data-i18n="ui.col_leads">Leads</th><th data-i18n="ui.col_offers">Offers</th><th data-i18n="ui.col_quotes">Quotes</th><th data-i18n="ui.col_quotes_won">Quotes won</th>
+                  <th data-i18n="ui.col_calls">Calls</th><th data-i18n="ui.col_meetings">Meetings</th><th data-i18n="ui.col_contacted">Clients contacted</th>
                 </tr>
               </thead>
               <tbody id="performanceBody"></tbody>
@@ -219,27 +219,27 @@
         <div class="filter-bar">
           <div class="search-box" style="width:320px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.8-3.8"/></svg>
-            <input id="companySearchInput" type="text" placeholder="Search companies…" />
+            <input id="companySearchInput" type="text" data-i18n-placeholder="ui.search_companies" placeholder="Search companies…" />
           </div>
           <div class="spacer"></div>
           <button class="btn btn-ghost btn-sm" id="exportCompaniesBtn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Export CSV
+            <span data-i18n="ui.export_csv">Export CSV</span>
           </button>
           <button class="btn btn-primary btn-sm" id="addCompanyBtn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            New company
+            <span data-i18n="ui.new_company">New company</span>
           </button>
         </div>
         <div class="table-card">
           <table>
-            <thead><tr><th>Company</th><th>Industry</th><th>Contacts</th></tr></thead>
+            <thead><tr><th data-i18n="ui.col_company">Company</th><th data-i18n="ui.col_industry">Industry</th><th data-i18n="ui.col_contacts">Contacts</th></tr></thead>
             <tbody id="companiesBody"></tbody>
           </table>
           <div class="empty-state hidden" id="companiesEmptyState">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V7l8-4 8 4v14"/><path d="M9 21V11h4v10"/></svg>
-            <h3>No companies yet</h3>
-            <p>Add a company, then link contacts to it as the owner, supervisor, or any other decision-maker.</p>
+            <h3 data-i18n="ui.empty_companies">No companies yet</h3>
+            <p data-i18n="ui.empty_companies_sub">Add a company, then link contacts to it as the owner, supervisor, or any other decision-maker.</p>
           </div>
         </div>
       </section>
@@ -248,29 +248,29 @@
       <section id="quotesView" class="hidden">
         <div class="filter-bar">
           <select id="quoteStatusFilter">
-            <option value="">All statuses</option>
-            <option value="draft">Draft</option>
-            <option value="sent">Sent</option>
-            <option value="accepted">Accepted</option>
-            <option value="declined">Declined</option>
+            <option value="" data-i18n="ui.all_statuses">All statuses</option>
+            <option value="draft" data-i18n="ui.status_draft">Draft</option>
+            <option value="sent" data-i18n="ui.status_sent">Sent</option>
+            <option value="accepted" data-i18n="ui.status_accepted">Accepted</option>
+            <option value="declined" data-i18n="ui.status_declined">Declined</option>
           </select>
           <div class="spacer"></div>
-          <button class="btn btn-ghost btn-sm" id="manageProductsBtn">Manage catalog</button>
+          <button class="btn btn-ghost btn-sm" id="manageProductsBtn" data-i18n="ui.manage_catalog">Manage catalog</button>
           <button class="btn btn-primary btn-sm" id="addQuoteBtn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            New quote
+            <span data-i18n="ui.new_quote">New quote</span>
           </button>
         </div>
         <div class="table-card">
           <table>
-            <thead><tr><th>Title</th><th>For</th><th>Total</th><th>Status</th><th>Updated</th></tr></thead>
+            <thead><tr><th data-i18n="ui.col_title">Title</th><th data-i18n="ui.col_for">For</th><th data-i18n="ui.col_total">Total</th><th data-i18n="ui.col_status">Status</th><th data-i18n="ui.col_updated">Updated</th></tr></thead>
             <tbody id="quotesBody"></tbody>
           </table>
           <div class="empty-state hidden" id="quotesEmptyState">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h8l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg>
-            <h3>No quotes yet</h3>
-            <p>Build a tailored, line-item quote for a specific customer instead of a one-size-fits-all email.</p>
-            <button class="btn btn-primary" id="quotesEmptyAddBtn">Build a quote</button>
+            <h3 data-i18n="ui.empty_quotes">No quotes yet</h3>
+            <p data-i18n="ui.empty_quotes_sub">Build a tailored, line-item quote for a specific customer instead of a one-size-fits-all email.</p>
+            <button class="btn btn-primary" id="quotesEmptyAddBtn" data-i18n="ui.build_quote">Build a quote</button>
           </div>
         </div>
       </section>
@@ -279,13 +279,13 @@
       <section id="remindersView" class="hidden">
         <div class="table-card">
           <table>
-            <thead><tr><th>Contact</th><th>Product / service</th><th>Purchased</th><th>Due</th><th></th></tr></thead>
+            <thead><tr><th data-i18n="ui.col_contact">Contact</th><th data-i18n="ui.col_product">Product / service</th><th data-i18n="ui.col_purchased">Purchased</th><th data-i18n="ui.col_due">Due</th><th></th></tr></thead>
             <tbody id="remindersBody"></tbody>
           </table>
           <div class="empty-state hidden" id="remindersEmptyState">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
-            <h3>Nothing due right now</h3>
-            <p>When a product with a service interval gets purchased (via an accepted quote), it'll show up here automatically once it's due.</p>
+            <h3 data-i18n="ui.empty_reminders">Nothing due right now</h3>
+            <p data-i18n="ui.empty_reminders_sub">When a product with a service interval gets purchased (via an accepted quote), it'll show up here automatically once it's due.</p>
           </div>
         </div>
       </section>
@@ -293,26 +293,26 @@
       <!-- TASKS VIEW -->
       <section id="tasksView" class="hidden">
         <div class="filter-bar">
-          <select id="taskAssigneeFilter"><option value="">All members</option></select>
+          <select id="taskAssigneeFilter"><option value="" data-i18n="ui.all_members">All members</option></select>
           <select id="taskStatusFilter">
-            <option value="">All statuses</option>
-            <option value="todo">To do</option>
-            <option value="in_progress">In progress</option>
-            <option value="done">Done</option>
+            <option value="" data-i18n="ui.all_statuses">All statuses</option>
+            <option value="todo" data-i18n="ui.task_todo">To do</option>
+            <option value="in_progress" data-i18n="ui.task_in_progress">In progress</option>
+            <option value="done" data-i18n="ui.task_done">Done</option>
           </select>
           <select id="taskPriorityFilter">
-            <option value="">All priorities</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
+            <option value="" data-i18n="ui.all_priorities">All priorities</option>
+            <option value="high" data-i18n="ui.priority_high">High</option>
+            <option value="medium" data-i18n="ui.priority_medium">Medium</option>
+            <option value="low" data-i18n="ui.priority_low">Low</option>
           </select>
           <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; cursor:pointer;">
-            <input type="checkbox" id="taskOverdueFilter" /> Overdue only
+            <input type="checkbox" id="taskOverdueFilter" /> <span data-i18n="ui.overdue_only">Overdue only</span>
           </label>
           <div class="spacer"></div>
           <button class="btn btn-primary btn-sm" id="addTaskBtn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            New task
+            <span data-i18n="ui.new_task">New task</span>
           </button>
         </div>
 
@@ -321,11 +321,11 @@
             <thead>
               <tr>
                 <th style="width:28px;"></th>
-                <th>Task</th>
-                <th>Assigned to</th>
-                <th>Linked to</th>
-                <th>Due</th>
-                <th>Priority</th>
+                <th data-i18n="ui.col_task">Task</th>
+                <th data-i18n="ui.col_assigned">Assigned to</th>
+                <th data-i18n="ui.col_linked">Linked to</th>
+                <th data-i18n="ui.col_due">Due</th>
+                <th data-i18n="ui.col_priority">Priority</th>
                 <th style="width:40px;"></th>
               </tr>
             </thead>
@@ -333,9 +333,9 @@
           </table>
           <div class="empty-state hidden" id="tasksEmptyState">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-            <h3>No tasks yet</h3>
-            <p>Create tasks and assign them to team members.</p>
-            <button class="btn btn-primary" id="tasksEmptyAddBtn">Create first task</button>
+            <h3 data-i18n="ui.empty_tasks">No tasks yet</h3>
+            <p data-i18n="ui.empty_tasks_sub">Create tasks and assign them to team members.</p>
+            <button class="btn btn-primary" id="tasksEmptyAddBtn" data-i18n="ui.create_first_task">Create first task</button>
           </div>
         </div>
       </section>
@@ -343,19 +343,19 @@
       <!-- DEALS VIEW -->
       <section id="dealsView" class="hidden">
         <div class="filter-bar">
-          <select id="dealStageFilter"><option value="">All stages</option></select>
-          <select id="dealAssigneeFilter"><option value="">All owners</option></select>
+          <select id="dealStageFilter"><option value="" data-i18n="ui.all_stages">All stages</option></select>
+          <select id="dealAssigneeFilter"><option value="" data-i18n="ui.all_owners">All owners</option></select>
           <select id="dealStatusFilter">
-            <option value="">Open + Won</option>
-            <option value="open">Open only</option>
-            <option value="won">Won</option>
-            <option value="lost">Lost</option>
+            <option value="" data-i18n="ui.all_open_won">Open + Won</option>
+            <option value="open" data-i18n="ui.open_only">Open only</option>
+            <option value="won" data-i18n="deals.status_won">Won</option>
+            <option value="lost" data-i18n="deals.status_lost">Lost</option>
           </select>
           <div class="spacer"></div>
-          <button class="btn btn-ghost btn-sm" id="manageStagesBtn">Manage stages</button>
+          <button class="btn btn-ghost btn-sm" id="manageStagesBtn" data-i18n="ui.manage_stages">Manage stages</button>
           <button class="btn btn-primary btn-sm" id="addDealBtn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            New deal
+            <span data-i18n="ui.new_deal">New deal</span>
           </button>
         </div>
 
@@ -366,25 +366,25 @@
 
         <div class="empty-state hidden" id="dealsEmptyState">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6.5L22 9.3l-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2 2 9.3l7-0.8z"/></svg>
-          <h3>No deals yet</h3>
-          <p>Track every sales opportunity from first contact to closed deal.</p>
-          <button class="btn btn-primary" id="dealsEmptyAddBtn">Add your first deal</button>
+          <h3 data-i18n="ui.empty_deals">No deals yet</h3>
+          <p data-i18n="ui.empty_deals_sub">Track every sales opportunity from first contact to closed deal.</p>
+          <button class="btn btn-primary" id="dealsEmptyAddBtn" data-i18n="ui.add_first_deal">Add your first deal</button>
         </div>
       </section>
 
       <!-- HISTORY VIEW -->
       <section id="historyView" class="hidden">
         <div class="filter-bar">
-          <select id="historyUserFilter"><option value="">All team members</option></select>
+          <select id="historyUserFilter"><option value="" data-i18n="ui.all_members">All team members</option></select>
           <select id="historyTypeFilter">
-            <option value="">All activity types</option>
-            <option value="contact_created">Contact added</option>
-            <option value="contact_updated">Contact updated</option>
-            <option value="status_change">Stage change</option>
-            <option value="offer_drafted">AI offer drafted</option>
-            <option value="call_logged">Call logged</option>
-            <option value="meeting_logged">Meeting logged</option>
-            <option value="note_logged">Note logged</option>
+            <option value="" data-i18n="ui.all_types">All activity types</option>
+            <option value="contact_created" data-i18n="ui.activity_contact_created">Contact added</option>
+            <option value="contact_updated" data-i18n="ui.activity_contact_updated">Contact updated</option>
+            <option value="status_change" data-i18n="ui.activity_status_change">Stage change</option>
+            <option value="offer_drafted" data-i18n="ui.activity_offer_drafted">AI offer drafted</option>
+            <option value="call_logged" data-i18n="ui.activity_call_logged">Call logged</option>
+            <option value="meeting_logged" data-i18n="ui.activity_meeting_logged">Meeting logged</option>
+            <option value="note_logged" data-i18n="ui.activity_note_logged">Note logged</option>
           </select>
           <div class="spacer"></div>
           <span class="muted" id="historyCount" style="font-size:12.5px;"></span>
@@ -393,11 +393,11 @@
           <div class="timeline" id="historyTimeline" style="padding:16px 20px;"></div>
           <div class="empty-state hidden" id="historyEmptyState">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
-            <h3>No activity yet</h3>
-            <p>Every time a contact is added, updated, or an email is sent, it'll appear here.</p>
+            <h3 data-i18n="ui.empty_history">No activity yet</h3>
+            <p data-i18n="ui.empty_history_sub">Every time a contact is added, updated, or an email is sent, it'll appear here.</p>
           </div>
           <div style="padding:12px 20px; display:none;" id="historyLoadMoreWrap">
-            <button class="btn btn-ghost btn-sm" id="historyLoadMoreBtn" style="width:100%;">Load more</button>
+            <button class="btn btn-ghost btn-sm" id="historyLoadMoreBtn" style="width:100%;" data-i18n="ui.load_more">Load more</button>
           </div>
         </div>
       </section>
@@ -616,11 +616,11 @@
     </div>
 
     <div id="panelNotesWrap" class="hidden">
-      <div class="section-title">Notes</div>
+      <div class="section-title" data-i18n="panel.notes">Notes</div>
       <div class="notes-box" id="panelNotes"></div>
     </div>
 
-    <div class="section-title">Send an offer</div>
+    <div class="section-title" data-i18n="panel.send_offer">Send an offer</div>
     <div class="composer">
       <div class="composer-label">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4L12 2z"/></svg>
@@ -630,7 +630,7 @@
         <label for="offerInstructions">Key points to include (optional)</label>
         <textarea id="offerInstructions" placeholder="e.g. 15% loyalty discount, mention our new service launching in July" style="min-height:54px;"></textarea>
       </div>
-      <button class="scan-btn" id="generateOfferBtn">Generate with AI</button>
+      <button class="scan-btn" id="generateOfferBtn" data-i18n="panel.generate_offer">Generate with AI</button>
 
       <div class="draft-box" id="draftBox">
         <div class="field" style="margin-top:14px;">
@@ -644,33 +644,33 @@
         <div class="modal-actions" style="justify-content:flex-start;">
           <button class="btn btn-primary" id="sendOfferBtn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-            Send email
+            <span data-i18n="panel.send_email">Send email</span>
           </button>
-          <button class="btn btn-ghost" id="discardDraftBtn">Discard</button>
+          <button class="btn btn-ghost" id="discardDraftBtn" data-i18n="common.cancel">Discard</button>
         </div>
       </div>
     </div>
 
-    <div class="section-title">Quotes</div>
+    <div class="section-title" data-i18n="panel.quotes_section">Quotes</div>
     <div id="panelQuotesList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;"></div>
     <button class="btn btn-ghost btn-sm" id="newQuoteForContactBtn" style="width:100%;">+ Build a quote for this contact</button>
 
-    <div class="section-title">Timeline</div>
+    <div class="section-title" data-i18n="panel.timeline">Timeline</div>
     <form class="activity-log-form" id="activityLogForm">
       <select id="activityLogType">
-        <option value="call_logged">Call</option>
-        <option value="meeting_logged">Meeting</option>
-        <option value="note_logged">Note</option>
+        <option value="call_logged" data-i18n="panel.call">Call</option>
+        <option value="meeting_logged" data-i18n="panel.meeting">Meeting</option>
+        <option value="note_logged" data-i18n="panel.note">Note</option>
       </select>
       <input id="activityLogDescription" type="text" placeholder="Quick note about it…" />
-      <button type="submit" class="btn btn-sm">Log</button>
+      <button type="submit" class="btn btn-sm" data-i18n="panel.add_log">Log</button>
     </form>
     <div class="timeline" id="panelTimeline"></div>
-    <div id="panelTimelineEmpty" class="hidden" style="text-align:center; padding:16px 0; font-size:12.5px; color:var(--text-faint);">No activity yet</div>
+    <div id="panelTimelineEmpty" class="hidden" style="text-align:center; padding:16px 0; font-size:12.5px; color:var(--text-faint);" data-i18n="panel.no_activity">No activity yet</div>
 
     <div class="modal-actions" style="justify-content:space-between; margin-top:26px;">
       <button class="btn btn-danger btn-sm" id="deleteContactBtn">Delete contact</button>
-      <button class="btn btn-ghost btn-sm" id="editContactBtn">Edit details</button>
+      <button class="btn btn-ghost btn-sm" id="editContactBtn" data-i18n="panel.edit">Edit details</button>
     </div>
   </div>
 </div>
@@ -1000,7 +1000,7 @@
     <div class="form-error" id="joinWorkspaceError"></div>
 
     <div class="section-title" data-i18n="settings.help">Help</div>
-    <button class="btn btn-ghost" id="replayTourBtn" style="width:100%;">Replay the welcome tour</button>
+    <button class="btn btn-ghost" id="replayTourBtn" style="width:100%;" data-i18n="ui.replay_tour">Replay the welcome tour</button>
   </div>
 </div>
 

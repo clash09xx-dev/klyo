@@ -1092,7 +1092,7 @@ async function loadThemes() {
   const { themes } = await API.get("/contacts/themes");
   const current = els.filterTheme.value;
   els.filterTheme.innerHTML =
-    '<option value="">All themes</option>' + themes.map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+    `<option value="">${t("ui.all_themes")}</option>` + themes.map((th) => `<option value="${escapeHtml(th)}">${escapeHtml(th)}</option>`).join("");
   if (themes.includes(current)) els.filterTheme.value = current;
 }
 
@@ -2393,7 +2393,7 @@ function wireEvents() {
     KlyoI18n.applyTranslations();
     switchView(currentView);
     // Re-render the active view so dynamic content gets translated
-    if      (currentView === "pipeline")   loadContacts();
+    if      (currentView === "pipeline")   { loadContacts(); loadThemes(); }
     else if (currentView === "companies")  loadCompanies();
     else if (currentView === "quotes")     loadQuotes();
     else if (currentView === "reminders")  loadReminders();
