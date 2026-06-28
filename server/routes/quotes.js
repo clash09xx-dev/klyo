@@ -1,5 +1,6 @@
 // server/routes/quotes.js
 const express = require("express");
+const crypto = require("crypto");
 const db = require("../db");
 const { requireAuth } = require("../middleware/auth");
 const { requirePaidAccess } = require("../middleware/billing");
@@ -119,7 +120,7 @@ router.post("/", async (req, res) => {
 
   const quoteResult = await db.query(
     `INSERT INTO quotes (workspace_id, contact_id, company_id, created_by, title, intro_message, subtotal, discount_total, total, public_token)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, encode(gen_random_bytes(18), 'hex')) RETURNING id`,
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
     [
       req.user.workspace_id,
       contact_id,
@@ -130,6 +131,7 @@ router.post("/", async (req, res) => {
       subtotal,
       discountTotal,
       total,
+      crypto.randomBytes(18).toString("hex"),
     ]
   );
   const quoteId = quoteResult.rows[0].id;

@@ -1,4 +1,5 @@
 // server/db.js
+const crypto = require("crypto");
 // ---------------------------------------------------------
 // Postgres connection + schema. Klyo is multi-tenant: every
 // business that signs up gets its own "workspace" row, and every
@@ -295,11 +296,12 @@ async function init() {
 
   // Quotes: public shareable token for print/PDF view
   await pool.query(`ALTER TABLE quotes ADD COLUMN IF NOT EXISTS public_token TEXT UNIQUE;`);
-  // Backfill existing quotes
-  await pool.query(`
-    UPDATE quotes SET public_token = encode(gen_random_bytes(18), 'hex')
-    WHERE public_token IS NULL
-  `);
+  // Backfill existing quotes — generate tokens in Node.js to avoid requiring pgcrypto
+  const unfilled = await pool.query(`SELECT id FROM quotes WHERE public_token IS NULL`);
+  for (const row of unfilled.rows) {
+    const token = crypto.randomBytes(18).toString("hex");
+    await pool.query(`UPDATE quotes SET public_token = $1 WHERE id = $2`, [token, row.id]);
+  }
 
   // Task assignment
   await pool.query(`
