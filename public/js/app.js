@@ -215,7 +215,8 @@ function stageColorVar(status) {
   return { lead: "var(--lead)", contacted: "var(--contacted)", negotiating: "var(--negotiating)", customer: "var(--customer)", lost: "var(--lost)" }[status] || "var(--lead)";
 }
 function badgeHtml(status) {
-  return `<span class="badge ${status}"><span class="ping"></span>${capitalize(status)}</span>`;
+  const label = (window.KlyoI18n ? window.KlyoI18n.t("ui.stage_" + status) : null) || capitalize(status);
+  return `<span class="badge ${status}"><span class="ping"></span>${label}</span>`;
 }
 function toast(message, type = "success", action) {
   const el = document.createElement("div");
@@ -1033,7 +1034,7 @@ function handleTourBack() {
 async function loadTeam() {
   const { team: t } = await API.get("/auth/team");
   team = t;
-  populateOwnerOptions(els.filterOwner, { placeholder: "All owners" });
+  populateOwnerOptions(els.filterOwner, { placeholder: t("ui.all_owners") });
   // Populate history + deals user filters
   els.historyUserFilter.innerHTML =
     '<option value="">All team members</option>' +
@@ -1174,17 +1175,21 @@ function populateOwnerOptions(selectEl, { placeholder, selected }) {
 }
 
 /* ---------- view switching ---------- */
-const VIEW_COPY = {
-  pipeline: { title: "Pipeline", sub: "Every client, connected by name, contact details, and history." },
-  companies: { title: "Companies", sub: "Businesses you work with, and who the decision-makers are at each one." },
-  quotes: { title: "Quotes", sub: "Tailored, line-item offers — built for one customer at a time." },
-  reminders: { title: "Reminders", sub: "Purchases due for a follow-up, calibration, or check-up." },
-  tasks: { title: "Tasks", sub: "Jobs assigned to team members — with due dates, priorities, and linked records." },
-  deals: { title: "Deals", sub: "Track every sales opportunity through your pipeline to close." },
-  history: { title: "History", sub: "Every action taken in this workspace — who did what and when." },
-  team: { title: "Team", sub: "Everyone with access to this workspace." },
-  platform: { title: "Platform", sub: "Every workspace using Klyo — yours alone to see." },
-};
+function getViewCopy(view) {
+  const map = {
+    pipeline:  { title: t("nav.pipeline"),  sub: t("view_sub.pipeline") },
+    companies: { title: t("nav.companies"), sub: t("view_sub.companies") },
+    quotes:    { title: t("nav.quotes"),    sub: t("view_sub.quotes") },
+    reminders: { title: t("nav.reminders"),  sub: t("view_sub.reminders") },
+    tasks:     { title: t("nav.tasks"),     sub: t("view_sub.tasks") },
+    deals:     { title: t("nav.deals"),     sub: t("view_sub.deals") },
+    history:   { title: t("nav.history"),   sub: t("view_sub.history") },
+    team:      { title: t("nav.team"),      sub: t("view_sub.team") },
+    platform:  { title: t("nav.platform"),   sub: t("view_sub.platform") },
+  };
+  return map[view] || map.pipeline;
+}
+let currentView = "pipeline";
 
 function switchView(view) {
   document.querySelectorAll(".nav-item[data-view]").forEach((i) => i.classList.toggle("active", i.dataset.view === view));
@@ -1200,7 +1205,8 @@ function switchView(view) {
   els.searchBoxWrap.style.display = view === "pipeline" ? "" : "none";
   els.addContactBtn.style.display = view === "pipeline" ? "" : "none";
 
-  const copy = VIEW_COPY[view] || VIEW_COPY.pipeline;
+  currentView = view;
+  const copy = getViewCopy(view);
   els.viewTitle.textContent = copy.title;
   els.viewSub.textContent = copy.sub;
 
@@ -1217,12 +1223,12 @@ function switchView(view) {
 /* ---------- contact modal ---------- */
 function openContactModal(contact) {
   els.contactFormError.textContent = "";
-  populateOwnerOptions(els.cOwner, { placeholder: "Unassigned", selected: contact ? contact.owner_id : API.getUser()?.id });
+  populateOwnerOptions(els.cOwner, { placeholder: t("common.unassigned"), selected: contact ? contact.owner_id : API.getUser()?.id });
   populateCompanySelect();
 
   if (contact) {
-    els.contactModalTitle.textContent = "Edit contact";
-    els.contactSubmitBtn.textContent = "Save changes";
+    els.contactModalTitle.textContent = t("modal.edit_contact");
+    els.contactSubmitBtn.textContent = t("modal.save_changes");
     els.contactId.value = contact.id;
     els.cFirstName.value = contact.first_name || (contact.full_name ? contact.full_name.split(" ")[0] : "");
     els.cLastName.value = contact.last_name || (contact.full_name && contact.full_name.includes(" ") ? contact.full_name.split(" ").slice(1).join(" ") : "");
@@ -1235,8 +1241,8 @@ function openContactModal(contact) {
     els.cStatus.value = contact.status || "lead";
     els.cNotes.value = contact.notes || "";
   } else {
-    els.contactModalTitle.textContent = "New contact";
-    els.contactSubmitBtn.textContent = "Add contact";
+    els.contactModalTitle.textContent = t("modal.add_contact");
+    els.contactSubmitBtn.textContent = t("modal.add_contact");
     els.contactForm.reset();
     els.contactId.value = "";
     els.cStatus.value = "lead";
@@ -1511,7 +1517,7 @@ function renderCompaniesTable(list) {
     <tr data-id="${c.id}">
       <td class="name-cell" style="--stage-color:var(--accent-1)">${escapeHtml(c.name)}</td>
       <td>${escapeHtml(c.industry || "—")}</td>
-      <td>${c.contact_count} contact${c.contact_count === 1 ? "" : "s"}</td>
+      <td>${c.contact_count} ${t("nav.contacts").toLowerCase()}</td>
     </tr>`
     )
     .join("");
@@ -1521,7 +1527,7 @@ function populateCompanySelect() {
   if (!els.cCompanySelect) return;
   const current = els.cCompanySelect.value;
   els.cCompanySelect.innerHTML =
-    '<option value="">No company</option>' +
+    `<option value="">${t("common.none")}</option>` +
     companies.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("") +
     '<option value="__new__">+ New company…</option>';
   if (current) els.cCompanySelect.value = current;
@@ -1530,15 +1536,15 @@ function populateCompanySelect() {
 function openCompanyModal(company) {
   els.companyFormError.textContent = "";
   if (company) {
-    els.companyModalTitle.textContent = "Edit company";
-    els.companySubmitBtn.textContent = "Save changes";
+    els.companyModalTitle.textContent = t("modal.edit_company");
+    els.companySubmitBtn.textContent = t("modal.save_changes");
     els.companyId.value = company.id;
     els.coName.value = company.name || "";
     els.coIndustry.value = company.industry || "";
     els.coNotes.value = company.notes || "";
   } else {
-    els.companyModalTitle.textContent = "New company";
-    els.companySubmitBtn.textContent = "Add company";
+    els.companyModalTitle.textContent = t("modal.add_company");
+    els.companySubmitBtn.textContent = t("modal.add_company");
     els.companyForm.reset();
     els.companyId.value = "";
   }
@@ -1698,8 +1704,8 @@ async function handleDeleteProduct(id) {
 function openQuoteModal(prefill) {
   els.quoteFormError.textContent = "";
   els.quoteId.value = "";
-  els.quoteModalTitle.textContent = "New quote";
-  els.quoteSendBtn.textContent = "Save & preview";
+  els.quoteModalTitle.textContent = t("modal.new_quote");
+  els.quoteSendBtn.textContent = t("panel.save_preview");
   currentQuoteLineItems = [];
   currentQuotePrefillContactId = prefill?.contactId || null;
 
@@ -1967,7 +1973,7 @@ function renderQuotesTable(quotes) {
       <td class="name-cell" style="--stage-color:var(--accent-1)">${escapeHtml(q.title)}</td>
       <td>${escapeHtml(q.contact_name)}${q.company_name ? ` <span class="muted">· ${escapeHtml(q.company_name)}</span>` : ""}</td>
       <td class="mono">$${Number(q.total).toFixed(2)}</td>
-      <td><span class="quote-status-badge ${q.status}">${q.status}</span></td>
+      <td><span class="quote-status-badge ${q.status}">${t("ui.status_" + q.status) || q.status}</span></td>
       <td class="muted mono">${formatDate(q.updated_at)}</td>
     </tr>`
     )
@@ -1978,7 +1984,7 @@ async function openQuotePanel(id) {
   const { quote, lineItems } = await API.get(`/quotes/${id}`);
   els.quotePanelTitle.textContent = quote.title;
   els.quotePanelFor.textContent = quote.company_name ? `${quote.contact_name} · ${quote.company_name}` : quote.contact_name;
-  els.quotePanelBadge.innerHTML = `<span class="quote-status-badge ${quote.status}">${quote.status}</span>`;
+  els.quotePanelBadge.innerHTML = `<span class="quote-status-badge ${quote.status}">${t("ui.status_" + quote.status) || quote.status}</span>`;
   els.quotePanelItems.innerHTML = lineItems
     .map((i) => `<div style="display:flex; justify-content:space-between;"><span>${escapeHtml(i.description)} <span class="muted">x${i.quantity}</span></span><span class="mono">$${Number(i.line_total).toFixed(2)}</span></div>`)
     .join("");
@@ -2049,8 +2055,8 @@ async function handleEditQuoteFromPanel() {
 
   els.quoteFormError.textContent = "";
   els.quoteId.value = quote.id;
-  els.quoteModalTitle.textContent = "Edit quote";
-  els.quoteSendBtn.textContent = "Save & preview";
+  els.quoteModalTitle.textContent = t("modal.edit_quote");
+  els.quoteSendBtn.textContent = t("panel.save_preview");
   currentQuotePrefillContactId = quote.contact_id;
   populateQuoteContactSelect();
   els.quoteContactSelect.value = String(quote.contact_id);
@@ -2086,8 +2092,8 @@ async function loadReminders() {
       <td class="mono muted">${formatDate(r.purchased_at)}</td>
       <td class="mono">${formatDate(r.next_service_due_at)}</td>
       <td style="display:flex; gap:6px;">
-        <button class="btn btn-sm" data-send-reminder="${r.id}">Send reminder</button>
-        <button class="btn btn-sm btn-ghost" data-quote-for-reminder="${r.contact_id}" data-product="${r.product_id || ""}" data-desc="${escapeHtml(r.product_name || r.description)}">Build quote</button>
+        <button class="btn btn-sm" data-send-reminder="${r.id}">${t("common.send")}</button>
+        <button class="btn btn-sm btn-ghost" data-quote-for-reminder="${r.contact_id}" data-product="${r.product_id || ""}" data-desc="${escapeHtml(r.product_name || r.description)}">${t("ui.build_quote")}</button>
       </td>
     </tr>`
     )
@@ -2109,15 +2115,15 @@ async function loadReminders() {
 
 async function handleSendReminder(purchaseId, btn) {
   btn.disabled = true;
-  btn.textContent = "Sending…";
+  btn.textContent = t("common.loading");
   try {
     await API.post(`/reminders/${purchaseId}/send`, {});
-    toast("Reminder sent");
+    toast(t("common.send") + " ✓");
     loadReminders();
   } catch (err) {
     toast(err.message, "error");
     btn.disabled = false;
-    btn.textContent = "Send reminder";
+    btn.textContent = t("common.send");
   }
 }
 
@@ -2127,16 +2133,17 @@ let historyOffset = 0;
 const HISTORY_PAGE = 50;
 
 function activityTypeLabel(type) {
-  return {
-    contact_created: "Contact added",
-    contact_updated: "Contact updated",
-    status_change: "Stage changed",
-    offer_drafted: "AI offer drafted",
-    offer_sent: "Offer sent",
-    call_logged: "Call logged",
-    meeting_logged: "Meeting logged",
-    note_logged: "Note",
-  }[type] || type;
+  const map = {
+    contact_created: "ui.activity_contact_created",
+    contact_updated: "ui.activity_contact_updated",
+    status_change:   "ui.activity_status_change",
+    offer_drafted:   "ui.activity_offer_drafted",
+    offer_sent:      "ui.activity_offer_drafted",
+    call_logged:     "ui.activity_call_logged",
+    meeting_logged:  "ui.activity_meeting_logged",
+    note_logged:     "ui.activity_note_logged",
+  };
+  return map[type] ? t(map[type]) : type;
 }
 
 async function loadHistory(reset = false) {
@@ -2384,6 +2391,16 @@ function wireEvents() {
   els.appLangPicker.addEventListener("change", () => {
     KlyoI18n.setLang(els.appLangPicker.value);
     KlyoI18n.applyTranslations();
+    switchView(currentView);
+    // Re-render the active view so dynamic content gets translated
+    if      (currentView === "pipeline")   loadContacts();
+    else if (currentView === "companies")  loadCompanies();
+    else if (currentView === "quotes")     loadQuotes();
+    else if (currentView === "reminders")  loadReminders();
+    else if (currentView === "tasks")      loadTasks();
+    else if (currentView === "deals")      loadDeals();
+    else if (currentView === "history")    loadHistory();
+    else if (currentView === "team")       loadTeam();
     toast(KlyoI18n.t("settings.language") + " → " + KlyoI18n.LANG_NAMES[KlyoI18n.getLang()]);
   });
   els.joinWorkspaceBtn.addEventListener("click", handleJoinWorkspace);
@@ -2543,7 +2560,7 @@ function renderDealsBoard() {
   // Also include an "Unsorted" bucket for deals with no stage
   const hasUnsorted = dealsCache.some(d => !d.stage_id && (!stageVal));
   if (!stageVal && hasUnsorted) {
-    visibleStages = [...visibleStages, { id: null, name: "Unsorted", color: "#9ca3af" }];
+    visibleStages = [...visibleStages, { id: null, name: t("deals.unsorted") || "Unsorted", color: "#9ca3af" }];
   }
 
   const totalDeals = dealsCache.length;
@@ -2613,8 +2630,8 @@ function escHtml(str) {
 
 function openDealModal(deal) {
   els.dealId.value = deal?.id || "";
-  els.dealModalTitle.textContent = deal ? "Edit deal" : "New deal";
-  els.dealSubmitBtn.textContent  = deal ? "Save changes" : "Add deal";
+  els.dealModalTitle.textContent = deal ? t("modal.edit_deal") : t("modal.add_deal");
+  els.dealSubmitBtn.textContent  = deal ? t("modal.save_changes") : t("modal.add_deal");
   els.dealTitle.value      = deal?.title || "";
   els.dealQty.value        = deal?.quantity ?? 1;
   els.dealValue.value      = deal?.value || "";
@@ -2913,10 +2930,10 @@ function renderTasksTable() {
         <div style="font-weight:600; font-size:13px;">${escHtml(t.title)}</div>
         ${t.description ? `<div class="muted" style="font-size:11.5px;">${escHtml(t.description)}</div>` : ""}
       </td>
-      <td>${t.assigned_name ? escHtml(t.assigned_name) : '<span class="muted">Unassigned</span>'}</td>
+      <td>${t.assigned_name ? escHtml(t.assigned_name) : `<span class="muted">${window.t("common.unassigned")}</span>`}</td>
       <td class="muted" style="font-size:12px;">${escHtml(linked)}</td>
       <td>${dueLbl}</td>
-      <td><span class="priority-badge priority-${t.priority}">${t.priority}</span></td>
+      <td><span class="priority-badge priority-${t.priority}">${window.t("tasks.priority_" + t.priority) || t.priority}</span></td>
       <td>
         <button class="btn btn-ghost btn-sm task-edit-btn" data-id="${t.id}" title="Edit">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -2947,8 +2964,8 @@ function renderTasksTable() {
 
 function openTaskModal(task) {
   els.taskId.value            = task?.id || "";
-  els.taskModalTitle.textContent = task ? "Edit task" : "New task";
-  els.taskSubmitBtn.textContent  = task ? "Save changes" : "Add task";
+  els.taskModalTitle.textContent = task ? t("modal.edit_task") : t("modal.add_task");
+  els.taskSubmitBtn.textContent  = task ? t("modal.save_changes") : t("modal.add_task");
   els.taskTitle.value         = task?.title || "";
   els.taskDescription.value   = task?.description || "";
   els.taskDueDate.value       = task?.due_date ? task.due_date.slice(0,10) : "";
@@ -2957,7 +2974,7 @@ function openTaskModal(task) {
   els.taskFormError.textContent = "";
 
   // Assignees from team
-  els.taskAssignedSelect.innerHTML = '<option value="">Unassigned</option>';
+  els.taskAssignedSelect.innerHTML = `<option value="">${t("common.unassigned")}</option>`;
   team.forEach(u => {
     const o = document.createElement("option");
     o.value = u.id; o.textContent = u.name;
@@ -2966,7 +2983,7 @@ function openTaskModal(task) {
   });
 
   // Contacts
-  els.taskContactSelect.innerHTML = '<option value="">None</option>';
+  els.taskContactSelect.innerHTML = `<option value="">${t("common.none")}</option>`;
   allContactsCache.forEach(c => {
     const o = document.createElement("option");
     o.value = c.id; o.textContent = c.full_name;
@@ -2975,7 +2992,7 @@ function openTaskModal(task) {
   });
 
   // Deals
-  els.taskDealSelect.innerHTML = '<option value="">None</option>';
+  els.taskDealSelect.innerHTML = `<option value="">${t("common.none")}</option>`;
   dealsCache.forEach(d => {
     const o = document.createElement("option");
     o.value = d.id; o.textContent = d.title;
