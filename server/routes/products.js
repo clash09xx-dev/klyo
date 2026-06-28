@@ -30,12 +30,13 @@ router.get("/categories", async (req, res) => {
 
 // POST /api/products
 router.post("/", async (req, res) => {
-  const { name, description, unit_price, unit_label, service_interval_months, category } = req.body || {};
+  const { name, description, unit_price, unit_label, service_interval_months, category, currency, image_url, notes } = req.body || {};
   if (!name || !name.trim()) return res.status(400).json({ error: "Product name is required." });
 
   const result = await db.query(
-    `INSERT INTO products (workspace_id, name, description, unit_price, unit_label, service_interval_months, category)
-     VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+    `INSERT INTO products
+       (workspace_id, name, description, unit_price, unit_label, service_interval_months, category, currency, image_url, notes)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
     [
       req.user.workspace_id,
       name.trim(),
@@ -44,6 +45,9 @@ router.post("/", async (req, res) => {
       unit_label?.trim() || "unit",
       service_interval_months ? Number(service_interval_months) : null,
       category?.trim() || null,
+      currency?.trim() || "USD",
+      image_url?.trim() || null,
+      notes?.trim() || null,
     ]
   );
   res.status(201).json({ product: result.rows[0] });
@@ -58,16 +62,14 @@ router.post("/:id/duplicate", async (req, res) => {
   const p = src.rows[0];
 
   const result = await db.query(
-    `INSERT INTO products (workspace_id, name, description, unit_price, unit_label, service_interval_months, category)
-     VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+    `INSERT INTO products
+       (workspace_id, name, description, unit_price, unit_label, service_interval_months, category, currency, image_url, notes)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
     [
       req.user.workspace_id,
       `${p.name} (copy)`,
-      p.description,
-      p.unit_price,
-      p.unit_label,
-      p.service_interval_months,
-      p.category,
+      p.description, p.unit_price, p.unit_label, p.service_interval_months, p.category,
+      p.currency || "USD", p.image_url, p.notes,
     ]
   );
   res.status(201).json({ product: result.rows[0] });
@@ -80,13 +82,14 @@ router.put("/:id", async (req, res) => {
   ]);
   if (!existing.rows.length) return res.status(404).json({ error: "Product not found." });
 
-  const { name, description, unit_price, unit_label, service_interval_months, category } = req.body || {};
+  const { name, description, unit_price, unit_label, service_interval_months, category, currency, image_url, notes } = req.body || {};
   if (!name || !name.trim()) return res.status(400).json({ error: "Product name is required." });
 
   const result = await db.query(
-    `UPDATE products SET name=$1, description=$2, unit_price=$3, unit_label=$4,
-       service_interval_months=$5, category=$6
-     WHERE id=$7 RETURNING *`,
+    `UPDATE products
+     SET name=$1, description=$2, unit_price=$3, unit_label=$4, service_interval_months=$5,
+         category=$6, currency=$7, image_url=$8, notes=$9
+     WHERE id=$10 RETURNING *`,
     [
       name.trim(),
       description?.trim() || null,
@@ -94,6 +97,9 @@ router.put("/:id", async (req, res) => {
       unit_label?.trim() || "unit",
       service_interval_months ? Number(service_interval_months) : null,
       category?.trim() || null,
+      currency?.trim() || "USD",
+      image_url?.trim() || null,
+      notes?.trim() || null,
       req.params.id,
     ]
   );

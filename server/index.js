@@ -34,6 +34,8 @@ const trackingRoutes = require("./routes/tracking");
 const historyRoutes = require("./routes/history");
 const dealsRoutes = require("./routes/deals");
 const tasksRoutes = require("./routes/tasks");
+const calendarRoutes = require("./routes/calendar");
+const clientsRoutes = require("./routes/clients");
 
 const app = express();
 app.use(cors());
@@ -60,6 +62,8 @@ app.use("/api/platform", platformRoutes);
 app.use("/api/history", historyRoutes);
 app.use("/api/deals", dealsRoutes);
 app.use("/api/tasks", tasksRoutes);
+app.use("/api/calendar", calendarRoutes);
+app.use("/api/clients", clientsRoutes);
 app.use("/api", trackingRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
@@ -114,6 +118,8 @@ db.init()
     app.listen(PORT, () => {
       console.log(`\n  Klyo is running → http://localhost:${PORT}\n`);
     });
+    // Start WhatsApp task reminder scheduler
+    require("./services/reminderCron").start();
   })
   .catch((err) => {
     console.error("\n[Klyo] Could not set up the database:", err.message, "\n");

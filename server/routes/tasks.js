@@ -45,12 +45,12 @@ router.get("/", async (req, res) => {
 
 // POST /api/tasks
 router.post("/", async (req, res) => {
-  const { title, description, assigned_to, contact_id, company_id, deal_id, due_date, priority, status } = req.body || {};
+  const { title, description, assigned_to, contact_id, company_id, deal_id, due_date, priority, status, reminder_at } = req.body || {};
   if (!title || !title.trim()) return res.status(400).json({ error: "Task title is required." });
 
   const result = await db.query(
-    `INSERT INTO tasks (workspace_id, title, description, assigned_to, created_by, contact_id, company_id, deal_id, due_date, priority, status)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+    `INSERT INTO tasks (workspace_id, title, description, assigned_to, created_by, contact_id, company_id, deal_id, due_date, priority, status, reminder_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
     [
       req.user.workspace_id,
       title.trim(),
@@ -63,6 +63,7 @@ router.post("/", async (req, res) => {
       due_date || null,
       VALID_PRIORITY.includes(priority) ? priority : "medium",
       VALID_STATUS.includes(status) ? status : "todo",
+      reminder_at || null,
     ]
   );
   res.status(201).json({ task: result.rows[0] });
@@ -73,13 +74,15 @@ router.put("/:id", async (req, res) => {
   const existing = await db.query("SELECT id FROM tasks WHERE id = $1 AND workspace_id = $2", [req.params.id, req.user.workspace_id]);
   if (!existing.rows.length) return res.status(404).json({ error: "Task not found." });
 
-  const { title, description, assigned_to, contact_id, company_id, deal_id, due_date, priority, status } = req.body || {};
+  const { title, description, assigned_to, contact_id, company_id, deal_id, due_date, priority, status, reminder_at } = req.body || {};
   if (!title || !title.trim()) return res.status(400).json({ error: "Task title is required." });
 
   const result = await db.query(
     `UPDATE tasks SET title=$1, description=$2, assigned_to=$3, contact_id=$4, company_id=$5,
-       deal_id=$6, due_date=$7, priority=$8, status=$9, updated_at=now()
-     WHERE id=$10 RETURNING *`,
+       deal_id=$6, due_date=$7, priority=$8, status=$9, reminder_at=$10,
+       reminder_sent_at = CASE WHEN $10::timestamptz IS DISTINCT FROM reminder_at THEN NULL ELSE reminder_sent_at END,
+       updated_at=now()
+     WHERE id=$11 RETURNING *`,
     [
       title.trim(),
       description?.trim() || null,
@@ -90,6 +93,7 @@ router.put("/:id", async (req, res) => {
       due_date || null,
       VALID_PRIORITY.includes(priority) ? priority : "medium",
       VALID_STATUS.includes(status) ? status : "todo",
+      reminder_at || null,
       req.params.id,
     ]
   );

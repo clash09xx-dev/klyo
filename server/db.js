@@ -329,6 +329,47 @@ async function init() {
     CREATE INDEX IF NOT EXISTS idx_tasks_due_date    ON tasks(workspace_id, due_date);
   `);
 
+  // Products: currency, image, notes fields
+  await pool.query(`
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS currency TEXT NOT NULL DEFAULT 'USD';
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url TEXT;
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS notes TEXT;
+  `);
+
+  // Calendar events
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS calendar_events (
+      id           SERIAL PRIMARY KEY,
+      workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+      created_by   INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      title        TEXT NOT NULL,
+      description  TEXT,
+      start_at     TIMESTAMPTZ NOT NULL,
+      end_at       TIMESTAMPTZ,
+      all_day      BOOLEAN NOT NULL DEFAULT FALSE,
+      color        TEXT NOT NULL DEFAULT '#6366f1',
+      contact_id   INTEGER REFERENCES contacts(id) ON DELETE SET NULL,
+      company_id   INTEGER REFERENCES companies(id) ON DELETE SET NULL,
+      deal_id      INTEGER REFERENCES deals(id) ON DELETE SET NULL,
+      task_id      INTEGER REFERENCES tasks(id) ON DELETE SET NULL,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_calendar_workspace ON calendar_events(workspace_id, start_at);
+  `);
+
+  // Tasks: WhatsApp reminder fields
+  await pool.query(`
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS reminder_at      TIMESTAMPTZ;
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ;
+  `);
+
+  // Users: WhatsApp phone
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS whatsapp_phone TEXT;`);
+
+  // Workspaces: WhatsApp provider setting
+  await pool.query(`ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS whatsapp_provider TEXT;`);
+
   // Seed default pipeline stages for any workspace that has none
   await pool.query(
     `INSERT INTO pipeline_stages (workspace_id, name, color, sort_order)

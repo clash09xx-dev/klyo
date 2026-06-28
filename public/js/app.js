@@ -103,7 +103,7 @@ const els = {
   newProductName: $("newProductName"), newProductPrice: $("newProductPrice"),
   newProductCategory: $("newProductCategory"),
   newProductUnit: $("newProductUnit"), newProductInterval: $("newProductInterval"), addProductBtn: $("addProductBtn"),
-  productFormError: $("productFormError"), manageProductsBtn: $("manageProductsBtn"),
+  oldProductFormError: $("oldProductFormError"), manageProductsBtn: $("manageProductsBtn"),
 
   // Quotes
   quotesView: $("quotesView"), quoteStatusFilter: $("quoteStatusFilter"), addQuoteBtn: $("addQuoteBtn"),
@@ -190,6 +190,44 @@ const els = {
   aiContextSection: $("aiContextSection"), aiContextInput: $("aiContextInput"),
   aiContextError: $("aiContextError"), saveAiContextBtn: $("saveAiContextBtn"),
   appLangPicker: $("appLangPicker"),
+
+  // WhatsApp settings
+  whatsappPhoneInput: $("whatsappPhoneInput"), saveWhatsappBtn: $("saveWhatsappBtn"), whatsappError: $("whatsappError"),
+
+  // Clients view
+  clientsView: $("clientsView"), clientsSearch: $("clientsSearch"), clientsOwnerFilter: $("clientsOwnerFilter"),
+  clientsBody: $("clientsBody"), clientsCount: $("clientsCount"), clientsEmptyState: $("clientsEmptyState"),
+
+  // Products view (tab, not modal)
+  productsView: $("productsView"), productsSearch: $("productsSearch"), productsCategoryFilter: $("productsCategoryFilter"),
+  productsBody: $("productsBody"), productsEmptyState: $("productsEmptyState"),
+
+  // Product CRUD modal (new standalone modal)
+  productModalOverlay: $("productModalOverlay"), productModalTitle: $("productModalTitle"), closeProductModalBtn: $("closeProductModalBtn"),
+  productForm: $("productForm"), productName: $("productName"), productDesc: $("productDesc"),
+  productPrice: $("productPrice"), productCurrency: $("productCurrency"), productUnit: $("productUnit"),
+  productCategory: $("productCategory"), productImageUrl: $("productImageUrl"),
+  productInterval: $("productInterval"), productNotes: $("productNotes"),
+  productId: $("productId"), cancelProductBtn: $("cancelProductBtn"), productSubmitBtn: $("productSubmitBtn"),
+  productFormError: $("productFormError"), addProductViewBtn: $("addProductViewBtn"),
+
+  // Calendar view
+  calendarView: $("calendarView"), calendarGrid: $("calendarGrid"), calMonthLabel: $("calMonthLabel"),
+  calPrevBtn: $("calPrevBtn"), calNextBtn: $("calNextBtn"), calTodayBtn: $("calTodayBtn"), addEventBtn: $("addEventBtn"),
+
+  // Event modal
+  eventModalOverlay: $("eventModalOverlay"), eventModalTitle: $("eventModalTitle"), closeEventModalBtn: $("closeEventModalBtn"),
+  eventForm: $("eventForm"), eventTitle: $("eventTitle"), eventStart: $("eventStart"), eventEnd: $("eventEnd"),
+  eventDesc: $("eventDesc"), eventColor: $("eventColor"), eventContactSelect: $("eventContactSelect"),
+  eventDealSelect: $("eventDealSelect"), eventAllDay: $("eventAllDay"),
+  eventId: $("eventId"), cancelEventBtn: $("cancelEventBtn"), deleteEventBtn: $("deleteEventBtn"), eventSubmitBtn: $("eventSubmitBtn"),
+  eventFormError: $("eventFormError"),
+
+  // Task reminder
+  taskReminderAt: $("taskReminderAt"),
+
+  // Quote currency picker
+  quoteCurrencySelect: $("quoteCurrencySelect"),
 };
 
 const SEND_BTN_HTML = els.sendOfferBtn.innerHTML;
@@ -466,6 +504,7 @@ function openAppearanceModal() {
   loadGmailStatus();
   loadCurrencySettings();
   loadAiContext();
+  loadWhatsappPhone();
   els.appearanceModalOverlay.classList.remove("hidden");
 }
 function closeAppearanceModal() {
@@ -570,6 +609,13 @@ async function handleSaveCurrency() {
   }
 }
 
+async function loadWhatsappPhone() {
+  try {
+    const { user } = await API.get("/auth/me");
+    if (els.whatsappPhoneInput) els.whatsappPhoneInput.value = user?.whatsapp_phone || "";
+  } catch { /* non-critical */ }
+}
+
 async function loadAiContext() {
   const user = API.getUser();
   const isAdmin = user?.role === "admin";
@@ -640,6 +686,333 @@ async function handleSavePassword() {
   } finally {
     els.savePasswordBtn.disabled = false;
   }
+}
+
+/* ---------- WhatsApp settings ---------- */
+async function saveWhatsappPhone() {
+  if (!els.whatsappError) return;
+  els.whatsappError.textContent = "";
+  const phone = (els.whatsappPhoneInput?.value || "").trim();
+  try {
+    await API.put("/auth/whatsapp-phone", { whatsapp_phone: phone });
+    toast("WhatsApp number saved");
+  } catch (err) {
+    if (els.whatsappError) els.whatsappError.textContent = err.message;
+  }
+}
+
+/* ---------- clients view ---------- */
+let clientsCache = [];
+
+async function loadClients() {
+  try {
+    const search = els.clientsSearch?.value || "";
+    const owner_id = els.clientsOwnerFilter?.value || "";
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (owner_id) params.set("owner_id", owner_id);
+    const { clients } = await API.get(`/clients?${params}`);
+    clientsCache = clients;
+    renderClientsTable();
+  } catch (err) {
+    console.error("loadClients", err);
+  }
+}
+
+function renderClientsTable() {
+  const tbody = els.clientsBody;
+  if (!tbody) return;
+  if (!clientsCache.length) {
+    tbody.innerHTML = "";
+    els.clientsEmptyState?.classList.remove("hidden");
+    if (els.clientsCount) els.clientsCount.textContent = "0 clients";
+    return;
+  }
+  els.clientsEmptyState?.classList.add("hidden");
+  if (els.clientsCount) els.clientsCount.textContent = `${clientsCache.length} client${clientsCache.length === 1 ? "" : "s"}`;
+  tbody.innerHTML = clientsCache.map(c => {
+    const revenue = Number(c.total_revenue) || 0;
+    const revenueStr = revenue > 0 ? fmtMoney(revenue, workspaceDefaultCurrency) : "—";
+    const lastPurchase = c.last_purchase_at ? new Date(c.last_purchase_at).toLocaleDateString() : "—";
+    return `<tr style="cursor:pointer;" data-contact-id="${c.id}">
+      <td><strong>${escapeHtml(c.full_name || (c.first_name + " " + c.last_name).trim())}</strong><br><span class="muted" style="font-size:11px;">${escapeHtml(c.email || "")}</span></td>
+      <td>${escapeHtml(c.company_name || "—")}</td>
+      <td>${escapeHtml(c.owner_name || "—")}</td>
+      <td class="mono">${revenueStr}</td>
+      <td>${c.accepted_quotes || 0}</td>
+      <td>${lastPurchase}</td>
+    </tr>`;
+  }).join("");
+  tbody.querySelectorAll("tr").forEach((row, i) => {
+    row.addEventListener("click", () => openPanel(clientsCache[i]));
+  });
+}
+
+/* ---------- products view (dedicated tab) ---------- */
+async function loadProductsView() {
+  try {
+    const { products: list } = await API.get("/products");
+    products = list;
+    renderProductsView();
+    // Populate category filter
+    const cats = [...new Set(list.map(p => p.category).filter(Boolean))].sort();
+    if (els.productsCategoryFilter) {
+      els.productsCategoryFilter.innerHTML = '<option value="">All categories</option>' +
+        cats.map(c => `<option value="${c}">${escapeHtml(c)}</option>`).join("");
+    }
+  } catch (err) { console.error("loadProductsView", err); }
+}
+
+function renderProductsView() {
+  const tbody = els.productsBody;
+  if (!tbody) return;
+  const search = (els.productsSearch?.value || "").toLowerCase();
+  const cat    = els.productsCategoryFilter?.value || "";
+  let visible  = products;
+  if (search) visible = visible.filter(p => p.name.toLowerCase().includes(search) || (p.category||"").toLowerCase().includes(search));
+  if (cat)    visible = visible.filter(p => p.category === cat);
+
+  if (!visible.length) {
+    tbody.innerHTML = "";
+    els.productsEmptyState?.classList.remove("hidden");
+    return;
+  }
+  els.productsEmptyState?.classList.add("hidden");
+  tbody.innerHTML = visible.map(p => `
+    <tr>
+      <td style="width:40px;">${p.image_url ? `<img src="${escapeHtml(p.image_url)}" style="width:32px;height:32px;object-fit:cover;border-radius:6px;">` : '<div style="width:32px;height:32px;border-radius:6px;background:var(--bg-subtle);"></div>'}</td>
+      <td><strong>${escapeHtml(p.name)}</strong>${p.description ? `<div class="muted" style="font-size:11px;">${escapeHtml(p.description)}</div>` : ""}</td>
+      <td>${p.category ? `<span class="product-cat-badge">${escapeHtml(p.category)}</span>` : '<span class="muted">—</span>'}</td>
+      <td class="mono">${Number(p.unit_price).toFixed(2)}</td>
+      <td>${escapeHtml(p.currency || "USD")}</td>
+      <td>${escapeHtml(p.unit_label || "unit")}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-ghost btn-sm" data-edit-product="${p.id}" title="Edit">Edit</button>
+        <button class="btn btn-ghost btn-sm" data-dup-product="${p.id}" title="Duplicate" style="opacity:.6;">⎘</button>
+        <button class="line-remove-btn" data-del-product="${p.id}" title="Delete">×</button>
+      </td>
+    </tr>`).join("");
+
+  tbody.querySelectorAll("[data-edit-product]").forEach(btn => {
+    const id = btn.dataset.editProduct;
+    btn.addEventListener("click", () => openProductModal(products.find(p => String(p.id) === id)));
+  });
+  tbody.querySelectorAll("[data-dup-product]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      await handleDuplicateProduct(btn.dataset.dupProduct);
+      loadProductsView();
+    });
+  });
+  tbody.querySelectorAll("[data-del-product]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Delete this product?")) return;
+      await handleDeleteProduct(btn.dataset.delProduct);
+      loadProductsView();
+    });
+  });
+}
+
+function openProductModal(product) {
+  if (!els.productModalOverlay) return;
+  els.productFormError.textContent = "";
+  els.productId.value = product?.id || "";
+  els.productModalTitle.textContent = product ? "Edit product" : "Add product";
+  els.productSubmitBtn.textContent  = product ? "Save changes" : "Add product";
+  els.productName.value       = product?.name || "";
+  els.productDesc.value       = product?.description || "";
+  els.productPrice.value      = product?.unit_price ?? 0;
+  els.productCurrency.value   = product?.currency || workspaceDefaultCurrency || "USD";
+  els.productUnit.value       = product?.unit_label || "unit";
+  els.productCategory.value   = product?.category || "";
+  els.productImageUrl.value   = product?.image_url || "";
+  els.productInterval.value   = product?.service_interval_months || "";
+  els.productNotes.value      = product?.notes || "";
+  els.productModalOverlay.classList.remove("hidden");
+}
+
+function closeProductModal() {
+  els.productModalOverlay?.classList.add("hidden");
+}
+
+async function handleProductSubmit(e) {
+  e.preventDefault();
+  els.productFormError.textContent = "";
+  const id = els.productId.value;
+  const body = {
+    name:                    els.productName.value.trim(),
+    description:             els.productDesc.value.trim() || null,
+    unit_price:              parseFloat(els.productPrice.value) || 0,
+    currency:                els.productCurrency.value || "USD",
+    unit_label:              els.productUnit.value.trim() || "unit",
+    category:                els.productCategory.value.trim() || null,
+    image_url:               els.productImageUrl.value.trim() || null,
+    service_interval_months: els.productInterval.value ? Number(els.productInterval.value) : null,
+    notes:                   els.productNotes.value.trim() || null,
+  };
+  if (!body.name) { els.productFormError.textContent = "Name is required."; return; }
+  try {
+    if (id) {
+      await API.put(`/products/${id}`, body);
+    } else {
+      await API.post("/products", body);
+    }
+    closeProductModal();
+    await loadProductsView();
+    populateLineItemProductOptions();
+    toast(id ? "Product updated" : "Product added");
+  } catch (err) {
+    els.productFormError.textContent = err.message;
+  }
+}
+
+/* ---------- calendar view ---------- */
+let calendarDate = new Date();
+let calendarEvents = [];
+
+async function loadCalendar() {
+  const year  = calendarDate.getFullYear();
+  const month = calendarDate.getMonth(); // 0-based
+  const start = new Date(year, month, 1).toISOString();
+  const end   = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+  try {
+    const { events } = await API.get(`/calendar?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
+    calendarEvents = events;
+    renderCalendar();
+  } catch (err) { console.error("loadCalendar", err); }
+}
+
+function renderCalendar() {
+  const year  = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+  if (els.calMonthLabel) {
+    els.calMonthLabel.textContent = new Date(year, month, 1).toLocaleString(undefined, { month: "long", year: "numeric" });
+  }
+
+  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+  const isThisMonth = today.getFullYear() === year && today.getMonth() === month;
+
+  const grid = els.calendarGrid;
+  if (!grid) return;
+  grid.innerHTML = "";
+
+  // Blank cells before day 1
+  for (let i = 0; i < firstDay; i++) {
+    const cell = document.createElement("div");
+    cell.style.cssText = "background:var(--bg-card); min-height:100px; padding:6px; opacity:.3;";
+    grid.appendChild(cell);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const isToday = isThisMonth && today.getDate() === day;
+    const dayEvents = calendarEvents.filter(ev => {
+      const d = new Date(ev.start_at);
+      return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
+    });
+
+    const cell = document.createElement("div");
+    cell.style.cssText = `background:var(--bg-card); min-height:100px; padding:6px; cursor:pointer; position:relative; ${isToday ? "outline:2px solid var(--accent);" : ""}`;
+    cell.innerHTML = `<div style="font-size:12px; font-weight:${isToday ? "700" : "500"}; color:${isToday ? "var(--accent)" : "var(--text-faint)"}; margin-bottom:4px;">${day}</div>` +
+      dayEvents.map(ev => `
+        <div data-event-id="${ev.id}" style="background:${ev.color || "#6366f1"}22; border-left:3px solid ${ev.color || "#6366f1"}; padding:2px 5px; border-radius:3px; margin-bottom:2px; font-size:11px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+          ${new Date(ev.start_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})} ${escapeHtml(ev.title)}
+        </div>`).join("");
+
+    cell.addEventListener("click", (e) => {
+      const evEl = e.target.closest("[data-event-id]");
+      if (evEl) {
+        const ev = calendarEvents.find(x => String(x.id) === evEl.dataset.eventId);
+        if (ev) openEventModal(ev);
+      } else {
+        // Click on blank day — pre-fill date
+        const d = new Date(year, month, day, 9, 0);
+        openEventModal(null, d);
+      }
+    });
+    grid.appendChild(cell);
+  }
+}
+
+function openEventModal(event, defaultDate) {
+  if (!els.eventModalOverlay) return;
+  els.eventFormError.textContent = "";
+  els.eventId.value = event?.id || "";
+  els.eventModalTitle.textContent = event ? "Edit event" : "Add event";
+  els.eventSubmitBtn.textContent  = event ? "Save changes" : "Add event";
+  els.eventTitle.value = event?.title || "";
+  els.eventDesc.value  = event?.description || "";
+  els.eventColor.value = event?.color || "#6366f1";
+  els.eventAllDay.checked = event?.all_day || false;
+
+  if (event?.start_at) {
+    els.eventStart.value = event.start_at.slice(0,16);
+    els.eventEnd.value   = event.end_at ? event.end_at.slice(0,16) : "";
+  } else if (defaultDate) {
+    const pad = n => String(n).padStart(2,"0");
+    const local = `${defaultDate.getFullYear()}-${pad(defaultDate.getMonth()+1)}-${pad(defaultDate.getDate())}T${pad(defaultDate.getHours())}:${pad(defaultDate.getMinutes())}`;
+    els.eventStart.value = local;
+    els.eventEnd.value   = "";
+  } else {
+    els.eventStart.value = "";
+    els.eventEnd.value   = "";
+  }
+
+  // Populate contact select
+  els.eventContactSelect.innerHTML = '<option value="">None</option>' +
+    allContactsCache.map(c => `<option value="${c.id}" ${event?.contact_id == c.id ? "selected" : ""}>${escapeHtml(c.full_name)}</option>`).join("");
+
+  // Populate deal select
+  els.eventDealSelect.innerHTML = '<option value="">None</option>' +
+    dealsCache.map(d => `<option value="${d.id}" ${event?.deal_id == d.id ? "selected" : ""}>${escapeHtml(d.title)}</option>`).join("");
+
+  els.deleteEventBtn?.classList.toggle("hidden", !event?.id);
+  els.eventModalOverlay.classList.remove("hidden");
+}
+
+function closeEventModal() {
+  els.eventModalOverlay?.classList.add("hidden");
+}
+
+async function handleEventSubmit(e) {
+  e.preventDefault();
+  els.eventFormError.textContent = "";
+  const id = els.eventId.value;
+  const body = {
+    title:       els.eventTitle.value.trim(),
+    description: els.eventDesc.value.trim() || null,
+    start_at:    els.eventStart.value,
+    end_at:      els.eventEnd.value || null,
+    all_day:     els.eventAllDay.checked,
+    color:       els.eventColor.value || "#6366f1",
+    contact_id:  els.eventContactSelect.value || null,
+    deal_id:     els.eventDealSelect.value || null,
+  };
+  if (!body.title)    { els.eventFormError.textContent = "Title is required."; return; }
+  if (!body.start_at) { els.eventFormError.textContent = "Start date/time is required."; return; }
+  try {
+    if (id) {
+      await API.put(`/calendar/${id}`, body);
+    } else {
+      await API.post("/calendar", body);
+    }
+    closeEventModal();
+    await loadCalendar();
+    toast(id ? "Event updated" : "Event added");
+  } catch (err) {
+    els.eventFormError.textContent = err.message;
+  }
+}
+
+async function handleDeleteEvent() {
+  const id = els.eventId.value;
+  if (!id || !confirm("Delete this event?")) return;
+  try {
+    await API.del(`/calendar/${id}`);
+    closeEventModal();
+    await loadCalendar();
+    toast("Event deleted");
+  } catch (err) { toast(err.message, "error"); }
 }
 
 /* ---------- platform (developer) dashboard ---------- */
@@ -1186,6 +1559,9 @@ function getViewCopy(view) {
     history:   { title: t("nav.history"),   sub: t("view_sub.history") },
     team:      { title: t("nav.team"),      sub: t("view_sub.team") },
     platform:  { title: t("nav.platform"),   sub: t("view_sub.platform") },
+    clients:   { title: t("nav.clients"),   sub: t("view_sub.clients") },
+    products:  { title: t("nav.products"),  sub: t("view_sub.products") },
+    calendar:  { title: t("nav.calendar"),  sub: t("view_sub.calendar") },
   };
   return map[view] || map.pipeline;
 }
@@ -1202,6 +1578,9 @@ function switchView(view) {
   els.historyView.classList.toggle("hidden", view !== "history");
   els.teamView.classList.toggle("hidden", view !== "team");
   els.platformView.classList.toggle("hidden", view !== "platform");
+  els.clientsView.classList.toggle("hidden", view !== "clients");
+  els.productsView.classList.toggle("hidden", view !== "products");
+  els.calendarView.classList.toggle("hidden", view !== "calendar");
   els.searchBoxWrap.style.display = view === "pipeline" ? "" : "none";
   els.addContactBtn.style.display = view === "pipeline" ? "" : "none";
 
@@ -1218,6 +1597,9 @@ function switchView(view) {
   if (view === "deals") loadDeals();
   if (view === "history") loadHistory(true);
   if (view === "platform") loadPlatformDashboard();
+  if (view === "clients") loadClients();
+  if (view === "products") loadProductsView();
+  if (view === "calendar") loadCalendar();
 }
 
 /* ---------- contact modal ---------- */
@@ -1652,9 +2034,9 @@ function openProductsModal() {
 function closeProductsModal() { els.productsModalOverlay.classList.add("hidden"); }
 
 async function handleAddProduct() {
-  els.productFormError.textContent = "";
+  if (els.oldProductFormError) els.oldProductFormError.textContent = "";
   const name = els.newProductName.value.trim();
-  if (!name) { els.productFormError.textContent = "Give the product a name."; return; }
+  if (!name) { if (els.oldProductFormError) els.oldProductFormError.textContent = "Give the product a name."; return; }
 
   try {
     await API.post("/products", {
@@ -1674,7 +2056,7 @@ async function handleAddProduct() {
     populateLineItemProductOptions();
     toast("Product added");
   } catch (err) {
-    els.productFormError.textContent = err.message;
+    if (els.oldProductFormError) els.oldProductFormError.textContent = err.message;
   }
 }
 
@@ -1718,6 +2100,7 @@ function openQuoteModal(prefill) {
   }
   els.quoteTitleInput.value = "";
   els.quoteIntroInput.value = "";
+  if (els.quoteCurrencySelect) els.quoteCurrencySelect.value = workspaceDefaultCurrency || "USD";
   handleQuoteContactChange();
 
   if (prefill?.lineItem) {
@@ -1882,7 +2265,7 @@ async function saveQuote(alsoSend) {
     company_id: contact?.company_id || null,
     title: els.quoteTitleInput.value.trim() || "Quote",
     intro_message: els.quoteIntroInput.value.trim(),
-    currency: workspaceDefaultCurrency,
+    currency: (els.quoteCurrencySelect && els.quoteCurrencySelect.value) || workspaceDefaultCurrency,
     line_items: currentQuoteLineItems,
     recipient_ids: els.quoteRecipientsField.classList.contains("hidden") ? [] : collectQuoteRecipientIds(),
   };
@@ -2063,6 +2446,7 @@ async function handleEditQuoteFromPanel() {
   els.quoteContactSelect.disabled = true;
   els.quoteTitleInput.value = quote.title;
   els.quoteIntroInput.value = quote.intro_message || "";
+  if (els.quoteCurrencySelect && quote.currency) els.quoteCurrencySelect.value = quote.currency;
   handleQuoteContactChange();
   // handleQuoteContactChange() above pre-checks decision-makers as a sensible
   // default for a brand-new quote — but this is an existing quote, so clear
@@ -2388,6 +2772,7 @@ function wireEvents() {
   els.savePasswordBtn.addEventListener("click", handleSavePassword);
   els.saveCurrencyBtn.addEventListener("click", handleSaveCurrency);
   els.saveAiContextBtn.addEventListener("click", handleSaveAiContext);
+  if (els.saveWhatsappBtn) els.saveWhatsappBtn.addEventListener("click", saveWhatsappPhone);
   els.appLangPicker.addEventListener("change", () => {
     KlyoI18n.setLang(els.appLangPicker.value);
     KlyoI18n.applyTranslations();
@@ -2401,6 +2786,9 @@ function wireEvents() {
     else if (currentView === "deals")      loadDeals();
     else if (currentView === "history")    loadHistory();
     else if (currentView === "team")       loadTeam();
+    else if (currentView === "clients")    loadClients();
+    else if (currentView === "products")   loadProductsView();
+    else if (currentView === "calendar")   loadCalendar();
     toast(KlyoI18n.t("settings.language") + " → " + KlyoI18n.LANG_NAMES[KlyoI18n.getLang()]);
   });
   els.joinWorkspaceBtn.addEventListener("click", handleJoinWorkspace);
@@ -2461,6 +2849,30 @@ function wireEvents() {
   els.productsModalOverlay.addEventListener("click", (e) => { if (e.target === els.productsModalOverlay) closeProductsModal(); });
   els.addProductBtn.addEventListener("click", handleAddProduct);
   if (els.productCategoryFilter) els.productCategoryFilter.addEventListener("input", renderProductsList);
+
+  // Products view (tab) listeners
+  if (els.addProductViewBtn) els.addProductViewBtn.addEventListener("click", () => openProductModal(null));
+  if (els.productForm) els.productForm.addEventListener("submit", handleProductSubmit);
+  if (els.closeProductModalBtn) els.closeProductModalBtn.addEventListener("click", closeProductModal);
+  if (els.cancelProductBtn) els.cancelProductBtn.addEventListener("click", closeProductModal);
+  if (els.productModalOverlay) els.productModalOverlay.addEventListener("click", (e) => { if (e.target === els.productModalOverlay) closeProductModal(); });
+  if (els.productsSearch) els.productsSearch.addEventListener("input", renderProductsView);
+  if (els.productsCategoryFilter) els.productsCategoryFilter.addEventListener("change", renderProductsView);
+
+  // Calendar listeners
+  if (els.calPrevBtn) els.calPrevBtn.addEventListener("click", () => { calendarDate.setMonth(calendarDate.getMonth() - 1); loadCalendar(); });
+  if (els.calNextBtn) els.calNextBtn.addEventListener("click", () => { calendarDate.setMonth(calendarDate.getMonth() + 1); loadCalendar(); });
+  if (els.calTodayBtn) els.calTodayBtn.addEventListener("click", () => { calendarDate = new Date(); loadCalendar(); });
+  if (els.addEventBtn) els.addEventBtn.addEventListener("click", () => openEventModal(null));
+  if (els.eventForm) els.eventForm.addEventListener("submit", handleEventSubmit);
+  if (els.closeEventModalBtn) els.closeEventModalBtn.addEventListener("click", closeEventModal);
+  if (els.cancelEventBtn) els.cancelEventBtn.addEventListener("click", closeEventModal);
+  if (els.deleteEventBtn) els.deleteEventBtn.addEventListener("click", handleDeleteEvent);
+  if (els.eventModalOverlay) els.eventModalOverlay.addEventListener("click", (e) => { if (e.target === els.eventModalOverlay) closeEventModal(); });
+
+  // Clients listeners
+  if (els.clientsSearch) els.clientsSearch.addEventListener("input", () => { clearTimeout(searchDebounce); searchDebounce = setTimeout(loadClients, 280); });
+  if (els.clientsOwnerFilter) els.clientsOwnerFilter.addEventListener("change", loadClients);
 
   // Quotes
   els.addQuoteBtn.addEventListener("click", () => { openQuoteModal(null); populateLineItemProductOptions(); });
@@ -2969,6 +3381,7 @@ function openTaskModal(task) {
   els.taskTitle.value         = task?.title || "";
   els.taskDescription.value   = task?.description || "";
   els.taskDueDate.value       = task?.due_date ? task.due_date.slice(0,10) : "";
+  if (els.taskReminderAt) els.taskReminderAt.value = task?.reminder_at ? task.reminder_at.slice(0,16) : "";
   els.taskPrioritySelect.value = task?.priority || "medium";
   els.taskStatusSelect.value  = task?.status || "todo";
   els.taskFormError.textContent = "";
@@ -3021,6 +3434,7 @@ async function handleTaskSubmit(e) {
     status:      els.taskStatusSelect.value,
     contact_id:  els.taskContactSelect.value || null,
     deal_id:     els.taskDealSelect.value || null,
+    reminder_at: els.taskReminderAt?.value || null,
   };
   try {
     if (id) {

@@ -21,6 +21,8 @@
         settings: "Settings",
         reminders: "Reminders",
         platform: "Platform",
+        clients: "Clients",
+        calendar: "Calendar",
       },
       auth: {
         welcome_title: "Welcome to Klyo",
@@ -87,6 +89,9 @@
         history: "Every action taken in this workspace — who did what and when.",
         team: "Everyone with access to this workspace.",
         platform: "Every workspace using Klyo — yours alone to see.",
+        clients: "Contacts who became customers — revenue, quotes, and deal history in one place.",
+        products: "Your product and service catalog — prices, currencies, and descriptions.",
+        calendar: "Upcoming events, deadlines, and follow-ups — linked to contacts and deals.",
       },
       ui: {
         search_contacts: "Search name, email, phone, company…",
@@ -396,6 +401,9 @@
         history: "Każda akcja wykonana w tym obszarze roboczym.",
         team: "Wszyscy z dostępem do tego obszaru roboczego.",
         platform: "Każdy obszar roboczy używający Klyo — tylko dla Ciebie.",
+        clients: "Kontakty, które stały się klientami — przychody, oferty i historia dealów.",
+        products: "Twój katalog produktów i usług — ceny, waluty i opisy.",
+        calendar: "Nadchodzące wydarzenia, terminy i przypomnienia — powiązane z kontaktami.",
       },
       ui: {
         search_contacts: "Szukaj nazwy, emaila, telefonu, firmy…",
@@ -573,6 +581,8 @@
         settings: "Ustawienia",
         reminders: "Przypomnienia",
         platform: "Platforma",
+        clients: "Klienci",
+        calendar: "Kalendarz",
       },
       auth: {
         welcome_title: "Witaj w Klyo",
@@ -778,6 +788,8 @@
         settings: "Ajustes",
         reminders: "Recordatorios",
         platform: "Plataforma",
+        clients: "Clientes",
+        calendar: "Calendario",
       },
       auth: {
         welcome_title: "Bienvenido a Klyo",
@@ -860,6 +872,8 @@
         settings: "Paramètres",
         reminders: "Rappels",
         platform: "Plateforme",
+        clients: "Clients",
+        calendar: "Calendrier",
       },
       auth: {
         welcome_title: "Bienvenue sur Klyo",
@@ -917,6 +931,8 @@
         settings: "Einstellungen",
         reminders: "Erinnerungen",
         platform: "Plattform",
+        clients: "Kunden",
+        calendar: "Kalender",
       },
       auth: {
         welcome_title: "Willkommen bei Klyo",

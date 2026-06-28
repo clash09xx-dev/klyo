@@ -151,7 +151,7 @@ router.post("/login", async (req, res) => {
 // GET /api/auth/me — includes theme + onboarding status, which aren't in the token
 router.get("/me", requireAuth, async (req, res) => {
   const result = await db.query(
-    "SELECT id, name, email, role, workspace_id, theme, has_seen_onboarding, password_hash, language FROM users WHERE id = $1",
+    "SELECT id, name, email, role, workspace_id, theme, has_seen_onboarding, password_hash, language, whatsapp_phone FROM users WHERE id = $1",
     [req.user.id]
   );
   const row = result.rows[0];
@@ -456,6 +456,15 @@ router.delete("/team/:id", requireAuth, requireAdmin, async (req, res) => {
   if (!existing.rows.length) return res.status(404).json({ error: "User not found." });
 
   await db.query("DELETE FROM users WHERE id = $1", [req.params.id]);
+  res.json({ ok: true });
+});
+
+// PUT /api/auth/whatsapp-phone — save your WhatsApp phone number
+router.put("/whatsapp-phone", requireAuth, async (req, res) => {
+  const { whatsapp_phone } = req.body || {};
+  await db.query("UPDATE users SET whatsapp_phone = $1 WHERE id = $2", [
+    whatsapp_phone?.trim() || null, req.user.id,
+  ]);
   res.json({ ok: true });
 });
 
