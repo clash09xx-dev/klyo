@@ -287,6 +287,29 @@ async function init() {
     CREATE INDEX IF NOT EXISTS idx_deals_contact ON deals(contact_id);
   `);
 
+  // Task assignment
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id           SERIAL PRIMARY KEY,
+      workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+      title        TEXT NOT NULL,
+      description  TEXT,
+      assigned_to  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_by   INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      contact_id   INTEGER REFERENCES contacts(id) ON DELETE SET NULL,
+      company_id   INTEGER REFERENCES companies(id) ON DELETE SET NULL,
+      deal_id      INTEGER REFERENCES deals(id) ON DELETE SET NULL,
+      due_date     DATE,
+      priority     TEXT NOT NULL DEFAULT 'medium',
+      status       TEXT NOT NULL DEFAULT 'todo',
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_tasks_workspace   ON tasks(workspace_id);
+    CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON tasks(assigned_to);
+    CREATE INDEX IF NOT EXISTS idx_tasks_due_date    ON tasks(workspace_id, due_date);
+  `);
+
   // Seed default pipeline stages for any workspace that has none
   await pool.query(
     `INSERT INTO pipeline_stages (workspace_id, name, color, sort_order)

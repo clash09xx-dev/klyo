@@ -124,6 +124,19 @@ const els = {
   // Reminders
   remindersView: $("remindersView"), remindersBody: $("remindersBody"), remindersEmptyState: $("remindersEmptyState"),
 
+  // Tasks
+  tasksView: $("tasksView"), tasksBody: $("tasksBody"), tasksTable: $("tasksTable"),
+  tasksEmptyState: $("tasksEmptyState"), addTaskBtn: $("addTaskBtn"), tasksEmptyAddBtn: $("tasksEmptyAddBtn"),
+  taskAssigneeFilter: $("taskAssigneeFilter"), taskStatusFilter: $("taskStatusFilter"),
+  taskPriorityFilter: $("taskPriorityFilter"), taskOverdueFilter: $("taskOverdueFilter"),
+  taskModalOverlay: $("taskModalOverlay"), closeTaskModalBtn: $("closeTaskModalBtn"),
+  taskForm: $("taskForm"), taskId: $("taskId"), taskTitle: $("taskTitle"),
+  taskDescription: $("taskDescription"), taskAssignedSelect: $("taskAssignedSelect"),
+  taskPrioritySelect: $("taskPrioritySelect"), taskDueDate: $("taskDueDate"),
+  taskStatusSelect: $("taskStatusSelect"), taskContactSelect: $("taskContactSelect"),
+  taskDealSelect: $("taskDealSelect"), taskFormError: $("taskFormError"),
+  taskSubmitBtn: $("taskSubmitBtn"), cancelTaskBtn: $("cancelTaskBtn"), taskModalTitle: $("taskModalTitle"),
+
   // Deals
   dealsView: $("dealsView"), dealsBoard: $("dealsBoard"), dealsEmptyState: $("dealsEmptyState"),
   dealStageFilter: $("dealStageFilter"), dealAssigneeFilter: $("dealAssigneeFilter"), dealStatusFilter: $("dealStatusFilter"),
@@ -991,6 +1004,9 @@ async function loadTeam() {
   els.dealAssigneeFilter.innerHTML =
     '<option value="">All owners</option>' +
     team.map((u) => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
+  els.taskAssigneeFilter.innerHTML =
+    '<option value="">All members</option>' +
+    team.map((u) => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
   els.teamBody.innerHTML = team
     .map((u) => `<tr><td>${escapeHtml(u.name)}</td><td class="mono">${escapeHtml(u.email)}</td><td>${capitalize(u.role)}</td></tr>`)
     .join("");
@@ -1088,6 +1104,7 @@ const VIEW_COPY = {
   companies: { title: "Companies", sub: "Businesses you work with, and who the decision-makers are at each one." },
   quotes: { title: "Quotes", sub: "Tailored, line-item offers — built for one customer at a time." },
   reminders: { title: "Reminders", sub: "Purchases due for a follow-up, calibration, or check-up." },
+  tasks: { title: "Tasks", sub: "Jobs assigned to team members — with due dates, priorities, and linked records." },
   deals: { title: "Deals", sub: "Track every sales opportunity through your pipeline to close." },
   history: { title: "History", sub: "Every action taken in this workspace — who did what and when." },
   team: { title: "Team", sub: "Everyone with access to this workspace." },
@@ -1100,6 +1117,7 @@ function switchView(view) {
   els.companiesView.classList.toggle("hidden", view !== "companies");
   els.quotesView.classList.toggle("hidden", view !== "quotes");
   els.remindersView.classList.toggle("hidden", view !== "reminders");
+  els.tasksView.classList.toggle("hidden", view !== "tasks");
   els.dealsView.classList.toggle("hidden", view !== "deals");
   els.historyView.classList.toggle("hidden", view !== "history");
   els.teamView.classList.toggle("hidden", view !== "team");
@@ -1115,6 +1133,7 @@ function switchView(view) {
   if (view === "quotes") loadQuotes();
   if (view === "reminders") loadReminders();
   if (view === "team") loadPerformance();
+  if (view === "tasks") loadTasks();
   if (view === "deals") loadDeals();
   if (view === "history") loadHistory(true);
   if (view === "platform") loadPlatformDashboard();
@@ -2302,18 +2321,18 @@ let currentDealPanelId = null;
 
 async function loadDeals() {
   try {
-    const stageRes = await api.get("/api/deals/stages");
+    const stageRes = await API.get("/deals/stages");
     dealsStagesCache = stageRes.stages || [];
 
     const statusVal = els.dealStatusFilter.value;
     const stageVal  = els.dealStageFilter.value;
     const ownerVal  = els.dealAssigneeFilter.value;
-    let url = "/api/deals?";
+    let url = "/deals?";
     if (stageVal)  url += `stage_id=${stageVal}&`;
     if (ownerVal)  url += `assigned_to=${ownerVal}&`;
     if (statusVal) url += `status=${statusVal}&`;
 
-    const res = await api.get(url);
+    const res = await API.get(url);
     dealsCache = res.deals || [];
 
     renderDealsBoard();
@@ -2500,9 +2519,9 @@ async function handleDealSubmit(e) {
   };
   try {
     if (id) {
-      await api.put(`/api/deals/${id}`, body);
+      await API.put(`/deals/${id}`, body);
     } else {
-      await api.post("/api/deals", body);
+      await API.post("/deals", body);
     }
     closeDealModal();
     await loadDeals();
@@ -2516,7 +2535,7 @@ async function handleDealSubmit(e) {
 
 async function openDealPanel(dealId) {
   try {
-    const res = await api.get(`/api/deals/${dealId}`);
+    const res = await API.get(`/deals/${dealId}`);
     const d = res.deal;
     currentDealPanelId = d.id;
 
@@ -2571,7 +2590,7 @@ async function handleMarkDeal(status) {
   try {
     const d = dealsCache.find(x => String(x.id) === String(currentDealPanelId));
     if (!d) return;
-    await api.put(`/api/deals/${currentDealPanelId}`, { ...d, status });
+    await API.put(`/deals/${currentDealPanelId}`, { ...d, status });
     closeDealPanel();
     await loadDeals();
     toast(status === "won" ? "Deal marked won 🎉" : "Deal marked lost");
@@ -2581,7 +2600,7 @@ async function handleMarkDeal(status) {
 async function handleDeleteDeal() {
   if (!currentDealPanelId || !confirm("Delete this deal?")) return;
   try {
-    await api.delete(`/api/deals/${currentDealPanelId}`);
+    await API.del(`/deals/${currentDealPanelId}`);
     closeDealPanel();
     await loadDeals();
     toast("Deal deleted");
@@ -2621,7 +2640,7 @@ function renderStagesList() {
     row.querySelector("[data-delete-stage]").addEventListener("click", async () => {
       if (!confirm(`Delete stage "${s.name}"? Deals in this stage will become unsorted.`)) return;
       try {
-        await api.delete(`/api/deals/stages/${s.id}`);
+        await API.del(`/deals/stages/${s.id}`);
         await loadDeals();
         renderStagesList();
         toast("Stage deleted");
@@ -2636,7 +2655,7 @@ async function handleAddStage() {
   if (!name) { els.stagesFormError.textContent = "Enter a stage name."; return; }
   els.stagesFormError.textContent = "";
   try {
-    await api.post("/api/deals/stages", { name, color: els.newStageColor.value });
+    await API.post("/deals/stages", { name, color: els.newStageColor.value });
     els.newStageName.value = "";
     await loadDeals();
     renderStagesList();
@@ -2669,4 +2688,173 @@ async function handleAddStage() {
   els.dealStageFilter.addEventListener("change", loadDeals);
   els.dealAssigneeFilter.addEventListener("change", loadDeals);
   els.dealStatusFilter.addEventListener("change", loadDeals);
+})();
+
+/* ============================================================
+   TASKS — list + assignment
+   ============================================================ */
+
+let tasksCache = [];
+
+async function loadTasks() {
+  const assignee = els.taskAssigneeFilter.value;
+  const status   = els.taskStatusFilter.value;
+  const priority = els.taskPriorityFilter.value;
+  const overdue  = els.taskOverdueFilter.checked ? "1" : "";
+
+  let url = "/tasks?";
+  if (assignee) url += `assigned_to=${assignee}&`;
+  if (status)   url += `status=${status}&`;
+  if (priority) url += `priority=${priority}&`;
+  if (overdue)  url += `overdue=1&`;
+
+  try {
+    const res = await API.get(url);
+    tasksCache = res.tasks || [];
+    renderTasksTable();
+  } catch (err) {
+    toast(err.message, "error");
+  }
+}
+
+function renderTasksTable() {
+  const today = new Date().toISOString().slice(0, 10);
+
+  els.tasksEmptyState.classList.toggle("hidden", tasksCache.length > 0);
+  els.tasksTable.classList.toggle("hidden", tasksCache.length === 0);
+
+  els.tasksBody.innerHTML = tasksCache.map(t => {
+    const done = t.status === "done";
+    const overdue = t.due_date && t.due_date.slice(0,10) < today && !done;
+    const dueLbl = t.due_date
+      ? `<span class="${overdue ? "due-overdue" : ""}">${new Date(t.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>`
+      : '<span class="muted">—</span>';
+    const linked = [t.contact_name, t.deal_title].filter(Boolean).join(" · ") || "—";
+    return `<tr class="${done ? "task-row-done" : ""}" data-task-id="${t.id}">
+      <td style="text-align:center;">
+        <input type="checkbox" class="task-checkbox" data-id="${t.id}" ${done ? "checked" : ""} title="Toggle done" />
+      </td>
+      <td>
+        <div style="font-weight:600; font-size:13px;">${escHtml(t.title)}</div>
+        ${t.description ? `<div class="muted" style="font-size:11.5px;">${escHtml(t.description)}</div>` : ""}
+      </td>
+      <td>${t.assigned_name ? escHtml(t.assigned_name) : '<span class="muted">Unassigned</span>'}</td>
+      <td class="muted" style="font-size:12px;">${escHtml(linked)}</td>
+      <td>${dueLbl}</td>
+      <td><span class="priority-badge priority-${t.priority}">${t.priority}</span></td>
+      <td>
+        <button class="btn btn-ghost btn-sm task-edit-btn" data-id="${t.id}" title="Edit">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  // Checkbox toggles
+  els.tasksBody.querySelectorAll(".task-checkbox").forEach(cb => {
+    cb.addEventListener("change", async () => {
+      const newStatus = cb.checked ? "done" : "todo";
+      try {
+        await API.patch(`/tasks/${cb.dataset.id}/status`, { status: newStatus });
+        await loadTasks();
+      } catch (err) { toast(err.message, "error"); }
+    });
+  });
+
+  // Edit buttons
+  els.tasksBody.querySelectorAll(".task-edit-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const t = tasksCache.find(x => String(x.id) === btn.dataset.id);
+      if (t) openTaskModal(t);
+    });
+  });
+}
+
+function openTaskModal(task) {
+  els.taskId.value            = task?.id || "";
+  els.taskModalTitle.textContent = task ? "Edit task" : "New task";
+  els.taskSubmitBtn.textContent  = task ? "Save changes" : "Add task";
+  els.taskTitle.value         = task?.title || "";
+  els.taskDescription.value   = task?.description || "";
+  els.taskDueDate.value       = task?.due_date ? task.due_date.slice(0,10) : "";
+  els.taskPrioritySelect.value = task?.priority || "medium";
+  els.taskStatusSelect.value  = task?.status || "todo";
+  els.taskFormError.textContent = "";
+
+  // Assignees from team
+  els.taskAssignedSelect.innerHTML = '<option value="">Unassigned</option>';
+  team.forEach(u => {
+    const o = document.createElement("option");
+    o.value = u.id; o.textContent = u.name;
+    if (task && String(task.assigned_to) === String(u.id)) o.selected = true;
+    els.taskAssignedSelect.appendChild(o);
+  });
+
+  // Contacts
+  els.taskContactSelect.innerHTML = '<option value="">None</option>';
+  allContactsCache.forEach(c => {
+    const o = document.createElement("option");
+    o.value = c.id; o.textContent = c.full_name;
+    if (task && String(task.contact_id) === String(c.id)) o.selected = true;
+    els.taskContactSelect.appendChild(o);
+  });
+
+  // Deals
+  els.taskDealSelect.innerHTML = '<option value="">None</option>';
+  dealsCache.forEach(d => {
+    const o = document.createElement("option");
+    o.value = d.id; o.textContent = d.title;
+    if (task && String(task.deal_id) === String(d.id)) o.selected = true;
+    els.taskDealSelect.appendChild(o);
+  });
+
+  els.taskModalOverlay.classList.remove("hidden");
+  els.taskTitle.focus();
+}
+
+function closeTaskModal() {
+  els.taskModalOverlay.classList.add("hidden");
+}
+
+async function handleTaskSubmit(e) {
+  e.preventDefault();
+  els.taskFormError.textContent = "";
+  const id = els.taskId.value;
+  const body = {
+    title:       els.taskTitle.value.trim(),
+    description: els.taskDescription.value.trim() || null,
+    assigned_to: els.taskAssignedSelect.value || null,
+    due_date:    els.taskDueDate.value || null,
+    priority:    els.taskPrioritySelect.value,
+    status:      els.taskStatusSelect.value,
+    contact_id:  els.taskContactSelect.value || null,
+    deal_id:     els.taskDealSelect.value || null,
+  };
+  try {
+    if (id) {
+      await API.put(`/tasks/${id}`, body);
+    } else {
+      await API.post("/tasks", body);
+    }
+    closeTaskModal();
+    await loadTasks();
+    toast(id ? "Task updated" : "Task created");
+  } catch (err) {
+    els.taskFormError.textContent = err.message;
+  }
+}
+
+// ---- wire task events ----
+(function wireTaskEvents() {
+  els.addTaskBtn.addEventListener("click", () => openTaskModal(null));
+  els.tasksEmptyAddBtn.addEventListener("click", () => openTaskModal(null));
+  els.closeTaskModalBtn.addEventListener("click", closeTaskModal);
+  els.cancelTaskBtn.addEventListener("click", closeTaskModal);
+  els.taskModalOverlay.addEventListener("click", e => { if (e.target === els.taskModalOverlay) closeTaskModal(); });
+  els.taskForm.addEventListener("submit", handleTaskSubmit);
+
+  els.taskAssigneeFilter.addEventListener("change", loadTasks);
+  els.taskStatusFilter.addEventListener("change", loadTasks);
+  els.taskPriorityFilter.addEventListener("change", loadTasks);
+  els.taskOverdueFilter.addEventListener("change", loadTasks);
 })();
