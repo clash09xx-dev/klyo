@@ -105,6 +105,10 @@ app.get("/q/:token", async (req, res) => {
 const publicDir = path.join(__dirname, "..", "public");
 app.use(express.static(publicDir));
 
+// Legal pages — serve explicitly before the SPA catch-all
+app.get("/terms",   (req, res) => res.sendFile(path.join(publicDir, "terms.html")));
+app.get("/privacy", (req, res) => res.sendFile(path.join(publicDir, "privacy.html")));
+
 // Anything that isn't an API call falls back to index.html so the
 // single-page app can handle its own client-side navigation.
 app.get(/^\/(?!api).*/, (req, res) => {
