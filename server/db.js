@@ -367,6 +367,9 @@ async function init() {
   // Users: WhatsApp phone
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS whatsapp_phone TEXT;`);
 
+  // Users: Terms acceptance timestamp
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ;`);
+
   // Workspaces: WhatsApp provider setting
   await pool.query(`ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS whatsapp_provider TEXT;`);
 

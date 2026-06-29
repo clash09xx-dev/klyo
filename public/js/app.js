@@ -298,8 +298,10 @@ function showLimitOrError(err, fallbackEl) {
 (async function init() {
   if (!API.token()) { window.location.href = "/login.html"; return; }
 
+  let currentUser;
   try {
     const { user } = await API.get("/auth/me");
+    currentUser = user;
     API.setUser(user);
     els.userAvatar.textContent = initials(user.name);
     els.userName.textContent = user.name;
@@ -328,6 +330,28 @@ function showLimitOrError(err, fallbackEl) {
   }
 
   handleGmailRedirectParam();
+
+  // Show terms acceptance modal for users who haven't accepted yet
+  if (!currentUser.terms_accepted_at) {
+    const overlay  = $("termsModalOverlay");
+    const checkbox = $("termsAcceptCheckbox");
+    const btn      = $("confirmTermsBtn");
+    if (overlay && checkbox && btn) {
+      overlay.classList.remove("hidden");
+      checkbox.addEventListener("change", () => { btn.disabled = !checkbox.checked; });
+      btn.addEventListener("click", async () => {
+        if (!checkbox.checked) return;
+        btn.disabled = true;
+        try {
+          await API.post("/auth/accept-terms", {});
+          overlay.classList.add("hidden");
+        } catch {
+          btn.disabled = false;
+        }
+      });
+    }
+  }
+
   if (!API.getUser().has_seen_onboarding) startTour();
 })();
 

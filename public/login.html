@@ -156,6 +156,12 @@
           <input id="signupPassword" type="password" autocomplete="new-password" placeholder="••••••••" required />
           <div class="field-hint" style="color:var(--text-dim);">Minimum 6 characters</div>
         </div>
+        <div class="field" style="margin-bottom:4px;">
+          <label style="display:flex; gap:9px; align-items:flex-start; cursor:pointer; font-size:13px; color:var(--text-dim);">
+            <input type="checkbox" id="termsCheckbox" required style="margin-top:2px; flex-shrink:0; accent-color:var(--accent-1);" />
+            <span>Akceptuję <a href="/terms" target="_blank" style="color:var(--accent-1);">Warunki Korzystania</a> i zapoznałem/am się z <a href="/privacy" target="_blank" style="color:var(--accent-1);">Polityką Prywatności</a></span>
+          </label>
+        </div>
         <div class="form-error" id="signupError"></div>
         <button class="btn btn-primary" type="submit" style="width:100%; padding:11px;" id="signupSubmitBtn" data-i18n="auth.create_account">Create account</button>
       </form>
