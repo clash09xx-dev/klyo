@@ -1,0 +1,1571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Klyo – Dashboard</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%226%22 fill=%22%234fd8ff%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Cloudflare Web Analytics — see public/login.html for setup notes. -->
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "YOUR_TOKEN_HERE"}'></script>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#061018" stroke-width="2.2" stroke-linecap="round"><path d="M2 12h4l2 7 4-14 3 9 2-5h5"/></svg>
+      </div>
+      <div class="brand-name">Kly<span>o</span></div>
+    </div>
+
+    <nav class="nav">
+      <a href="#" class="nav-item active" data-view="pipeline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 7 4-14 3 9 2-5h5"/></svg>
+        <span data-i18n="nav.pipeline">Pipeline</span>
+      </a>
+      <a href="#" class="nav-item" data-view="companies">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V7l8-4 8 4v14"/><path d="M9 21V11h4v10"/><path d="M3 11h18"/></svg>
+        <span data-i18n="nav.companies">Companies</span>
+      </a>
+      <a href="#" class="nav-item" data-view="quotes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h8l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
+        <span data-i18n="nav.quotes">Quotes</span>
+      </a>
+      <a href="#" class="nav-item" data-view="reminders">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        Reminders
+      </a>
+      <a href="#" class="nav-item" data-view="tasks">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        <span data-i18n="nav.tasks">Tasks</span>
+      </a>
+      <a href="#" class="nav-item" data-view="deals">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6.5L22 9.3l-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2 2 9.3l7-0.8z"/></svg>
+        <span data-i18n="nav.deals">Deals</span>
+      </a>
+      <a href="#" class="nav-item" data-view="clients">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span data-i18n="nav.clients">Clients</span>
+      </a>
+      <a href="#" class="nav-item" data-view="products">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <span data-i18n="nav.products">Products</span>
+      </a>
+      <a href="#" class="nav-item" data-view="calendar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span data-i18n="nav.calendar">Calendar</span>
+      </a>
+      <a href="#" class="nav-item" data-view="history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+        <span data-i18n="nav.history">History</span>
+      </a>
+      <a href="#" class="nav-item" data-view="team">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5"/><circle cx="17.5" cy="8.5" r="2.4"/><path d="M16.2 13.7c2.6.4 4.3 2.2 4.3 5"/></svg>
+        <span data-i18n="nav.team">Team</span>
+      </a>
+      <a href="#" class="nav-item hidden" data-view="platform" id="platformNavItem" style="border-top:1px solid var(--border-soft); margin-top:8px; padding-top:14px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Platform
+      </a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="user-chip">
+        <div class="avatar" id="userAvatar">?</div>
+        <div class="user-meta">
+          <div class="user-name" id="userName">—</div>
+          <div class="user-role" id="userRole">—</div>
+        </div>
+      </div>
+      <a href="#" class="nav-item" id="appearanceBtn" style="margin-top:6px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>
+        <span data-i18n="nav.settings">Settings</span>
+      </a>
+      <a href="#" class="nav-item" id="signOutBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        <span data-i18n="settings.sign_out">Sign out</span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="viewTitle">Pipeline</h1>
+        <div class="topbar-sub" id="viewSub">Every client, connected by name, contact details, and history.</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:center;">
+        <div class="search-box" id="searchBoxWrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.8-3.8"/></svg>
+          <input id="searchInput" type="text" data-i18n-placeholder="ui.search_contacts" placeholder="Search name, email, phone, company…" />
+        </div>
+        <button class="btn btn-ghost btn-sm" id="importContactsBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3" transform="rotate(180 12 9)"/></svg>
+          <span data-i18n="ui.import_csv">Import CSV</span>
+        </button>
+        <input type="file" id="importContactsFile" accept=".csv,.xlsx,.xls,text/csv" style="display:none;" />
+        <button class="btn btn-ghost btn-sm" id="exportContactsBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span data-i18n="ui.export_csv">Export CSV</span>
+        </button>
+        <button class="btn btn-primary" id="addContactBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span data-i18n="ui.new_contact">New contact</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="hidden" id="billingBanner" style="display:flex; align-items:center; justify-content:space-between; gap:16px; background:linear-gradient(160deg, var(--surface), var(--bg-soft)); border:1px solid var(--border); border-radius:var(--radius); padding:14px 18px; margin-bottom:20px;">
+        <div>
+          <strong id="billingBannerTitle" style="font-size:13.5px;">Your free trial is active</strong>
+          <div class="muted" id="billingBannerSub" style="font-size:12.5px; margin-top:2px;"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="upgradeBtn">Upgrade now</button>
+      </div>
+
+      <!-- PIPELINE VIEW -->
+      <section id="pipelineView">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="label"><span class="dot"></span><span data-i18n="ui.stat_total">Total contacts</span></div>
+            <div class="value" id="statTotal">0</div>
+            <svg class="spark" id="sparkTotal" width="90" height="28"></svg>
+          </div>
+          <div class="stat-card">
+            <div class="label"><span class="dot" style="background:var(--lead)"></span><span data-i18n="ui.stat_leads">Leads</span></div>
+            <div class="value" id="statLeads">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label"><span class="dot" style="background:var(--negotiating)"></span><span data-i18n="ui.stat_negotiating">In negotiation</span></div>
+            <div class="value" id="statNegotiating">0</div>
+          </div>
+          <div class="stat-card" id="offersStatCard">
+            <div class="label"><span class="dot" style="background:var(--customer)"></span><span data-i18n="ui.stat_offers">Offers sent (30d)</span></div>
+            <div class="value" id="statOffers">0</div>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <select id="filterStatus">
+            <option value="" data-i18n="ui.all_stages">All stages</option>
+            <option value="lead" data-i18n="ui.stage_lead">Lead</option>
+            <option value="contacted" data-i18n="ui.stage_contacted">Contacted</option>
+            <option value="negotiating" data-i18n="ui.stage_negotiating">Negotiating</option>
+            <option value="customer" data-i18n="ui.stage_customer">Customer</option>
+            <option value="lost" data-i18n="ui.stage_lost">Lost</option>
+          </select>
+          <select id="filterTheme"><option value="" data-i18n="ui.all_themes">All themes</option></select>
+          <select id="filterOwner"><option value="" data-i18n="ui.all_owners">All owners</option></select>
+          <div class="spacer"></div>
+          <span class="muted" id="resultCount"></span>
+        </div>
+
+        <div class="table-card">
+          <table id="contactsTable">
+            <thead>
+              <tr>
+                <th data-i18n="ui.col_name">Name</th>
+                <th data-i18n="ui.col_contact">Contact</th>
+                <th data-i18n="ui.col_company">Company</th>
+                <th data-i18n="ui.col_theme">Theme</th>
+                <th data-i18n="ui.col_stage">Stage</th>
+                <th data-i18n="ui.col_owner">Owner</th>
+              </tr>
+            </thead>
+            <tbody id="contactsBody"></tbody>
+          </table>
+          <div class="empty-state hidden" id="emptyState">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 7 4-14 3 9 2-5h5"/></svg>
+            <h3 data-i18n="ui.empty_contacts">No contacts yet</h3>
+            <p data-i18n="ui.empty_contacts_sub">Add your first client to start tracking leads, sending AI-drafted offers, and watching the pipeline move.</p>
+            <button class="btn btn-primary" id="emptyAddBtn" data-i18n="ui.empty_add_contact">Add a contact</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TEAM VIEW -->
+      <section id="teamView" class="hidden">
+        <div class="table-card hidden" id="inviteCard" style="padding:18px; margin-bottom:16px;">
+          <div class="label" style="font-size:12px; color:var(--text-dim); margin-bottom:8px;" data-i18n="ui.invite_teammates">Invite teammates</div>
+          <p class="muted" style="font-size:13px; margin-bottom:10px;" data-i18n="ui.invite_sub">Share this code — anyone who signs up with it joins your workspace instead of creating a new one.</p>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <code class="mono" id="inviteCodeValue" style="font-size:16px; padding:8px 12px; background:var(--bg-soft); border:1px solid var(--border-soft); border-radius:var(--radius-sm);">—</code>
+            <button class="btn btn-sm" id="copyInviteBtn" data-i18n="ui.copy">Copy</button>
+            <button class="btn btn-sm btn-ghost" id="regenInviteBtn" data-i18n="ui.regenerate">Regenerate</button>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <table>
+            <thead><tr><th data-i18n="ui.col_name">Name</th><th data-i18n="ui.col_email">Email</th><th data-i18n="ui.col_role">Role</th><th style="width:40px;"></th></tr></thead>
+            <tbody id="teamBody"></tbody>
+          </table>
+        </div>
+
+        <div class="hidden" id="performanceCard" style="margin-top:16px;">
+          <div class="filter-bar">
+            <div class="section-title" style="margin:0; flex:1;" data-i18n="ui.perf_title">Performance (last 30 days)</div>
+          </div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="ui.col_teammate">Teammate</th><th data-i18n="ui.col_leads">Leads</th><th data-i18n="ui.col_offers">Offers</th><th data-i18n="ui.col_quotes">Quotes</th><th data-i18n="ui.col_quotes_won">Quotes won</th>
+                  <th data-i18n="ui.col_calls">Calls</th><th data-i18n="ui.col_meetings">Meetings</th><th data-i18n="ui.col_contacted">Clients contacted</th>
+                </tr>
+              </thead>
+              <tbody id="performanceBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMPANIES VIEW -->
+      <section id="companiesView" class="hidden">
+        <div class="filter-bar">
+          <div class="search-box" style="width:320px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.8-3.8"/></svg>
+            <input id="companySearchInput" type="text" data-i18n-placeholder="ui.search_companies" placeholder="Search companies…" />
+          </div>
+          <div class="spacer"></div>
+          <button class="btn btn-ghost btn-sm" id="exportCompaniesBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span data-i18n="ui.export_csv">Export CSV</span>
+          </button>
+          <button class="btn btn-primary btn-sm" id="addCompanyBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span data-i18n="ui.new_company">New company</span>
+          </button>
+        </div>
+        <div class="table-card">
+          <table>
+            <thead><tr><th data-i18n="ui.col_company">Company</th><th data-i18n="ui.col_industry">Industry</th><th data-i18n="ui.col_contacts">Contacts</th></tr></thead>
+            <tbody id="companiesBody"></tbody>
+          </table>
+          <div class="empty-state hidden" id="companiesEmptyState">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V7l8-4 8 4v14"/><path d="M9 21V11h4v10"/></svg>
+            <h3 data-i18n="ui.empty_companies">No companies yet</h3>
+            <p data-i18n="ui.empty_companies_sub">Add a company, then link contacts to it as the owner, supervisor, or any other decision-maker.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- QUOTES VIEW -->
+      <section id="quotesView" class="hidden">
+        <div class="filter-bar">
+          <select id="quoteStatusFilter">
+            <option value="" data-i18n="ui.all_statuses">All statuses</option>
+            <option value="draft" data-i18n="ui.status_draft">Draft</option>
+            <option value="sent" data-i18n="ui.status_sent">Sent</option>
+            <option value="accepted" data-i18n="ui.status_accepted">Accepted</option>
+            <option value="declined" data-i18n="ui.status_declined">Declined</option>
+          </select>
+          <div class="spacer"></div>
+          <button class="btn btn-ghost btn-sm" id="manageProductsBtn" data-i18n="ui.manage_catalog">Manage catalog</button>
+          <button class="btn btn-primary btn-sm" id="addQuoteBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span data-i18n="ui.new_quote">New quote</span>
+          </button>
+        </div>
+        <div class="table-card">
+          <table>
+            <thead><tr><th data-i18n="ui.col_title">Title</th><th data-i18n="ui.col_for">For</th><th data-i18n="ui.col_total">Total</th><th data-i18n="ui.col_status">Status</th><th data-i18n="ui.col_updated">Updated</th></tr></thead>
+            <tbody id="quotesBody"></tbody>
+          </table>
+          <div class="empty-state hidden" id="quotesEmptyState">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h8l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg>
+            <h3 data-i18n="ui.empty_quotes">No quotes yet</h3>
+            <p data-i18n="ui.empty_quotes_sub">Build a tailored, line-item quote for a specific customer instead of a one-size-fits-all email.</p>
+            <button class="btn btn-primary" id="quotesEmptyAddBtn" data-i18n="ui.build_quote">Build a quote</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- REMINDERS VIEW -->
+      <section id="remindersView" class="hidden">
+        <div class="table-card">
+          <table>
+            <thead><tr><th data-i18n="ui.col_contact">Contact</th><th data-i18n="ui.col_product">Product / service</th><th data-i18n="ui.col_purchased">Purchased</th><th data-i18n="ui.col_due">Due</th><th></th></tr></thead>
+            <tbody id="remindersBody"></tbody>
+          </table>
+          <div class="empty-state hidden" id="remindersEmptyState">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+            <h3 data-i18n="ui.empty_reminders">Nothing due right now</h3>
+            <p data-i18n="ui.empty_reminders_sub">When a product with a service interval gets purchased (via an accepted quote), it'll show up here automatically once it's due.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TASKS VIEW -->
+      <section id="tasksView" class="hidden">
+        <div class="filter-bar">
+          <select id="taskAssigneeFilter"><option value="" data-i18n="ui.all_members">All members</option></select>
+          <select id="taskStatusFilter">
+            <option value="" data-i18n="ui.all_statuses">All statuses</option>
+            <option value="todo" data-i18n="ui.task_todo">To do</option>
+            <option value="in_progress" data-i18n="ui.task_in_progress">In progress</option>
+            <option value="done" data-i18n="ui.task_done">Done</option>
+          </select>
+          <select id="taskPriorityFilter">
+            <option value="" data-i18n="ui.all_priorities">All priorities</option>
+            <option value="high" data-i18n="ui.priority_high">High</option>
+            <option value="medium" data-i18n="ui.priority_medium">Medium</option>
+            <option value="low" data-i18n="ui.priority_low">Low</option>
+          </select>
+          <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; cursor:pointer;">
+            <input type="checkbox" id="taskOverdueFilter" /> <span data-i18n="ui.overdue_only">Overdue only</span>
+          </label>
+          <div class="spacer"></div>
+          <button class="btn btn-primary btn-sm" id="addTaskBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span data-i18n="ui.new_task">New task</span>
+          </button>
+        </div>
+
+        <div id="tasksListWrap">
+          <table class="data-table" id="tasksTable">
+            <thead>
+              <tr>
+                <th style="width:28px;"></th>
+                <th data-i18n="ui.col_task">Task</th>
+                <th data-i18n="ui.col_assigned">Assigned to</th>
+                <th data-i18n="ui.col_linked">Linked to</th>
+                <th data-i18n="ui.col_due">Due</th>
+                <th data-i18n="ui.col_priority">Priority</th>
+                <th style="width:40px;"></th>
+              </tr>
+            </thead>
+            <tbody id="tasksBody"></tbody>
+          </table>
+          <div class="empty-state hidden" id="tasksEmptyState">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            <h3 data-i18n="ui.empty_tasks">No tasks yet</h3>
+            <p data-i18n="ui.empty_tasks_sub">Create tasks and assign them to team members.</p>
+            <button class="btn btn-primary" id="tasksEmptyAddBtn" data-i18n="ui.create_first_task">Create first task</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- DEALS VIEW -->
+      <section id="dealsView" class="hidden">
+        <div class="filter-bar">
+          <select id="dealStageFilter"><option value="" data-i18n="ui.all_stages">All stages</option></select>
+          <select id="dealAssigneeFilter"><option value="" data-i18n="ui.all_owners">All owners</option></select>
+          <select id="dealStatusFilter">
+            <option value="" data-i18n="ui.all_open_won">Open + Won</option>
+            <option value="open" data-i18n="ui.open_only">Open only</option>
+            <option value="won" data-i18n="deals.status_won">Won</option>
+            <option value="lost" data-i18n="deals.status_lost">Lost</option>
+          </select>
+          <div class="spacer"></div>
+          <button class="btn btn-ghost btn-sm" id="manageStagesBtn" data-i18n="ui.manage_stages">Manage stages</button>
+          <button class="btn btn-primary btn-sm" id="addDealBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span data-i18n="ui.new_deal">New deal</span>
+          </button>
+        </div>
+
+        <!-- Pipeline board (one column per stage) -->
+        <div id="dealsBoardWrap" style="overflow-x:auto; padding-bottom:12px;">
+          <div id="dealsBoard" style="display:flex; gap:12px; min-width:max-content; align-items:flex-start;"></div>
+        </div>
+
+        <div class="empty-state hidden" id="dealsEmptyState">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6.5L22 9.3l-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2 2 9.3l7-0.8z"/></svg>
+          <h3 data-i18n="ui.empty_deals">No deals yet</h3>
+          <p data-i18n="ui.empty_deals_sub">Track every sales opportunity from first contact to closed deal.</p>
+          <button class="btn btn-primary" id="dealsEmptyAddBtn" data-i18n="ui.add_first_deal">Add your first deal</button>
+        </div>
+      </section>
+
+      <!-- HISTORY VIEW -->
+      <section id="historyView" class="hidden">
+        <div class="filter-bar">
+          <select id="historyUserFilter"><option value="" data-i18n="ui.all_members">All team members</option></select>
+          <select id="historyTypeFilter">
+            <option value="" data-i18n="ui.all_types">All activity types</option>
+            <option value="contact_created" data-i18n="ui.activity_contact_created">Contact added</option>
+            <option value="contact_updated" data-i18n="ui.activity_contact_updated">Contact updated</option>
+            <option value="status_change" data-i18n="ui.activity_status_change">Stage change</option>
+            <option value="offer_drafted" data-i18n="ui.activity_offer_drafted">AI offer drafted</option>
+            <option value="call_logged" data-i18n="ui.activity_call_logged">Call logged</option>
+            <option value="meeting_logged" data-i18n="ui.activity_meeting_logged">Meeting logged</option>
+            <option value="note_logged" data-i18n="ui.activity_note_logged">Note logged</option>
+          </select>
+          <div class="spacer"></div>
+          <span class="muted" id="historyCount" style="font-size:12.5px;"></span>
+        </div>
+        <div class="table-card">
+          <div class="timeline" id="historyTimeline" style="padding:16px 20px;"></div>
+          <div class="empty-state hidden" id="historyEmptyState">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+            <h3 data-i18n="ui.empty_history">No activity yet</h3>
+            <p data-i18n="ui.empty_history_sub">Every time a contact is added, updated, or an email is sent, it'll appear here.</p>
+          </div>
+          <div style="padding:12px 20px; display:none;" id="historyLoadMoreWrap">
+            <button class="btn btn-ghost btn-sm" id="historyLoadMoreBtn" style="width:100%;" data-i18n="ui.load_more">Load more</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PLATFORM (DEVELOPER) DASHBOARD — hidden unless you're the platform admin -->
+      <section id="platformView" class="hidden">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="label"><span class="dot"></span>Total workspaces</div>
+            <div class="value" id="platTotalWorkspaces">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label"><span class="dot" style="background:var(--customer)"></span>Active subscriptions</div>
+            <div class="value" id="platActive">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label"><span class="dot" style="background:var(--lead)"></span>On trial</div>
+            <div class="value" id="platTrial">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label"><span class="dot" style="background:var(--accent-2)"></span>Estimated MRR</div>
+            <div class="value" id="platMrr">$0</div>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <span class="muted" id="platSecondaryStats">—</span>
+        </div>
+
+        <div class="section-title">Site visits <span class="muted" style="text-transform:none; letter-spacing:0; font-size:11px;">(built-in counter — approximate, not bot-filtered)</span></div>
+        <div class="stat-grid" style="margin-bottom:20px;">
+          <div class="stat-card">
+            <div class="label"><span class="dot"></span>Today</div>
+            <div class="value" id="platViewsToday">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label"><span class="dot" style="background:var(--accent-2)"></span>Last 7 days</div>
+            <div class="value" id="platViews7d">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label"><span class="dot" style="background:var(--customer)"></span>Last 30 days</div>
+            <div class="value" id="platViews30d">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label"><span class="dot" style="background:var(--lead)"></span>All time</div>
+            <div class="value" id="platViewsTotal">0</div>
+          </div>
+        </div>
+
+        <div class="section-title">Workspaces</div>
+        <div class="table-card" style="margin-bottom:20px;">
+          <table>
+            <thead><tr><th>Business</th><th>Plan</th><th>Tier</th><th>Users</th><th>Contacts</th><th>Signed up</th><th></th></tr></thead>
+            <tbody id="platWorkspacesBody"></tbody>
+          </table>
+        </div>
+
+        <div class="section-title">Users</div>
+        <div class="table-card">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Workspace</th><th>Role</th><th>Via</th><th>Joined</th></tr></thead>
+            <tbody id="platUsersBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- CLIENTS VIEW -->
+      <section id="clientsView" class="hidden">
+        <div class="filter-bar">
+          <input type="text" id="clientsSearch" class="input" placeholder="Search clients…" style="max-width:260px;" data-i18n-placeholder="clients.search">
+          <select id="clientsOwnerFilter">
+            <option value="" data-i18n="ui.all_owners">All owners</option>
+          </select>
+          <div class="spacer"></div>
+          <span class="muted" id="clientsCount"></span>
+        </div>
+        <div class="table-card">
+          <table id="clientsTable">
+            <thead>
+              <tr>
+                <th data-i18n="ui.col_name">Name</th>
+                <th data-i18n="ui.col_company">Company</th>
+                <th data-i18n="ui.col_owner">Owner</th>
+                <th>Revenue</th>
+                <th>Quotes</th>
+                <th>Last purchase</th>
+              </tr>
+            </thead>
+            <tbody id="clientsBody"></tbody>
+          </table>
+          <div class="empty-state hidden" id="clientsEmptyState">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+            <h3>No clients yet</h3>
+            <p>Clients appear here when a contact reaches <strong>Customer</strong> stage or has an accepted quote.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRODUCTS VIEW -->
+      <section id="productsView" class="hidden">
+        <div class="filter-bar">
+          <input type="text" id="productsSearch" class="input" placeholder="Search products…" style="max-width:240px;">
+          <select id="productsCategoryFilter">
+            <option value="">All categories</option>
+          </select>
+          <div class="spacer"></div>
+          <button class="btn btn-primary btn-sm" id="addProductViewBtn">+ Add product</button>
+        </div>
+        <div class="table-card">
+          <table id="productsTable">
+            <thead>
+              <tr>
+                <th></th>
+                <th data-i18n="ui.col_name">Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Currency</th>
+                <th>Unit</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="productsBody"></tbody>
+          </table>
+          <div class="empty-state hidden" id="productsEmptyState">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            <h3>No products yet</h3>
+            <p>Add your first product or service to start building quotes.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- CALENDAR VIEW -->
+      <section id="calendarView" class="hidden">
+        <div class="filter-bar" style="align-items:center;">
+          <button class="btn btn-ghost btn-sm" id="calPrevBtn">‹</button>
+          <h3 id="calMonthLabel" style="margin:0 12px; font-size:15px; font-weight:600;"></h3>
+          <button class="btn btn-ghost btn-sm" id="calNextBtn">›</button>
+          <button class="btn btn-ghost btn-sm" id="calTodayBtn" style="margin-left:8px;" data-i18n="calendar.today">Today</button>
+          <div class="spacer"></div>
+          <button class="btn btn-primary btn-sm" id="addEventBtn" data-i18n="calendar.add_event_btn">+ Add event</button>
+        </div>
+        <div id="calendarDayHeader" style="display:grid; grid-template-columns:repeat(7,1fr); gap:1px; margin-bottom:1px;">
+          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">SUN</div>
+          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">MON</div>
+          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">TUE</div>
+          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">WED</div>
+          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">THU</div>
+          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">FRI</div>
+          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">SAT</div>
+        </div>
+        <div id="calendarGrid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:1px; background:var(--border-soft); border-radius:10px; overflow:hidden;">
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div class="overlay hidden" id="productModalOverlay">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-head">
+      <h2 id="productModalTitle">Add product</h2>
+      <button class="modal-close" id="closeProductModalBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="productForm">
+      <p id="productFormError" class="form-error"></p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="field" style="grid-column:1/-1;">
+          <label>Name *</label>
+          <input type="text" id="productName" class="input" required>
+        </div>
+        <div class="field" style="grid-column:1/-1;">
+          <label>Description</label>
+          <textarea id="productDesc" class="input" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label>Price</label>
+          <input type="number" id="productPrice" class="input" min="0" step="0.01" value="0">
+        </div>
+        <div class="field">
+          <label>Currency</label>
+          <select id="productCurrency" class="input">
+            <option value="USD">USD $</option>
+            <option value="EUR">EUR €</option>
+            <option value="GBP">GBP £</option>
+            <option value="PLN">PLN zł</option>
+            <option value="CAD">CAD $</option>
+            <option value="AUD">AUD $</option>
+            <option value="CHF">CHF Fr</option>
+            <option value="JPY">JPY ¥</option>
+            <option value="SEK">SEK kr</option>
+            <option value="NOK">NOK kr</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Unit</label>
+          <input type="text" id="productUnit" class="input" placeholder="unit, hr, kg…" value="unit">
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <input type="text" id="productCategory" class="input" placeholder="e.g. Software, Service…">
+        </div>
+        <div class="field" style="grid-column:1/-1;">
+          <label>Image URL</label>
+          <input type="url" id="productImageUrl" class="input" placeholder="https://…">
+        </div>
+        <div class="field" style="grid-column:1/-1;">
+          <label>Service interval (months)</label>
+          <input type="number" id="productInterval" class="input" min="1" placeholder="Leave blank if none">
+        </div>
+        <div class="field" style="grid-column:1/-1;">
+          <label>Notes / details</label>
+          <textarea id="productNotes" class="input" rows="3" placeholder="Internal notes, specs, terms…"></textarea>
+        </div>
+      </div>
+      <input type="hidden" id="productId">
+      <div class="modal-foot" style="margin-top:16px;">
+        <button type="button" class="btn btn-ghost" id="cancelProductBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="productSubmitBtn">Add product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- CALENDAR EVENT MODAL -->
+<div class="overlay hidden" id="eventModalOverlay">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-head">
+      <h2 id="eventModalTitle">Add event</h2>
+      <button class="modal-close" id="closeEventModalBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="eventForm">
+      <p id="eventFormError" class="form-error"></p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="field" style="grid-column:1/-1;">
+          <label><span data-i18n="calendar.title_field">Title</span> *</label>
+          <input type="text" id="eventTitle" class="input" required>
+        </div>
+        <div class="field">
+          <label><span data-i18n="calendar.start">Start</span> *</label>
+          <input type="datetime-local" id="eventStart" class="input" required>
+        </div>
+        <div class="field">
+          <label data-i18n="calendar.end">End</label>
+          <input type="datetime-local" id="eventEnd" class="input">
+        </div>
+        <div class="field" style="grid-column:1/-1;">
+          <label data-i18n="calendar.description">Description</label>
+          <textarea id="eventDesc" class="input" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label data-i18n="calendar.color">Color</label>
+          <input type="color" id="eventColor" class="input" value="#6366f1" style="height:38px; padding:2px 4px;">
+        </div>
+        <div class="field">
+          <label data-i18n="calendar.link_contact">Link to contact</label>
+          <select id="eventContactSelect" class="input">
+            <option value="" data-i18n="common.none">None</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="calendar.link_deal">Link to deal</label>
+          <select id="eventDealSelect" class="input">
+            <option value="" data-i18n="common.none">None</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-i18n="calendar.all_day">All day</label>
+          <input type="checkbox" id="eventAllDay" style="margin-top:10px; width:20px; height:20px;">
+        </div>
+      </div>
+      <input type="hidden" id="eventId">
+      <div class="modal-foot" style="margin-top:16px;">
+        <button type="button" class="btn btn-ghost" id="cancelEventBtn" data-i18n="common.cancel">Cancel</button>
+        <button type="button" class="btn btn-danger btn-sm hidden" id="deleteEventBtn" data-i18n="common.delete">Delete</button>
+        <button type="submit" class="btn btn-primary" id="eventSubmitBtn" data-i18n="calendar.add_event">Add event</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- GRANT FREE ACCESS MODAL (Platform dashboard only) -->
+<div class="overlay hidden" id="grantModalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Grant free access</h2>
+      <button class="modal-close" id="closeGrantModalBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <p class="muted" style="font-size:12.5px; margin-bottom:14px;">For <strong id="grantWorkspaceName">—</strong>. This bypasses billing entirely — no Stripe charge happens.</p>
+    <div class="field">
+      <label for="grantTierSelect">Tier</label>
+      <select id="grantTierSelect">
+        <option value="personal">Personal</option>
+        <option value="plus">Plus</option>
+        <option value="pro">Pro</option>
+        <option value="ultra" selected>Ultra</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="grantDurationSelect">For how long</label>
+      <select id="grantDurationSelect">
+        <option value="1_month">1 month</option>
+        <option value="3_months">3 months</option>
+        <option value="6_months">6 months</option>
+        <option value="1_year">1 year</option>
+        <option value="forever" selected>Forever</option>
+      </select>
+    </div>
+    <div class="form-error" id="grantFormError"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="cancelGrantBtn">Cancel</button>
+      <button type="button" class="btn btn-primary" id="confirmGrantBtn">Grant access</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ADD / EDIT CONTACT MODAL -->
+<div class="overlay hidden" id="contactModalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="contactModalTitle">New contact</h2>
+      <button class="modal-close" data-close-modal>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="contactForm">
+      <input type="hidden" id="contactId" />
+      <div class="field-row">
+        <div class="field">
+          <label for="cFirstName">First name</label>
+          <input id="cFirstName" type="text" placeholder="Jamie" required />
+        </div>
+        <div class="field">
+          <label for="cLastName">Last name</label>
+          <input id="cLastName" type="text" placeholder="Lawson" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="cEmail">Email</label>
+          <input id="cEmail" type="email" placeholder="jamie@client.com" />
+        </div>
+        <div class="field">
+          <label for="cPhone">Phone</label>
+          <input id="cPhone" type="text" placeholder="+1 555 010 2030" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="cCompanySelect">Company</label>
+          <select id="cCompanySelect"><option value="">No company</option></select>
+          <div id="newCompanyInlineWrap" class="hidden" style="margin-top:6px; display:flex; gap:6px;">
+            <input id="newCompanyInlineInput" type="text" placeholder="New company name" style="flex:1;" />
+            <button type="button" class="btn btn-sm btn-primary" id="createInlineCompanyBtn">Create</button>
+            <button type="button" class="btn btn-sm btn-ghost" id="cancelInlineCompanyBtn">✕</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="cTheme">Marketing theme</label>
+          <input id="cTheme" type="text" placeholder="Spring promo, referral, etc." />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="cTitle">Title at company</label>
+          <input id="cTitle" type="text" placeholder="Owner, Supervisor, Employee…" />
+        </div>
+        <div class="field" style="display:flex; align-items:flex-end; padding-bottom:10px;">
+          <label style="display:flex; align-items:center; gap:8px; margin:0; cursor:pointer;">
+            <input id="cDecisionMaker" type="checkbox" style="width:auto;" />
+            Decision-maker (offers/quotes can be addressed to them)
+          </label>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="cStatus">Stage</label>
+          <select id="cStatus">
+            <option value="lead">Lead</option>
+            <option value="contacted">Contacted</option>
+            <option value="negotiating">Negotiating</option>
+            <option value="customer">Customer</option>
+            <option value="lost">Lost</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cOwner">Owner</label>
+          <select id="cOwner"></select>
+          <div class="muted" style="font-size:11.5px; margin-top:5px;">Whoever on your team is responsible for following up with this client.</div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="cNotes">Notes</label>
+        <textarea id="cNotes" placeholder="Anything your team should know before reaching out."></textarea>
+      </div>
+      <div class="form-error" id="contactFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn-primary" id="contactSubmitBtn">Add contact</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- CONTACT DETAIL / OFFER PANEL -->
+<div class="panel-overlay hidden" id="panelOverlay">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h2 class="panel-title" id="panelName">—</h2>
+        <div class="panel-sub" id="panelSub">—</div>
+      </div>
+      <button class="modal-close" data-close-panel>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div id="panelBadge" style="margin-top:10px;"></div>
+
+    <div class="detail-grid">
+      <div class="detail-item"><div class="k">Email</div><div class="v mono" id="panelEmail">—</div></div>
+      <div class="detail-item"><div class="k">Phone</div><div class="v mono" id="panelPhone">—</div></div>
+      <div class="detail-item"><div class="k">Company</div><div class="v" id="panelCompany">—</div></div>
+      <div class="detail-item"><div class="k">Marketing theme</div><div class="v" id="panelTheme">—</div></div>
+      <div class="detail-item"><div class="k">Added</div><div class="v mono" id="panelCreated">—</div></div>
+    </div>
+
+    <div id="panelNotesWrap" class="hidden">
+      <div class="section-title" data-i18n="panel.notes">Notes</div>
+      <div class="notes-box" id="panelNotes"></div>
+    </div>
+
+    <div class="section-title" data-i18n="panel.send_offer">Send an offer</div>
+    <div class="composer">
+      <div class="composer-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4L12 2z"/></svg>
+        AI offer composer
+      </div>
+      <div class="field">
+        <label for="offerInstructions">Key points to include (optional)</label>
+        <textarea id="offerInstructions" placeholder="e.g. 15% loyalty discount, mention our new service launching in July" style="min-height:54px;"></textarea>
+      </div>
+      <button class="scan-btn" id="generateOfferBtn" data-i18n="panel.generate_offer">Generate with AI</button>
+
+      <div class="draft-box" id="draftBox">
+        <div class="field" style="margin-top:14px;">
+          <label for="draftSubject">Subject</label>
+          <input id="draftSubject" type="text" />
+        </div>
+        <div class="field">
+          <label for="draftBody">Email body</label>
+          <textarea id="draftBody"></textarea>
+        </div>
+        <div class="modal-actions" style="justify-content:flex-start;">
+          <button class="btn btn-primary" id="sendOfferBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            <span data-i18n="panel.send_email">Send email</span>
+          </button>
+          <button class="btn btn-ghost" id="discardDraftBtn" data-i18n="common.cancel">Discard</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title" data-i18n="panel.quotes_section">Quotes</div>
+    <div id="panelQuotesList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;"></div>
+    <button class="btn btn-ghost btn-sm" id="newQuoteForContactBtn" style="width:100%;">+ Build a quote for this contact</button>
+
+    <div class="section-title" data-i18n="panel.timeline">Timeline</div>
+    <form class="activity-log-form" id="activityLogForm">
+      <select id="activityLogType">
+        <option value="call_logged" data-i18n="panel.call">Call</option>
+        <option value="meeting_logged" data-i18n="panel.meeting">Meeting</option>
+        <option value="note_logged" data-i18n="panel.note">Note</option>
+      </select>
+      <input id="activityLogDescription" type="text" placeholder="Quick note about it…" />
+      <button type="submit" class="btn btn-sm" data-i18n="panel.add_log">Log</button>
+    </form>
+    <div class="timeline" id="panelTimeline"></div>
+    <div id="panelTimelineEmpty" class="hidden" style="text-align:center; padding:16px 0; font-size:12.5px; color:var(--text-faint);" data-i18n="panel.no_activity">No activity yet</div>
+
+    <div class="modal-actions" style="justify-content:space-between; margin-top:26px;">
+      <button class="btn btn-danger btn-sm" id="deleteContactBtn">Delete contact</button>
+      <button class="btn btn-ghost btn-sm" id="editContactBtn" data-i18n="panel.edit">Edit details</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- COMPANY MODAL -->
+<div class="overlay hidden" id="companyModalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="companyModalTitle">New company</h2>
+      <button class="modal-close" id="closeCompanyModalBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="companyForm">
+      <input type="hidden" id="companyId" />
+      <div class="field">
+        <label for="coName">Company name</label>
+        <input id="coName" type="text" placeholder="Lawson & Co." required />
+      </div>
+      <div class="field">
+        <label for="coIndustry">Industry (optional)</label>
+        <input id="coIndustry" type="text" placeholder="Retail, healthcare, manufacturing…" />
+      </div>
+      <div class="field">
+        <label for="coNotes">Notes</label>
+        <textarea id="coNotes"></textarea>
+      </div>
+      <div class="form-error" id="companyFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="cancelCompanyBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="companySubmitBtn">Add company</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- COMPANY DETAIL PANEL -->
+<div class="panel-overlay hidden" id="companyPanelOverlay">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h2 class="panel-title" id="companyPanelName">—</h2>
+        <div class="panel-sub" id="companyPanelIndustry">—</div>
+      </div>
+      <button class="modal-close" id="closeCompanyPanelBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="hidden" id="companyPanelNotesWrap">
+      <div class="section-title">Notes</div>
+      <div class="notes-box" id="companyPanelNotes"></div>
+    </div>
+
+    <div class="section-title">People</div>
+    <div class="table-card" style="margin-bottom:16px;">
+      <table>
+        <thead><tr><th>Name</th><th>Title</th><th>Decision-maker</th></tr></thead>
+        <tbody id="companyContactsBody"></tbody>
+      </table>
+    </div>
+
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button class="btn btn-danger btn-sm" id="deleteCompanyBtn">Delete company</button>
+      <button class="btn btn-ghost btn-sm" id="editCompanyBtn">Edit details</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCTS / CATALOG MANAGER -->
+<div class="overlay hidden" id="productsModalOverlay">
+  <div class="modal" style="width:600px;">
+    <div class="modal-head">
+      <h2>Catalog</h2>
+      <button class="modal-close" id="closeProductsModalBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <p class="muted" style="font-size:12.5px; margin-bottom:12px;">What you sell — quotes are built from this list. Set a service interval on anything that needs recurring maintenance (e.g. annual calibration) to enable automatic reminders.</p>
+    <div style="display:flex; gap:8px; margin-bottom:10px; align-items:center;">
+      <input id="productCategoryFilter" type="text" placeholder="Filter by category…" style="flex:1; font-size:12.5px;" />
+      <span class="muted" style="font-size:12px;" id="productsCount"></span>
+    </div>
+    <div id="productsList" style="margin-bottom:14px;"></div>
+    <div class="product-row-add" style="background:var(--bg-soft); border-radius:var(--radius-sm); padding:8px; display:grid; grid-template-columns:1.6fr 70px 70px 90px 110px 28px; gap:6px; align-items:center;">
+      <input id="newProductName" type="text" placeholder="Name" />
+      <input id="newProductPrice" type="number" min="0" step="0.01" placeholder="Price" />
+      <input id="newProductUnit" type="text" placeholder="unit" />
+      <input id="newProductInterval" type="number" min="0" placeholder="Svc mo." title="Months between required service" />
+      <input id="newProductCategory" type="text" placeholder="Category" />
+      <button class="btn btn-sm btn-primary" id="addProductBtn" style="padding:6px 10px;">+</button>
+    </div>
+    <div class="form-error" id="oldProductFormError"></div>
+  </div>
+</div>
+
+<!-- QUOTE BUILDER -->
+<div class="overlay hidden" id="quoteModalOverlay">
+  <div class="modal quote-modal">
+    <div class="modal-head">
+      <h2 id="quoteModalTitle">New quote</h2>
+      <button class="modal-close" id="closeQuoteModalBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="quoteForm">
+      <input type="hidden" id="quoteId" />
+      <div class="field-row">
+        <div class="field">
+          <label for="quoteContactSelect">For contact</label>
+          <select id="quoteContactSelect" required></select>
+        </div>
+        <div class="field">
+          <label for="quoteTitleInput">Title</label>
+          <input id="quoteTitleInput" type="text" placeholder="Q3 service package" />
+        </div>
+      </div>
+
+      <div class="field hidden" id="quoteRecipientsField">
+        <label>Send to (decision-makers at this company)</label>
+        <div class="recipient-checklist" id="quoteRecipientsList"></div>
+      </div>
+
+      <div class="field">
+        <label for="quoteIntroInput">Intro message (optional)</label>
+        <textarea id="quoteIntroInput" placeholder="A short note to open the email with" style="min-height:54px;"></textarea>
+      </div>
+
+      <div class="field" style="margin-bottom:10px;">
+        <label for="quoteCurrencySelect">Currency</label>
+        <select id="quoteCurrencySelect" style="max-width:200px;">
+          <option value="USD">USD $</option>
+          <option value="EUR">EUR €</option>
+          <option value="GBP">GBP £</option>
+          <option value="PLN">PLN zł</option>
+          <option value="CAD">CAD $</option>
+          <option value="AUD">AUD $</option>
+          <option value="CHF">CHF Fr</option>
+          <option value="JPY">JPY ¥</option>
+          <option value="SEK">SEK kr</option>
+          <option value="NOK">NOK kr</option>
+          <option value="DKK">DKK kr</option>
+          <option value="CZK">CZK Kč</option>
+          <option value="HUF">HUF Ft</option>
+          <option value="RON">RON lei</option>
+          <option value="INR">INR ₹</option>
+          <option value="BRL">BRL R$</option>
+          <option value="MXN">MXN $</option>
+          <option value="SGD">SGD $</option>
+        </select>
+      </div>
+
+      <div class="section-title">Line items</div>
+      <div class="quote-line-headers">
+        <span></span><span>Product</span><span>Description</span><span>Qty</span><span>Unit price</span><span>Disc. %</span><span>Total</span><span></span>
+      </div>
+      <div class="quote-items" id="quoteItemsContainer"></div>
+      <button type="button" class="btn btn-ghost btn-sm" id="addLineItemBtn">+ Add line item</button>
+
+      <div class="quote-totals">
+        <div><span>Subtotal</span><span class="mono" id="quoteSubtotalValue">$0.00</span></div>
+        <div><span>Discount</span><span class="mono" id="quoteDiscountValue">−$0.00</span></div>
+        <div class="quote-total-final"><span>Total</span><span class="mono" id="quoteTotalValue">$0.00</span></div>
+      </div>
+
+      <div class="form-error" id="quoteFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="quoteCancelBtn">Cancel</button>
+        <button type="button" class="btn" id="quoteSaveDraftBtn">Save draft</button>
+        <button type="submit" class="btn btn-primary" id="quoteSendBtn">Save & preview</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- QUOTE DETAIL PANEL (view an existing quote) -->
+<div class="panel-overlay hidden" id="quotePanelOverlay">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h2 class="panel-title" id="quotePanelTitle">—</h2>
+        <div class="panel-sub" id="quotePanelFor">—</div>
+      </div>
+      <button class="modal-close" id="closeQuotePanelBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="quotePanelBadge" style="margin-top:10px;"></div>
+    <div class="section-title">Line items</div>
+    <div id="quotePanelItems" style="font-size:13px; display:flex; flex-direction:column; gap:6px;"></div>
+    <div class="quote-totals">
+      <div class="quote-total-final"><span>Total</span><span class="mono" id="quotePanelTotal">$0.00</span></div>
+    </div>
+    <div class="modal-actions" style="justify-content:space-between; flex-wrap:wrap; gap:8px;">
+      <button class="btn btn-danger btn-sm" id="deleteQuoteBtn">Delete</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a class="btn btn-ghost btn-sm" id="quotePrintLink" href="#" target="_blank" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print / PDF
+        </a>
+        <button class="btn btn-ghost btn-sm hidden" id="editQuoteBtn">Edit</button>
+        <button class="btn btn-ghost btn-sm hidden" id="declineQuoteBtn">Mark declined</button>
+        <button class="btn btn-primary btn-sm hidden" id="acceptQuoteBtn">Mark accepted</button>
+        <button class="btn btn-primary btn-sm hidden" id="sendQuoteFromPanelBtn">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APPEARANCE SETTINGS MODAL -->
+<div class="overlay hidden" id="appearanceModalOverlay">
+  <div class="modal" style="max-height:88vh; overflow-y:auto;">
+    <div class="modal-head">
+      <h2>Settings</h2>
+      <button class="modal-close" id="closeAppearanceBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Gmail card lives here in Settings (admin only — shown/hidden by JS) -->
+    <div class="hidden" id="gmailCard">
+      <div class="section-title" style="margin-top:0;">Email sending</div>
+      <p class="muted" style="font-size:12.5px; margin-bottom:6px;" id="gmailDescription">
+        Connect your Gmail account so offers send from your real address — no shared password involved.
+      </p>
+      <p class="muted" style="font-size:11.5px; margin-bottom:10px; color:var(--text-faint);">
+        Google may show an "unverified app" warning — this is expected while our app is awaiting Google's review. Click <strong>Advanced → Go to klyolabs.com</strong> to proceed safely.
+      </p>
+      <div style="display:flex; gap:10px; align-items:center; margin-bottom:6px;">
+        <button class="btn btn-primary btn-sm" id="connectGmailBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 6l8 7 8-7"/></svg>
+          Connect Gmail
+        </button>
+        <span class="hidden" id="gmailConnectedChip" style="display:flex; align-items:center; gap:10px;">
+          <span class="badge customer"><span class="ping"></span><span id="gmailConnectedEmail">—</span></span>
+          <button class="btn btn-sm btn-ghost" id="disconnectGmailBtn">Disconnect</button>
+        </span>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:0;" data-i18n="settings.profile">Profile</div>
+    <div class="field">
+      <label for="profileNameInput" data-i18n="settings.display_name">Your name</label>
+      <input id="profileNameInput" type="text" />
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <div class="mono muted" id="profileEmailDisplay" style="font-size:13px; padding:4px 0;">—</div>
+    </div>
+    <div class="form-error" id="profileNameError"></div>
+    <button class="btn btn-sm" id="saveProfileNameBtn" data-i18n="settings.save_profile">Save name</button>
+
+    <div class="section-title">Plan</div>
+    <div class="detail-item" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div class="k">Current plan</div>
+        <div class="v" id="settingsCurrentPlan">—</div>
+        <div class="muted" id="settingsPlanDetail" style="font-size:11.5px; margin-top:4px;"></div>
+      </div>
+      <button class="btn btn-sm btn-primary" id="settingsUpgradeBtn">Upgrade plan</button>
+    </div>
+    <button class="btn btn-sm btn-danger hidden" id="settingsCancelBtn" style="width:100%; margin-bottom:6px;">Cancel subscription</button>
+    <button class="btn btn-sm hidden" id="settingsResumeBtn" style="width:100%; margin-bottom:6px;">Resume subscription</button>
+
+    <div class="section-title" data-i18n="settings.password">Password</div>
+    <p class="muted hidden" id="googleOnlyNotice" style="font-size:12.5px; margin-bottom:10px;">
+      You signed in with Google and don't have a password yet — you can set one below as a backup way to sign in.
+    </p>
+    <div class="field hidden" id="currentPasswordField">
+      <label for="currentPasswordInput">Current password</label>
+      <input id="currentPasswordInput" type="password" />
+    </div>
+    <div class="field">
+      <label for="newPasswordInput" id="newPasswordLabel">New password</label>
+      <input id="newPasswordInput" type="password" placeholder="At least 6 characters" />
+    </div>
+    <div class="form-error" id="passwordError"></div>
+    <button class="btn btn-sm" id="savePasswordBtn" data-i18n="settings.save_password">Update password</button>
+
+    <div class="section-title">Appearance</div>
+    <div class="label" style="font-size:12px; color:var(--text-dim); margin-bottom:4px;">Color theme</div>
+    <p class="muted" style="font-size:12.5px; margin-bottom:4px;">This is just for you — your teammates can each pick their own.</p>
+    <div class="theme-grid" id="themeGrid">
+      <button type="button" class="theme-swatch" data-theme-key="signal"><span class="puck"></span><span>Signal</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="ember"><span class="puck"></span><span>Ember</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="meadow"><span class="puck"></span><span>Meadow</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="nebula"><span class="puck"></span><span>Nebula</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="arctic"><span class="puck"></span><span>Arctic</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="slate"><span class="puck"></span><span>Slate</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="midnight"><span class="puck"></span><span>Midnight</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="sand"><span class="puck"></span><span>Sand</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="cobalt"><span class="puck"></span><span>Cobalt</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="graphite"><span class="puck"></span><span>Graphite</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="forest"><span class="puck"></span><span>Forest</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="pearl"><span class="puck"></span><span>Pearl</span></button>
+    </div>
+
+    <div class="section-title" data-i18n="settings.language">Language</div>
+    <p class="muted" style="font-size:12.5px; margin-bottom:10px;" data-i18n="settings.language_sub">Choose the language for the Klyo interface.</p>
+    <select id="appLangPicker" style="font-size:13px; padding:7px 10px; margin-bottom:4px;">
+      <option value="en">English</option>
+      <option value="pl">Polski</option>
+      <option value="es">Español</option>
+      <option value="fr">Français</option>
+      <option value="de">Deutsch</option>
+    </select>
+
+    <div id="currencySettingsSection" class="hidden">
+      <div class="section-title">Organization</div>
+      <div class="field">
+        <label for="workspaceCurrencySelect">Default currency for quotes</label>
+        <select id="workspaceCurrencySelect">
+          <option value="USD">USD — US Dollar</option>
+          <option value="EUR">EUR — Euro</option>
+          <option value="GBP">GBP — British Pound</option>
+          <option value="PLN">PLN — Polish Złoty</option>
+          <option value="CHF">CHF — Swiss Franc</option>
+          <option value="CAD">CAD — Canadian Dollar</option>
+          <option value="AUD">AUD — Australian Dollar</option>
+          <option value="JPY">JPY — Japanese Yen</option>
+          <option value="SEK">SEK — Swedish Krona</option>
+          <option value="NOK">NOK — Norwegian Krone</option>
+          <option value="DKK">DKK — Danish Krone</option>
+          <option value="CZK">CZK — Czech Koruna</option>
+          <option value="HUF">HUF — Hungarian Forint</option>
+          <option value="RON">RON — Romanian Leu</option>
+          <option value="BGN">BGN — Bulgarian Lev</option>
+          <option value="HRK">HRK — Croatian Kuna</option>
+          <option value="INR">INR — Indian Rupee</option>
+          <option value="BRL">BRL — Brazilian Real</option>
+          <option value="MXN">MXN — Mexican Peso</option>
+          <option value="SGD">SGD — Singapore Dollar</option>
+        </select>
+      </div>
+      <div class="form-error" id="currencyError"></div>
+      <button class="btn btn-sm" id="saveCurrencyBtn" data-i18n="settings.save_currency">Save currency</button>
+    </div>
+
+    <div class="section-title">WhatsApp reminders</div>
+    <p class="muted" style="font-size:12.5px; margin-bottom:10px;">Get WhatsApp messages when a task reminder fires. Enter your number in international format (e.g. +48123456789).</p>
+    <div class="field" style="margin-bottom:8px;">
+      <label>Your WhatsApp number</label>
+      <input type="tel" id="whatsappPhoneInput" class="input" placeholder="+1 555 000 0000" style="max-width:260px;">
+    </div>
+    <button class="btn btn-sm" id="saveWhatsappBtn">Save number</button>
+    <div class="form-error" id="whatsappError"></div>
+
+    <div id="aiContextSection" class="hidden">
+      <div class="section-title" data-i18n="settings.ai_context">AI email assistant</div>
+      <p class="muted" style="font-size:12.5px; margin-bottom:8px;" data-i18n="settings.ai_context_sub">Tell the AI about your business — industry, tone, key services, what makes you different. It uses this every time it drafts an offer email.</p>
+      <textarea id="aiContextInput" data-i18n-placeholder="settings.ai_context_sub" style="min-height:90px; width:100%; margin-bottom:8px; font-size:13px;"></textarea>
+      <div class="form-error" id="aiContextError"></div>
+      <button class="btn btn-sm" id="saveAiContextBtn" data-i18n="settings.save_ai">Save</button>
+    </div>
+
+    <div class="section-title" data-i18n="settings.join_org">Join another organization</div>
+    <p class="muted" style="font-size:12.5px; margin-bottom:10px;" data-i18n="settings.join_sub">Have an invite code from a colleague? Enter it below to switch into their workspace. You'll leave your current workspace.</p>
+    <div style="display:flex; gap:8px; margin-bottom:6px;">
+      <input id="joinInviteCodeInput" type="text" placeholder="Invite code (e.g. A1B2C3D4E5)" style="flex:1; text-transform:uppercase; letter-spacing:0.05em;" />
+      <button class="btn btn-sm btn-primary" id="joinWorkspaceBtn" data-i18n="settings.join_btn">Join</button>
+    </div>
+    <div class="form-error" id="joinWorkspaceError"></div>
+
+    <div class="section-title" data-i18n="settings.help">Help</div>
+    <button class="btn btn-ghost" id="replayTourBtn" style="width:100%;" data-i18n="ui.replay_tour">Replay the welcome tour</button>
+
+    <div style="margin-top:24px; display:flex; gap:16px; padding-top:16px; border-top:1px solid var(--border-soft);">
+      <a onclick="window.open('/terms','_blank'); return false;" href="/terms" style="font-size:12px; color:var(--text-faint); text-decoration:none; cursor:pointer;" onmouseover="this.style.color='var(--text-dim)'" onmouseout="this.style.color='var(--text-faint)'" data-i18n="settings.legal_terms">Terms of service</a>
+      <a onclick="window.open('/privacy','_blank'); return false;" href="/privacy" style="font-size:12px; color:var(--text-faint); text-decoration:none; cursor:pointer;" onmouseover="this.style.color='var(--text-dim)'" onmouseout="this.style.color='var(--text-faint)'" data-i18n="settings.legal_privacy">Privacy policy</a>
+    </div>
+  </div>
+</div>
+
+<!-- TERMS ACCEPTANCE MODAL (existing users) -->
+<div class="overlay hidden" id="termsModalOverlay" style="z-index:1100;">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-head">
+      <h2>Zanim przejdziesz dalej</h2>
+    </div>
+    <div style="padding:0 24px 24px;">
+      <p style="margin:0 0 16px; color:var(--text-dim); font-size:14px; line-height:1.6;">Zaktualizowaliśmy nasze dokumenty prawne. Prosimy o zapoznanie się z nimi i potwierdzenie akceptacji przed dalszym korzystaniem z aplikacji.</p>
+      <div style="display:flex; gap:16px; margin-bottom:20px; font-size:14px;">
+        <a href="/terms" target="_blank" style="color:var(--accent-1); display:flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Warunki Korzystania
+        </a>
+        <a href="/privacy" target="_blank" style="color:var(--accent-1); display:flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Polityka Prywatności
+        </a>
+      </div>
+      <label style="display:flex; gap:10px; align-items:flex-start; cursor:pointer; margin-bottom:20px; font-size:14px; color:var(--text);">
+        <input type="checkbox" id="termsAcceptCheckbox" style="margin-top:2px; flex-shrink:0; accent-color:var(--accent-1);" />
+        <span>Akceptuję <a href="/terms" target="_blank" style="color:var(--accent-1);">Warunki Korzystania</a> i zapoznałem/am się z <a href="/privacy" target="_blank" style="color:var(--accent-1);">Polityką Prywatności</a></span>
+      </label>
+      <button class="btn btn-primary" id="confirmTermsBtn" style="width:100%;" disabled>Akceptuję i kontynuuję</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING / UPGRADE MODAL -->
+<div class="overlay hidden" id="pricingModalOverlay">
+  <div class="modal pricing-modal">
+    <div class="modal-head">
+      <h2>Choose a plan</h2>
+      <button class="modal-close" id="closePricingBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div style="display:flex; gap:8px; margin-bottom:16px;" id="billingModeToggle">
+      <button type="button" class="btn btn-sm btn-primary" data-mode="subscription" style="flex:1;">Monthly (auto-renews)</button>
+      <button type="button" class="btn btn-sm btn-ghost" data-mode="one_time" style="flex:1;">One month only</button>
+    </div>
+    <div class="pricing-grid" id="pricingGrid"></div>
+  </div>
+</div>
+
+<!-- ONBOARDING TOUR MODAL -->
+<div class="overlay hidden" id="tourOverlay">
+  <div class="modal tour-modal" id="tourModal">
+    <div class="tour-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 7 4-14 3 9 2-5h5"/></svg>
+    </div>
+    <h2 class="tour-step-title" id="tourTitle">—</h2>
+    <p class="tour-step-body" id="tourBody">—</p>
+    <div class="tour-dots" id="tourDots"></div>
+    <div class="tour-actions">
+      <button class="btn btn-ghost btn-sm" id="tourSkipBtn">Skip</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-sm hidden" id="tourBackBtn">Back</button>
+        <button class="btn btn-primary btn-sm" id="tourNextBtn">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="help-fab" id="helpFab" title="Replay the welcome tour">?</button>
+
+<!-- QUOTE PREVIEW (shown before anything actually sends) -->
+<div class="overlay hidden" id="quotePreviewOverlay">
+  <div class="modal" style="width:560px;">
+    <div class="modal-head">
+      <h2>Preview before sending</h2>
+      <button class="modal-close" id="closeQuotePreviewBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <p class="muted" style="font-size:12.5px; margin-bottom:14px;">This is exactly what will be sent — nothing goes out until you confirm.</p>
+    <div class="field">
+      <label>To</label>
+      <div class="mono" id="quotePreviewTo" style="font-size:13px; padding:8px 0;">—</div>
+    </div>
+    <div class="field">
+      <label for="quotePreviewSubject">Subject</label>
+      <input id="quotePreviewSubject" type="text" />
+    </div>
+    <div class="field">
+      <label for="quotePreviewBody">Body</label>
+      <textarea id="quotePreviewBody" style="min-height:220px;"></textarea>
+    </div>
+    <div class="form-error" id="quotePreviewError"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="backToEditQuoteBtn">Back to edit</button>
+      <button type="button" class="btn btn-primary" id="confirmSendQuoteBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        Send now
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD / EDIT TASK MODAL -->
+<div class="overlay hidden" id="taskModalOverlay">
+  <div class="modal" style="width:500px;">
+    <div class="modal-head">
+      <h2 id="taskModalTitle">New task</h2>
+      <button class="modal-close" id="closeTaskModalBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="taskForm">
+      <input type="hidden" id="taskId" />
+      <div class="field">
+        <label for="taskTitle">Task</label>
+        <input id="taskTitle" type="text" placeholder="e.g. Send contract to Lawson & Co." required />
+      </div>
+      <div class="field">
+        <label for="taskDescription">Description <span class="muted">(optional)</span></label>
+        <textarea id="taskDescription" placeholder="Any extra context…" style="min-height:56px;"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="taskAssignedSelect">Assign to</label>
+          <select id="taskAssignedSelect"><option value="">Unassigned</option></select>
+        </div>
+        <div class="field">
+          <label for="taskPrioritySelect">Priority</label>
+          <select id="taskPrioritySelect">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="taskDueDate">Due date</label>
+          <input id="taskDueDate" type="date" />
+        </div>
+        <div class="field">
+          <label for="taskStatusSelect">Status</label>
+          <select id="taskStatusSelect">
+            <option value="todo">To do</option>
+            <option value="in_progress">In progress</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="taskContactSelect">Contact <span class="muted">(optional)</span></label>
+          <select id="taskContactSelect"><option value="">None</option></select>
+        </div>
+        <div class="field">
+          <label for="taskDealSelect">Deal <span class="muted">(optional)</span></label>
+          <select id="taskDealSelect"><option value="">None</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="taskReminderAt">WhatsApp reminder <span class="muted">(optional)</span></label>
+        <input id="taskReminderAt" type="datetime-local" />
+        <small class="muted" style="font-size:11px;">You'll receive a WhatsApp message at this time if your number is set in Settings.</small>
+      </div>
+      <div class="form-error" id="taskFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="cancelTaskBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="taskSubmitBtn">Add task</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD / EDIT DEAL MODAL -->
+<div class="overlay hidden" id="dealModalOverlay">
+  <div class="modal" style="width:540px;">
+    <div class="modal-head">
+      <h2 id="dealModalTitle">New deal</h2>
+      <button class="modal-close" id="closeDealModalBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="dealForm">
+      <input type="hidden" id="dealId" />
+      <div class="field">
+        <label for="dealTitle">Deal title</label>
+        <input id="dealTitle" type="text" placeholder="e.g. Office fit-out — Lawson & Co." required />
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="dealContactSelect">Contact</label>
+          <select id="dealContactSelect"><option value="">No contact</option></select>
+        </div>
+        <div class="field">
+          <label for="dealCompanySelect">Company</label>
+          <select id="dealCompanySelect"><option value="">No company</option></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="dealStageSelect">Stage</label>
+          <select id="dealStageSelect"><option value="">No stage</option></select>
+        </div>
+        <div class="field">
+          <label for="dealAssignedSelect">Assigned to</label>
+          <select id="dealAssignedSelect"><option value="">Unassigned</option></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="dealProductSelect">Product</label>
+          <select id="dealProductSelect"><option value="">No product</option></select>
+        </div>
+        <div class="field">
+          <label for="dealQty">Quantity</label>
+          <input id="dealQty" type="number" min="0" step="any" value="1" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="dealValue">Deal value</label>
+          <input id="dealValue" type="number" min="0" step="0.01" placeholder="0.00" />
+        </div>
+        <div class="field">
+          <label for="dealCloseDate">Expected close</label>
+          <input id="dealCloseDate" type="date" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="dealNotes">Notes</label>
+        <textarea id="dealNotes" placeholder="Any context on this opportunity…" style="min-height:64px;"></textarea>
+      </div>
+      <div class="form-error" id="dealFormError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="cancelDealBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="dealSubmitBtn">Add deal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- DEAL DETAIL PANEL -->
+<div class="panel-overlay hidden" id="dealPanelOverlay">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h2 class="panel-title" id="dealPanelTitle">—</h2>
+        <div class="panel-sub" id="dealPanelSub">—</div>
+      </div>
+      <button class="modal-close" id="closeDealPanelBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="dealPanelStageBadge" style="margin-top:10px;"></div>
+    <div class="detail-grid" id="dealPanelDetails" style="margin-top:14px;"></div>
+    <div id="dealPanelNotesWrap" class="hidden">
+      <div class="section-title">Notes</div>
+      <div class="notes-box" id="dealPanelNotes"></div>
+    </div>
+    <div class="modal-actions" style="justify-content:space-between; margin-top:24px;">
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-sm btn-ghost" id="markDealWonBtn">Mark won</button>
+        <button class="btn btn-sm btn-ghost" id="markDealLostBtn">Mark lost</button>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-danger btn-sm" id="deleteDealBtn">Delete</button>
+        <button class="btn btn-ghost btn-sm" id="editDealBtn">Edit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MANAGE STAGES MODAL -->
+<div class="overlay hidden" id="stagesModalOverlay">
+  <div class="modal" style="width:480px;">
+    <div class="modal-head">
+      <h2>Pipeline stages</h2>
+      <button class="modal-close" id="closeStagesModalBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <p class="muted" style="font-size:12.5px; margin-bottom:12px;">Drag to reorder. Changes apply to all deals.</p>
+    <div id="stagesList" style="display:flex; flex-direction:column; gap:6px; margin-bottom:14px;"></div>
+    <div style="display:flex; gap:8px;">
+      <input id="newStageName" type="text" placeholder="New stage name" style="flex:1;" />
+      <input id="newStageColor" type="color" value="#6366f1" style="width:40px; padding:2px; border-radius:6px; cursor:pointer;" />
+      <button class="btn btn-primary btn-sm" id="addStageBtn">Add</button>
+    </div>
+    <div class="form-error" id="stagesFormError"></div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

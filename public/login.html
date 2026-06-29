@@ -279,7 +279,7 @@
       API.setUser(result.user);
       // sync language pref if server has one
       if (result.user?.language) KlyoI18n.setLang(result.user.language, true);
-      window.location.href = "/index.html";
+      window.location.href = "/app";
     } catch (err) {
       loginError.textContent = err.message || "Could not sign in. Please try again.";
     } finally {
@@ -318,7 +318,7 @@
       const result = await API.post("/auth/register", payload);
       API.setToken(result.token);
       API.setUser(result.user);
-      window.location.href = "/index.html";
+      window.location.href = "/app";
     } catch (err) {
       signupError.textContent = err.message || "Could not create account. Please try again.";
     } finally {
@@ -372,7 +372,7 @@
         const { user } = await API.get("/auth/me");
         API.setUser(user);
         if (user?.language) KlyoI18n.setLang(user.language, true);
-        window.location.href = "/index.html";
+        window.location.href = "/app";
       } catch {
         API.clearToken();
         document.getElementById("welcomeError").textContent = "Could not complete Google sign-in. Please try again.";
@@ -395,7 +395,11 @@
   (async function boot() {
     const handledByGoogle = await handleGoogleRedirect();
     if (!handledByGoogle && API.token()) {
-      window.location.href = "/index.html";
+      window.location.href = "/app";
+    }
+    // Auto-show signup tab if accessed via /signup URL or ?signup param
+    if (!handledByGoogle && (window.location.pathname === "/signup" || new URLSearchParams(window.location.search).get("signup") === "1")) {
+      show("signup");
     }
   })();
 </script>

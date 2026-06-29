@@ -290,18 +290,18 @@ router.get("/google/callback", async (req, res) => {
   const appUrl = process.env.APP_URL || "http://localhost:4000";
   const { code, state, error } = req.query;
 
-  if (error) return res.redirect(`${appUrl}/login.html?google_error=cancelled`);
+  if (error) return res.redirect(`${appUrl}/login?google_error=cancelled`);
 
   let payload;
   try {
     payload = jwt.verify(state, process.env.JWT_SECRET);
   } catch {
-    return res.redirect(`${appUrl}/login.html?google_error=expired`);
+    return res.redirect(`${appUrl}/login?google_error=expired`);
   }
 
   try {
     const profile = await getGoogleProfile(code);
-    if (!profile.email) return res.redirect(`${appUrl}/login.html?google_error=no_email`);
+    if (!profile.email) return res.redirect(`${appUrl}/login?google_error=no_email`);
     const normalizedEmail = profile.email.toLowerCase();
 
     const existing = await db.query("SELECT * FROM users WHERE email = $1", [normalizedEmail]);
@@ -318,13 +318,13 @@ router.get("/google/callback", async (req, res) => {
 
       if (payload.mode === "join" && payload.invite_code) {
         const ws = await db.query("SELECT id FROM workspaces WHERE invite_code = $1", [payload.invite_code.toUpperCase()]);
-        if (!ws.rows.length) return res.redirect(`${appUrl}/login.html?google_error=bad_invite`);
+        if (!ws.rows.length) return res.redirect(`${appUrl}/login?google_error=bad_invite`);
         workspaceId = ws.rows[0].id;
         role = "member";
         try {
           await assertWithinLimit(workspaceId, "seats");
         } catch (err) {
-          if (err instanceof LimitExceededError) return res.redirect(`${appUrl}/login.html?google_error=seat_limit`);
+          if (err instanceof LimitExceededError) return res.redirect(`${appUrl}/login?google_error=seat_limit`);
           throw err;
         }
       } else {
@@ -347,10 +347,10 @@ router.get("/google/callback", async (req, res) => {
     }
 
     const token = signToken({ id: user.id, name: user.name, email: user.email, role: user.role, workspace_id: user.workspace_id });
-    res.redirect(`${appUrl}/login.html?google_token=${token}`);
+    res.redirect(`${appUrl}/login?google_token=${token}`);
   } catch (err) {
     console.error("Google sign-in failed:", err.message);
-    res.redirect(`${appUrl}/login.html?google_error=failed`);
+    res.redirect(`${appUrl}/login?google_error=failed`);
   }
 });
 

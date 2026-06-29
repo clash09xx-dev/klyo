@@ -122,8 +122,7 @@ workspace with a 7-day trial.
 
 ## 3. Bringing your dad in — free, unlimited access
 
-Have him register a normal account at `/login.html` → **Create an
-account** → **Create a business** → his own business name. This creates
+Have him register a normal account at `/signup` → **Create a business** → his own business name. This creates
 his own fully separate workspace.
 
 Then, on the server, run:
@@ -299,20 +298,46 @@ once you have even one or two paying customers.
 
 ## 10. Running ads / selling it publicly
 
-The app itself doesn't need anything more to start selling — `/login.html`
-*is* your signup page. Point ads or a landing page straight at
-`https://your-domain.com/login.html`.
+The public landing page at `https://klyolabs.com` explains what Klyo is and
+has clear **Sign up** and **Log in** buttons. Point ads straight there.
 
-One thing worth building before you spend real ad money: a proper marketing
-page (what Klyo does, pricing, a screenshot, a clear "Start free trial"
-button) at `your-domain.com/`, since the current root page is the app
-itself, not a sales pitch. That's a content/design task more than an
-engineering one — happy to help with it separately once you're ready.
+- `/` — public marketing/landing page (no login required)
+- `/signup` — signup page
+- `/login` — login page
+- `/app` — the CRM itself (requires login; redirects to `/login` if not authenticated)
+- `/privacy` — privacy policy (public)
+- `/terms` — terms of service (public)
 
-**Ready to actually launch?** Skip the rest of this file and follow
-[`PUBLISHING.md`](./PUBLISHING.md) top to bottom — it's the same
-information as sections 1–9 above, but reordered into one no-skipping
-checklist instead of split across topics.
+---
+
+## 11. Google OAuth verification — domain ownership
+
+For Google to approve the OAuth consent screen (required for Gmail integration
+and "Sign in with Google" to work for all users, not just test accounts), you
+must verify that you own `klyolabs.com` in Google Search Console **using the
+same Google account** that owns the Google Cloud project.
+
+**Steps:**
+
+1. Go to [search.google.com/search-console](https://search.google.com/search-console/)
+   and sign in with the **same Google account** used in Google Cloud Console.
+2. Click **Add property** → choose **Domain** → enter `klyolabs.com`.
+3. Google will give you a DNS TXT record to add. Add it via your domain
+   registrar's DNS settings (e.g. Namecheap, GoDaddy, Cloudflare).
+4. Click **Verify** — can take up to 24 h for DNS to propagate.
+5. Once verified, go back to Google Cloud → **APIs & Services → OAuth consent
+   screen** and ensure your **Authorized domain** is set to `klyolabs.com`.
+6. Submit for **verification** (required for sensitive scopes like
+   `gmail.send` to work for all users). You will need to supply:
+   - A link to your Privacy Policy: `https://klyolabs.com/privacy`
+   - A link to your Terms of Service: `https://klyolabs.com/terms`
+   - A YouTube demo video showing the OAuth flow and how Gmail is used
+   - A clear explanation that Gmail is used only to send emails the user
+     composes and approves (never to read the inbox)
+
+**Important:** the homepage `https://klyolabs.com` must be publicly accessible
+(no login required) and clearly explain the app's purpose. This is already
+the case — the landing page is public and describes Klyo's Gmail use.
 
 ---
 
@@ -336,17 +361,19 @@ klyo/
 │   └── scripts/
 │       └── comp-workspace.js  # CLI: give one workspace permanent free access
 ├── public/
-│   ├── index.html             # dashboard shell
+│   ├── index.html             # public landing page (no login required)
+│   ├── app.html               # CRM dashboard shell (requires login)
 │   ├── login.html             # sign in / create business / join with invite code / Google
+│   ├── privacy.html           # privacy policy (public)
+│   ├── terms.html             # terms of service (public)
 │   ├── css/style.css
-│   └── js/                    # api.js, app.js
+│   └── js/                    # api.js, app.js, i18n.js
 ├── .env.example
 └── package.json
 ```
 
 ## What's deliberately not built yet
 
-- **A public marketing/pricing landing page** — see section 10.
 - **A "super-admin" panel** to manage every customer workspace from one
   screen (right now, comping someone is a one-line terminal command — fine
   for a handful of accounts, worth building properly once you have many).

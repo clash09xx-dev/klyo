@@ -296,7 +296,7 @@ function showLimitOrError(err, fallbackEl) {
 
 /* ---------- auth guard + boot ---------- */
 (async function init() {
-  if (!API.token()) { window.location.href = "/login.html"; return; }
+  if (!API.token()) { window.location.href = "/login"; return; }
 
   let currentUser;
   try {
@@ -314,7 +314,7 @@ function showLimitOrError(err, fallbackEl) {
     if (els.appLangPicker) els.appLangPicker.value = KlyoI18n.getLang();
   } catch {
     API.clearToken();
-    window.location.href = "/login.html";
+    window.location.href = "/login";
     return;
   }
 
@@ -2662,7 +2662,7 @@ function wireEvents() {
   els.signOutBtn.addEventListener("click", (e) => {
     e.preventDefault();
     API.clearToken();
-    window.location.href = "/login.html";
+    window.location.href = "/login";
   });
 
   els.upgradeBtn.addEventListener("click", handleUpgradeClick);

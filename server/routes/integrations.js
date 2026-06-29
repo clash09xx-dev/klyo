@@ -49,14 +49,14 @@ router.get("/gmail/callback", async (req, res) => {
   const { code, state, error } = req.query;
 
   if (error) {
-    return res.redirect(`${appUrl}/index.html?gmail=cancelled`);
+    return res.redirect(`${appUrl}/app?gmail=cancelled`);
   }
 
   let payload;
   try {
     payload = jwt.verify(state, process.env.JWT_SECRET);
   } catch {
-    return res.redirect(`${appUrl}/index.html?gmail=error`);
+    return res.redirect(`${appUrl}/app?gmail=error`);
   }
 
   try {
@@ -65,10 +65,10 @@ router.get("/gmail/callback", async (req, res) => {
       "UPDATE workspaces SET gmail_email = $1, gmail_refresh_token = $2, gmail_connected_at = now() WHERE id = $3",
       [email, refreshToken, payload.workspace_id]
     );
-    res.redirect(`${appUrl}/index.html?gmail=connected`);
+    res.redirect(`${appUrl}/app?gmail=connected`);
   } catch (err) {
     console.error("Gmail connect failed:", err.message);
-    res.redirect(`${appUrl}/index.html?gmail=error`);
+    res.redirect(`${appUrl}/app?gmail=error`);
   }
 });
 

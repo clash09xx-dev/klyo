@@ -105,14 +105,20 @@ app.get("/q/:token", async (req, res) => {
 const publicDir = path.join(__dirname, "..", "public");
 app.use(express.static(publicDir));
 
-// Legal pages — serve explicitly before the SPA catch-all
+// Public pages — served explicitly so they are always accessible without login
+app.get("/",        (req, res) => res.sendFile(path.join(publicDir, "index.html")));
 app.get("/terms",   (req, res) => res.sendFile(path.join(publicDir, "terms.html")));
 app.get("/privacy", (req, res) => res.sendFile(path.join(publicDir, "privacy.html")));
+app.get("/login",   (req, res) => res.sendFile(path.join(publicDir, "login.html")));
+app.get("/signup",  (req, res) => res.sendFile(path.join(publicDir, "login.html")));
 
-// Anything that isn't an API call falls back to index.html so the
-// single-page app can handle its own client-side navigation.
+// CRM app — authenticated SPA served at /app (client-side auth guard in app.js)
+app.get("/app",     (req, res) => res.sendFile(path.join(publicDir, "app.html")));
+app.get(/^\/app\//, (req, res) => res.sendFile(path.join(publicDir, "app.html")));
+
+// Anything else (old /index.html bookmarks etc.) → redirect to login
 app.get(/^\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(publicDir, "index.html"));
+  res.redirect("/login");
 });
 
 const PORT = process.env.PORT || 4000;
