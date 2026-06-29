@@ -400,6 +400,8 @@
         join_sub: "Have an invite code from a colleague? Enter it below.",
         join_btn: "Join",
         help: "Help",
+        legal_terms: "Terms of service",
+        legal_privacy: "Privacy policy",
         sign_out: "Sign out",
       },
     },
@@ -794,6 +796,8 @@
         join_sub: "Masz kod zaproszenia od współpracownika? Wpisz go poniżej.",
         join_btn: "Dołącz",
         help: "Pomoc",
+        legal_terms: "Warunki korzystania",
+        legal_privacy: "Polityka prywatności",
         sign_out: "Wyloguj się",
       },
     },
@@ -880,7 +884,7 @@
       products: { title: "Productos", add: "Añadir producto", empty: "Sin productos", name: "Nombre", description: "Descripción", price: "Precio", unit: "Unidad", category: "Categoría", filter_category: "Filtrar por categoría…" },
       history: { title: "Historial", empty: "Sin actividad", filter_user: "Todos los miembros", filter_type: "Todos los tipos" },
       team: { title: "Equipo", invite_title: "Invitar compañeros", invite_sub: "Comparte este código para que se unan a tu espacio.", copy_code: "Copiar", regen_code: "Regenerar", role_viewer: "Observador", role_editor: "Editor", role_member: "Miembro", role_admin: "Admin", remove: "Eliminar" },
-      settings: { title: "Ajustes", profile: "Perfil", display_name: "Nombre mostrado", password: "Contraseña", current_password: "Contraseña actual", new_password: "Nueva contraseña", save_profile: "Guardar nombre", save_password: "Actualizar contraseña", theme: "Tema", language: "Idioma", language_sub: "Elige el idioma de la interfaz de Klyo.", currency: "Moneda predeterminada", currency_sub: "Usada por defecto al crear presupuestos.", save_currency: "Guardar moneda", ai_context: "Asistente de email IA", ai_context_sub: "Describe tu empresa — sector, tono, servicios clave.", save_ai: "Guardar", billing: "Facturación", join_org: "Unirse a otra organización", join_sub: "¿Tienes un código de invitación? Introdúcelo.", join_btn: "Unirse", help: "Ayuda", sign_out: "Cerrar sesión" },
+      settings: { title: "Ajustes", profile: "Perfil", display_name: "Nombre mostrado", password: "Contraseña", current_password: "Contraseña actual", new_password: "Nueva contraseña", save_profile: "Guardar nombre", save_password: "Actualizar contraseña", theme: "Tema", language: "Idioma", language_sub: "Elige el idioma de la interfaz de Klyo.", currency: "Moneda predeterminada", currency_sub: "Usada por defecto al crear presupuestos.", save_currency: "Guardar moneda", ai_context: "Asistente de email IA", ai_context_sub: "Describe tu empresa — sector, tono, servicios clave.", save_ai: "Guardar", billing: "Facturación", join_org: "Unirse a otra organización", join_sub: "¿Tienes un código de invitación? Introdúcelo.", join_btn: "Unirse", help: "Ayuda", legal_terms: "Términos de uso", legal_privacy: "Política de privacidad", sign_out: "Cerrar sesión" },
     },
 
     fr: {
@@ -940,7 +944,7 @@
       products: { title: "Produits", add: "Ajouter un produit", empty: "Aucun produit", name: "Nom", description: "Description", price: "Prix", unit: "Unité", category: "Catégorie", filter_category: "Filtrer par catégorie…" },
       history: { title: "Historique", empty: "Aucune activité", filter_user: "Tous les membres", filter_type: "Tous les types" },
       team: { title: "Équipe", invite_title: "Inviter des coéquipiers", invite_sub: "Partagez ce code pour rejoindre votre espace.", copy_code: "Copier", regen_code: "Regénérer", role_viewer: "Lecteur", role_editor: "Éditeur", role_member: "Membre", role_admin: "Admin", remove: "Retirer" },
-      settings: { title: "Paramètres", profile: "Profil", display_name: "Nom affiché", password: "Mot de passe", current_password: "Mot de passe actuel", new_password: "Nouveau mot de passe", save_profile: "Enregistrer le nom", save_password: "Mettre à jour", theme: "Thème", language: "Langue", language_sub: "Choisissez la langue de l'interface Klyo.", currency: "Devise par défaut", currency_sub: "Utilisée par défaut lors de la création de devis.", save_currency: "Enregistrer la devise", ai_context: "Assistant e-mail IA", ai_context_sub: "Décrivez votre activité — secteur, ton, services clés.", save_ai: "Enregistrer", billing: "Facturation", join_org: "Rejoindre une autre organisation", join_sub: "Vous avez un code d'invitation ? Saisissez-le.", join_btn: "Rejoindre", help: "Aide", sign_out: "Se déconnecter" },
+      settings: { title: "Paramètres", profile: "Profil", display_name: "Nom affiché", password: "Mot de passe", current_password: "Mot de passe actuel", new_password: "Nouveau mot de passe", save_profile: "Enregistrer le nom", save_password: "Mettre à jour", theme: "Thème", language: "Langue", language_sub: "Choisissez la langue de l'interface Klyo.", currency: "Devise par défaut", currency_sub: "Utilisée par défaut lors de la création de devis.", save_currency: "Enregistrer la devise", ai_context: "Assistant e-mail IA", ai_context_sub: "Décrivez votre activité — secteur, ton, services clés.", save_ai: "Enregistrer", billing: "Facturation", join_org: "Rejoindre une autre organisation", join_sub: "Vous avez un code d'invitation ? Saisissez-le.", join_btn: "Rejoindre", help: "Aide", legal_terms: "Conditions d'utilisation", legal_privacy: "Politique de confidentialité", sign_out: "Se déconnecter" },
     },
 
     de: {
@@ -1000,7 +1004,7 @@
       products: { title: "Produkte", add: "Produkt hinzufügen", empty: "Keine Produkte", name: "Name", description: "Beschreibung", price: "Preis", unit: "Einheit", category: "Kategorie", filter_category: "Nach Kategorie filtern…" },
       history: { title: "Verlauf", empty: "Keine Aktivität", filter_user: "Alle Mitglieder", filter_type: "Alle Typen" },
       team: { title: "Team", invite_title: "Teammitglieder einladen", invite_sub: "Teilen Sie diesen Code — jeder der sich damit anmeldet tritt Ihrem Bereich bei.", copy_code: "Kopieren", regen_code: "Neu generieren", role_viewer: "Betrachter", role_editor: "Bearbeiter", role_member: "Mitglied", role_admin: "Admin", remove: "Entfernen" },
-      settings: { title: "Einstellungen", profile: "Profil", display_name: "Anzeigename", password: "Passwort", current_password: "Aktuelles Passwort", new_password: "Neues Passwort", save_profile: "Namen speichern", save_password: "Passwort aktualisieren", theme: "Design", language: "Sprache", language_sub: "Wählen Sie die Sprache für die Klyo-Oberfläche.", currency: "Standardwährung", currency_sub: "Wird beim Erstellen neuer Angebote verwendet.", save_currency: "Währung speichern", ai_context: "KI-E-Mail-Assistent", ai_context_sub: "Beschreiben Sie Ihr Unternehmen — Branche, Ton, Hauptleistungen.", save_ai: "Speichern", billing: "Abrechnung", join_org: "Einer anderen Organisation beitreten", join_sub: "Haben Sie einen Einladungscode? Geben Sie ihn ein.", join_btn: "Beitreten", help: "Hilfe", sign_out: "Abmelden" },
+      settings: { title: "Einstellungen", profile: "Profil", display_name: "Anzeigename", password: "Passwort", current_password: "Aktuelles Passwort", new_password: "Neues Passwort", save_profile: "Namen speichern", save_password: "Passwort aktualisieren", theme: "Design", language: "Sprache", language_sub: "Wählen Sie die Sprache für die Klyo-Oberfläche.", currency: "Standardwährung", currency_sub: "Wird beim Erstellen neuer Angebote verwendet.", save_currency: "Währung speichern", ai_context: "KI-E-Mail-Assistent", ai_context_sub: "Beschreiben Sie Ihr Unternehmen — Branche, Ton, Hauptleistungen.", save_ai: "Speichern", billing: "Abrechnung", join_org: "Einer anderen Organisation beitreten", join_sub: "Haben Sie einen Einladungscode? Geben Sie ihn ein.", join_btn: "Beitreten", help: "Hilfe", legal_terms: "Nutzungsbedingungen", legal_privacy: "Datenschutzrichtlinie", sign_out: "Abmelden" },
     },
   };
 
