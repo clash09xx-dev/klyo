@@ -365,10 +365,8 @@ router.get("/:id/timeline", async (req, res) => {
   res.json({ events });
 });
 
-// POST /api/contacts/import — bulk import from CSV text body
-// Expects JSON: { csv: "...raw csv string..." }
-// Columns (first row = headers, case-insensitive):
-//   first_name, last_name, full_name, email, phone, company, status, notes, marketing_theme
+// POST /api/contacts/import — bulk import from CSV/TSV text body
+// Accepts column names from any major CRM — see COLUMN_ALIASES below.
 router.post("/import", async (req, res) => {
   const { csv } = req.body || {};
   if (!csv || typeof csv !== "string") return res.status(400).json({ error: "Send { csv: '...' } in the request body." });
@@ -376,23 +374,71 @@ router.post("/import", async (req, res) => {
   const lines = csv.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return res.status(400).json({ error: "CSV must have a header row and at least one data row." });
 
-  // Parse simple CSV (handles quoted fields with commas)
-  function parseCSVLine(line) {
+  // Auto-detect delimiter: semicolon, tab, or comma
+  const firstLine = lines[0];
+  const delim = (firstLine.split(";").length > firstLine.split(",").length)
+    ? ";"
+    : (firstLine.split("\t").length > firstLine.split(",").length ? "\t" : ",");
+
+  // Parse one CSV/TSV line respecting quoted fields
+  function parseLine(line) {
     const result = [];
     let cur = "";
     let inQuote = false;
     for (let i = 0; i < line.length; i++) {
       const ch = line[i];
-      if (ch === '"') { inQuote = !inQuote; continue; }
-      if (ch === "," && !inQuote) { result.push(cur.trim()); cur = ""; continue; }
+      if (ch === '"') {
+        if (inQuote && line[i + 1] === '"') { cur += '"'; i++; } // escaped quote
+        else inQuote = !inQuote;
+        continue;
+      }
+      if (ch === delim && !inQuote) { result.push(cur.trim()); cur = ""; continue; }
       cur += ch;
     }
     result.push(cur.trim());
     return result;
   }
 
-  const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().replace(/\s+/g, "_"));
-  const col = (name) => headers.indexOf(name);
+  // Map common CRM export column names → internal field names
+  const COLUMN_ALIASES = {
+    // full name
+    name: "full_name", contact: "full_name", contact_name: "full_name",
+    full_name: "full_name", fullname: "full_name", display_name: "full_name",
+    // first name
+    first_name: "first_name", firstname: "first_name", given_name: "first_name", forename: "first_name",
+    // last name
+    last_name: "last_name", lastname: "last_name", surname: "last_name", family_name: "last_name",
+    // email
+    email: "email", email_address: "email", e_mail: "email", mail: "email",
+    // phone
+    phone: "phone", phone_number: "phone", mobile: "phone", mobile_phone: "phone",
+    telephone: "phone", tel: "phone", cell: "phone", cell_phone: "phone",
+    // company
+    company: "company", company_name: "company", organization: "company", organisation: "company",
+    account: "company", account_name: "company", employer: "company",
+    // notes
+    notes: "notes", note: "notes", description: "notes", comments: "notes", comment: "notes",
+    // status
+    status: "status", lead_status: "status", contact_status: "status", stage: "status", lifecycle_stage: "status",
+  };
+
+  function normalizeHeader(h) {
+    const key = h.toLowerCase().trim()
+      .replace(/\s+/g, "_")         // spaces → underscore
+      .replace(/[^a-z0-9_]/g, "")  // strip non-alphanumeric
+      .replace(/_+/g, "_");         // collapse multiple underscores
+    return COLUMN_ALIASES[key] || key;
+  }
+
+  const rawHeaders = parseLine(lines[0]);
+  // Build a map: internal_field → column index (first occurrence wins)
+  const fieldIndex = {};
+  rawHeaders.forEach((h, i) => {
+    const field = normalizeHeader(h);
+    if (!(field in fieldIndex)) fieldIndex[field] = i;
+  });
+
+  const get = (row, field) => (fieldIndex[field] !== undefined ? (row[fieldIndex[field]] || "").trim() : "");
 
   const VALID_STATUSES = ["lead", "contacted", "negotiating", "customer", "lost"];
   let imported = 0;
@@ -400,29 +446,27 @@ router.post("/import", async (req, res) => {
   const errors = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const row = parseCSVLine(lines[i]);
+    const row = parseLine(lines[i]);
+    if (row.every(c => !c)) continue; // blank line
+
     try {
-      const firstName = col("first_name") >= 0 ? row[col("first_name")] || "" : "";
-      const lastName  = col("last_name")  >= 0 ? row[col("last_name")]  || "" : "";
-      let fullName    = col("full_name")  >= 0 ? row[col("full_name")]  || "" : "";
-      if (!fullName) {
-        fullName = [firstName, lastName].filter(Boolean).join(" ");
-      }
+      const firstName = get(row, "first_name");
+      const lastName  = get(row, "last_name");
+      let fullName    = get(row, "full_name") || [firstName, lastName].filter(Boolean).join(" ");
+
       if (!fullName) { skipped++; errors.push(`Row ${i + 1}: no name — skipped`); continue; }
 
-      const email  = col("email")  >= 0 ? row[col("email")]  || null : null;
-      const phone  = col("phone")  >= 0 ? row[col("phone")]  || null : null;
-      const company = col("company") >= 0 ? row[col("company")] || null : null;
-      const notes  = col("notes")  >= 0 ? row[col("notes")]  || null : null;
-      const theme  = col("marketing_theme") >= 0 ? row[col("marketing_theme")] || null : null;
-      let status   = col("status") >= 0 ? row[col("status")] || "lead" : "lead";
-      if (!VALID_STATUSES.includes(status)) status = "lead";
+      const email   = get(row, "email")   || null;
+      const phone   = get(row, "phone")   || null;
+      const company = get(row, "company") || null;
+      const notes   = get(row, "notes")   || null;
+      let status    = get(row, "status")  || "lead";
+      if (!VALID_STATUSES.includes(status.toLowerCase())) status = "lead";
 
       await db.query(
-        `INSERT INTO contacts (workspace_id, full_name, first_name, last_name, email, phone, company, notes, marketing_theme, status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-         ON CONFLICT DO NOTHING`,
-        [req.user.workspace_id, fullName, firstName || null, lastName || null, email, phone, company, notes, theme, status]
+        `INSERT INTO contacts (workspace_id, full_name, first_name, last_name, email, phone, company, notes, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [req.user.workspace_id, fullName, firstName || null, lastName || null, email, phone, company, notes, status]
       );
       imported++;
     } catch (err) {
