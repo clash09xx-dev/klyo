@@ -94,6 +94,40 @@
   --accent-1: #b8512a; --accent-2: #d4804a;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
 }
+/* ---- corporate / enterprise themes ---- */
+[data-theme="cobalt"] {
+  /* Cobalt — deep navy canvas, electric blue accent — finance / consulting */
+  --bg: #09101f; --bg-glow: #0e192e; --bg-soft: #0c1428; --surface: #132038;
+  --surface-2: #192b4850; --border: #213860; --border-soft: #192e50;
+  --text: #dce9ff; --text-dim: #7898c0; --text-faint: #486080;
+  --accent-1: #4d9fff; --accent-2: #82c0ff;
+  --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+}
+[data-theme="graphite"] {
+  /* Graphite — near-black warm charcoal, muted steel accent — executive */
+  --bg: #141414; --bg-glow: #1c1c1c; --bg-soft: #181818; --surface: #222222;
+  --surface-2: #28282850; --border: #323232; --border-soft: #2a2a2a;
+  --text: #e8e8e8; --text-dim: #909090; --text-faint: #585858;
+  --accent-1: #8bb4d8; --accent-2: #a8c8e8;
+  --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+}
+[data-theme="forest"] {
+  /* Forest — deep muted green, sage accent — premium / luxury brands */
+  --bg: #0c1410; --bg-glow: #111c14; --bg-soft: #0f1812; --surface: #162018;
+  --surface-2: #1e2e1e50; --border: #283820; --border-soft: #202e1a;
+  --text: #d5e8d0; --text-dim: #7a9c78; --text-faint: #4e664c;
+  --accent-1: #6ec47a; --accent-2: #9ed8a4;
+  --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+}
+[data-theme="pearl"] {
+  /* Pearl — crisp white light mode, indigo accent — corporate clean */
+  --bg: #f5f6f8; --bg-glow: #ecedee; --bg-soft: #eef0f2; --surface: #ffffff;
+  --surface-2: #f0f1f388; --border: #d0d4da; --border-soft: #dce0e5;
+  --bg-card: #ffffff;
+  --text: #1a202c; --text-dim: #60708a; --text-faint: #a0afc0;
+  --accent-1: #2563eb; --accent-2: #3b82f6;
+  --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+}
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -475,6 +509,10 @@ td.name-cell::before {
 .theme-swatch[data-theme-key="slate"]    .puck { background: linear-gradient(135deg, #6cb4e4, #a0c4e8); box-shadow: 0 0 0 3px #101418; }
 .theme-swatch[data-theme-key="midnight"] .puck { background: linear-gradient(135deg, #e8c86e, #e89b6e); box-shadow: 0 0 0 3px #0c0c0f; }
 .theme-swatch[data-theme-key="sand"]     .puck { background: linear-gradient(135deg, #b85c3a, #d48a5c); box-shadow: 0 0 0 3px #f5f0ea; }
+.theme-swatch[data-theme-key="cobalt"]   .puck { background: linear-gradient(135deg, #4d9fff, #82c0ff); box-shadow: 0 0 0 3px #09101f; }
+.theme-swatch[data-theme-key="graphite"] .puck { background: linear-gradient(135deg, #8bb4d8, #a8c8e8); box-shadow: 0 0 0 3px #141414; }
+.theme-swatch[data-theme-key="forest"]   .puck { background: linear-gradient(135deg, #6ec47a, #9ed8a4); box-shadow: 0 0 0 3px #0c1410; }
+.theme-swatch[data-theme-key="pearl"]    .puck { background: linear-gradient(135deg, #2563eb, #3b82f6); box-shadow: 0 0 0 3px #dce0e5; }
 
 /* ---------- onboarding tour ---------- */
 #tourOverlay { background: transparent; backdrop-filter: none; }

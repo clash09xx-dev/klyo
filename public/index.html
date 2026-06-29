@@ -546,9 +546,9 @@
           <button class="btn btn-ghost btn-sm" id="calPrevBtn">‹</button>
           <h3 id="calMonthLabel" style="margin:0 12px; font-size:15px; font-weight:600;"></h3>
           <button class="btn btn-ghost btn-sm" id="calNextBtn">›</button>
-          <button class="btn btn-ghost btn-sm" id="calTodayBtn" style="margin-left:8px;">Today</button>
+          <button class="btn btn-ghost btn-sm" id="calTodayBtn" style="margin-left:8px;" data-i18n="calendar.today">Today</button>
           <div class="spacer"></div>
-          <button class="btn btn-primary btn-sm" id="addEventBtn">+ Add event</button>
+          <button class="btn btn-primary btn-sm" id="addEventBtn" data-i18n="calendar.add_event_btn">+ Add event</button>
         </div>
         <div id="calendarDayHeader" style="display:grid; grid-template-columns:repeat(7,1fr); gap:1px; margin-bottom:1px;">
           <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">SUN</div>
@@ -649,47 +649,47 @@
       <p id="eventFormError" class="form-error"></p>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
         <div class="field" style="grid-column:1/-1;">
-          <label>Title *</label>
+          <label><span data-i18n="calendar.title_field">Title</span> *</label>
           <input type="text" id="eventTitle" class="input" required>
         </div>
         <div class="field">
-          <label>Start *</label>
+          <label><span data-i18n="calendar.start">Start</span> *</label>
           <input type="datetime-local" id="eventStart" class="input" required>
         </div>
         <div class="field">
-          <label>End</label>
+          <label data-i18n="calendar.end">End</label>
           <input type="datetime-local" id="eventEnd" class="input">
         </div>
         <div class="field" style="grid-column:1/-1;">
-          <label>Description</label>
+          <label data-i18n="calendar.description">Description</label>
           <textarea id="eventDesc" class="input" rows="2"></textarea>
         </div>
         <div class="field">
-          <label>Color</label>
+          <label data-i18n="calendar.color">Color</label>
           <input type="color" id="eventColor" class="input" value="#6366f1" style="height:38px; padding:2px 4px;">
         </div>
         <div class="field">
-          <label>Link to contact</label>
+          <label data-i18n="calendar.link_contact">Link to contact</label>
           <select id="eventContactSelect" class="input">
-            <option value="">None</option>
+            <option value="" data-i18n="common.none">None</option>
           </select>
         </div>
         <div class="field">
-          <label>Link to deal</label>
+          <label data-i18n="calendar.link_deal">Link to deal</label>
           <select id="eventDealSelect" class="input">
-            <option value="">None</option>
+            <option value="" data-i18n="common.none">None</option>
           </select>
         </div>
         <div class="field">
-          <label>All day</label>
+          <label data-i18n="calendar.all_day">All day</label>
           <input type="checkbox" id="eventAllDay" style="margin-top:10px; width:20px; height:20px;">
         </div>
       </div>
       <input type="hidden" id="eventId">
       <div class="modal-foot" style="margin-top:16px;">
-        <button type="button" class="btn btn-ghost" id="cancelEventBtn">Cancel</button>
-        <button type="button" class="btn btn-danger btn-sm hidden" id="deleteEventBtn">Delete</button>
-        <button type="submit" class="btn btn-primary" id="eventSubmitBtn">Add event</button>
+        <button type="button" class="btn btn-ghost" id="cancelEventBtn" data-i18n="common.cancel">Cancel</button>
+        <button type="button" class="btn btn-danger btn-sm hidden" id="deleteEventBtn" data-i18n="common.delete">Delete</button>
+        <button type="submit" class="btn btn-primary" id="eventSubmitBtn" data-i18n="calendar.add_event">Add event</button>
       </div>
     </form>
   </div>
@@ -1193,6 +1193,10 @@
       <button type="button" class="theme-swatch" data-theme-key="slate"><span class="puck"></span><span>Slate</span></button>
       <button type="button" class="theme-swatch" data-theme-key="midnight"><span class="puck"></span><span>Midnight</span></button>
       <button type="button" class="theme-swatch" data-theme-key="sand"><span class="puck"></span><span>Sand</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="cobalt"><span class="puck"></span><span>Cobalt</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="graphite"><span class="puck"></span><span>Graphite</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="forest"><span class="puck"></span><span>Forest</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="pearl"><span class="puck"></span><span>Pearl</span></button>
     </div>
 
     <div class="section-title" data-i18n="settings.language">Language</div>

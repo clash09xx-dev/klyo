@@ -938,8 +938,8 @@ function openEventModal(event, defaultDate) {
   if (!els.eventModalOverlay) return;
   els.eventFormError.textContent = "";
   els.eventId.value = event?.id || "";
-  els.eventModalTitle.textContent = event ? "Edit event" : "Add event";
-  els.eventSubmitBtn.textContent  = event ? "Save changes" : "Add event";
+  els.eventModalTitle.textContent = event ? t("calendar.edit_event") : t("calendar.add_event");
+  els.eventSubmitBtn.textContent  = event ? t("modal.save_changes") : t("calendar.add_event");
   els.eventTitle.value = event?.title || "";
   els.eventDesc.value  = event?.description || "";
   els.eventColor.value = event?.color || "#6366f1";
