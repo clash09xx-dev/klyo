@@ -2684,14 +2684,24 @@ function wireEvents() {
       })
       .catch(() => toast("Export failed", "error"));
   });
-  // CSV import
+  // CSV / Excel import
   els.importContactsBtn.addEventListener("click", () => els.importContactsFile.click());
   els.importContactsFile.addEventListener("change", async () => {
     const file = els.importContactsFile.files[0];
     if (!file) return;
     try {
-      const text = await file.text();
-      const res = await API.post("/contacts/import", { csv: text });
+      let csvText;
+      const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+      if (isExcel) {
+        // Parse Excel with SheetJS → convert first sheet to CSV
+        const buf = await file.arrayBuffer();
+        const wb  = XLSX.read(buf, { type: "array" });
+        const ws  = wb.Sheets[wb.SheetNames[0]];
+        csvText   = XLSX.utils.sheet_to_csv(ws);
+      } else {
+        csvText = await file.text();
+      }
+      const res = await API.post("/contacts/import", { csv: csvText });
       toast(`Imported ${res.imported} contact${res.imported === 1 ? "" : "s"}${res.skipped ? `, ${res.skipped} skipped` : ""}`);
       if (res.errors?.length) console.warn("Import row errors:", res.errors);
       await loadContacts();
