@@ -13,148 +13,190 @@
   *, *::before, *::after { box-sizing: border-box; }
   body { margin: 0; font-family: "Inter", sans-serif; font-size: 15px; line-height: 1.75; color: #1a1a2e; background: #f8f9fb; }
   .wrap { max-width: 740px; margin: 0 auto; padding: 60px 24px 80px; }
-  header { margin-bottom: 48px; border-bottom: 1px solid #e5e7eb; padding-bottom: 32px; }
-  .brand { font-size: 22px; font-weight: 700; color: #111; text-decoration: none; display: inline-block; margin-bottom: 28px; }
+  header { margin-bottom: 48px; border-bottom: 1px solid #e5e7eb; padding-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; }
+  .brand { font-size: 22px; font-weight: 700; color: #111; text-decoration: none; display: block; margin-bottom: 16px; }
   .brand span { color: #4fd8ff; }
-  h1 { font-size: 30px; font-weight: 700; margin: 0 0 6px; }
+  .lang-toggle { display: flex; gap: 6px; }
+  .lang-btn { padding: 4px 12px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; font-size: 12px; font-weight: 500; cursor: pointer; color: #6b7280; }
+  .lang-btn.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+  h1 { font-size: 28px; font-weight: 700; margin: 0 0 6px; }
   .sub { color: #6b7280; font-size: 13.5px; margin: 0; }
-  h2 { font-size: 17px; font-weight: 600; margin: 40px 0 10px; color: #111; }
+  h2 { font-size: 16px; font-weight: 600; margin: 36px 0 8px; color: #111; }
   p { color: #374151; margin: 0 0 14px; }
   ul { padding-left: 22px; margin: 0 0 14px; }
   li { color: #374151; margin-bottom: 6px; }
   a { color: #2563eb; }
   code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
-  .highlight { background: #eff6ff; border-left: 3px solid #2563eb; padding: 12px 16px; border-radius: 4px; margin: 16px 0; }
+  .note { background: #f0fdf4; border-left: 3px solid #16a34a; padding: 10px 14px; border-radius: 4px; margin: 14px 0; font-size: 14px; color: #166534; }
   hr { border: none; border-top: 1px solid #e5e7eb; margin: 48px 0; }
-  footer { font-size: 13px; color: #9ca3af; display: flex; gap: 16px; }
+  footer { font-size: 13px; color: #9ca3af; display: flex; gap: 16px; flex-wrap: wrap; }
   footer a { color: #6b7280; text-decoration: none; }
   footer a:hover { color: #111; }
-  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
-  th { text-align: left; padding: 8px 12px; background: #f1f5f9; font-weight: 600; border: 1px solid #e5e7eb; }
-  td { padding: 8px 12px; border: 1px solid #e5e7eb; vertical-align: top; }
+  [data-lang] { display: none; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <a class="brand" href="/">Kly<span>o</span></a>
-    <h1>Polityka Prywatności</h1>
-    <p class="sub">Ostatnia aktualizacja: czerwiec 2026 &nbsp;·&nbsp; Wersja 1.0</p>
+    <div>
+      <a class="brand" href="/">Kly<span>o</span></a>
+      <div data-lang="pl"><h1>Polityka Prywatności</h1><p class="sub">Ostatnia aktualizacja: czerwiec 2026</p></div>
+      <div data-lang="en"><h1>Privacy Policy</h1><p class="sub">Last updated: June 2026</p></div>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn" onclick="setLang('pl')">PL</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+    </div>
   </header>
 
-  <div class="highlight">
-    <strong>Skrócona wersja:</strong> Klyo to narzędzie CRM dla firm. Zbieramy tylko dane niezbędne do działania aplikacji. Nie sprzedajemy Twoich danych. Nie używamy ich do reklam. Dane Twoich kontaktów należą do Ciebie i możesz je usunąć w każdej chwili.
+  <!-- ===== POLISH ===== -->
+  <div data-lang="pl">
+    <div class="note">Klyo zbiera tylko dane niezbędne do działania aplikacji. Nie sprzedajemy danych. Nie używamy ich do reklam.</div>
+
+    <h2>1. Administrator danych</h2>
+    <p>Administratorem Twoich danych jest operator serwisu Klyo. Kontakt: <a href="mailto:clash.09xx@gmail.com">clash.09xx@gmail.com</a>.</p>
+
+    <h2>2. Jakie dane zbieramy</h2>
+    <ul>
+      <li><strong>Dane konta:</strong> imię, adres e-mail, zaszyfrowane hasło.</li>
+      <li><strong>Dane biznesowe:</strong> kontakty, firmy, oferty, wyceny, zadania, notatki i historia aktywności, które tworzysz w aplikacji.</li>
+      <li><strong>Dane Google (opcjonalne):</strong> jeśli łączysz Gmail, przechowujemy token odświeżający do wysyłania e-maili w Twoim imieniu. Udzielamy dostępu wyłącznie do zakresu <code>gmail.send</code> — nie odczytujemy skrzynki.</li>
+      <li><strong>Dane płatności:</strong> Stripe przetwarza płatności. Przechowujemy jedynie ID klienta i subskrypcji w Stripe — nigdy numeru karty.</li>
+      <li><strong>Dane techniczne:</strong> anonimowe liczniki wyświetleń stron do wewnętrznej analityki.</li>
+    </ul>
+
+    <h2>3. Podstawy prawne (RODO)</h2>
+    <ul>
+      <li><strong>Wykonanie umowy (art. 6 ust. 1 lit. b)</strong> — świadczenie usługi Klyo.</li>
+      <li><strong>Zgoda (art. 6 ust. 1 lit. a)</strong> — dostęp do Gmaila. Możesz cofnąć zgodę odłączając Gmail w Ustawieniach.</li>
+      <li><strong>Uzasadniony interes (art. 6 ust. 1 lit. f)</strong> — anonimowa analityka wewnętrzna.</li>
+    </ul>
+
+    <h2>4. Jak używamy danych</h2>
+    <ul>
+      <li>Świadczenie i utrzymanie usługi Klyo.</li>
+      <li>Wysyłanie wiadomości transakcyjnych (potwierdzenia płatności, powiadomienia).</li>
+      <li>Wysyłanie e-maili biznesowych w Twoim imieniu przez Gmail — tylko tych, które sam tworzysz i zatwierdzasz.</li>
+      <li>Obsługa limitów planu subskrypcyjnego.</li>
+    </ul>
+    <p><strong>Nie sprzedajemy danych, nie przekazujemy reklamodawcom, nie trenujemy na nich modeli AI.</strong></p>
+
+    <h2>5. Gmail API — polityka Ograniczonego Użycia</h2>
+    <p>Klyo stosuje się do <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Polityki danych użytkownika usług API Google</a>, w tym wymogów Ograniczonego Użycia. Używamy wyłącznie zakresu <code>gmail.send</code> i tylko do wysyłania e-maili, które explicite zatwierdzasz w aplikacji.</p>
+
+    <h2>6. Przechowywanie i bezpieczeństwo</h2>
+    <p>Dane przechowywane są w zarządzanej bazie PostgreSQL na platformie Railway, szyfrowane w spoczynku i podczas przesyłania (TLS). Dostęp wymaga uwierzytelnienia tokenem JWT.</p>
+
+    <h2>7. Udostępnianie danych</h2>
+    <ul>
+      <li><strong>Railway</strong> — hosting i baza danych.</li>
+      <li><strong>Stripe</strong> — przetwarzanie płatności.</li>
+      <li><strong>Google</strong> — wysyłka e-maili i logowanie przez Google (jeśli włączone).</li>
+      <li><strong>OpenAI</strong> — asystent AI do ofert (imię kontaktu i Twoje instrukcje — nigdy pełny rekord).</li>
+    </ul>
+
+    <h2>8. Dane kontaktów w Twoim CRM</h2>
+    <p>Dane osób, które dodajesz do CRM, przetwarzasz jako <strong>administrator danych</strong>. Klyo jest <strong>podmiotem przetwarzającym</strong> w Twoim imieniu. Odpowiadasz za zgodność tego przetwarzania z RODO.</p>
+
+    <h2>9. Retencja i usuwanie</h2>
+    <p>Dane przechowujemy przez czas trwania subskrypcji + 30 dni po jej zakończeniu. Możesz poprosić o natychmiastowe usunięcie konta wysyłając e-mail na <a href="mailto:clash.09xx@gmail.com">clash.09xx@gmail.com</a>. Zrealizujemy żądanie w ciągu 30 dni. Tokeny Gmail są usuwane natychmiast po odłączeniu w Ustawieniach.</p>
+
+    <h2>10. Cookies i localStorage</h2>
+    <p>Klyo przechowuje w <code>localStorage</code> przeglądarki token autoryzacyjny oraz preferencje (motyw, język). Nie używamy ciasteczek reklamowych ani zewnętrznego śledzenia.</p>
+
+    <h2>11. Twoje prawa</h2>
+    <p>Na podstawie RODO przysługuje Ci prawo dostępu, sprostowania, usunięcia, ograniczenia przetwarzania i przenoszenia danych. Dane kontaktów możesz wyeksportować do CSV bezpośrednio z aplikacji. Możesz też wnieść skargę do <a href="https://uodo.gov.pl" target="_blank" rel="noopener">Prezesa UODO</a>.</p>
+    <p>Kontakt w sprawach prywatności: <a href="mailto:clash.09xx@gmail.com">clash.09xx@gmail.com</a>.</p>
+
+    <h2>12. Zmiany polityki</h2>
+    <p>O istotnych zmianach poinformujemy e-mailem lub komunikatem w aplikacji. Data na górze strony zawsze odzwierciedla ostatnią aktualizację.</p>
   </div>
 
-  <p>Klyo (dalej: „my", „nas", „Klyo") to aplikacja CRM dostępna pod adresem <a href="https://klyolabs.com">klyolabs.com</a>. Niniejsza Polityka Prywatności opisuje, jakie dane zbieramy, w jaki sposób je używamy oraz jakie masz prawa w związku z ich przetwarzaniem.</p>
+  <!-- ===== ENGLISH ===== -->
+  <div data-lang="en">
+    <div class="note">Klyo only collects data necessary to run the service. We do not sell your data or use it for advertising.</div>
 
-  <h2>1. Administrator danych</h2>
-  <p>Administratorem Twoich danych osobowych jest operator serwisu Klyo. W sprawach związanych z ochroną prywatności możesz się z nami kontaktować pod adresem: <a href="mailto:hello@klyolabs.com">hello@klyolabs.com</a>.</p>
+    <h2>1. Data controller</h2>
+    <p>The data controller is the operator of the Klyo service. Contact: <a href="mailto:clash.09xx@gmail.com">clash.09xx@gmail.com</a>.</p>
 
-  <h2>2. Jakie dane zbieramy</h2>
-  <table>
-    <tr><th>Kategoria danych</th><th>Przykłady</th><th>Cel</th></tr>
-    <tr>
-      <td><strong>Dane konta</strong></td>
-      <td>Imię, adres e-mail, zaszyfrowane hasło</td>
-      <td>Rejestracja i logowanie do aplikacji</td>
-    </tr>
-    <tr>
-      <td><strong>Dane biznesowe</strong></td>
-      <td>Kontakty, firmy, oferty, wyceny, notatki, historia aktywności</td>
-      <td>Świadczenie usługi CRM</td>
-    </tr>
-    <tr>
-      <td><strong>Dane Google (opcjonalne)</strong></td>
-      <td>Adres e-mail konta Google, token odświeżający Gmail</td>
-      <td>Logowanie przez Google i wysyłanie e-maili z poziomu aplikacji</td>
-    </tr>
-    <tr>
-      <td><strong>Dane płatności</strong></td>
-      <td>ID klienta Stripe, ID subskrypcji</td>
-      <td>Obsługa płatności. Dane karty przetwarza wyłącznie Stripe.</td>
-    </tr>
-    <tr>
-      <td><strong>Dane techniczne</strong></td>
-      <td>Anonimowe liczniki wyświetleń stron</td>
-      <td>Wewnętrzna analityka — bez śledzenia użytkowników</td>
-    </tr>
-  </table>
+    <h2>2. What data we collect</h2>
+    <ul>
+      <li><strong>Account data:</strong> name, email address, hashed password.</li>
+      <li><strong>Business data:</strong> contacts, companies, quotes, tasks, notes and activity logs you create in the app.</li>
+      <li><strong>Google data (optional):</strong> if you connect Gmail, we store a refresh token to send emails on your behalf. We only request the <code>gmail.send</code> scope — we never read your inbox.</li>
+      <li><strong>Payment data:</strong> Stripe handles payments. We store only your Stripe customer and subscription IDs — never your card number.</li>
+      <li><strong>Technical data:</strong> anonymous page-view counts for internal analytics.</li>
+    </ul>
 
-  <h2>3. Podstawy prawne przetwarzania danych (RODO)</h2>
-  <ul>
-    <li><strong>Wykonanie umowy (art. 6 ust. 1 lit. b RODO)</strong> — przetwarzamy Twoje dane konta i dane biznesowe, aby świadczyć usługę Klyo.</li>
-    <li><strong>Uzasadniony interes (art. 6 ust. 1 lit. f RODO)</strong> — anonimowa analityka wewnętrzna (liczniki wyświetleń).</li>
-    <li><strong>Zgoda (art. 6 ust. 1 lit. a RODO)</strong> — dostęp do Gmaila w celu wysyłania e-maili. Możesz cofnąć zgodę w każdej chwili, odłączając konto Gmail w Ustawieniach.</li>
-  </ul>
+    <h2>3. Legal basis (GDPR)</h2>
+    <ul>
+      <li><strong>Contract performance (Art. 6(1)(b))</strong> — providing the Klyo service.</li>
+      <li><strong>Consent (Art. 6(1)(a))</strong> — Gmail access. You can withdraw consent by disconnecting Gmail in Settings.</li>
+      <li><strong>Legitimate interest (Art. 6(1)(f))</strong> — anonymous internal analytics.</li>
+    </ul>
 
-  <h2>4. Jak używamy danych</h2>
-  <ul>
-    <li>Świadczenie i utrzymanie usługi Klyo CRM.</li>
-    <li>Wysyłanie wiadomości transakcyjnych (potwierdzenia płatności, powiadomienia systemowe).</li>
-    <li>Wysyłanie e-maili biznesowych w Twoim imieniu za pośrednictwem Gmaila — wyłącznie wiadomości, które sam tworzysz i zatwierdzasz w aplikacji.</li>
-    <li>Egzekwowanie limitów planu subskrypcyjnego.</li>
-  </ul>
-  <p><strong>Czego nie robimy:</strong> nie sprzedajemy Twoich danych, nie udostępniamy ich reklamodawcom, nie używamy ich do trenowania modeli AI.</p>
+    <h2>4. How we use data</h2>
+    <ul>
+      <li>Providing and maintaining the Klyo CRM service.</li>
+      <li>Sending transactional emails (billing receipts, notifications).</li>
+      <li>Sending business emails on your behalf via Gmail — only messages you compose and approve in the app.</li>
+      <li>Enforcing subscription plan limits.</li>
+    </ul>
+    <p><strong>We do not sell data, share it with advertisers, or use it to train AI models.</strong></p>
 
-  <h2>5. Zasady korzystania z API Google (polityka Ograniczonego Użycia)</h2>
-  <p>Klyo korzysta z API Google wyłącznie w zakresie zakresu <code>gmail.send</code>. Dostęp ten jest używany jedynie do wysyłania e-maili, które samodzielnie tworzysz i zatwierdzasz w aplikacji Klyo. Nie odczytujemy, nie przechowujemy ani nie udostępniamy treści Twojej skrzynki pocztowej ani żadnych innych danych Gmail.</p>
-  <p>Korzystanie z informacji otrzymanych z API Google jest zgodne z <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Polityką danych użytkownika usług API Google</a>, w tym z wymogami <strong>Ograniczonego Użycia</strong>.</p>
+    <h2>5. Google API — Limited Use policy</h2>
+    <p>Klyo's use of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Google API Services User Data Policy</a>, including the Limited Use requirements. We only request <code>gmail.send</code> and use it exclusively to send emails you explicitly approve in the app.</p>
 
-  <h2>6. Przechowywanie i bezpieczeństwo danych</h2>
-  <p>Twoje dane są przechowywane w zarządzanej bazie danych PostgreSQL hostowanej na platformie Railway. Dane są szyfrowane w spoczynku i podczas przesyłania (TLS). Dostęp do aplikacji wymaga uwierzytelnienia tokenem JWT.</p>
-  <p>Dołożyliśmy wszelkich starań, aby chronić Twoje dane, jednak żaden system nie jest w 100% odporny na ataki. W przypadku naruszenia bezpieczeństwa danych poinformujemy Cię zgodnie z obowiązującymi przepisami.</p>
+    <h2>6. Storage and security</h2>
+    <p>Data is stored in a managed PostgreSQL database on Railway, encrypted at rest and in transit (TLS). Access requires JWT authentication.</p>
 
-  <h2>7. Udostępnianie danych podmiotom trzecim</h2>
-  <p>Udostępniamy dane wyłącznie podmiotom niezbędnym do świadczenia usługi:</p>
-  <table>
-    <tr><th>Podmiot</th><th>Cel</th><th>Dane</th></tr>
-    <tr><td><strong>Railway</strong></td><td>Hosting i infrastruktura bazy danych</td><td>Wszystkie dane przechowywane w aplikacji</td></tr>
-    <tr><td><strong>Stripe</strong></td><td>Przetwarzanie płatności</td><td>Dane niezbędne do rozliczeń (bez danych kart)</td></tr>
-    <tr><td><strong>Google</strong></td><td>Wysyłka e-maili, logowanie przez Google</td><td>Token Gmail, e-mail konta (jeśli włączone)</td></tr>
-    <tr><td><strong>OpenAI</strong></td><td>Asystent AI do tworzenia ofert e-mail</td><td>Imię kontaktu i Twoje instrukcje — nigdy pełny rekord kontaktu</td></tr>
-  </table>
-  <p>Nie sprzedajemy danych żadnym innym podmiotom.</p>
+    <h2>7. Data sharing</h2>
+    <ul>
+      <li><strong>Railway</strong> — hosting and database infrastructure.</li>
+      <li><strong>Stripe</strong> — payment processing.</li>
+      <li><strong>Google</strong> — Gmail sending and Google sign-in (if enabled).</li>
+      <li><strong>OpenAI</strong> — AI email drafting (contact name and your instructions only — never a full contact record).</li>
+    </ul>
 
-  <h2>8. Dane kontaktów w Twoim CRM</h2>
-  <p>Dane osób, które dodajesz do swojego CRM (imiona, adresy e-mail, numery telefonów itp.), przetwarzasz jako <strong>administrator danych</strong> w rozumieniu RODO. Klyo pełni funkcję <strong>podmiotu przetwarzającego</strong> w Twoim imieniu. Jesteś odpowiedzialny za to, aby przetwarzanie tych danych odbywało się zgodnie z obowiązującymi przepisami o ochronie danych osobowych.</p>
+    <h2>8. Your CRM contact data</h2>
+    <p>Data about people you add to your CRM is processed by you as the <strong>data controller</strong>. Klyo acts as a <strong>data processor</strong> on your behalf. You are responsible for ensuring this processing complies with GDPR and applicable data protection laws.</p>
 
-  <h2>9. Przechowywanie danych i usuwanie konta</h2>
-  <p>Twoje dane są przechowywane przez czas trwania subskrypcji oraz przez 30 dni po jej zakończeniu — na wypadek reaktywacji. Po upływie tego okresu dane są trwale usuwane.</p>
-  <p>Możesz poprosić o natychmiastowe usunięcie wszystkich swoich danych, wysyłając wiadomość na adres <a href="mailto:hello@klyolabs.com">hello@klyolabs.com</a>. Zrealizujemy żądanie w ciągu 30 dni.</p>
-  <p>Tokeny Gmail są usuwane natychmiast po odłączeniu konta Gmail w Ustawieniach.</p>
+    <h2>9. Retention and deletion</h2>
+    <p>We retain data for the duration of your subscription plus 30 days after cancellation. You can request immediate deletion by emailing <a href="mailto:clash.09xx@gmail.com">clash.09xx@gmail.com</a> — we will action it within 30 days. Gmail tokens are deleted immediately when you disconnect Gmail in Settings.</p>
 
-  <h2>10. Pliki cookies i localStorage</h2>
-  <p>Klyo przechowuje w <code>localStorage</code> przeglądarki token uwierzytelniający oraz preferencje wyglądu (motyw, język). Nie używamy plików cookie do śledzenia reklam ani analityki zewnętrznej.</p>
+    <h2>10. Cookies and localStorage</h2>
+    <p>Klyo stores an authentication token and preferences (theme, language) in the browser's <code>localStorage</code>. We do not use advertising cookies or third-party tracking.</p>
 
-  <h2>11. Transfery danych poza EOG</h2>
-  <p>Infrastruktura Railway może przechowywać dane na serwerach w USA. Railway stosuje standardowe klauzule umowne (SCC) zgodne z wymogami RODO dla transferów danych poza Europejski Obszar Gospodarczy.</p>
+    <h2>11. Your rights</h2>
+    <p>Under GDPR you have the right to access, rectify, erase, restrict processing, and port your data. You can export your contact data to CSV directly from the app. You may also lodge a complaint with your local data protection authority.</p>
+    <p>Privacy contact: <a href="mailto:clash.09xx@gmail.com">clash.09xx@gmail.com</a>.</p>
 
-  <h2>12. Twoje prawa</h2>
-  <p>Na podstawie RODO przysługują Ci następujące prawa:</p>
-  <ul>
-    <li><strong>Prawo dostępu</strong> — możesz poprosić o kopię swoich danych osobowych.</li>
-    <li><strong>Prawo do sprostowania</strong> — możesz poprosić o korektę nieprawidłowych danych.</li>
-    <li><strong>Prawo do usunięcia</strong> — możesz poprosić o usunięcie swoich danych.</li>
-    <li><strong>Prawo do ograniczenia przetwarzania</strong> — możesz poprosić o ograniczenie przetwarzania danych.</li>
-    <li><strong>Prawo do przenoszenia danych</strong> — dane kontaktów możesz wyeksportować do CSV bezpośrednio z aplikacji.</li>
-    <li><strong>Prawo do cofnięcia zgody</strong> — jeśli przetwarzamy dane na podstawie zgody, możesz ją cofnąć w każdej chwili.</li>
-    <li><strong>Prawo do wniesienia skargi</strong> — możesz złożyć skargę do Prezesa Urzędu Ochrony Danych Osobowych (UODO) pod adresem uodo.gov.pl.</li>
-  </ul>
-  <p>Aby skorzystać z powyższych praw, skontaktuj się z nami: <a href="mailto:hello@klyolabs.com">hello@klyolabs.com</a>.</p>
-
-  <h2>13. Zmiany polityki</h2>
-  <p>Możemy aktualizować tę politykę. O istotnych zmianach poinformujemy Cię e-mailem lub komunikatem w aplikacji. Data w nagłówku dokumentu zawsze odzwierciedla ostatnią aktualizację.</p>
-
-  <h2>14. Kontakt</h2>
-  <p>Pytania dotyczące prywatności kieruj na adres: <a href="mailto:hello@klyolabs.com">hello@klyolabs.com</a></p>
+    <h2>12. Changes</h2>
+    <p>We will notify you of significant changes by email or in-app notice. The date at the top of this page always reflects the latest update.</p>
+  </div>
 
   <hr />
   <footer>
-    <a href="/">← Wróć do Klyo</a>
-    <a href="/terms">Warunki Korzystania</a>
+    <a href="/">← Klyo</a>
+    <a href="/terms" data-lang-text='{"pl":"Warunki Korzystania","en":"Terms of Service"}'>Warunki Korzystania</a>
     <span style="margin-left:auto;">© 2026 Klyo</span>
   </footer>
 </div>
+
+<script>
+  function setLang(lang) {
+    localStorage.setItem("klyo_lang", lang);
+    document.querySelectorAll("[data-lang]").forEach(el => {
+      el.style.display = el.dataset.lang === lang ? "" : "none";
+    });
+    document.querySelectorAll(".lang-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.textContent === lang.toUpperCase());
+    });
+    document.querySelector("[data-lang-text]").textContent = JSON.parse(document.querySelector("[data-lang-text]").dataset.langText)[lang];
+    document.documentElement.lang = lang;
+  }
+  const lang = localStorage.getItem("klyo_lang") || (navigator.language.startsWith("pl") ? "pl" : "en");
+  setLang(lang);
+</script>
 </body>
 </html>
