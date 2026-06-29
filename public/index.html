@@ -6,98 +6,420 @@
 <title>Klyo — CRM for small businesses</title>
 <meta name="description" content="Klyo is a CRM platform for managing clients, companies, sales opportunities, tasks, quotes, products, and Gmail-based communication history." />
 <link rel="canonical" href="https://klyolabs.com" />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2020/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%226%22 fill=%22%234fd8ff%22/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%226%22 fill=%22%234fd8ff%22/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
-  body { margin: 0; font-family: "Inter", sans-serif; font-size: 16px; line-height: 1.6; color: #1a1a2e; background: #fff; }
 
-  nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e5e7eb; }
-  .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
-  .brand { font-size: 22px; font-weight: 700; color: #111; text-decoration: none; }
-  .brand span { color: #4fd8ff; }
-  .nav-links { display: flex; align-items: center; gap: 12px; }
-  .btn { display: inline-flex; align-items: center; justify-content: center; padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; border: none; transition: opacity .15s, transform .1s; }
-  .btn:hover { opacity: .88; transform: translateY(-1px); }
-  .btn-ghost { color: #374151; background: transparent; padding: 8px 16px; }
-  .btn-primary { background: #1a1a2e; color: #fff; }
-  .btn-accent { background: #4fd8ff; color: #1a1a2e; }
+  :root {
+    --bg: #0a0e1a;
+    --bg-glow: #122038;
+    --bg-soft: #0d1322;
+    --surface: #121a2c;
+    --surface-2: #16203650;
+    --border: #232f4d;
+    --border-soft: #1a2540;
+    --text: #e7ebf7;
+    --text-dim: #8b93ab;
+    --text-faint: #5b6584;
+    --accent-1: #4fd8ff;
+    --accent-2: #8b6bff;
+    --signal: linear-gradient(135deg, #4fd8ff, #8b6bff);
+    --radius: 14px;
+    --radius-sm: 9px;
+    --font-display: "Space Grotesk", "Inter", sans-serif;
+    --font-body: "Inter", -apple-system, sans-serif;
+  }
 
-  .hero { max-width: 1100px; margin: 0 auto; padding: 80px 24px 60px; text-align: center; }
-  .hero-badge { display: inline-block; background: #f0f9ff; color: #0284c7; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; margin-bottom: 20px; letter-spacing: .04em; text-transform: uppercase; }
-  .hero h1 { font-size: clamp(32px, 6vw, 60px); font-weight: 700; line-height: 1.1; margin: 0 0 20px; color: #111; }
-  .hero h1 em { font-style: normal; color: #4fd8ff; }
-  .hero p { font-size: 18px; color: #6b7280; max-width: 600px; margin: 0 auto 36px; }
+  body {
+    margin: 0;
+    background: radial-gradient(circle at 12% 0%, var(--bg-glow) 0%, var(--bg) 45%) fixed;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 26px 26px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  * { position: relative; z-index: 1; }
+
+  h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; margin: 0; }
+  p { margin: 0; }
+  a { color: var(--accent-1); text-decoration: none; }
+
+  /* ---- NAV ---- */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--border-soft);
+    background: rgba(10, 14, 26, 0.85);
+    backdrop-filter: blur(12px);
+  }
+  .nav-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 28px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.03em;
+  }
+  .brand em { font-style: normal; color: var(--accent-1); }
+  .nav-links { display: flex; align-items: center; gap: 8px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn:hover { opacity: .85; transform: translateY(-1px); }
+  .btn-ghost {
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border-soft); }
+  .btn-primary {
+    background: var(--signal);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(79,216,255,.2);
+  }
+
+  /* ---- HERO ---- */
+  .hero {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 96px 28px 72px;
+    text-align: center;
+  }
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent-1);
+    background: rgba(79,216,255,.07);
+    border: 1px solid rgba(79,216,255,.18);
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 28px;
+  }
+  .hero h1 {
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 700;
+    line-height: 1.05;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+  .hero h1 .grad {
+    background: var(--signal);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    font-size: 17px;
+    color: var(--text-dim);
+    max-width: 540px;
+    margin: 0 auto 40px;
+    line-height: 1.65;
+  }
   .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  .hero-cta .btn { font-size: 16px; padding: 12px 28px; }
+  .hero-cta .btn { font-size: 14.5px; padding: 10px 24px; }
 
-  .preview { max-width: 960px; margin: 0 auto 80px; padding: 0 24px; }
-  .preview-frame { background: linear-gradient(135deg, #1a1a2e 0%, #0f2044 100%); border-radius: 16px; padding: 32px; box-shadow: 0 24px 60px rgba(0,0,0,.18); }
-  .preview-bar { display: flex; gap: 6px; margin-bottom: 24px; }
-  .preview-dot { width: 10px; height: 10px; border-radius: 50%; }
-  .preview-dot:nth-child(1) { background: #ff5f57; }
-  .preview-dot:nth-child(2) { background: #ffbd2e; }
-  .preview-dot:nth-child(3) { background: #28c840; }
-  .preview-screen { background: #0d1117; border-radius: 10px; padding: 24px; display: grid; grid-template-columns: 140px 1fr; gap: 16px; min-height: 220px; }
-  .preview-sidebar { display: flex; flex-direction: column; gap: 8px; }
-  .preview-item { height: 10px; border-radius: 4px; background: rgba(79,216,255,.15); }
-  .preview-item.active { background: rgba(79,216,255,.45); }
-  .preview-content { display: flex; flex-direction: column; gap: 12px; }
-  .preview-row { height: 10px; border-radius: 4px; background: rgba(255,255,255,.06); }
-  .preview-row.w60 { width: 60%; }
-  .preview-row.w80 { width: 80%; }
-  .preview-row.w40 { width: 40%; }
-  .preview-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 4px; }
-  .preview-card { background: rgba(255,255,255,.04); border-radius: 8px; padding: 12px; }
-  .preview-card-line { height: 8px; border-radius: 4px; background: rgba(255,255,255,.08); margin-bottom: 6px; }
-  .preview-card-line.accent { background: rgba(79,216,255,.25); width: 50%; }
+  /* ---- PREVIEW ---- */
+  .preview-wrap {
+    max-width: 900px;
+    margin: 0 auto 80px;
+    padding: 0 28px;
+  }
+  .preview-shell {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(79,216,255,.06);
+  }
+  .preview-topbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-soft);
+    background: var(--bg-soft);
+  }
+  .pbar-dot { width: 9px; height: 9px; border-radius: 50%; }
+  .pbar-url {
+    flex: 1;
+    height: 24px;
+    background: var(--bg);
+    border-radius: 5px;
+    margin: 0 8px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 11px;
+    color: var(--text-faint);
+    font-family: monospace;
+  }
+  .preview-body {
+    display: flex;
+    min-height: 200px;
+  }
+  .preview-sidebar {
+    width: 160px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border-soft);
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(10,14,26,.4);
+  }
+  .psb-item {
+    height: 28px;
+    border-radius: 7px;
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+  }
+  .psb-item.active {
+    background: rgba(79,216,255,.1);
+    border: 1px solid rgba(79,216,255,.15);
+  }
+  .psb-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-faint); margin-right: 8px; flex-shrink: 0; }
+  .psb-item.active .psb-dot { background: var(--accent-1); }
+  .psb-line { flex: 1; height: 6px; border-radius: 3px; background: var(--text-faint); opacity: .35; }
+  .psb-item.active .psb-line { background: var(--accent-1); opacity: .6; }
+  .preview-content { flex: 1; padding: 20px; }
+  .pc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .pc-title { width: 120px; height: 12px; border-radius: 4px; background: var(--text-faint); opacity: .4; }
+  .pc-btn { width: 64px; height: 24px; border-radius: 6px; background: var(--signal); opacity: .7; }
+  .pc-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+  .pc-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .pc-card-label { width: 40%; height: 6px; border-radius: 3px; background: var(--accent-1); opacity: .35; margin-bottom: 8px; }
+  .pc-card-val { width: 60%; height: 14px; border-radius: 4px; background: var(--text-faint); opacity: .3; }
+  .pc-rows { display: flex; flex-direction: column; gap: 8px; }
+  .pc-row { display: flex; align-items: center; gap: 10px; }
+  .pc-row-av { width: 24px; height: 24px; border-radius: 50%; background: rgba(79,216,255,.15); flex-shrink: 0; }
+  .pc-row-lines { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .pc-row-l1 { height: 6px; border-radius: 3px; background: var(--text-faint); opacity: .35; }
+  .pc-row-l2 { height: 5px; border-radius: 3px; background: var(--text-faint); opacity: .2; width: 60%; }
+  .pc-row-tag { width: 48px; height: 16px; border-radius: 4px; background: rgba(79,216,255,.12); flex-shrink: 0; }
 
-  section { padding: 72px 24px; }
-  .section-inner { max-width: 1100px; margin: 0 auto; }
-  .section-label { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #4fd8ff; margin-bottom: 10px; }
-  .section-title { font-size: clamp(24px, 4vw, 36px); font-weight: 700; color: #111; margin: 0 0 16px; }
-  .section-desc { font-size: 17px; color: #6b7280; max-width: 560px; margin: 0 0 48px; }
+  /* ---- FEATURES ---- */
+  .section {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 80px 28px;
+  }
+  .section-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent-1);
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: clamp(26px, 4vw, 40px);
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .section-desc {
+    font-size: 15.5px;
+    color: var(--text-dim);
+    max-width: 480px;
+    margin-bottom: 48px;
+  }
 
-  .features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
-  .feature-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; }
-  .feature-icon { font-size: 24px; margin-bottom: 12px; }
-  .feature-title { font-size: 15px; font-weight: 600; color: #111; margin: 0 0 6px; }
-  .feature-desc { font-size: 14px; color: #6b7280; margin: 0; line-height: 1.55; }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border-soft);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .feat {
+    background: var(--surface);
+    padding: 28px 24px;
+    transition: background .18s;
+  }
+  .feat:hover { background: var(--bg-soft); }
+  .feat-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(79,216,255,.1);
+    border: 1px solid rgba(79,216,255,.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+  .feat-icon svg { width: 16px; height: 16px; stroke: var(--accent-1); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .feat-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .feat-desc { font-size: 13.5px; color: var(--text-dim); line-height: 1.55; }
 
-  .gmail-section { background: #f0f9ff; }
-  .gmail-box { background: #fff; border: 1px solid #bae6fd; border-radius: 12px; padding: 28px 32px; }
-  .gmail-title { font-size: 16px; font-weight: 600; color: #0369a1; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
-  .gmail-list { padding-left: 20px; margin: 0 0 16px; }
-  .gmail-list li { color: #374151; font-size: 15px; margin-bottom: 8px; }
-  .gmail-note { font-size: 14px; color: #166534; background: #f0fdf4; border-left: 3px solid #16a34a; padding: 10px 14px; border-radius: 4px; margin: 0; }
+  /* ---- GMAIL SECTION ---- */
+  .gmail-wrap {
+    border-top: 1px solid var(--border-soft);
+    border-bottom: 1px solid var(--border-soft);
+    background: rgba(79,216,255,.025);
+  }
+  .gmail-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 72px 28px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    align-items: start;
+  }
+  .gmail-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .gmail-card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-1);
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .gmail-card-head svg { width: 16px; height: 16px; stroke: var(--accent-1); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .gmail-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13.5px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  .gmail-row:last-child { margin-bottom: 0; }
+  .gmail-check { width: 16px; height: 16px; border-radius: 50%; background: rgba(79,216,255,.1); border: 1px solid rgba(79,216,255,.25); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .gmail-check svg { width: 8px; height: 8px; stroke: var(--accent-1); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .gmail-never {
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: rgba(79,216,255,.05);
+    border: 1px solid rgba(79,216,255,.12);
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.55;
+  }
+  .gmail-never strong { color: var(--accent-1); }
+  .scope-pill {
+    display: inline-block;
+    background: rgba(79,216,255,.1);
+    border: 1px solid rgba(79,216,255,.2);
+    color: var(--accent-1);
+    font-size: 11.5px;
+    font-family: monospace;
+    padding: 1px 7px;
+    border-radius: 4px;
+    letter-spacing: .02em;
+  }
 
-  .cta-band { background: #1a1a2e; }
-  .cta-band .section-title { color: #fff; }
-  .cta-band p { color: #9ca3af; font-size: 17px; max-width: 440px; margin: 0 auto 32px; }
+  /* ---- CTA BAND ---- */
+  .cta-wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 80px 28px;
+    text-align: center;
+  }
+  .cta-wrap .section-title { margin-bottom: 10px; }
+  .cta-wrap p { color: var(--text-dim); font-size: 15px; margin-bottom: 36px; }
+  .cta-wrap .hero-cta { justify-content: center; }
 
-  footer { background: #f9fafb; border-top: 1px solid #e5e7eb; padding: 32px 24px; }
-  .footer-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  /* ---- FOOTER ---- */
+  footer {
+    border-top: 1px solid var(--border-soft);
+    background: rgba(10,14,26,.5);
+  }
+  .footer-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
   .footer-links { display: flex; gap: 20px; }
-  .footer-links a { font-size: 13px; color: #6b7280; text-decoration: none; }
-  .footer-links a:hover { color: #111; }
-  .footer-copy { font-size: 13px; color: #9ca3af; }
+  .footer-links a { font-size: 12.5px; color: var(--text-faint); }
+  .footer-links a:hover { color: var(--text-dim); }
+  .footer-copy { font-size: 12.5px; color: var(--text-faint); }
 
-  @media (max-width: 600px) {
-    .preview-screen { grid-template-columns: 1fr; }
+  @media (max-width: 720px) {
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .gmail-inner { grid-template-columns: 1fr; gap: 32px; }
     .preview-sidebar { display: none; }
-    .preview-cards { grid-template-columns: repeat(2, 1fr); }
+    .pc-cards { grid-template-columns: repeat(2,1fr); }
+  }
+  @media (max-width: 480px) {
+    .features-grid { grid-template-columns: 1fr; }
     .nav-links .btn-ghost { display: none; }
-    .footer-inner { flex-direction: column; align-items: flex-start; }
   }
 </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
   <div class="nav-inner">
-    <a class="brand" href="/">Kly<span>o</span></a>
+    <span class="brand">Kly<em>o</em></span>
     <div class="nav-links">
       <a class="btn btn-ghost" href="/login">Log in</a>
       <a class="btn btn-primary" href="/signup">Sign up free</a>
@@ -105,135 +427,158 @@
   </div>
 </nav>
 
+<!-- HERO -->
 <div class="hero">
-  <div class="hero-badge">CRM for small businesses</div>
-  <h1>Run your business,<br>not your <em>spreadsheets</em></h1>
-  <p>Klyo is a CRM platform for managing clients, companies, sales opportunities, tasks, quotes, products, and Gmail-based communication history — all in one place.</p>
+  <div class="hero-tag">CRM for small businesses</div>
+  <h1>Your clients.<br>Your pipeline.<br><span class="grad">All in one place.</span></h1>
+  <p>Klyo is a CRM platform for managing clients, companies, sales opportunities, tasks, quotes, products, and Gmail-based communication — built for teams that move fast.</p>
   <div class="hero-cta">
-    <a class="btn btn-accent" href="/signup">Get started free</a>
-    <a class="btn btn-ghost" href="/login" style="color:#6b7280;">Log in to Klyo</a>
+    <a class="btn btn-primary" href="/signup">Get started free</a>
+    <a class="btn btn-ghost" href="/login">Log in</a>
   </div>
 </div>
 
-<div class="preview">
-  <div class="preview-frame">
-    <div class="preview-bar">
-      <div class="preview-dot"></div>
-      <div class="preview-dot"></div>
-      <div class="preview-dot"></div>
+<!-- APP PREVIEW -->
+<div class="preview-wrap">
+  <div class="preview-shell">
+    <div class="preview-topbar">
+      <div class="pbar-dot" style="background:#ff5f57"></div>
+      <div class="pbar-dot" style="background:#ffbd2e"></div>
+      <div class="pbar-dot" style="background:#28c840"></div>
+      <div class="pbar-url">klyolabs.com/app</div>
     </div>
-    <div class="preview-screen">
+    <div class="preview-body">
       <div class="preview-sidebar">
-        <div class="preview-item active"></div>
-        <div class="preview-item"></div>
-        <div class="preview-item"></div>
-        <div class="preview-item"></div>
-        <div class="preview-item"></div>
-        <div class="preview-item"></div>
+        <div class="psb-item active"><div class="psb-dot"></div><div class="psb-line"></div></div>
+        <div class="psb-item"><div class="psb-dot"></div><div class="psb-line"></div></div>
+        <div class="psb-item"><div class="psb-dot"></div><div class="psb-line"></div></div>
+        <div class="psb-item"><div class="psb-dot"></div><div class="psb-line"></div></div>
+        <div class="psb-item"><div class="psb-dot"></div><div class="psb-line"></div></div>
+        <div class="psb-item"><div class="psb-dot"></div><div class="psb-line"></div></div>
       </div>
       <div class="preview-content">
-        <div class="preview-row w60"></div>
-        <div class="preview-row w80"></div>
-        <div class="preview-row w40"></div>
-        <div class="preview-cards">
-          <div class="preview-card">
-            <div class="preview-card-line accent"></div>
-            <div class="preview-card-line"></div>
-            <div class="preview-card-line"></div>
-          </div>
-          <div class="preview-card">
-            <div class="preview-card-line accent"></div>
-            <div class="preview-card-line"></div>
-            <div class="preview-card-line"></div>
-          </div>
-          <div class="preview-card">
-            <div class="preview-card-line accent"></div>
-            <div class="preview-card-line"></div>
-            <div class="preview-card-line"></div>
-          </div>
+        <div class="pc-header">
+          <div class="pc-title"></div>
+          <div class="pc-btn"></div>
+        </div>
+        <div class="pc-cards">
+          <div class="pc-card"><div class="pc-card-label"></div><div class="pc-card-val"></div></div>
+          <div class="pc-card"><div class="pc-card-label"></div><div class="pc-card-val"></div></div>
+          <div class="pc-card"><div class="pc-card-label"></div><div class="pc-card-val"></div></div>
+        </div>
+        <div class="pc-rows">
+          <div class="pc-row"><div class="pc-row-av"></div><div class="pc-row-lines"><div class="pc-row-l1"></div><div class="pc-row-l2"></div></div><div class="pc-row-tag"></div></div>
+          <div class="pc-row"><div class="pc-row-av"></div><div class="pc-row-lines"><div class="pc-row-l1"></div><div class="pc-row-l2"></div></div><div class="pc-row-tag"></div></div>
+          <div class="pc-row"><div class="pc-row-av"></div><div class="pc-row-lines"><div class="pc-row-l1"></div><div class="pc-row-l2"></div></div><div class="pc-row-tag"></div></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<section id="features">
-  <div class="section-inner">
-    <div class="section-label">Everything you need</div>
-    <h2 class="section-title">All your client work, one app</h2>
-    <p class="section-desc">Klyo replaces the patchwork of tools most small teams rely on to manage customers and sales.</p>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">&#128101;</div>
-        <div class="feature-title">Contacts &amp; Companies</div>
-        <p class="feature-desc">Store clients, leads, and companies with notes, tags, and full activity history.</p>
+<!-- FEATURES -->
+<div class="section">
+  <div class="section-eyebrow">What's inside</div>
+  <h2 class="section-title">Everything your business needs</h2>
+  <p class="section-desc">Klyo replaces the scattered spreadsheets and disconnected tools most small teams are running on.</p>
+
+  <div class="features-grid">
+    <div class="feat">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">&#128188;</div>
-        <div class="feature-title">Sales Pipeline</div>
-        <p class="feature-desc">Track deals through a customisable Kanban pipeline — from lead to closed.</p>
+      <div class="feat-title">Contacts &amp; Companies</div>
+      <p class="feat-desc">Store clients, leads, and companies with notes and full activity history.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">&#128203;</div>
-        <div class="feature-title">Tasks &amp; Calendar</div>
-        <p class="feature-desc">Assign tasks to team members, set deadlines, and view everything in a calendar.</p>
+      <div class="feat-title">Sales Pipeline</div>
+      <p class="feat-desc">Track deals through a customisable Kanban board — from first contact to closed.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">&#128196;</div>
-        <div class="feature-title">Quotes &amp; Products</div>
-        <p class="feature-desc">Build professional PDF quotes with your product catalogue, discounts, and currencies.</p>
+      <div class="feat-title">Tasks &amp; Calendar</div>
+      <p class="feat-desc">Assign tasks to teammates, set deadlines, and view everything in a calendar.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">&#9993;&#65039;</div>
-        <div class="feature-title">Gmail Integration</div>
-        <p class="feature-desc">Send emails and view full communication history with contacts — right inside Klyo.</p>
+      <div class="feat-title">Quotes &amp; Products</div>
+      <p class="feat-desc">Build professional PDF quotes with your product catalogue, discounts, and currencies.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">&#128100;</div>
-        <div class="feature-title">Team &amp; Roles</div>
-        <p class="feature-desc">Invite team members, set viewer / editor / admin roles, and collaborate safely.</p>
+      <div class="feat-title">Gmail Integration</div>
+      <p class="feat-desc">Send emails and view full communication history with contacts — right inside Klyo.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="feat-title">Team &amp; Roles</div>
+      <p class="feat-desc">Invite teammates, set viewer / editor / admin permissions, collaborate safely.</p>
+    </div>
+  </div>
+</div>
+
+<!-- GMAIL EXPLANATION -->
+<div class="gmail-wrap">
+  <div class="gmail-inner">
+    <div>
+      <div class="section-eyebrow">Google integration</div>
+      <h2 class="section-title" style="margin-bottom:12px;">Why Klyo requests Gmail access</h2>
+      <p style="color:var(--text-dim);font-size:15px;line-height:1.65;">Klyo can optionally connect to your Gmail account to send business emails and track communication history with your clients. Here is exactly what we do — and what we don't.</p>
+    </div>
+    <div>
+      <div class="gmail-card">
+        <div class="gmail-card-head">
+          <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Gmail access is used only to:
+        </div>
+        <div class="gmail-row">
+          <div class="gmail-check"><svg viewBox="0 0 10 10"><polyline points="2,5 4.5,7.5 8,2.5"/></svg></div>
+          <span>Connect your Gmail so Klyo can send emails on your behalf.</span>
+        </div>
+        <div class="gmail-row">
+          <div class="gmail-check"><svg viewBox="0 0 10 10"><polyline points="2,5 4.5,7.5 8,2.5"/></svg></div>
+          <span>Send business emails — only messages you compose and approve before they go out.</span>
+        </div>
+        <div class="gmail-row">
+          <div class="gmail-check"><svg viewBox="0 0 10 10"><polyline points="2,5 4.5,7.5 8,2.5"/></svg></div>
+          <span>Show communication history with your contacts to improve your CRM workflow.</span>
+        </div>
+        <div class="gmail-never">
+          We request only the <span class="scope-pill">gmail.send</span> scope — write-only, no inbox access.
+          <strong>Gmail data is never sold, shared with advertisers, or used to train AI models.</strong>
+          Disconnect anytime from Settings.
+        </div>
       </div>
     </div>
   </div>
-</section>
+</div>
 
-<section class="gmail-section" id="gmail">
-  <div class="section-inner">
-    <div class="section-label">Google integration</div>
-    <h2 class="section-title">Why Klyo requests Gmail access</h2>
-    <p class="section-desc">Klyo can optionally connect to your Gmail account. Here is exactly what that means and what we do with access.</p>
-    <div class="gmail-box">
-      <div class="gmail-title">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" fill="#0369a1"/></svg>
-        Gmail access is used only to:
-      </div>
-      <ul class="gmail-list">
-        <li>Connect your Gmail account so Klyo can send emails on your behalf.</li>
-        <li>Send business emails from inside Klyo — only messages <strong>you</strong> compose and explicitly approve before sending.</li>
-        <li>Show communication history with your contacts to improve your CRM workflow.</li>
-      </ul>
-      <p class="gmail-note">
-        <strong>We never read your inbox.</strong> Klyo requests only the <code style="background:#dcfce7;padding:1px 5px;border-radius:3px;font-size:13px;">gmail.send</code> scope — write-only access to send emails you approve. Gmail data is <strong>never sold, never shared with advertisers, and never used to train AI models</strong>. You can disconnect Gmail at any time from your Settings page.
-      </p>
-    </div>
+<!-- CTA -->
+<div class="cta-wrap">
+  <div class="section-eyebrow">Get started</div>
+  <h2 class="section-title">Ready to organise your business?</h2>
+  <p>Create a free account and have your CRM running in minutes.</p>
+  <div class="hero-cta">
+    <a class="btn btn-primary" href="/signup" style="font-size:14.5px;padding:10px 28px;">Create free account</a>
+    <a class="btn btn-ghost" href="/login" style="font-size:14.5px;padding:10px 24px;">Log in</a>
   </div>
-</section>
+</div>
 
-<section class="cta-band">
-  <div class="section-inner" style="text-align:center;">
-    <div class="section-label" style="color:#4fd8ff;">Get started today</div>
-    <h2 class="section-title">Ready to organise your business?</h2>
-    <p>Join businesses using Klyo to manage clients, close deals, and stay on top of their work.</p>
-    <div class="hero-cta">
-      <a class="btn btn-accent" href="/signup" style="font-size:16px;padding:12px 32px;">Create free account</a>
-      <a class="btn btn-ghost" href="/login" style="font-size:16px;padding:12px 32px;color:#9ca3af;">Log in</a>
-    </div>
-  </div>
-</section>
-
+<!-- FOOTER -->
 <footer>
   <div class="footer-inner">
-    <a class="brand" href="/" style="font-size:18px;">Kly<span style="color:#4fd8ff;">o</span></a>
+    <span class="brand" style="font-size:17px;">Kly<em>o</em></span>
     <div class="footer-links">
       <a href="/privacy">Privacy Policy</a>
       <a href="/terms">Terms of Service</a>
