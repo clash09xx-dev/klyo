@@ -2726,8 +2726,14 @@ function wireEvents() {
         csvText = await file.text();
       }
       const res = await API.post("/contacts/import", { csv: csvText });
-      toast(`Imported ${res.imported} contact${res.imported === 1 ? "" : "s"}${res.skipped ? `, ${res.skipped} skipped` : ""}`);
-      if (res.errors?.length) console.warn("Import row errors:", res.errors);
+      if (res.imported === 0 && res.skipped > 0) {
+        const hint = res.errors?.[0] || "Wszystkie wiersze pominięte.";
+        toast(`Zaimportowano 0 — ${hint}`, "error");
+        console.warn("Import skipped rows:", res.errors);
+      } else {
+        toast(`Zaimportowano ${res.imported}${res.skipped ? `, pominięto ${res.skipped}` : ""}`);
+        if (res.errors?.length) console.warn("Import row errors:", res.errors);
+      }
       await loadContacts();
       await loadStats();
     } catch (err) {

@@ -399,34 +399,68 @@ router.post("/import", async (req, res) => {
     return result;
   }
 
+  // Transliterate diacritics → ASCII so Polish/DE/FR headers survive stripping
+  function transliterate(str) {
+    return str
+      .replace(/[àáâãäå]/g, "a").replace(/[ą]/g, "a")
+      .replace(/[èéêë]/g, "e").replace(/[ę]/g, "e")
+      .replace(/[ìíîï]/g, "i")
+      .replace(/[òóôõöø]/g, "o").replace(/[ó]/g, "o")
+      .replace(/[ùúûü]/g, "u")
+      .replace(/[ýÿ]/g, "y")
+      .replace(/[ñń]/g, "n")
+      .replace(/[çć]/g, "c")
+      .replace(/[ß]/g, "ss")
+      .replace(/[łl]/g, "l")
+      .replace(/[śšş]/g, "s")
+      .replace(/[źżžz]/g, "z")
+      .replace(/[ð]/g, "d")
+      .replace(/[þ]/g, "th");
+  }
+
   // Map common CRM export column names → internal field names
+  // Keys are already transliterated + lowercased + underscored
   const COLUMN_ALIASES = {
-    // full name
+    // ----- English -----
     name: "full_name", contact: "full_name", contact_name: "full_name",
     full_name: "full_name", fullname: "full_name", display_name: "full_name",
-    // first name
     first_name: "first_name", firstname: "first_name", given_name: "first_name", forename: "first_name",
-    // last name
     last_name: "last_name", lastname: "last_name", surname: "last_name", family_name: "last_name",
-    // email
     email: "email", email_address: "email", e_mail: "email", mail: "email",
-    // phone
     phone: "phone", phone_number: "phone", mobile: "phone", mobile_phone: "phone",
     telephone: "phone", tel: "phone", cell: "phone", cell_phone: "phone",
-    // company
     company: "company", company_name: "company", organization: "company", organisation: "company",
     account: "company", account_name: "company", employer: "company",
-    // notes
     notes: "notes", note: "notes", description: "notes", comments: "notes", comment: "notes",
-    // status
     status: "status", lead_status: "status", contact_status: "status", stage: "status", lifecycle_stage: "status",
+    // ----- Polish -----
+    // full name
+    imie_i_nazwisko: "full_name", imie_nazwisko: "full_name", pelne_imie: "full_name",
+    osoba: "full_name", kontakt: "full_name", nazwa_kontaktu: "full_name", klient: "full_name",
+    // first name
+    imie: "first_name",
+    // last name
+    nazwisko: "last_name",
+    // email
+    adres_email: "email", adres_e_mail: "email", e_mail_adres: "email", poczta: "email",
+    // phone
+    telefon: "phone", numer_telefonu: "phone", telefon_komorkowy: "phone", komorka: "phone",
+    nr_telefonu: "phone", tel_komorkowy: "phone",
+    // company
+    firma: "company", organizacja: "company", przedsiebiorstwo: "company", pracodawca: "company",
+    nazwa_firmy: "company",
+    // notes
+    notatki: "notes", notatka: "notes", uwagi: "notes", opis: "notes",
+    // status
+    etap: "status", faza: "status",
   };
 
   function normalizeHeader(h) {
-    const key = h.toLowerCase().trim()
-      .replace(/\s+/g, "_")         // spaces → underscore
-      .replace(/[^a-z0-9_]/g, "")  // strip non-alphanumeric
-      .replace(/_+/g, "_");         // collapse multiple underscores
+    const key = transliterate(h.toLowerCase().trim())
+      .replace(/\s+/g, "_")        // spaces → underscore
+      .replace(/[^a-z0-9_]/g, "") // strip remaining non-alphanumeric
+      .replace(/_+/g, "_")         // collapse multiple underscores
+      .replace(/^_|_$/g, "");      // trim leading/trailing underscores
     return COLUMN_ALIASES[key] || key;
   }
 
@@ -437,6 +471,15 @@ router.post("/import", async (req, res) => {
     const field = normalizeHeader(h);
     if (!(field in fieldIndex)) fieldIndex[field] = i;
   });
+
+  // If no name column resolved at all, surface detected headers so the user can debug
+  const hasName = "full_name" in fieldIndex || "first_name" in fieldIndex || "last_name" in fieldIndex;
+  if (!hasName && rawHeaders.length > 0) {
+    return res.status(400).json({
+      error: `Nie rozpoznano kolumny z imieniem/nazwiskiem. Wykryte kolumny: ${rawHeaders.join(", ")}. Oczekiwane nazwy: "Imię", "Nazwisko", "Imię i nazwisko", "Name", "First Name", "Last Name".`,
+      detected_headers: rawHeaders,
+    });
+  }
 
   const get = (row, field) => (fieldIndex[field] !== undefined ? (row[fieldIndex[field]] || "").trim() : "");
 
