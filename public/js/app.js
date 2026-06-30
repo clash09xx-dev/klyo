@@ -2993,6 +2993,9 @@ function wireEvents() {
   els.connectGmailBtn.addEventListener("click", handleConnectGmail);
   els.disconnectGmailBtn.addEventListener("click", handleDisconnectGmail);
 
+  // ── Data Reset ──────────────────────────────────────────────────────────
+  initDataReset();
+
   els.helpFab.addEventListener("click", startTour);
   els.closeGrantModalBtn.addEventListener("click", closeGrantModal);
   els.cancelGrantBtn.addEventListener("click", closeGrantModal);
@@ -3646,3 +3649,126 @@ async function handleTaskSubmit(e) {
   els.taskPriorityFilter.addEventListener("change", loadTasks);
   els.taskOverdueFilter.addEventListener("change", loadTasks);
 })();
+
+/* ═══════════════════════════════════════════════════════════
+   DATA RESET
+   ═══════════════════════════════════════════════════════════ */
+function initDataReset() {
+  const overlay       = document.getElementById("resetConfirmOverlay");
+  const closeBtn      = document.getElementById("closeResetConfirmBtn");
+  const cancelBtn     = document.getElementById("cancelResetBtn");
+  const confirmBtn    = document.getElementById("confirmResetBtn");
+  const confirmList   = document.getElementById("resetConfirmList");
+  const pwWrap        = document.getElementById("resetPasswordWrap");
+  const pwInput       = document.getElementById("resetPasswordInput");
+  const errorEl       = document.getElementById("resetConfirmError");
+  const settingsError = document.getElementById("resetError");
+  const resetSelBtn   = document.getElementById("resetSelectedBtn");
+  const resetAllBtn   = document.getElementById("resetAllBtn");
+
+  if (!overlay || !resetSelBtn || !resetAllBtn) return;
+
+  // human-readable labels per key
+  const LABELS = {
+    contacts: () => t("reset.contacts"),
+    companies: () => t("reset.companies"),
+    products:  () => t("reset.products"),
+    quotes:    () => t("reset.quotes"),
+    deals:     () => t("reset.deals"),
+    tasks:     () => t("reset.tasks"),
+    calendar:  () => t("reset.calendar"),
+    history:   () => t("reset.history"),
+  };
+
+  let _pendingItems  = [];
+  let _pendingAll    = false;
+  let _needsPassword = false;
+
+  function openResetModal(items, isAll) {
+    _pendingItems  = items;
+    _pendingAll    = isAll;
+    _needsPassword = isAll || items.includes("contacts");
+    errorEl.textContent = "";
+    pwInput.value = "";
+
+    // build list
+    confirmList.innerHTML = (isAll ? Object.keys(LABELS) : items)
+      .map((k) => `<li>${LABELS[k] ? LABELS[k]() : k}</li>`)
+      .join("");
+
+    // show/hide password field
+    pwWrap.classList.toggle("hidden", !_needsPassword);
+
+    overlay.classList.remove("hidden");
+    if (_needsPassword) setTimeout(() => pwInput.focus(), 60);
+  }
+
+  function closeResetModal() {
+    overlay.classList.add("hidden");
+    pwInput.value = "";
+    errorEl.textContent = "";
+  }
+
+  closeBtn.addEventListener("click", closeResetModal);
+  cancelBtn.addEventListener("click", closeResetModal);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeResetModal(); });
+
+  resetSelBtn.addEventListener("click", () => {
+    const checked = [...document.querySelectorAll(".reset-item-cb:checked")].map((cb) => cb.value);
+    if (!checked.length) {
+      if (settingsError) settingsError.textContent = t("reset.select_at_least_one");
+      return;
+    }
+    if (settingsError) settingsError.textContent = "";
+    openResetModal(checked, false);
+  });
+
+  resetAllBtn.addEventListener("click", () => {
+    if (settingsError) settingsError.textContent = "";
+    openResetModal(Object.keys(LABELS), true);
+  });
+
+  confirmBtn.addEventListener("click", async () => {
+    errorEl.textContent = "";
+    const password = _needsPassword ? pwInput.value : undefined;
+    if (_needsPassword && !password) {
+      errorEl.textContent = t("reset.password_required");
+      pwInput.focus();
+      return;
+    }
+
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = t("common.loading");
+
+    try {
+      const body = { items: _pendingItems };
+      if (_pendingAll) body.reset_all = true;
+      if (password)    body.password  = password;
+
+      await API.post("/settings/reset", body);
+
+      closeResetModal();
+
+      // uncheck all boxes
+      document.querySelectorAll(".reset-item-cb").forEach((cb) => { cb.checked = false; });
+
+      toast(t("reset.success"), "success");
+
+      // Reload affected views
+      await Promise.all([loadContacts(), loadStats()]);
+      if (currentView === "companies")  loadCompanies();
+      if (currentView === "products")   loadProductsView();
+      if (currentView === "tasks")      loadTasks();
+      if (currentView === "deals")      loadDeals();
+      if (currentView === "quotes")     loadQuotes();
+      if (currentView === "calendar")   loadCalendar();
+      if (currentView === "history")    loadHistory(true);
+
+    } catch (err) {
+      errorEl.textContent = err.message || t("reset.failed");
+    } finally {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = t("reset.confirm_btn");
+    }
+  });
+}

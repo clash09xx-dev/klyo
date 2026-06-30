@@ -1356,9 +1356,62 @@
     <div class="section-title" data-i18n="settings.help">Help</div>
     <button class="btn btn-ghost" id="replayTourBtn" style="width:100%;" data-i18n="ui.replay_tour">Replay the welcome tour</button>
 
+    <!-- ───── Danger Zone ───── -->
+    <details class="danger-zone-toggle" id="dangerZoneToggle">
+      <summary data-i18n="settings.danger_zone">Danger zone</summary>
+      <div class="danger-zone-body">
+        <p class="muted" style="font-size:12.5px; margin-bottom:14px;" data-i18n="settings.danger_zone_sub">Permanently delete selected data from your workspace. This cannot be undone.</p>
+
+        <div class="reset-checks">
+          <label class="reset-check-item"><input type="checkbox" class="reset-item-cb" value="contacts" /> <span data-i18n="reset.contacts">Contacts</span> <span class="muted" style="font-size:11px;" data-i18n="reset.contacts_sub">(+ linked quotes, offers, activity)</span></label>
+          <label class="reset-check-item"><input type="checkbox" class="reset-item-cb" value="companies" /> <span data-i18n="reset.companies">Companies</span></label>
+          <label class="reset-check-item"><input type="checkbox" class="reset-item-cb" value="products" /> <span data-i18n="reset.products">Products</span></label>
+          <label class="reset-check-item"><input type="checkbox" class="reset-item-cb" value="quotes" /> <span data-i18n="reset.quotes">Quotes</span></label>
+          <label class="reset-check-item"><input type="checkbox" class="reset-item-cb" value="deals" /> <span data-i18n="reset.deals">Deals</span></label>
+          <label class="reset-check-item"><input type="checkbox" class="reset-item-cb" value="tasks" /> <span data-i18n="reset.tasks">Tasks</span></label>
+          <label class="reset-check-item"><input type="checkbox" class="reset-item-cb" value="calendar" /> <span data-i18n="reset.calendar">Calendar</span></label>
+          <label class="reset-check-item"><input type="checkbox" class="reset-item-cb" value="history" /> <span data-i18n="reset.history">Activity history</span></label>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; align-items:center;">
+          <button class="btn btn-sm btn-danger-outline" id="resetSelectedBtn" data-i18n="reset.reset_selected">Reset selected</button>
+          <button class="btn btn-sm btn-danger" id="resetAllBtn" data-i18n="reset.reset_all">Reset everything</button>
+        </div>
+        <div class="form-error" id="resetError" style="margin-top:8px;"></div>
+      </div>
+    </details>
+
     <div style="margin-top:24px; display:flex; gap:16px; padding-top:16px; border-top:1px solid var(--border-soft);">
       <a onclick="window.open('/terms','_blank'); return false;" href="/terms" style="font-size:12px; color:var(--text-faint); text-decoration:none; cursor:pointer;" onmouseover="this.style.color='var(--text-dim)'" onmouseout="this.style.color='var(--text-faint)'" data-i18n="settings.legal_terms">Terms of service</a>
       <a onclick="window.open('/privacy','_blank'); return false;" href="/privacy" style="font-size:12px; color:var(--text-faint); text-decoration:none; cursor:pointer;" onmouseover="this.style.color='var(--text-dim)'" onmouseout="this.style.color='var(--text-faint)'" data-i18n="settings.legal_privacy">Privacy policy</a>
+    </div>
+  </div>
+</div>
+
+<!-- DATA RESET CONFIRMATION MODAL -->
+<div class="overlay hidden" id="resetConfirmOverlay" style="z-index:1050;">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-head">
+      <h2 id="resetConfirmTitle" data-i18n="reset.confirm_title">Confirm reset</h2>
+      <button class="icon-btn" id="closeResetConfirmBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div style="padding:0 24px 24px;">
+      <div style="background:rgba(255,80,80,.08); border:1px solid rgba(255,80,80,.22); border-radius:8px; padding:12px 14px; margin-bottom:16px;">
+        <p style="font-size:13px; color:var(--danger, #ff5050); margin:0 0 6px; font-weight:600;" data-i18n="reset.warning_head">This cannot be undone.</p>
+        <p style="font-size:12.5px; color:var(--text-dim); margin:0;" data-i18n="reset.warning_sub">The following data will be permanently deleted from your workspace:</p>
+        <ul id="resetConfirmList" style="margin:8px 0 0; padding-left:18px; font-size:12.5px; color:var(--text); line-height:1.8;"></ul>
+      </div>
+
+      <div id="resetPasswordWrap" class="hidden" style="margin-bottom:14px;">
+        <label style="font-size:12.5px; font-weight:600; display:block; margin-bottom:6px;" data-i18n="reset.enter_password">Enter your password to confirm</label>
+        <input id="resetPasswordInput" type="password" placeholder="Your current password" style="width:100%;" />
+      </div>
+
+      <div class="form-error" id="resetConfirmError"></div>
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <button class="btn btn-ghost" id="cancelResetBtn" data-i18n="common.cancel">Cancel</button>
+        <button class="btn btn-danger" id="confirmResetBtn" data-i18n="reset.confirm_btn">Yes, delete permanently</button>
+      </div>
     </div>
   </div>
 </div>

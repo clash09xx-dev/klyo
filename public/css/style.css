@@ -575,6 +575,44 @@ td.name-cell::before {
 }
 .adv-section-label:first-child { border-top: none; padding-top: 0; margin-top: 0; }
 
+/* ---------- danger zone ---------- */
+:root { --danger: #ff5050; }
+.danger-zone-toggle {
+  border: 1px solid rgba(255,80,80,.22); border-radius: 10px;
+  margin-top: 28px; overflow: hidden;
+}
+.danger-zone-toggle > summary {
+  font-size: 13px; font-weight: 600; color: var(--danger);
+  cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px; user-select: none; background: rgba(255,80,80,.05);
+}
+.danger-zone-toggle > summary::-webkit-details-marker { display: none; }
+.danger-zone-toggle > summary::before {
+  content: "›"; font-size: 17px; transition: transform .15s; line-height: 1;
+}
+.danger-zone-toggle[open] > summary::before { transform: rotate(90deg); }
+.danger-zone-body { padding: 16px; border-top: 1px solid rgba(255,80,80,.15); }
+.reset-checks { display: flex; flex-direction: column; gap: 8px; }
+.reset-check-item {
+  display: flex; align-items: center; gap: 9px; font-size: 13px;
+  color: var(--text); cursor: pointer; padding: 5px 6px; border-radius: 6px;
+}
+.reset-check-item:hover { background: rgba(255,80,80,.06); }
+.reset-check-item input[type="checkbox"] { accent-color: var(--danger); width: 14px; height: 14px; flex-shrink: 0; }
+.btn-danger {
+  background: var(--danger); color: #fff; border: 1px solid transparent;
+  font-size: 13px; font-weight: 600; border-radius: var(--radius-sm); padding: 7px 14px;
+  cursor: pointer; transition: opacity .15s;
+}
+.btn-danger:hover { opacity: .85; }
+.btn-danger:disabled { opacity: .5; cursor: default; }
+.btn-danger-outline {
+  background: transparent; color: var(--danger); border: 1px solid rgba(255,80,80,.4);
+  font-size: 13px; font-weight: 600; border-radius: var(--radius-sm); padding: 7px 14px;
+  cursor: pointer; transition: background .15s, border-color .15s;
+}
+.btn-danger-outline:hover { background: rgba(255,80,80,.08); border-color: var(--danger); }
+
 /* ---------- onboarding tour ---------- */
 #tourOverlay { background: transparent; backdrop-filter: none; }
 .tour-modal { width: 340px; z-index: 61; transition: top .2s ease, left .2s ease; }

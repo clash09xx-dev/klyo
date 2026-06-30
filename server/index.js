@@ -36,6 +36,7 @@ const dealsRoutes = require("./routes/deals");
 const tasksRoutes = require("./routes/tasks");
 const calendarRoutes = require("./routes/calendar");
 const clientsRoutes = require("./routes/clients");
+const dataResetRoutes = require("./routes/data-reset");
 
 const app = express();
 app.use(cors());
@@ -64,6 +65,7 @@ app.use("/api/deals", dealsRoutes);
 app.use("/api/tasks", tasksRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/clients", clientsRoutes);
+app.use("/api/settings", dataResetRoutes);
 app.use("/api", trackingRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
