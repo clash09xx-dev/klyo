@@ -44,7 +44,7 @@ app.use(cors());
 // so this one path must be excluded from JSON parsing below. Order
 // matters: this has to be registered before express.json().
 app.use("/api/billing/webhook", express.raw({ type: "application/json" }));
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "50mb" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/contacts", contactRoutes);

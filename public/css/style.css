@@ -123,9 +123,24 @@
   /* Pearl — crisp white light mode, indigo accent — corporate clean */
   --bg: #f5f6f8; --bg-glow: #ecedee; --bg-soft: #eef0f2; --surface: #ffffff;
   --surface-2: #f0f1f388; --border: #d0d4da; --border-soft: #dce0e5;
-  --bg-card: #ffffff;
   --text: #1a202c; --text-dim: #60708a; --text-faint: #a0afc0;
   --accent-1: #2563eb; --accent-2: #3b82f6;
+  --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+}
+[data-theme="dawn"] {
+  /* Dawn — warm off-white, clean teal accent — friendly SaaS */
+  --bg: #f8f9fa; --bg-glow: #f0f4f8; --bg-soft: #f1f4f7; --surface: #ffffff;
+  --surface-2: #f4f6f888; --border: #dde2e8; --border-soft: #e4e8ed;
+  --text: #1c2536; --text-dim: #5a6a82; --text-faint: #a3b0c0;
+  --accent-1: #0ea5e9; --accent-2: #38bdf8;
+  --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+}
+[data-theme="office"] {
+  /* Office — neutral cool white, muted violet accent — enterprise / B2B */
+  --bg: #f3f4f6; --bg-glow: #eaecf0; --bg-soft: #eff0f3; --surface: #ffffff;
+  --surface-2: #f0f2f488; --border: #d2d6dc; --border-soft: #dfe2e8;
+  --text: #111827; --text-dim: #4b5563; --text-faint: #9ca3af;
+  --accent-1: #7c3aed; --accent-2: #a78bfa;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
 }
 
@@ -513,6 +528,52 @@ td.name-cell::before {
 .theme-swatch[data-theme-key="graphite"] .puck { background: linear-gradient(135deg, #8bb4d8, #a8c8e8); box-shadow: 0 0 0 3px #141414; }
 .theme-swatch[data-theme-key="forest"]   .puck { background: linear-gradient(135deg, #6ec47a, #9ed8a4); box-shadow: 0 0 0 3px #0c1410; }
 .theme-swatch[data-theme-key="pearl"]    .puck { background: linear-gradient(135deg, #2563eb, #3b82f6); box-shadow: 0 0 0 3px #dce0e5; }
+.theme-swatch[data-theme-key="dawn"]     .puck { background: linear-gradient(135deg, #0ea5e9, #38bdf8); box-shadow: 0 0 0 3px #e0edf5; }
+.theme-swatch[data-theme-key="office"]   .puck { background: linear-gradient(135deg, #7c3aed, #a78bfa); box-shadow: 0 0 0 3px #e5e7eb; }
+
+.theme-group-label { font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px; }
+.theme-grid { grid-template-columns: repeat(4, 1fr); }
+
+/* ---------- tag pills ---------- */
+.tag-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(79,216,255,.1); border: 1px solid rgba(79,216,255,.2);
+  color: var(--accent-1); font-size: 11.5px; font-weight: 500;
+  padding: 2px 8px; border-radius: 20px; white-space: nowrap; cursor: default;
+}
+.tag-pill.removable { cursor: pointer; }
+.tag-pill.removable:hover { background: rgba(255,107,122,.1); border-color: rgba(255,107,122,.3); color: var(--danger); }
+.tag-pill-x { font-size: 12px; line-height: 1; opacity: .7; }
+
+/* tag input container */
+.tag-input-wrap {
+  display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+  background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 6px 10px; min-height: 38px; cursor: text;
+}
+.tag-input-wrap:focus-within { border-color: var(--accent-1); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-1) 15%, transparent); }
+.tag-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+
+/* ---------- advanced details section ---------- */
+.advanced-details-toggle { border: none; margin-top: 8px; }
+.advanced-details-toggle > summary {
+  font-size: 12.5px; font-weight: 600; color: var(--text-faint); cursor: pointer;
+  list-style: none; display: flex; align-items: center; gap: 6px;
+  padding: 6px 0; user-select: none;
+}
+.advanced-details-toggle > summary::-webkit-details-marker { display: none; }
+.advanced-details-toggle > summary::before {
+  content: "›"; font-size: 16px; transition: transform .15s; line-height: 1;
+}
+.advanced-details-toggle[open] > summary::before { transform: rotate(90deg); }
+.advanced-details-toggle > summary:hover { color: var(--text-dim); }
+.advanced-details-body { padding-top: 10px; }
+.adv-section-label {
+  font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text-faint); margin: 14px 0 8px; padding-top: 10px;
+  border-top: 1px solid var(--border-soft);
+}
+.adv-section-label:first-child { border-top: none; padding-top: 0; margin-top: 0; }
 
 /* ---------- onboarding tour ---------- */
 #tourOverlay { background: transparent; backdrop-filter: none; }

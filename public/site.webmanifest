@@ -1,0 +1,12 @@
+{
+  "name": "Klyo CRM",
+  "short_name": "Klyo",
+  "description": "Simple CRM for small teams",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#0a0e1a",
+  "theme_color": "#4fd8ff",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

@@ -373,6 +373,33 @@ async function init() {
   // Workspaces: WhatsApp provider setting
   await pool.query(`ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS whatsapp_provider TEXT;`);
 
+  // Contacts: extended fields (tags, contact info, address, classification)
+  await pool.query(`
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS tags          TEXT[] NOT NULL DEFAULT '{}';
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS secondary_email TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS secondary_phone TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS website         TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS linkedin        TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS instagram       TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS facebook        TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS twitter         TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS city            TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS country         TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS state           TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS postal_code     TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS address         TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS customer_type   TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS priority        TEXT NOT NULL DEFAULT 'medium';
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS lead_source     TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS department      TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS preferred_language TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS whatsapp        TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS telegram        TEXT;
+    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS internal_notes  TEXT;
+  `);
+  // Index for tag search
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_contacts_tags ON contacts USING GIN(tags);`);
+
   // Seed default pipeline stages for any workspace that has none
   await pool.query(
     `INSERT INTO pipeline_stages (workspace_id, name, color, sort_order)

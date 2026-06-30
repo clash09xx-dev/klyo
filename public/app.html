@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Klyo – Dashboard</title>
 <meta name="robots" content="noindex" />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%226%22 fill=%22%234fd8ff%22/></svg>">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+<link rel="manifest" href="/site.webmanifest" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css" />
@@ -163,6 +165,7 @@
           </select>
           <select id="filterTheme"><option value="" data-i18n="ui.all_themes">All themes</option></select>
           <select id="filterOwner"><option value="" data-i18n="ui.all_owners">All owners</option></select>
+          <select id="filterTag"><option value="" data-i18n="ui.all_tags">All tags</option></select>
           <div class="spacer"></div>
           <span class="muted" id="resultCount"></span>
         </div>
@@ -177,6 +180,7 @@
                 <th data-i18n="ui.col_theme">Theme</th>
                 <th data-i18n="ui.col_stage">Stage</th>
                 <th data-i18n="ui.col_owner">Owner</th>
+                <th data-i18n="ui.col_tags">Tags</th>
               </tr>
             </thead>
             <tbody id="contactsBody"></tbody>
@@ -813,6 +817,76 @@
         <label for="cNotes">Notes</label>
         <textarea id="cNotes" placeholder="Anything your team should know before reaching out."></textarea>
       </div>
+      <div class="field">
+        <label for="cTagsInput" data-i18n="contact.tags">Tags</label>
+        <div class="tag-input-wrap" id="cTagsWrap">
+          <div class="tag-pills" id="cTagPills"></div>
+          <input id="cTagsInput" type="text" placeholder="Add tag, press Enter…" autocomplete="off" style="border:none;background:transparent;outline:none;flex:1;min-width:80px;font-size:13px;color:var(--text);" />
+        </div>
+        <div class="muted" style="font-size:11.5px;margin-top:4px;" data-i18n="contact.tags_hint">Press Enter or comma to add a tag. Click tag to remove.</div>
+      </div>
+
+      <!-- Advanced Details (collapsible) -->
+      <details class="advanced-details-toggle" id="contactAdvancedDetails">
+        <summary data-i18n="contact.advanced_details">Advanced details</summary>
+        <div class="advanced-details-body">
+          <div class="adv-section-label" data-i18n="contact.adv_contact_info">Contact info</div>
+          <div class="field-row">
+            <div class="field"><label for="cSecondaryEmail" data-i18n="contact.secondary_email">Secondary email</label><input id="cSecondaryEmail" type="email" /></div>
+            <div class="field"><label for="cSecondaryPhone" data-i18n="contact.secondary_phone">Secondary phone</label><input id="cSecondaryPhone" type="text" /></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="cWebsite" data-i18n="contact.website">Website</label><input id="cWebsite" type="url" placeholder="https://…" /></div>
+            <div class="field"><label for="cLinkedin" data-i18n="contact.linkedin">LinkedIn</label><input id="cLinkedin" type="url" placeholder="https://linkedin.com/in/…" /></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="cWhatsapp" data-i18n="contact.whatsapp">WhatsApp</label><input id="cWhatsapp" type="text" /></div>
+            <div class="field"><label for="cTelegram" data-i18n="contact.telegram">Telegram</label><input id="cTelegram" type="text" /></div>
+          </div>
+
+          <div class="adv-section-label" data-i18n="contact.adv_address">Address</div>
+          <div class="field-row">
+            <div class="field"><label for="cCity" data-i18n="contact.city">City</label><input id="cCity" type="text" /></div>
+            <div class="field"><label for="cCountry" data-i18n="contact.country">Country</label><input id="cCountry" type="text" /></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="cState" data-i18n="contact.state">State / Province</label><input id="cState" type="text" /></div>
+            <div class="field"><label for="cPostalCode" data-i18n="contact.postal_code">Postal code</label><input id="cPostalCode" type="text" /></div>
+          </div>
+          <div class="field">
+            <label for="cAddress" data-i18n="contact.address">Street address</label>
+            <input id="cAddress" type="text" />
+          </div>
+
+          <div class="adv-section-label" data-i18n="contact.adv_classification">Classification</div>
+          <div class="field-row">
+            <div class="field">
+              <label for="cCustomerType" data-i18n="contact.customer_type">Type</label>
+              <select id="cCustomerType">
+                <option value="" data-i18n="ui.select_option">— select —</option>
+                <option value="lead" data-i18n="contact.type_lead">Lead</option>
+                <option value="prospect" data-i18n="contact.type_prospect">Prospect</option>
+                <option value="customer" data-i18n="contact.type_customer">Customer</option>
+                <option value="partner" data-i18n="contact.type_partner">Partner</option>
+                <option value="supplier" data-i18n="contact.type_supplier">Supplier</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="cPriority" data-i18n="contact.priority">Priority</label>
+              <select id="cPriority">
+                <option value="low" data-i18n="contact.priority_low">Low</option>
+                <option value="medium" data-i18n="contact.priority_medium">Medium</option>
+                <option value="high" data-i18n="contact.priority_high">High</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="cLeadSource" data-i18n="contact.lead_source">Lead source</label><input id="cLeadSource" type="text" placeholder="Website, referral, cold call…" /></div>
+            <div class="field"><label for="cDepartment" data-i18n="contact.department">Department</label><input id="cDepartment" type="text" /></div>
+          </div>
+        </div>
+      </details>
+
       <div class="form-error" id="contactFormError"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close-modal>Cancel</button>
@@ -836,14 +910,23 @@
     </div>
 
     <div id="panelBadge" style="margin-top:10px;"></div>
+    <div id="panelTags" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;"></div>
 
     <div class="detail-grid">
-      <div class="detail-item"><div class="k">Email</div><div class="v mono" id="panelEmail">—</div></div>
-      <div class="detail-item"><div class="k">Phone</div><div class="v mono" id="panelPhone">—</div></div>
-      <div class="detail-item"><div class="k">Company</div><div class="v" id="panelCompany">—</div></div>
-      <div class="detail-item"><div class="k">Marketing theme</div><div class="v" id="panelTheme">—</div></div>
-      <div class="detail-item"><div class="k">Added</div><div class="v mono" id="panelCreated">—</div></div>
+      <div class="detail-item"><div class="k" data-i18n="ui.col_contact">Email</div><div class="v mono" id="panelEmail">—</div></div>
+      <div class="detail-item"><div class="k" data-i18n="ui.col_phone">Phone</div><div class="v mono" id="panelPhone">—</div></div>
+      <div class="detail-item"><div class="k" data-i18n="ui.col_company">Company</div><div class="v" id="panelCompany">—</div></div>
+      <div class="detail-item"><div class="k" data-i18n="ui.col_theme">Marketing theme</div><div class="v" id="panelTheme">—</div></div>
+      <div class="detail-item"><div class="k" data-i18n="ui.added">Added</div><div class="v mono" id="panelCreated">—</div></div>
     </div>
+
+    <!-- Advanced Details collapsible in panel -->
+    <details class="advanced-details-toggle" id="panelAdvanced" style="margin-top:8px;">
+      <summary data-i18n="contact.advanced_details">Advanced details</summary>
+      <div class="advanced-details-body">
+        <div id="panelAdvancedGrid" class="detail-grid"></div>
+      </div>
+    </details>
 
     <div id="panelNotesWrap" class="hidden">
       <div class="section-title" data-i18n="panel.notes">Notes</div>
@@ -1182,22 +1265,26 @@
     <div class="form-error" id="passwordError"></div>
     <button class="btn btn-sm" id="savePasswordBtn" data-i18n="settings.save_password">Update password</button>
 
-    <div class="section-title">Appearance</div>
-    <div class="label" style="font-size:12px; color:var(--text-dim); margin-bottom:4px;">Color theme</div>
-    <p class="muted" style="font-size:12.5px; margin-bottom:4px;">This is just for you — your teammates can each pick their own.</p>
+    <div class="section-title" data-i18n="settings.appearance">Appearance</div>
+    <div class="label" style="font-size:12px; color:var(--text-dim); margin-bottom:4px;" data-i18n="settings.color_theme">Color theme</div>
+    <p class="muted" style="font-size:12.5px; margin-bottom:12px;" data-i18n="settings.theme_sub">This is just for you — your teammates can each pick their own.</p>
+
+    <div class="theme-group-label" data-i18n="settings.themes_light">Light</div>
     <div class="theme-grid" id="themeGrid">
-      <button type="button" class="theme-swatch" data-theme-key="signal"><span class="puck"></span><span>Signal</span></button>
-      <button type="button" class="theme-swatch" data-theme-key="ember"><span class="puck"></span><span>Ember</span></button>
-      <button type="button" class="theme-swatch" data-theme-key="meadow"><span class="puck"></span><span>Meadow</span></button>
-      <button type="button" class="theme-swatch" data-theme-key="nebula"><span class="puck"></span><span>Nebula</span></button>
-      <button type="button" class="theme-swatch" data-theme-key="arctic"><span class="puck"></span><span>Arctic</span></button>
-      <button type="button" class="theme-swatch" data-theme-key="slate"><span class="puck"></span><span>Slate</span></button>
-      <button type="button" class="theme-swatch" data-theme-key="midnight"><span class="puck"></span><span>Midnight</span></button>
-      <button type="button" class="theme-swatch" data-theme-key="sand"><span class="puck"></span><span>Sand</span></button>
-      <button type="button" class="theme-swatch" data-theme-key="cobalt"><span class="puck"></span><span>Cobalt</span></button>
-      <button type="button" class="theme-swatch" data-theme-key="graphite"><span class="puck"></span><span>Graphite</span></button>
-      <button type="button" class="theme-swatch" data-theme-key="forest"><span class="puck"></span><span>Forest</span></button>
-      <button type="button" class="theme-swatch" data-theme-key="pearl"><span class="puck"></span><span>Pearl</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="dawn"><span class="puck"></span><span data-i18n="theme.dawn">Dawn</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="office"><span class="puck"></span><span data-i18n="theme.office">Office</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="pearl"><span class="puck"></span><span data-i18n="theme.pearl">Pearl</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="sand"><span class="puck"></span><span data-i18n="theme.sand">Sand</span></button>
+    </div>
+
+    <div class="theme-group-label" style="margin-top:14px;" data-i18n="settings.themes_dark">Dark</div>
+    <div class="theme-grid">
+      <button type="button" class="theme-swatch" data-theme-key="signal"><span class="puck"></span><span data-i18n="theme.signal">Signal</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="midnight"><span class="puck"></span><span data-i18n="theme.midnight">Midnight</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="slate"><span class="puck"></span><span data-i18n="theme.slate">Slate</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="cobalt"><span class="puck"></span><span data-i18n="theme.cobalt">Cobalt</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="forest"><span class="puck"></span><span data-i18n="theme.forest">Forest</span></button>
+      <button type="button" class="theme-swatch" data-theme-key="nebula"><span class="puck"></span><span data-i18n="theme.nebula">Nebula</span></button>
     </div>
 
     <div class="section-title" data-i18n="settings.language">Language</div>

@@ -9,7 +9,8 @@
 
 /* ---------- state ---------- */
 let team = [];
-let filters = { search: "", status: "", theme: "", owner_id: "" };
+let filters = { search: "", status: "", theme: "", owner_id: "", tag: "" };
+let _tagInputTags = []; // tracks tags currently in the contact form tag input
 let currentPanelContactId = null;
 let currentPanelContact = null;
 let currentDraftOfferId = null;
@@ -37,7 +38,7 @@ const els = {
   statTotal: $("statTotal"), statLeads: $("statLeads"),
   statNegotiating: $("statNegotiating"), statOffers: $("statOffers"),
   sparkTotal: $("sparkTotal"),
-  filterStatus: $("filterStatus"), filterTheme: $("filterTheme"), filterOwner: $("filterOwner"),
+  filterStatus: $("filterStatus"), filterTheme: $("filterTheme"), filterOwner: $("filterOwner"), filterTag: $("filterTag"),
   resultCount: $("resultCount"),
   contactsTable: $("contactsTable"), contactsBody: $("contactsBody"), emptyState: $("emptyState"),
   teamBody: $("teamBody"),
@@ -1531,6 +1532,19 @@ async function loadContacts() {
   const { contacts } = await API.get(`/contacts${qs ? "?" + qs : ""}`);
   renderContacts(contacts);
   loadAllContactsCache(); // keep pickers (quote builder, company panel) fresh too
+  loadTagFilter();        // keep tag dropdown fresh
+}
+
+async function loadTagFilter() {
+  try {
+    const tagEl = els.filterTag;
+    if (!tagEl) return;
+    const { tags } = await API.get("/contacts/tags");
+    const current = tagEl.value;
+    tagEl.innerHTML = `<option value="">${t("ui.all_tags")}</option>` +
+      (tags || []).map(tag => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`).join("");
+    if (tags && tags.includes(current)) tagEl.value = current;
+  } catch { /* non-critical */ }
 }
 
 async function loadAllContactsCache() {
@@ -1560,6 +1574,7 @@ function renderContacts(contacts) {
       <td>${escapeHtml(c.marketing_theme || "—")}</td>
       <td>${badgeHtml(c.status)}</td>
       <td>${escapeHtml(c.owner_name || "—")}</td>
+      <td>${(c.tags || []).map(tag => `<span class="tag-pill">${escapeHtml(tag)}</span>`).join(" ")}</td>
     </tr>`
     )
     .join("");
@@ -1626,11 +1641,64 @@ function switchView(view) {
   if (view === "calendar") loadCalendar();
 }
 
+/* ---------- tag input helpers ---------- */
+function addTagToInput(tag) {
+  tag = tag.trim().toLowerCase();
+  if (!tag || _tagInputTags.includes(tag)) return;
+  _tagInputTags.push(tag);
+  renderTagPills();
+}
+
+function renderTagPills() {
+  const container = document.getElementById("cTagPills");
+  if (!container) return;
+  container.innerHTML = _tagInputTags.map((tag, i) =>
+    `<span class="tag-pill removable" data-idx="${i}">${escapeHtml(tag)}<span class="tag-pill-x">×</span></span>`
+  ).join("");
+  container.querySelectorAll(".tag-pill").forEach(pill => {
+    pill.addEventListener("click", () => {
+      _tagInputTags.splice(Number(pill.dataset.idx), 1);
+      renderTagPills();
+    });
+  });
+}
+
+function initTagInput() {
+  const wrap = document.getElementById("cTagsWrap");
+  const input = document.getElementById("cTagsInput");
+  if (!wrap || !input) return;
+
+  wrap.addEventListener("click", () => input.focus());
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      const val = input.value.replace(/,/g, "").trim();
+      if (val) { addTagToInput(val); input.value = ""; }
+    } else if (e.key === "Backspace" && !input.value && _tagInputTags.length) {
+      _tagInputTags.pop();
+      renderTagPills();
+    }
+  });
+
+  input.addEventListener("blur", () => {
+    const val = input.value.replace(/,/g, "").trim();
+    if (val) { addTagToInput(val); input.value = ""; }
+  });
+}
+
 /* ---------- contact modal ---------- */
 function openContactModal(contact) {
   els.contactFormError.textContent = "";
   populateOwnerOptions(els.cOwner, { placeholder: t("common.unassigned"), selected: contact ? contact.owner_id : API.getUser()?.id });
   populateCompanySelect();
+
+  // Reset tag state
+  _tagInputTags = [];
+  const tagPills = document.getElementById("cTagPills");
+  const tagInput = document.getElementById("cTagsInput");
+  if (tagPills) tagPills.innerHTML = "";
+  if (tagInput) tagInput.value = "";
 
   if (contact) {
     els.contactModalTitle.textContent = t("modal.edit_contact");
@@ -1646,12 +1714,25 @@ function openContactModal(contact) {
     els.cTheme.value = contact.marketing_theme || "";
     els.cStatus.value = contact.status || "lead";
     els.cNotes.value = contact.notes || "";
+    // Tags
+    (contact.tags || []).forEach(addTagToInput);
+    // Advanced fields
+    const adv = { cSecondaryEmail: "secondary_email", cSecondaryPhone: "secondary_phone", cWebsite: "website",
+      cLinkedin: "linkedin", cWhatsapp: "whatsapp", cTelegram: "telegram", cCity: "city", cCountry: "country",
+      cState: "state", cPostalCode: "postal_code", cAddress: "address", cCustomerType: "customer_type",
+      cPriority: "priority", cLeadSource: "lead_source", cDepartment: "department" };
+    for (const [elId, field] of Object.entries(adv)) {
+      const el = document.getElementById(elId);
+      if (el) el.value = contact[field] || (field === "priority" ? "medium" : "");
+    }
   } else {
     els.contactModalTitle.textContent = t("modal.add_contact");
     els.contactSubmitBtn.textContent = t("modal.add_contact");
     els.contactForm.reset();
     els.contactId.value = "";
     els.cStatus.value = "lead";
+    const pEl = document.getElementById("cPriority");
+    if (pEl) pEl.value = "medium";
   }
   els.contactModalOverlay.classList.remove("hidden");
 }
@@ -1665,6 +1746,7 @@ async function handleContactSubmit(e) {
   const lastName = els.cLastName.value.trim();
   if (!firstName) { els.contactFormError.textContent = "First name is required."; return; }
 
+  const gv = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
   const payload = {
     first_name: firstName,
     last_name: lastName || null,
@@ -1678,6 +1760,22 @@ async function handleContactSubmit(e) {
     status: els.cStatus.value,
     notes: els.cNotes.value.trim(),
     owner_id: els.cOwner.value ? Number(els.cOwner.value) : null,
+    tags: [..._tagInputTags],
+    secondary_email: gv("cSecondaryEmail") || null,
+    secondary_phone: gv("cSecondaryPhone") || null,
+    website: gv("cWebsite") || null,
+    linkedin: gv("cLinkedin") || null,
+    whatsapp: gv("cWhatsapp") || null,
+    telegram: gv("cTelegram") || null,
+    city: gv("cCity") || null,
+    country: gv("cCountry") || null,
+    state: gv("cState") || null,
+    postal_code: gv("cPostalCode") || null,
+    address: gv("cAddress") || null,
+    customer_type: gv("cCustomerType") || null,
+    priority: gv("cPriority") || "medium",
+    lead_source: gv("cLeadSource") || null,
+    department: gv("cDepartment") || null,
   };
 
   const id = els.contactId.value;
@@ -1713,6 +1811,46 @@ async function openPanel(id) {
     : "—";
   els.panelTheme.textContent = contact.marketing_theme || "—";
   els.panelCreated.textContent = formatDate(contact.created_at);
+
+  // Tags
+  const panelTags = document.getElementById("panelTags");
+  if (panelTags) {
+    const tags = contact.tags || [];
+    panelTags.innerHTML = tags.map(tag => `<span class="tag-pill">${escapeHtml(tag)}</span>`).join("");
+    panelTags.style.display = tags.length ? "flex" : "none";
+  }
+
+  // Advanced details in panel
+  const advGrid = document.getElementById("panelAdvancedGrid");
+  const panelAdv = document.getElementById("panelAdvanced");
+  if (advGrid) {
+    const advFields = [
+      [t("contact.secondary_email"), contact.secondary_email],
+      [t("contact.secondary_phone"), contact.secondary_phone],
+      [t("contact.website"), contact.website ? `<a href="${escapeHtml(contact.website)}" target="_blank" rel="noopener" style="color:var(--accent-1)">${escapeHtml(contact.website)}</a>` : null],
+      [t("contact.linkedin"), contact.linkedin ? `<a href="${escapeHtml(contact.linkedin)}" target="_blank" rel="noopener" style="color:var(--accent-1)">LinkedIn</a>` : null],
+      [t("contact.whatsapp"), contact.whatsapp],
+      [t("contact.telegram"), contact.telegram],
+      [t("contact.city"), contact.city],
+      [t("contact.country"), contact.country],
+      [t("contact.state"), contact.state],
+      [t("contact.postal_code"), contact.postal_code],
+      [t("contact.address"), contact.address],
+      [t("contact.customer_type"), contact.customer_type],
+      [t("contact.priority"), contact.priority && contact.priority !== "medium" ? contact.priority : null],
+      [t("contact.lead_source"), contact.lead_source],
+      [t("contact.department"), contact.department],
+    ].filter(([, v]) => v);
+    if (advFields.length) {
+      advGrid.innerHTML = advFields.map(([k, v]) =>
+        `<div class="detail-item"><div class="k">${escapeHtml(k)}</div><div class="v">${v}</div></div>`
+      ).join("");
+      if (panelAdv) panelAdv.style.display = "";
+    } else {
+      advGrid.innerHTML = "";
+      if (panelAdv) panelAdv.style.display = "none";
+    }
+  }
 
   if (contact.notes) {
     els.panelNotesWrap.classList.remove("hidden");
@@ -2682,6 +2820,10 @@ function wireEvents() {
   els.filterStatus.addEventListener("change", () => { filters.status = els.filterStatus.value; loadContacts(); });
   els.filterTheme.addEventListener("change", () => { filters.theme = els.filterTheme.value; loadContacts(); });
   els.filterOwner.addEventListener("change", () => { filters.owner_id = els.filterOwner.value; loadContacts(); });
+  if (els.filterTag) els.filterTag.addEventListener("change", () => { filters.tag = els.filterTag.value; loadContacts(); });
+
+  // --- Tag input logic ---
+  initTagInput();
 
   els.addContactBtn.addEventListener("click", () => openContactModal(null));
   els.exportContactsBtn.addEventListener("click", () => {
