@@ -197,7 +197,7 @@ router.put("/password", requireAuth, async (req, res) => {
 
 // PUT /api/auth/theme — save the signed-in user's chosen color theme
 router.put("/theme", requireAuth, async (req, res) => {
-  const VALID_THEMES = ["signal", "ember", "meadow", "nebula", "arctic", "slate", "midnight", "sand"];
+  const VALID_THEMES = ["signal", "ember", "meadow", "nebula", "arctic", "slate", "midnight", "sand", "cobalt", "graphite", "forest", "pearl", "dawn", "office", "blanc", "noir"];
   const { theme } = req.body || {};
   if (!VALID_THEMES.includes(theme)) {
     return res.status(400).json({ error: "That's not a valid theme." });

@@ -450,7 +450,7 @@
       theme: {
         signal: "Signal", midnight: "Midnight", slate: "Slate", cobalt: "Cobalt",
         forest: "Forest", nebula: "Nebula", pearl: "Pearl", sand: "Sand",
-        dawn: "Dawn", office: "Office",
+        dawn: "Dawn", office: "Office", blanc: "Blanc", noir: "Noir",
       },
       reset: {
         contacts: "Contacts",
@@ -916,7 +916,7 @@
       theme: {
         signal: "Signal", midnight: "Midnight", slate: "Slate", cobalt: "Cobalt",
         forest: "Forest", nebula: "Nebula", pearl: "Pearl", sand: "Sand",
-        dawn: "Dawn", office: "Office",
+        dawn: "Dawn", office: "Office", blanc: "Blanc", noir: "Noir",
       },
       reset: {
         contacts: "Kontakty",
