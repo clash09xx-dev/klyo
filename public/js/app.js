@@ -3178,10 +3178,7 @@ function renderDealsBoard() {
   const ownerVal  = els.dealAssigneeFilter.value;
   const statusVal = els.dealStatusFilter.value;
 
-  // Build visible stage list (respect filter)
   let visibleStages = dealsStagesCache.filter(s => !stageVal || String(s.id) === stageVal);
-
-  // Also include an "Unsorted" bucket for deals with no stage
   const hasUnsorted = dealsCache.some(d => !d.stage_id && (!stageVal));
   if (!stageVal && hasUnsorted) {
     visibleStages = [...visibleStages, { id: null, name: t("deals.unsorted") || "Unsorted", color: "#9ca3af" }];
@@ -3203,30 +3200,80 @@ function renderDealsBoard() {
 
     const totalVal = stageDeals.reduce((sum, d) => sum + (parseFloat(d.value) || 0), 0);
 
-    col.innerHTML = `
-      <div class="deals-column-head">
-        <div class="deals-column-dot" style="background:${stage.color}"></div>
-        <div class="deals-column-name">${escHtml(stage.name)}</div>
-        <div class="deals-column-count">${stageDeals.length}</div>
-      </div>
-      <div class="deals-column-body">
-        ${stageDeals.map(d => dealCardHTML(d)).join("")}
-        ${totalVal > 0 ? `<div style="font-size:11px; color:var(--text-faint); text-align:center; padding:4px 0; border-top:1px solid var(--border-soft); margin-top:4px;">${fmtMoney(totalVal, workspaceDefaultCurrency)}</div>` : ""}
-      </div>
+    const head = document.createElement("div");
+    head.className = "deals-column-head";
+    head.innerHTML = `
+      <div class="deals-column-dot" style="background:${stage.color}"></div>
+      <div class="deals-column-name">${escHtml(stage.name)}</div>
+      <div class="deals-column-count">${stageDeals.length}</div>
     `;
 
-    // Click on card → open panel
-    col.querySelectorAll(".deal-card").forEach(card => {
+    const body = document.createElement("div");
+    body.className = "deals-column-body";
+
+    stageDeals.forEach(d => {
+      const card = document.createElement("div");
+      const cls = d.status === "won" ? " won" : d.status === "lost" ? " lost" : "";
+      const sub = [d.contact_name, d.company_name].filter(Boolean).join(" · ");
+      const valStr = d.value ? `<div class="deal-card-value">${fmtMoney(d.value, d.currency)}</div>` : "";
+      card.className = `deal-card${cls}`;
+      card.dataset.id = d.id;
+      card.draggable = true;
+      card.innerHTML = `
+        <div class="deal-card-title">${escHtml(d.title)}</div>
+        ${sub ? `<div class="deal-card-meta">${escHtml(sub)}</div>` : ""}
+        ${valStr}
+      `;
       card.addEventListener("click", () => openDealPanel(card.dataset.id));
+      // ── drag source ──
+      card.addEventListener("dragstart", e => {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("dealId", d.id);
+        e.dataTransfer.setData("fromStage", stage.id ?? "");
+        setTimeout(() => card.classList.add("dragging"), 0);
+      });
+      card.addEventListener("dragend", () => card.classList.remove("dragging"));
+      body.appendChild(card);
     });
 
+    if (totalVal > 0) {
+      const tot = document.createElement("div");
+      tot.style.cssText = "font-size:11px;color:var(--text-faint);text-align:center;padding:4px 0;border-top:1px solid var(--border-soft);margin-top:4px;";
+      tot.textContent = fmtMoney(totalVal, workspaceDefaultCurrency);
+      body.appendChild(tot);
+    }
+
+    // ── drop target on column body ──
+    body.addEventListener("dragover", e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      body.classList.add("drag-over");
+    });
+    body.addEventListener("dragleave", e => {
+      if (!body.contains(e.relatedTarget)) body.classList.remove("drag-over");
+    });
+    body.addEventListener("drop", async e => {
+      e.preventDefault();
+      body.classList.remove("drag-over");
+      const dealId   = e.dataTransfer.getData("dealId");
+      const fromStage = e.dataTransfer.getData("fromStage");
+      const toStage  = stage.id ?? "";
+      if (!dealId || String(fromStage) === String(toStage)) return;
+      try {
+        await API.patch(`/deals/${dealId}/stage`, { stage_id: stage.id || null });
+        // Optimistic update in cache
+        const deal = dealsCache.find(x => String(x.id) === String(dealId));
+        if (deal) { deal.stage_id = stage.id || null; deal.stage_name = stage.name; }
+        renderDealsBoard();
+      } catch (err) { toast(err.message, "error"); }
+    });
+
+    col.appendChild(head);
+    col.appendChild(body);
     els.dealsBoard.appendChild(col);
   });
 
-  // If no stages at all show empty state
-  if (visibleStages.length === 0) {
-    els.dealsEmptyState.classList.remove("hidden");
-  }
+  if (visibleStages.length === 0) els.dealsEmptyState.classList.remove("hidden");
 }
 
 function dealCardHTML(d) {
@@ -3442,17 +3489,23 @@ function closeStagesModal() {
   els.stagesModalOverlay.classList.add("hidden");
 }
 
+let _stageDragIdx = null;
+
 function renderStagesList() {
   els.stagesList.innerHTML = "";
-  dealsStagesCache.forEach(s => {
+  dealsStagesCache.forEach((s, idx) => {
     const row = document.createElement("div");
     row.className = "stage-manage-row";
     row.dataset.stageId = s.id;
+    row.draggable = true;
     row.innerHTML = `
+      <span class="stage-drag-handle" title="Drag to reorder">⠿</span>
       <div class="stage-dot-edit" style="background:${s.color}"></div>
       <span class="stage-name">${escHtml(s.name)}</span>
       <button class="btn btn-danger btn-sm" data-delete-stage="${s.id}" title="Delete stage">×</button>
     `;
+
+    // delete
     row.querySelector("[data-delete-stage]").addEventListener("click", async () => {
       if (!confirm(`Delete stage "${s.name}"? Deals in this stage will become unsorted.`)) return;
       try {
@@ -3462,6 +3515,39 @@ function renderStagesList() {
         toast("Stage deleted");
       } catch (err) { toast(err.message, "error"); }
     });
+
+    // drag-to-reorder
+    row.addEventListener("dragstart", e => {
+      e.dataTransfer.effectAllowed = "move";
+      _stageDragIdx = idx;
+      setTimeout(() => row.classList.add("dragging"), 0);
+    });
+    row.addEventListener("dragend", () => {
+      row.classList.remove("dragging");
+      _stageDragIdx = null;
+      els.stagesList.querySelectorAll(".stage-manage-row").forEach(r => r.classList.remove("drag-over-stage"));
+    });
+    row.addEventListener("dragover", e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      els.stagesList.querySelectorAll(".stage-manage-row").forEach(r => r.classList.remove("drag-over-stage"));
+      row.classList.add("drag-over-stage");
+    });
+    row.addEventListener("drop", async e => {
+      e.preventDefault();
+      row.classList.remove("drag-over-stage");
+      if (_stageDragIdx === null || _stageDragIdx === idx) return;
+      // Reorder in local cache
+      const [moved] = dealsStagesCache.splice(_stageDragIdx, 1);
+      dealsStagesCache.splice(idx, 0, moved);
+      // Persist new order
+      const order = dealsStagesCache.map((st, i) => ({ id: st.id, sort_order: i }));
+      renderStagesList(); // immediate visual feedback
+      try {
+        await API.put("/deals/stages/reorder", { order });
+      } catch (err) { toast(err.message, "error"); await loadDeals(); renderStagesList(); }
+    });
+
     els.stagesList.appendChild(row);
   });
 }
