@@ -24,6 +24,7 @@
   --accent-1: #4fd8ff;
   --accent-2: #8b6bff;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --on-accent: #ffffff;
 
   --lead: #6f8bff;
   --contacted: var(--accent-1);
@@ -93,6 +94,7 @@
   --text: #2c2318; --text-dim: #7a6a58; --text-faint: #b0a090;
   --accent-1: #b8512a; --accent-2: #d4804a;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --on-accent: #ffffff;
 }
 /* ---- corporate / enterprise themes ---- */
 [data-theme="cobalt"] {
@@ -126,6 +128,7 @@
   --text: #1a202c; --text-dim: #60708a; --text-faint: #a0afc0;
   --accent-1: #2563eb; --accent-2: #3b82f6;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --on-accent: #ffffff;
 }
 [data-theme="blanc"] {
   /* Blanc — pure white, deep black accent — minimal */
@@ -134,6 +137,7 @@
   --text: #0a0a0a; --text-dim: #444444; --text-faint: #999999;
   --accent-1: #111111; --accent-2: #333333;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --on-accent: #ffffff;
 }
 [data-theme="noir"] {
   /* Noir — pure black, crisp white accent — dramatic */
@@ -142,6 +146,7 @@
   --text: #f0f0f0; --text-dim: #aaaaaa; --text-faint: #555555;
   --accent-1: #f0f0f0; --accent-2: #cccccc;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --on-accent: #0a0a0a;
 }
 [data-theme="dawn"] {
   /* Dawn — warm off-white, clean teal accent — friendly SaaS */
@@ -150,6 +155,7 @@
   --text: #1c2536; --text-dim: #5a6a82; --text-faint: #a3b0c0;
   --accent-1: #0ea5e9; --accent-2: #38bdf8;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --on-accent: #ffffff;
 }
 [data-theme="office"] {
   /* Office — neutral cool white, muted violet accent — enterprise / B2B */
@@ -158,6 +164,7 @@
   --text: #111827; --text-dim: #4b5563; --text-faint: #9ca3af;
   --accent-1: #7c3aed; --accent-2: #a78bfa;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --on-accent: #ffffff;
 }
 
 * { box-sizing: border-box; }
@@ -227,7 +234,7 @@ input:focus, textarea:focus, select:focus {
 .btn:active { transform: translateY(0); }
 .btn-primary {
   background: var(--signal);
-  color: #061018;
+  color: var(--on-accent, #ffffff);
   border: none;
   font-weight: 600;
 }
