@@ -60,7 +60,7 @@ router.post("/:purchaseId/send", async (req, res) => {
   ].join("\n");
 
   try {
-    const wsResult = await db.query("SELECT gmail_refresh_token FROM workspaces WHERE id = $1", [req.user.workspace_id]);
+    const wsResult = await db.query("SELECT gmail_refresh_token, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from_name, smtp_from_email, smtp_secure FROM workspaces WHERE id = $1", [req.user.workspace_id]);
     await sendOfferEmail(purchase.contact_email, subject, body, wsResult.rows[0]);
 
     await db.query("UPDATE purchases SET reminder_sent_at = now() WHERE id = $1", [purchase.id]);

@@ -400,6 +400,16 @@ async function init() {
   // Index for tag search
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_contacts_tags ON contacts USING GIN(tags);`);
 
+  await pool.query(`
+    ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS smtp_host       TEXT;
+    ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS smtp_port       INTEGER NOT NULL DEFAULT 587;
+    ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS smtp_user       TEXT;
+    ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS smtp_pass       TEXT;
+    ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS smtp_from_name  TEXT;
+    ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS smtp_from_email TEXT;
+    ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS smtp_secure     BOOLEAN NOT NULL DEFAULT FALSE;
+  `);
+
   // Seed default pipeline stages for any workspace that has none
   await pool.query(
     `INSERT INTO pipeline_stages (workspace_id, name, color, sort_order)

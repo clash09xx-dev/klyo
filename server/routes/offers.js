@@ -53,9 +53,10 @@ router.post("/:id/send", async (req, res) => {
   const body = (req.body && req.body.body) ?? offer.body;
 
   try {
-    const wsResult = await db.query("SELECT gmail_refresh_token FROM workspaces WHERE id = $1", [
-      req.user.workspace_id,
-    ]);
+    const wsResult = await db.query(
+      "SELECT gmail_refresh_token, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from_name, smtp_from_email, smtp_secure FROM workspaces WHERE id = $1",
+      [req.user.workspace_id]
+    );
     await sendOfferEmail(contact.email, subject, body, wsResult.rows[0]);
 
     const updated = await db.query(

@@ -53,8 +53,14 @@ const els = {
 
   pricingModalOverlay: $("pricingModalOverlay"), closePricingBtn: $("closePricingBtn"), pricingGrid: $("pricingGrid"),
 
-  gmailCard: $("gmailCard"), gmailDescription: $("gmailDescription"), connectGmailBtn: $("connectGmailBtn"),
-  gmailConnectedChip: $("gmailConnectedChip"), gmailConnectedEmail: $("gmailConnectedEmail"), disconnectGmailBtn: $("disconnectGmailBtn"),
+  mailCard: $("mailCard"), mailConnectedBadge: $("mailConnectedBadge"), mailConnectedEmail: $("mailConnectedEmail"),
+  mailForm: $("mailForm"), mailError: $("mailError"),
+  smtpHost: $("smtpHost"), smtpPort: $("smtpPort"), smtpUser: $("smtpUser"), smtpPass: $("smtpPass"),
+  smtpFromName: $("smtpFromName"), smtpFromEmail: $("smtpFromEmail"), smtpSecure: $("smtpSecure"),
+  saveMailBtn: $("saveMailBtn"), testMailBtn: $("testMailBtn"), disconnectMailBtn: $("disconnectMailBtn"),
+  // legacy gmail refs (kept so old code doesn't crash)
+  gmailCard: null, gmailDescription: null, connectGmailBtn: null,
+  gmailConnectedChip: null, gmailConnectedEmail: null, disconnectGmailBtn: null,
 
   tourOverlay: $("tourOverlay"), tourTitle: $("tourTitle"), tourBody: $("tourBody"), tourDots: $("tourDots"),
   tourSkipBtn: $("tourSkipBtn"), tourBackBtn: $("tourBackBtn"), tourNextBtn: $("tourNextBtn"), helpFab: $("helpFab"),
@@ -357,17 +363,15 @@ function showLimitOrError(err, fallbackEl) {
 })();
 
 function handleGmailRedirectParam() {
+  // Legacy Gmail OAuth redirect handler — kept for existing connected workspaces
   const params = new URLSearchParams(window.location.search);
   const gmailResult = params.get("gmail");
   if (!gmailResult) return;
-
-  if (gmailResult === "connected") toast("Gmail connected — offers will send from that address.");
+  if (gmailResult === "connected") toast("Gmail connected.");
   else if (gmailResult === "cancelled") toast("Gmail connection cancelled.", "error");
-  else if (gmailResult === "error") toast("Couldn't connect Gmail — please try again.", "error");
-
+  else if (gmailResult === "error") toast("Couldn't connect Gmail.", "error");
   params.delete("gmail");
-  const newUrl = window.location.pathname + (params.toString() ? `?${params}` : "");
-  window.history.replaceState({}, "", newUrl);
+  window.history.replaceState({}, "", window.location.pathname + (params.toString() ? `?${params}` : ""));
 }
 
 /* ---------- workspace + billing ---------- */
@@ -382,57 +386,79 @@ async function loadWorkspace() {
   }
 }
 
-async function loadGmailStatus() {
+async function loadMailStatus() {
   const user = API.getUser();
   if (!user || user.role !== "admin") {
-    els.gmailCard.classList.add("hidden");
+    els.mailCard.classList.add("hidden");
     return;
   }
-  els.gmailCard.classList.remove("hidden");
-
+  els.mailCard.classList.remove("hidden");
   try {
-    const status = await API.get("/integrations/gmail/status");
-    if (!status.configured) {
-      els.gmailDescription.textContent =
-        "Gmail sign-in isn't set up on this server yet — ask whoever's hosting Klyo to add Google API credentials.";
-      els.connectGmailBtn.classList.add("hidden");
-      els.gmailConnectedChip.classList.add("hidden");
-      return;
-    }
-    els.gmailDescription.textContent = "Connect your Gmail account so offers send from your real address — no shared password involved.";
-    if (status.connected) {
-      els.connectGmailBtn.classList.add("hidden");
-      els.gmailConnectedChip.classList.remove("hidden");
-      els.gmailConnectedEmail.textContent = status.email;
+    const s = await API.get("/integrations/mail/status");
+    if (s.connected) {
+      els.mailConnectedEmail.textContent = s.from_email || s.user;
+      els.mailConnectedBadge.classList.remove("hidden");
+      // Pre-fill form with existing values (password stays blank for security)
+      els.smtpHost.value      = s.host      || "";
+      els.smtpPort.value      = s.port      || 587;
+      els.smtpUser.value      = s.user      || "";
+      els.smtpFromName.value  = s.from_name || "";
+      els.smtpFromEmail.value = s.from_email|| "";
+      els.smtpSecure.checked  = s.secure    || false;
     } else {
-      els.connectGmailBtn.classList.remove("hidden");
-      els.gmailConnectedChip.classList.add("hidden");
+      els.mailConnectedBadge.classList.add("hidden");
     }
-  } catch {
-    els.gmailCard.classList.add("hidden");
+  } catch { els.mailCard.classList.add("hidden"); }
+}
+
+async function handleSaveMail() {
+  els.mailError.textContent = "";
+  const host      = els.smtpHost.value.trim();
+  const port      = els.smtpPort.value;
+  const user      = els.smtpUser.value.trim();
+  const pass      = els.smtpPass.value;
+  const from_name = els.smtpFromName.value.trim();
+  const from_email= els.smtpFromEmail.value.trim();
+  const secure    = els.smtpSecure.checked;
+  if (!host || !user || !pass) {
+    els.mailError.textContent = "Host, username and password are required.";
+    return;
+  }
+  els.saveMailBtn.disabled = true;
+  try {
+    await API.post("/integrations/mail/save", { host, port, user, pass, from_name, from_email, secure });
+    toast("Mail settings saved");
+    els.smtpPass.value = "";
+    loadMailStatus();
+  } catch (err) {
+    els.mailError.textContent = err.message;
+  } finally {
+    els.saveMailBtn.disabled = false;
   }
 }
 
-async function handleConnectGmail() {
-  els.connectGmailBtn.disabled = true;
+async function handleTestMail() {
+  els.testMailBtn.disabled = true;
   try {
-    const { url } = await API.post("/integrations/gmail/connect", {});
-    window.location.href = url;
+    const { sent_to } = await API.post("/integrations/mail/test", {});
+    toast(`Test email sent to ${sent_to}`);
   } catch (err) {
     toast(err.message, "error");
-    els.connectGmailBtn.disabled = false;
+  } finally {
+    els.testMailBtn.disabled = false;
   }
 }
 
-async function handleDisconnectGmail() {
-  if (!confirm("Disconnect Gmail? Offers will fall back to the server's default email sending.")) return;
+async function handleDisconnectMail() {
+  if (!confirm("Disconnect mail? Emails will fall back to the server default.")) return;
   try {
-    await API.post("/integrations/gmail/disconnect", {});
-    toast("Gmail disconnected");
-    loadGmailStatus();
-  } catch (err) {
-    toast(err.message, "error");
-  }
+    await API.post("/integrations/mail/disconnect", {});
+    toast("Mail disconnected");
+    els.smtpHost.value = els.smtpUser.value = els.smtpPass.value = els.smtpFromName.value = els.smtpFromEmail.value = "";
+    els.smtpPort.value = 587;
+    els.smtpSecure.checked = false;
+    loadMailStatus();
+  } catch (err) { toast(err.message, "error"); }
 }
 
 function daysUntil(dateStr) {
@@ -526,7 +552,7 @@ function openAppearanceModal() {
   els.currentPasswordField.classList.toggle("hidden", !user.has_password);
   els.newPasswordLabel.textContent = user.has_password ? "New password" : "Set a password";
   updateSettingsPlanDisplay();
-  loadGmailStatus();
+  loadMailStatus();
   loadCurrencySettings();
   loadAiContext();
   loadWhatsappPhone();
@@ -2990,8 +3016,9 @@ function wireEvents() {
   els.closePricingBtn.addEventListener("click", closePricingModal);
   els.pricingModalOverlay.addEventListener("click", (e) => { if (e.target === els.pricingModalOverlay) closePricingModal(); });
 
-  els.connectGmailBtn.addEventListener("click", handleConnectGmail);
-  els.disconnectGmailBtn.addEventListener("click", handleDisconnectGmail);
+  els.saveMailBtn.addEventListener("click", handleSaveMail);
+  els.testMailBtn.addEventListener("click", handleTestMail);
+  els.disconnectMailBtn.addEventListener("click", handleDisconnectMail);
 
   // ── Data Reset ──────────────────────────────────────────────────────────
   initDataReset();
