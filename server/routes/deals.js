@@ -39,6 +39,20 @@ router.post("/stages", async (req, res) => {
   res.status(201).json({ stage: result.rows[0] });
 });
 
+// PUT /api/deals/stages/reorder — MUST be before /stages/:id to avoid :id="reorder"
+router.put("/stages/reorder", async (req, res) => {
+  const { order } = req.body || {};
+  if (!Array.isArray(order)) return res.status(400).json({ error: "order must be an array." });
+
+  for (const { id, sort_order } of order) {
+    await db.query(
+      "UPDATE pipeline_stages SET sort_order=$1 WHERE id=$2 AND workspace_id=$3",
+      [sort_order, id, req.user.workspace_id]
+    );
+  }
+  res.json({ ok: true });
+});
+
 // PUT /api/deals/stages/:id
 router.put("/stages/:id", async (req, res) => {
   const existing = await db.query(
@@ -55,20 +69,6 @@ router.put("/stages/:id", async (req, res) => {
     [name.trim(), color || "#6b7280", sort_order ?? null, req.params.id]
   );
   res.json({ stage: result.rows[0] });
-});
-
-// PUT /api/deals/stages/reorder — accepts [{id, sort_order}]
-router.put("/stages/reorder", async (req, res) => {
-  const { order } = req.body || {};
-  if (!Array.isArray(order)) return res.status(400).json({ error: "order must be an array." });
-
-  for (const { id, sort_order } of order) {
-    await db.query(
-      "UPDATE pipeline_stages SET sort_order=$1 WHERE id=$2 AND workspace_id=$3",
-      [sort_order, id, req.user.workspace_id]
-    );
-  }
-  res.json({ ok: true });
 });
 
 // DELETE /api/deals/stages/:id — moves deals in this stage to null
