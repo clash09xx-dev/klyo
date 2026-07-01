@@ -25,6 +25,7 @@
   --accent-2: #8b6bff;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   --on-accent: #ffffff;
+  --topbar-bg: rgba(10,14,26,0.78);
 
   --lead: #6f8bff;
   --contacted: var(--accent-1);
@@ -51,24 +52,28 @@
   --surface-2: #2e1f1850; --border: #3d2a1f; --border-soft: #2c1f17;
   --text: #f5ebe2; --text-dim: #b89a85; --text-faint: #7a5f4d;
   --accent-1: #ff9d5c; --accent-2: #ff5c7a;
+  --topbar-bg: rgba(23,15,12,0.78);
 }
 [data-theme="meadow"] {
   --bg: #0a140f; --bg-glow: #0f2418; --bg-soft: #0d1813; --surface: #13241c;
   --surface-2: #1a2e2350; --border: #25402f; --border-soft: #1c3024;
   --text: #e7f5ec; --text-dim: #8fb0a0; --text-faint: #5c7c6c;
   --accent-1: #4ce6a8; --accent-2: #a8e64c;
+  --topbar-bg: rgba(10,20,15,0.78);
 }
 [data-theme="nebula"] {
   --bg: #110a1a; --bg-glow: #1f1430; --bg-soft: #150d1f; --surface: #20132c;
   --surface-2: #2a1a3850; --border: #3a2750; --border-soft: #2a1d3d;
   --text: #f0e7f5; --text-dim: #a896b8; --text-faint: #6e5c80;
   --accent-1: #d65cff; --accent-2: #5c7aff;
+  --topbar-bg: rgba(17,10,26,0.78);
 }
 [data-theme="arctic"] {
   --bg: #08131a; --bg-glow: #0f2430; --bg-soft: #0b1820; --surface: #11232c;
   --surface-2: #182d3850; --border: #234050; --border-soft: #1a303c;
   --text: #e7f3f7; --text-dim: #87aab8; --text-faint: #557684;
   --accent-1: #8fe8ff; --accent-2: #c9d8ff;
+  --topbar-bg: rgba(8,19,26,0.78);
 }
 /* ---- professional neutral themes ---- */
 [data-theme="slate"] {
@@ -78,6 +83,7 @@
   --text: #d8e2ed; --text-dim: #8096aa; --text-faint: #526070;
   --accent-1: #6cb4e4; --accent-2: #a0c4e8;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --topbar-bg: rgba(16,20,24,0.78);
 }
 [data-theme="midnight"] {
   /* Midnight — true dark, almost black, with warm white text and gold accent */
@@ -86,6 +92,7 @@
   --text: #eaeaea; --text-dim: #888899; --text-faint: #555566;
   --accent-1: #e8c86e; --accent-2: #e89b6e;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --topbar-bg: rgba(12,12,15,0.78);
 }
 [data-theme="sand"] {
   /* Sand — warm parchment canvas (light mode), terracotta accent */
@@ -95,6 +102,7 @@
   --accent-1: #b8512a; --accent-2: #d4804a;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   --on-accent: #ffffff;
+  --topbar-bg: rgba(244,237,227,0.88);
 }
 /* ---- corporate / enterprise themes ---- */
 [data-theme="cobalt"] {
@@ -104,6 +112,7 @@
   --text: #dce9ff; --text-dim: #7898c0; --text-faint: #486080;
   --accent-1: #4d9fff; --accent-2: #82c0ff;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --topbar-bg: rgba(9,16,31,0.78);
 }
 [data-theme="graphite"] {
   /* Graphite — near-black warm charcoal, muted steel accent — executive */
@@ -112,6 +121,7 @@
   --text: #e8e8e8; --text-dim: #909090; --text-faint: #585858;
   --accent-1: #8bb4d8; --accent-2: #a8c8e8;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --topbar-bg: rgba(20,20,20,0.78);
 }
 [data-theme="forest"] {
   /* Forest — deep muted green, sage accent — premium / luxury brands */
@@ -120,6 +130,7 @@
   --text: #d5e8d0; --text-dim: #7a9c78; --text-faint: #4e664c;
   --accent-1: #6ec47a; --accent-2: #9ed8a4;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --topbar-bg: rgba(12,20,16,0.78);
 }
 [data-theme="pearl"] {
   /* Pearl — crisp white light mode, indigo accent — corporate clean */
@@ -129,6 +140,7 @@
   --accent-1: #2563eb; --accent-2: #3b82f6;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   --on-accent: #ffffff;
+  --topbar-bg: rgba(245,246,248,0.90);
 }
 [data-theme="blanc"] {
   /* Blanc — pure white, deep black accent — minimal */
@@ -138,6 +150,7 @@
   --accent-1: #111111; --accent-2: #333333;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   --on-accent: #ffffff;
+  --topbar-bg: rgba(255,255,255,0.90);
 }
 [data-theme="noir"] {
   /* Noir — pure black, crisp white accent — dramatic */
@@ -147,6 +160,7 @@
   --accent-1: #f0f0f0; --accent-2: #cccccc;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   --on-accent: #0a0a0a;
+  --topbar-bg: rgba(0,0,0,0.88);
 }
 [data-theme="dawn"] {
   /* Dawn — warm off-white, clean teal accent — friendly SaaS */
@@ -156,6 +170,7 @@
   --accent-1: #0ea5e9; --accent-2: #38bdf8;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   --on-accent: #ffffff;
+  --topbar-bg: rgba(248,249,250,0.90);
 }
 [data-theme="office"] {
   /* Office — neutral cool white, muted violet accent — enterprise / B2B */
@@ -165,6 +180,7 @@
   --accent-1: #7c3aed; --accent-2: #a78bfa;
   --signal: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   --on-accent: #ffffff;
+  --topbar-bg: rgba(243,244,246,0.90);
 }
 
 * { box-sizing: border-box; }
@@ -305,7 +321,7 @@ input:focus, textarea:focus, select:focus {
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
   padding: 18px 28px; border-bottom: 1px solid var(--border-soft);
-  position: sticky; top: 0; background: rgba(10,14,26,0.75); backdrop-filter: blur(10px);
+  position: sticky; top: 0; background: var(--topbar-bg); backdrop-filter: blur(12px);
   z-index: 5;
 }
 .topbar h1 { font-size: 19px; }
