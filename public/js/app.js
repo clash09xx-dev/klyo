@@ -310,7 +310,7 @@ function showLimitOrError(err, fallbackEl) {
     els.userAvatar.textContent = initials(user.name);
     els.userName.textContent = user.name;
     els.userRole.textContent = user.role;
-    applyTheme(user.theme || "signal");
+    KlyoCustomize.initUser(user);
     els.platformNavItem.classList.toggle("hidden", !user.is_platform_admin);
     // Apply saved language (server preference takes priority)
     KlyoI18n.initLang(user.language || null);
@@ -324,6 +324,7 @@ function showLimitOrError(err, fallbackEl) {
 
   wireEvents();
   KlyoSales.init();
+  KlyoCustomize.init();
 
   // A failed auxiliary request must never prevent the pipeline from loading.
   const bootResults = await Promise.allSettled([
@@ -334,6 +335,7 @@ function showLimitOrError(err, fallbackEl) {
     toast("Some dashboard data could not be loaded. Refresh to try again.", "error");
   }
 
+  KlyoCustomize.startup();
   handleGmailRedirectParam();
 
   // Show terms acceptance modal for users who haven't accepted yet
@@ -531,12 +533,7 @@ async function handleRegenInvite() {
 }
 
 /* ---------- theme picker ---------- */
-function applyTheme(themeKey) {
-  document.documentElement.setAttribute("data-theme", themeKey === "signal" ? "" : themeKey);
-  els.themeGrid.querySelectorAll(".theme-swatch").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.themeKey === themeKey);
-  });
-}
+function applyTheme(themeKey) { KlyoCustomize.applyLegacy(themeKey); }
 
 function openAppearanceModal() {
   const user = API.getUser();
@@ -553,9 +550,11 @@ function openAppearanceModal() {
   loadMailStatus();
   loadCurrencySettings();
   loadAiContext();
+  KlyoCustomize.open();
   els.appearanceModalOverlay.classList.remove("hidden");
 }
 function closeAppearanceModal() {
+  KlyoCustomize.cancelPreview();
   els.appearanceModalOverlay.classList.add("hidden");
 }
 
@@ -1549,12 +1548,16 @@ function buildQuery(f) {
   return p.toString();
 }
 
-async function loadContacts() {
+let contactsRequestVersion = 0;
+async function loadContacts({ refreshPickers = false } = {}) {
+  const requestVersion = ++contactsRequestVersion;
   const qs = buildQuery(filters);
   const { contacts } = await API.get(`/contacts${qs ? "?" + qs : ""}`);
+  if (requestVersion !== contactsRequestVersion) return;
   renderContacts(contacts);
-  loadAllContactsCache(); // keep pickers (quote builder, company panel) fresh too
-  loadTagFilter();        // keep tag dropdown fresh
+  if (!qs) allContactsCache = contacts;
+  else if (refreshPickers) await loadAllContactsCache();
+  if (!filters.search) loadTagFilter();
 }
 
 async function loadTagFilter() {
@@ -1600,6 +1603,7 @@ function renderContacts(contacts) {
     </tr>`
     )
     .join("");
+  KlyoCustomize.applyContactColumns();
 }
 
 function populateOwnerOptions(selectEl, { placeholder, selected }) {
@@ -1630,6 +1634,7 @@ function getViewCopy(view) {
 let currentView = "pipeline";
 
 function switchView(view) {
+  if (view === "platform" && API.getUser()?.is_platform_admin !== true) return;
   document.querySelectorAll(".nav-item[data-view]").forEach((i) => i.classList.toggle("active", i.dataset.view === view));
   els.pipelineView.classList.toggle("hidden", view !== "pipeline");
   els.companiesView.classList.toggle("hidden", view !== "companies");
@@ -1810,7 +1815,7 @@ async function handleContactSubmit(e) {
 
     closeContactModal();
     toast(id ? "Contact updated" : "Contact added");
-    await Promise.all([loadContacts(), loadStats(), loadThemes()]);
+    await Promise.all([loadContacts({ refreshPickers: true }), loadStats(), loadThemes()]);
     if (id && currentPanelContactId === Number(id)) openPanel(id);
   } catch (err) {
     showLimitOrError(err, els.contactFormError);
@@ -2059,7 +2064,7 @@ async function handleDeleteContact() {
     await API.del(`/contacts/${currentPanelContact.id}`);
     closePanel();
     toast("Contact deleted");
-    await Promise.all([loadContacts(), loadStats(), loadThemes()]);
+    await Promise.all([loadContacts({ refreshPickers: true }), loadStats(), loadThemes()]);
   } catch (err) {
     toast(err.message, "error");
   }
@@ -2900,7 +2905,7 @@ function wireEvents() {
         toast(`Zaimportowano ${res.imported}${res.skipped ? `, pominięto ${res.skipped}` : ""}`);
         if (res.errors?.length) console.warn("Import row errors:", res.errors);
       }
-      await loadContacts();
+      await loadContacts({ refreshPickers: true });
       await loadStats();
     } catch (err) {
       toast(err.message, "error");
@@ -3875,7 +3880,7 @@ function initDataReset() {
       toast(t("reset.success"), "success");
 
       // Reload affected views
-      await Promise.all([loadContacts(), loadStats()]);
+      await Promise.all([loadContacts({ refreshPickers: true }), loadStats()]);
       if (currentView === "companies")  loadCompanies();
       if (currentView === "products")   loadProductsView();
       if (currentView === "tasks")      loadTasks();

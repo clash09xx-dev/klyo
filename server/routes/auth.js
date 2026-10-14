@@ -10,6 +10,7 @@ const { isConfigured: isGoogleConfigured, getSigninConsentUrl, getGoogleProfile 
 
 const { normalizeCurrency, setWorkspaceCurrency } = require("../services/workspaceCurrency");
 
+const preferences = require("../../public/js/preferences-core");
 const router = express.Router();
 
 function signToken(user) {
@@ -153,7 +154,7 @@ router.post("/login", async (req, res) => {
 // GET /api/auth/me — includes theme + onboarding status, which aren't in the token
 router.get("/me", requireAuth, async (req, res) => {
   const result = await db.query(
-    "SELECT id, name, email, role, workspace_id, theme, has_seen_onboarding, password_hash, language, terms_accepted_at FROM users WHERE id = $1",
+    "SELECT id, name, email, role, workspace_id, theme, has_seen_onboarding, password_hash, language, terms_accepted_at, workspace_preferences FROM users WHERE id = $1",
     [req.user.id]
   );
   const row = result.rows[0];
@@ -197,14 +198,30 @@ router.put("/password", requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// Personal preferences never update a workspace, another user, or platform access.
+router.get("/preferences", requireAuth, async (req,res) => {
+  const result = await db.query("SELECT workspace_preferences,theme FROM users WHERE id=$1 AND workspace_id=$2",[req.user.id,req.user.workspace_id]);
+  if(!result.rows.length)return res.status(404).json({error:"Account not found."});
+  res.json({preferences:preferences.normalize(result.rows[0].workspace_preferences,false,result.rows[0].theme)});
+});
+router.put("/preferences", requireAuth, async (req,res) => {
+  try {
+    const value=preferences.normalize(req.body,true);
+    const result=await db.query("UPDATE users SET workspace_preferences=$1,theme=$2 WHERE id=$3 AND workspace_id=$4 RETURNING id",[JSON.stringify(value),value.palette.preset,req.user.id,req.user.workspace_id]);
+    if(!result.rows.length)return res.status(404).json({error:"Account not found."});
+    res.json({preferences:value});
+  } catch(error) { if(!error.status)console.error("Preferences update failed:",error.message);res.status(error.status||500).json({error:error.status?error.message:"Could not save your workspace preferences."}); }
+});
+
 // PUT /api/auth/theme — save the signed-in user's chosen color theme
 router.put("/theme", requireAuth, async (req, res) => {
   const VALID_THEMES = ["signal", "ember", "meadow", "nebula", "arctic", "slate", "midnight", "sand", "cobalt", "graphite", "forest", "pearl", "dawn", "office", "blanc", "noir"];
   const { theme } = req.body || {};
-  if (!VALID_THEMES.includes(theme)) {
+  if (![...VALID_THEMES, ...Object.keys(preferences.PRESETS), "custom"].includes(theme)) {
     return res.status(400).json({ error: "That's not a valid theme." });
   }
-  await db.query("UPDATE users SET theme = $1 WHERE id = $2", [theme, req.user.id]);
+  const preset=(preferences.PRESETS[theme]||theme==="custom")?theme:preferences.LEGACY[theme]||"graphite";
+  await db.query("UPDATE users SET theme=$1,workspace_preferences=CASE WHEN workspace_preferences ? 'palette' THEN jsonb_set(workspace_preferences,'{palette,preset}',to_jsonb($3::text),true) ELSE workspace_preferences END WHERE id=$2", [theme,req.user.id,preset]);
   res.json({ theme });
 });
 

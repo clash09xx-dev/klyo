@@ -1,7 +1,7 @@
 // server/routes/contacts.js
 const express = require("express");
 const db = require("../db");
-const { requireAuth } = require("../middleware/auth");
+const { requireAuth, requireEditor } = require("../middleware/auth");
 const { requirePaidAccess } = require("../middleware/billing");
 const { assertWithinLimit, LimitExceededError } = require("../services/limits");
 const { generateOfferEmail } = require("../services/openai");
@@ -294,7 +294,7 @@ router.delete("/:id", async (req, res) => {
 });
 
 // POST /api/contacts/:id/offers/generate — draft an email with AI
-router.post("/:id/offers/generate", async (req, res) => {
+router.post("/:id/offers/generate", requireEditor, async (req, res) => {
   const cResult = await db.query("SELECT * FROM contacts WHERE id = $1 AND workspace_id = $2", [
     req.params.id,
     req.user.workspace_id,
@@ -311,9 +311,10 @@ router.post("/:id/offers/generate", async (req, res) => {
 
   try {
     const { instructions } = req.body || {};
-    const wsResult = await db.query("SELECT ai_context FROM workspaces WHERE id = $1", [req.user.workspace_id]);
+    if(instructions != null && (typeof instructions !== "string" || instructions.length>12000))return res.status(400).json({error:"Enter a text instruction under 12,000 characters."});
+    const wsResult = await db.query("SELECT w.ai_context,u.language FROM workspaces w JOIN users u ON u.workspace_id=w.id AND u.id=$2 WHERE w.id=$1", [req.user.workspace_id,req.user.id]);
     const aiContext = wsResult.rows[0]?.ai_context || null;
-    const draft = await generateOfferEmail(contact, instructions, req.user.name, aiContext);
+    const draft = await generateOfferEmail(contact, instructions, req.user.name, aiContext, wsResult.rows[0]?.language || contact.preferred_language || "en");
 
     const result = await db.query(
       `INSERT INTO offers (workspace_id, contact_id, created_by, subject, body, ai_generated, status)
