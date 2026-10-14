@@ -25,10 +25,12 @@ async function run(engine, name) {
       { ...deal, id: 3, title: 'Branding project', stage_id: 2, value: '800.00' },
     ];
     const stages = [
-      { id: 1, name: 'New', color: '#777777' },
-      { id: 2, name: 'In progress', color: '#777777' },
-      { id: 3, name: 'Proposal', color: '#777777' },
-      { id: 4, name: 'Won', color: '#777777' },
+      { id: 1, name: 'Contacted', color: '#777777' },
+      { id: 2, name: 'Interested', color: '#777777' },
+      { id: 3, name: 'Preview sent', color: '#777777' },
+      { id: 4, name: 'Offer sent', color: '#777777' },
+      { id: 5, name: 'Closing', color: '#777777' },
+      { id: 6, name: 'Closed', color: '#777777' },
     ];
     const product = { id: 1, name: 'Website', unit_price: '4500.00', currency, unit_label: 'project' };
     const quote = { id: 1, title: 'Draft quote', total: '4500.00', currency, status: 'draft', contact_id: 1, contact_name: contact.full_name };
@@ -132,7 +134,7 @@ async function run(engine, name) {
     const columns = await page.locator('.deals-column').evaluateAll(items => items.map(item => {
       const box = item.getBoundingClientRect(); return { x: box.x, y: box.y, width: box.width };
     }));
-    assert.equal(columns.length, 4);
+    assert.equal(columns.length, 6);
     assert.equal(columns[0].y, columns[1].y);
     assert.ok(columns[1].x > columns[0].x);
     const firstCards = await page.locator('.deals-column[data-stage-id="1"] .deal-card').evaluateAll(items => items.map(item => {
@@ -144,9 +146,43 @@ async function run(engine, name) {
     await page.locator('.deal-card[data-id="2"]').dragTo(page.locator('.deals-column[data-stage-id="3"] .deals-column-body'));
     await page.waitForFunction(() => document.querySelector('.deals-column[data-stage-id="3"] .deal-card[data-id="2"]'));
     assert.equal(deals[1].stage_id, 3);
-    await page.setViewportSize({ width: 760, height: 1000 });
-    assert.equal(await page.locator('#dealsBoard').evaluate(board => board.scrollWidth > board.clientWidth), true);
-    assert.equal(await page.locator('#dealsBoard').evaluate(board => getComputedStyle(board).overflowX), 'auto');
+    // Every stage fits horizontally and fills the available viewport height.
+    for (const viewport of [
+      { width: 1512, height: 836 }, { width: 1280, height: 800 },
+      { width: 1920, height: 1080 }, { width: 760, height: 1000 },
+    ]) {
+      await page.setViewportSize(viewport);
+      const layout = await page.locator('#dealsBoard').evaluate(board => {
+        const box = board.getBoundingClientRect();
+        return { width: board.clientWidth, scrollWidth: board.scrollWidth, bottom: box.bottom,
+          columns: [...board.children].map(column => {
+            const rect = column.getBoundingClientRect(); return { right: rect.right, bottom: rect.bottom };
+          }), right: box.right };
+      });
+      assert.ok(layout.scrollWidth <= layout.width + 1, `${name}: all stages fit at ${viewport.width}`);
+      assert.ok(Math.abs(layout.bottom - (viewport.height - 20)) < 2, `${name}: board reaches bottom of viewport`);
+      assert.ok(layout.columns.every(column => column.right <= layout.right + 1));
+      assert.ok(layout.columns.every(column => Math.abs(column.bottom - layout.bottom) < 2));
+    }
+    await page.setViewportSize({ width: 1512, height: 836 });
+    await page.evaluate(() => applyTheme('blanc'));
+    if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, `${name}-deals-fit-screen.png`), animations: 'disabled' });
+    // Overflowing cards scroll inside their stage without growing the page.
+    await page.evaluate(() => {
+      for (let id = 100; id < 130; id++) dealsCache.push({ ...dealsCache[0], id, stage_id: 1, title: `Test project ${id}` });
+      renderDealsBoard();
+    });
+    const body = page.locator('.deals-column[data-stage-id="1"] .deals-column-body');
+    assert.equal(await body.evaluate(element => element.scrollHeight > element.clientHeight), true);
+    await body.evaluate(element => { element.scrollTop = 300; });
+    assert.ok(await body.evaluate(element => element.scrollTop > 0));
+    assert.ok(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1));
+    await page.evaluate(() => loadDeals());
+    // Empty accounts retain their actionable empty state.
+    await page.evaluate(() => { dealsCache = []; dealsStagesCache = []; renderDealsBoard(); });
+    assert.equal(await page.locator('#dealsEmptyState').isVisible(), true);
+    assert.equal(await page.locator('#dealsBoardWrap').isVisible(), false);
+    await page.evaluate(() => loadDeals());
     await page.setViewportSize({ width: 1440, height: 1000 });
     // Call the actual settings save handler after choosing PLN.
     const settingsLoaded = page.waitForResponse('**/api/auth/workspace/settings');
@@ -170,7 +206,7 @@ async function run(engine, name) {
     await page.selectOption('#quoteCurrencySelect', 'EUR');
     assert.match(await page.locator('#quoteTotalValue').textContent(), /€/);
     assert.deepEqual(errors, [], `${name}: all flows must be free of uncaught errors`);
-    console.log(`${name}: PASS — reload, failed auxiliary request, visible pipeline error, currency persistence, quote currency, Blanc/Noir, vertical cards and drag/drop`);
+    console.log(`${name}: PASS — reload, failed auxiliary request, visible pipeline error, currency persistence, quote currency, Blanc/Noir, full-height fitted stages, internal card scrolling and drag/drop`);
   } finally { await browser.close(); }
 }
 (async () => { await run(chromium, 'chromium'); await run(webkit, 'webkit'); })().catch(error => { console.error(error); process.exitCode = 1; });
