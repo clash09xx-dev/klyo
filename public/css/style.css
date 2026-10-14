@@ -1006,3 +1006,7 @@ body[data-view="overview"] #importContactsBtn,body[data-view="overview"] #export
 
 :root { --bg-card: var(--surface); --bg-subtle: var(--bg-soft); --accent: var(--accent-1); }
 .auth-shell { flex-direction: column; gap: 18px; }
+
+.auth-card { max-width: 100%; }
+.auth-card input[type="checkbox"] { width: auto; padding: 0; }
+.auth-card .btn { white-space: normal; }

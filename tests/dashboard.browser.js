@@ -94,7 +94,7 @@ async function run(engine, name) {
         else { status = 404; data = { error: `Missing fixture: ${endpoint}` }; }
         return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) });
       }
-      const file = path.join(publicDir, url.pathname === '/app' ? 'app.html' : url.pathname === '/' ? 'index.html' : url.pathname === '/login' ? 'login.html' : url.pathname);
+      const file = path.join(publicDir, url.pathname === '/app' ? 'app.html' : url.pathname === '/' ? 'index.html' : ['/login','/signup'].includes(url.pathname) ? 'login.html' : url.pathname);
       const contentType = file.endsWith('.png') ? 'image/png' : file.endsWith('.svg') ? 'image/svg+xml' : file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html';
       return route.fulfill({ contentType, body: fs.readFileSync(file) });
     });
@@ -304,6 +304,13 @@ async function run(engine, name) {
     await page.locator('#goLoginBtn').click();
     assert.ok(await page.evaluate(() => document.querySelector('.auth-card').getBoundingClientRect().bottom < document.querySelector('.auth-shell').lastElementChild.getBoundingClientRect().top));
     if (screenshotDir) await page.screenshot({path:path.join(screenshotDir,`${name}-login.png`),animations:'disabled'});
+    await page.setViewportSize({width:390,height:844});
+    await page.goto('http://klyo.test/signup');
+    await page.locator('#signupScreen:not(.hidden)').waitFor();
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    assert.ok(await page.locator('#termsCheckbox').evaluate(el=>el.getBoundingClientRect().width<30));
+    if(screenshotDir)await page.screenshot({path:path.join(screenshotDir,`${name}-signup-mobile.png`),fullPage:true,animations:'disabled'});
+    await page.setViewportSize({width:1440,height:1000});
     await page.goto('http://klyo.test/');
     await page.locator('h1').waitFor();
     if (screenshotDir) await page.locator('.toast').evaluateAll(items=>items.forEach(item=>item.remove()));
