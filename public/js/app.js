@@ -1587,7 +1587,7 @@ function renderContacts(contacts) {
     .map(
       (c) => `
     <tr data-id="${c.id}" style="--stage-color:${stageColorVar(c.status)}">
-      <td class="name-cell">${escapeHtml(c.full_name)}</td>
+      <td class="name-cell"><div class="contact-identity"><span class="contact-initials" aria-hidden="true">${escapeHtml(c.full_name.split(/\s+/).filter(Boolean).slice(0,2).map(part => part[0]).join("").toUpperCase())}</span><span>${escapeHtml(c.full_name)}</span></div></td>
       <td>
         <div class="mono">${escapeHtml(c.email || "—")}</div>
         <div class="mono muted">${escapeHtml(c.phone || "—")}</div>

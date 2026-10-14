@@ -18,11 +18,12 @@ async function run(engine, name) {
     let failContacts = false;
     let theme = 'blanc';
     let currency = 'USD';
-    const contact = { id: 1, full_name: 'Example Client', email: 'client@example.test', status: 'customer', tags: ['sold'], owner_name: 'Demo', created_at: '2026-10-14' };
-    const deal = { id: 1, title: 'Website project', value: '4500.00', currency, stage_id: 1, status: 'open', quantity: 1 };
+    const contact = { id: 1, full_name: 'Example Client', email: 'client@example.test', status: 'customer', tags: ['sold'], company_name:'Harbor Studio', phone:'+44 7700 900123', notes:'Interested in a website refresh. Prepare a proposal after the discovery call.', owner_name: 'Demo', created_at: '2026-10-14' };
+    const deal = { id: 1, title: 'Website project', value: '4500.00', currency, stage_id: 1, status: 'open', quantity: 1, assigned_name:'Demo', contact_name:contact.full_name, stage_entered_at:new Date(Date.now()-3*86400000).toISOString() };
     const deals = [deal,
       { ...deal, id: 2, title: 'Second website project', value: '2300.00' },
-      { ...deal, id: 3, title: 'Branding project', stage_id: 2, value: '800.00' },
+      { ...deal, id: 3, title: 'Branding project', stage_id: 2, value: '800.00', next_task_id:3, next_task_title:'Review the proposal', next_task_due:'2026-10-19' },
+      { ...deal, id: 4, title: 'Shop redesign', stage_id:6, value:'3200.00', status:'won' },
     ];
     const savedViews = [], emailTemplates = [], dealEvents = [], drafts = [];
     let draftCount = 0, sentCount = 0;
@@ -123,6 +124,25 @@ async function run(engine, name) {
     await page.reload();
     await page.waitForFunction(() => document.querySelectorAll('#contactsBody tr').length === 1);
 
+    assert.deepEqual(await page.locator('.nav .nav-item[data-view]').evaluateAll(items=>items.map(el=>el.dataset.view).sort()),['overview','pipeline','companies','quotes','reminders','tasks','deals','clients','products','calendar','history','team','platform'].sort());
+    // The contact database is the primary work surface, with an inline summary rather than tiles.
+    await page.evaluate(contact => {
+      const samples = [contact,
+        {id:2,full_name:'Maya Lewis',email:'maya@example.test',phone:'+44 7700 900245',company_name:'Eastfield Design',status:'lead',owner_name:'Demo',tags:['New enquiry']},
+        {id:3,full_name:'Oliver Clark',email:'oliver@example.test',phone:'+44 7700 900316',company_name:'Clark & Co.',status:'negotiating',owner_name:'Demo',tags:['Proposal']},
+        {id:4,full_name:'Sofia Martin',email:'sofia@example.test',phone:'+44 7700 900427',company_name:'Studio Martin',status:'contacted',owner_name:'Demo',tags:[]},
+        {id:5,full_name:'James Wilson',email:'james@example.test',phone:'+44 7700 900538',company_name:'Northline',status:'customer',owner_name:'Demo',tags:['Website']},
+      ];
+      renderContacts(samples);els.statTotal.textContent='5';els.statLeads.textContent='1';els.statNegotiating.textContent='1';
+    },contact);
+    await page.setViewportSize({width:1440,height:900});
+    assert.ok(await page.locator('#pipelineView .stat-card').first().evaluate(el=>el.getBoundingClientRect().height<40));
+    assert.equal(await page.locator('#sparkTotal').isVisible(),false);
+    assert.ok(await page.locator('#contactsBody tr').first().evaluate(el=>el.getBoundingClientRect().height<=60));
+    if(screenshotDir)await page.screenshot({path:path.join(screenshotDir,`${name}-pipeline-compact.png`),animations:'disabled'});
+    if(name==='chromium'&&process.env.KLYO_PREVIEW_DIR)await page.screenshot({path:path.join(process.env.KLYO_PREVIEW_DIR,'contacts-preview.png'),animations:'disabled'});
+    await page.evaluate(contact=>{renderContacts([contact]);els.statTotal.textContent='1';els.statLeads.textContent='0';els.statNegotiating.textContent='0';},contact);
+    await page.setViewportSize({width:1440,height:1000});
     // Theme checks run against the real stylesheet and rendered contact panel.
     await page.locator('#contactsBody tr').click();
     await page.waitForFunction(() => !document.querySelector('#panelOverlay').classList.contains('hidden'));
@@ -138,9 +158,10 @@ async function run(engine, name) {
         };
       });
       const expected = selectedTheme === 'blanc' ? 'rgb(255, 255, 255)' : 'rgb(10, 10, 10)';
-      assert.equal(colors.logo, expected);
+      assert.equal(colors.logo, 'rgb(36, 38, 43)');
       assert.equal(colors.button, expected);
       assert.ok(!colors.composer.includes('18, 26, 44'));
+      if(name==='chromium'&&selectedTheme==='blanc'&&process.env.KLYO_PREVIEW_DIR)await page.locator('#panelOverlay .panel').screenshot({path:path.join(process.env.KLYO_PREVIEW_DIR,'contact-preview.png'),animations:'disabled'});
       if (screenshotDir) {
         fs.mkdirSync(screenshotDir, { recursive: true });
         await page.screenshot({ path: path.join(screenshotDir, `${name}-${selectedTheme}.png`), animations: 'disabled' });
@@ -275,12 +296,19 @@ async function run(engine, name) {
     await page.waitForFunction(() => document.querySelector('#salesLossReasons').textContent.includes('Budget postponed'));
     if (screenshotDir) await page.locator('.toast').evaluateAll(items=>items.forEach(item=>item.remove()));
     if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, `${name}-overview.png`), animations: 'disabled' });
+    if(name==='chromium'&&process.env.KLYO_PREVIEW_DIR)await page.screenshot({path:path.join(process.env.KLYO_PREVIEW_DIR,'results-preview.png'),animations:'disabled'});
     await page.setViewportSize({ width: 390, height: 844 });
     await page.locator('.mobile-menu-toggle').click();
     await page.locator('.nav-item[data-view="overview"]').click();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
     if (screenshotDir) await page.locator('.toast').evaluateAll(items=>items.forEach(item=>item.remove()));
     if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, `${name}-overview-mobile.png`), animations: 'disabled' });
+    await page.locator('.mobile-menu-toggle').click();
+    await page.locator('.nav-item[data-view="pipeline"]').click();
+    await page.locator('#contactsBody tr').first().waitFor();
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    assert.ok(await page.locator('#pipelineView .table-card').evaluate(el=>el.scrollWidth>el.clientWidth));
+    if(screenshotDir)await page.screenshot({path:path.join(screenshotDir,`${name}-pipeline-mobile.png`),animations:'disabled'});
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.evaluate(() => { openQuoteModal(); currentQuoteLineItems[0].unit_price = 4500; renderQuoteLineItems(); });
     assert.match(await page.locator('#quoteTotalValue').textContent(), /zł|PLN/);
