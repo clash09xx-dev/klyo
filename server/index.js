@@ -51,6 +51,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/offers", offerRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/sales", require("./routes/sales"));
 app.use("/api/billing", billingRoutes);
 app.use("/api/integrations", integrationsRoutes);
 app.use("/api/companies", companiesRoutes);
@@ -130,8 +131,6 @@ db.init()
     app.listen(PORT, () => {
       console.log(`\n  Klyo is running → http://localhost:${PORT}\n`);
     });
-    // Start WhatsApp task reminder scheduler
-    require("./services/reminderCron").start();
   })
   .catch((err) => {
     console.error("\n[Klyo] Could not set up the database:", err.message, "\n");

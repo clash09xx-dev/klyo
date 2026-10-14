@@ -128,7 +128,7 @@ router.post("/", async (req, res) => {
     owner_id, company_id, title, is_decision_maker,
     tags, secondary_email, secondary_phone, website, linkedin, instagram, facebook, twitter,
     city, country, state, postal_code, address, customer_type, priority, lead_source,
-    department, preferred_language, whatsapp, telegram, internal_notes,
+    department, preferred_language, telegram, internal_notes,
   } = req.body || {};
 
   const derivedFullName = buildFullName(first_name, last_name, full_name);
@@ -154,13 +154,13 @@ router.post("/", async (req, res) => {
        owner_id, company_id, title, is_decision_maker,
        tags, secondary_email, secondary_phone, website, linkedin, instagram, facebook, twitter,
        city, country, state, postal_code, address, customer_type, priority, lead_source,
-       department, preferred_language, whatsapp, telegram, internal_notes
+       department, preferred_language, telegram, internal_notes
      ) VALUES (
        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
        $11,$12,$13,$14,
        $15,$16,$17,$18,$19,$20,$21,$22,
        $23,$24,$25,$26,$27,$28,$29,$30,
-       $31,$32,$33,$34,$35
+       $31,$32,$33,$34
      ) RETURNING *`,
     [
       req.user.workspace_id, derivedFullName, firstName||null, lastName||null,
@@ -175,7 +175,7 @@ router.post("/", async (req, res) => {
       postal_code?.trim()||null, address?.trim()||null,
       customer_type?.trim()||null, priority?.trim()||"medium", lead_source?.trim()||null,
       department?.trim()||null, preferred_language?.trim()||null,
-      whatsapp?.trim()||null, telegram?.trim()||null, internal_notes?.trim()||null,
+      telegram?.trim()||null, internal_notes?.trim()||null,
     ]
   );
 
@@ -226,7 +226,7 @@ router.put("/:id", async (req, res) => {
     owner_id, company_id, title, is_decision_maker,
     tags, secondary_email, secondary_phone, website, linkedin, instagram, facebook, twitter,
     city, country, state, postal_code, address, customer_type, priority, lead_source,
-    department, preferred_language, whatsapp, telegram, internal_notes,
+    department, preferred_language, telegram, internal_notes,
   } = req.body || {};
 
   const derivedFullName = buildFullName(first_name, last_name, full_name);
@@ -247,9 +247,9 @@ router.put("/:id", async (req, res) => {
        instagram=$19, facebook=$20, twitter=$21,
        city=$22, country=$23, state=$24, postal_code=$25, address=$26,
        customer_type=$27, priority=$28, lead_source=$29,
-       department=$30, preferred_language=$31, whatsapp=$32, telegram=$33, internal_notes=$34,
+       department=$30, preferred_language=$31, telegram=$32, internal_notes=$33,
        updated_at=now()
-     WHERE id=$35 RETURNING *`,
+     WHERE id=$34 RETURNING *`,
     [
       derivedFullName, firstName||null, lastName||null,
       email?.trim()||null, phone?.trim()||null, company?.trim()||null,
@@ -265,7 +265,7 @@ router.put("/:id", async (req, res) => {
       customer_type?.trim()||null, priority?.trim()||existing.priority||"medium",
       lead_source?.trim()||null,
       department?.trim()||null, preferred_language?.trim()||null,
-      whatsapp?.trim()||null, telegram?.trim()||null, internal_notes?.trim()||null,
+      telegram?.trim()||null, internal_notes?.trim()||null,
       req.params.id,
     ]
   );
@@ -508,7 +508,6 @@ router.post("/import", async (req, res) => {
     // language
     language: "preferred_language", preferred_language: "preferred_language",
     // messaging
-    whatsapp: "whatsapp", whatsapp_number: "whatsapp",
     telegram: "telegram",
 
     // ----- Polish -----

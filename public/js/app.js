@@ -198,8 +198,6 @@ const els = {
   aiContextError: $("aiContextError"), saveAiContextBtn: $("saveAiContextBtn"),
   appLangPicker: $("appLangPicker"),
 
-  // WhatsApp settings
-  whatsappPhoneInput: $("whatsappPhoneInput"), saveWhatsappBtn: $("saveWhatsappBtn"), whatsappError: $("whatsappError"),
 
   // Clients view
   clientsView: $("clientsView"), clientsSearch: $("clientsSearch"), clientsOwnerFilter: $("clientsOwnerFilter"),
@@ -231,7 +229,6 @@ const els = {
   eventFormError: $("eventFormError"),
 
   // Task reminder
-  taskReminderAt: $("taskReminderAt"),
 
   // Quote currency picker
   quoteCurrencySelect: $("quoteCurrencySelect"),
@@ -326,6 +323,7 @@ function showLimitOrError(err, fallbackEl) {
   }
 
   wireEvents();
+  KlyoSales.init();
 
   // A failed auxiliary request must never prevent the pipeline from loading.
   const bootResults = await Promise.allSettled([
@@ -555,7 +553,6 @@ function openAppearanceModal() {
   loadMailStatus();
   loadCurrencySettings();
   loadAiContext();
-  loadWhatsappPhone();
   els.appearanceModalOverlay.classList.remove("hidden");
 }
 function closeAppearanceModal() {
@@ -679,13 +676,6 @@ async function handleSaveCurrency() {
   }
 }
 
-async function loadWhatsappPhone() {
-  try {
-    const { user } = await API.get("/auth/me");
-    if (els.whatsappPhoneInput) els.whatsappPhoneInput.value = user?.whatsapp_phone || "";
-  } catch { /* non-critical */ }
-}
-
 async function loadAiContext() {
   const user = API.getUser();
   const isAdmin = user?.role === "admin";
@@ -755,19 +745,6 @@ async function handleSavePassword() {
     els.passwordError.textContent = err.message;
   } finally {
     els.savePasswordBtn.disabled = false;
-  }
-}
-
-/* ---------- WhatsApp settings ---------- */
-async function saveWhatsappPhone() {
-  if (!els.whatsappError) return;
-  els.whatsappError.textContent = "";
-  const phone = (els.whatsappPhoneInput?.value || "").trim();
-  try {
-    await API.put("/auth/whatsapp-phone", { whatsapp_phone: phone });
-    toast("WhatsApp number saved");
-  } catch (err) {
-    if (els.whatsappError) els.whatsappError.textContent = err.message;
   }
 }
 
@@ -1634,6 +1611,7 @@ function populateOwnerOptions(selectEl, { placeholder, selected }) {
 /* ---------- view switching ---------- */
 function getViewCopy(view) {
   const map = {
+    overview: { title: KlyoI18n.getLang() === "pl" ? "Wyniki" : "Overview", sub: "" },
     pipeline:  { title: t("nav.pipeline"),  sub: t("view_sub.pipeline") },
     companies: { title: t("nav.companies"), sub: t("view_sub.companies") },
     quotes:    { title: t("nav.quotes"),    sub: t("view_sub.quotes") },
@@ -1669,6 +1647,7 @@ function switchView(view) {
   els.addContactBtn.style.display = view === "pipeline" ? "" : "none";
 
   currentView = view;
+  KlyoSales.onView(view);
   document.body.dataset.view = view;
   const copy = getViewCopy(view);
   els.viewTitle.textContent = copy.title;
@@ -1764,7 +1743,7 @@ function openContactModal(contact) {
     (contact.tags || []).forEach(addTagToInput);
     // Advanced fields
     const adv = { cSecondaryEmail: "secondary_email", cSecondaryPhone: "secondary_phone", cWebsite: "website",
-      cLinkedin: "linkedin", cWhatsapp: "whatsapp", cTelegram: "telegram", cCity: "city", cCountry: "country",
+      cLinkedin: "linkedin", cTelegram: "telegram", cCity: "city", cCountry: "country",
       cState: "state", cPostalCode: "postal_code", cAddress: "address", cCustomerType: "customer_type",
       cPriority: "priority", cLeadSource: "lead_source", cDepartment: "department" };
     for (const [elId, field] of Object.entries(adv)) {
@@ -1811,7 +1790,6 @@ async function handleContactSubmit(e) {
     secondary_phone: gv("cSecondaryPhone") || null,
     website: gv("cWebsite") || null,
     linkedin: gv("cLinkedin") || null,
-    whatsapp: gv("cWhatsapp") || null,
     telegram: gv("cTelegram") || null,
     city: gv("cCity") || null,
     country: gv("cCountry") || null,
@@ -1875,7 +1853,6 @@ async function openPanel(id) {
       [t("contact.secondary_phone"), contact.secondary_phone],
       [t("contact.website"), contact.website ? `<a href="${escapeHtml(contact.website)}" target="_blank" rel="noopener" style="color:var(--accent-1)">${escapeHtml(contact.website)}</a>` : null],
       [t("contact.linkedin"), contact.linkedin ? `<a href="${escapeHtml(contact.linkedin)}" target="_blank" rel="noopener" style="color:var(--accent-1)">LinkedIn</a>` : null],
-      [t("contact.whatsapp"), contact.whatsapp],
       [t("contact.telegram"), contact.telegram],
       [t("contact.city"), contact.city],
       [t("contact.country"), contact.country],
@@ -3001,7 +2978,6 @@ function wireEvents() {
   els.savePasswordBtn.addEventListener("click", handleSavePassword);
   els.saveCurrencyBtn.addEventListener("click", handleSaveCurrency);
   els.saveAiContextBtn.addEventListener("click", handleSaveAiContext);
-  if (els.saveWhatsappBtn) els.saveWhatsappBtn.addEventListener("click", saveWhatsappPhone);
   els.appLangPicker.addEventListener("change", () => {
     KlyoI18n.setLang(els.appLangPicker.value);
     KlyoI18n.applyTranslations();
@@ -3194,6 +3170,7 @@ function refreshDealStageFilter() {
 // ---- board rendering ----
 
 function renderDealsBoard() {
+  const visibleDeals = KlyoSales.filterDeals(dealsCache);
   els.dealsBoard.innerHTML = "";
 
   const stageVal  = els.dealStageFilter.value;
@@ -3201,17 +3178,17 @@ function renderDealsBoard() {
   const statusVal = els.dealStatusFilter.value;
 
   let visibleStages = dealsStagesCache.filter(s => !stageVal || String(s.id) === stageVal);
-  const hasUnsorted = dealsCache.some(d => !d.stage_id && (!stageVal));
+  const hasUnsorted = visibleDeals.some(d => !d.stage_id && (!stageVal));
   if (!stageVal && hasUnsorted) {
     visibleStages = [...visibleStages, { id: null, name: t("deals.unsorted") || "Unsorted", color: "#9ca3af" }];
   }
 
-  const totalDeals = dealsCache.length;
+  const totalDeals = visibleDeals.length;
   els.dealsEmptyState.classList.toggle("hidden", totalDeals > 0 || dealsStagesCache.length > 0);
   els.dealsBoard.parentElement.classList.toggle("hidden", visibleStages.length === 0);
 
   visibleStages.forEach(stage => {
-    const stageDeals = dealsCache.filter(d => {
+    const stageDeals = visibleDeals.filter(d => {
       if (stage.id === null) return !d.stage_id;
       return String(d.stage_id) === String(stage.id);
     });
@@ -3220,7 +3197,11 @@ function renderDealsBoard() {
     col.className = "deals-column";
     col.dataset.stageId = stage.id ?? "";
 
-    const totalVal = stageDeals.reduce((sum, d) => sum + (parseFloat(d.value) || 0), 0);
+    const totals = new Map();
+    for (const deal of stageDeals) {
+      const currency = deal.currency || workspaceDefaultCurrency;
+      totals.set(currency, (totals.get(currency) || 0) + (parseFloat(deal.value) || 0));
+    }
 
     const head = document.createElement("div");
     head.className = "deals-column-head";
@@ -3245,6 +3226,7 @@ function renderDealsBoard() {
         <div class="deal-card-title">${escHtml(d.title)}</div>
         ${sub ? `<div class="deal-card-meta">${escHtml(sub)}</div>` : ""}
         ${valStr}
+        ${KlyoSales.cardDetails(d)}
       `;
       card.addEventListener("click", () => openDealPanel(card.dataset.id));
       // ── drag source ──
@@ -3258,10 +3240,12 @@ function renderDealsBoard() {
       body.appendChild(card);
     });
 
-    if (totalVal > 0) {
+    for (const [currency, totalVal] of totals) {
+      if (totalVal <= 0) continue;
       const tot = document.createElement("div");
       tot.style.cssText = "font-size:11px;color:var(--text-faint);text-align:center;padding:4px 0;border-top:1px solid var(--border-soft);margin-top:4px;";
-      tot.textContent = fmtMoney(totalVal, workspaceDefaultCurrency);
+      tot.className = "deal-stage-total";
+      tot.textContent = fmtMoney(totalVal, currency);
       body.appendChild(tot);
     }
 
@@ -3282,10 +3266,10 @@ function renderDealsBoard() {
       const toStage  = stage.id ?? "";
       if (!dealId || String(fromStage) === String(toStage)) return;
       try {
-        await API.patch(`/deals/${dealId}/stage`, { stage_id: stage.id || null });
-        // Optimistic update in cache
-        const deal = dealsCache.find(x => String(x.id) === String(dealId));
-        if (deal) { deal.stage_id = stage.id || null; deal.stage_name = stage.name; }
+        const { deal: updated } = await API.patch(`/deals/${dealId}/stage`, { stage_id: stage.id || null });
+        // Keep server timestamps in sync for the time-in-stage indicator.
+        const deal = visibleDeals.find(x => String(x.id) === String(dealId));
+        if (deal) Object.assign(deal, updated, { stage_name: stage.name });
         renderDealsBoard();
       } catch (err) { toast(err.message, "error"); }
     });
@@ -3459,6 +3443,7 @@ async function openDealPanel(dealId) {
     els.markDealWonBtn.style.display  = d.status === "won"  ? "none" : "";
     els.markDealLostBtn.style.display = d.status === "lost" ? "none" : "";
 
+    KlyoSales.showDeal(d);
     els.dealPanelOverlay.classList.remove("hidden");
   } catch (err) {
     toast(err.message, "error");
@@ -3470,15 +3455,17 @@ function closeDealPanel() {
   currentDealPanelId = null;
 }
 
-async function handleMarkDeal(status) {
+async function handleMarkDeal(status, lostReason) {
+  if (status === "lost" && !lostReason) { KlyoSales.openLossModal(); return false; }
   if (!currentDealPanelId) return;
   try {
     const d = dealsCache.find(x => String(x.id) === String(currentDealPanelId));
     if (!d) return;
-    await API.put(`/deals/${currentDealPanelId}`, { ...d, status });
+    await API.put(`/deals/${currentDealPanelId}`, { ...d, status, ...(status === "lost" ? { lost_reason: lostReason } : {}) });
     closeDealPanel();
     await loadDeals();
-    toast(status === "won" ? "Deal marked won 🎉" : "Deal marked lost");
+    toast(status === "won" ? "Deal marked won" : "Deal marked lost");
+    return true;
   } catch (err) { toast(err.message, "error"); }
 }
 
@@ -3701,7 +3688,6 @@ function openTaskModal(task) {
   els.taskTitle.value         = task?.title || "";
   els.taskDescription.value   = task?.description || "";
   els.taskDueDate.value       = task?.due_date ? task.due_date.slice(0,10) : "";
-  if (els.taskReminderAt) els.taskReminderAt.value = task?.reminder_at ? task.reminder_at.slice(0,16) : "";
   els.taskPrioritySelect.value = task?.priority || "medium";
   els.taskStatusSelect.value  = task?.status || "todo";
   els.taskFormError.textContent = "";
@@ -3754,7 +3740,6 @@ async function handleTaskSubmit(e) {
     status:      els.taskStatusSelect.value,
     contact_id:  els.taskContactSelect.value || null,
     deal_id:     els.taskDealSelect.value || null,
-    reminder_at: els.taskReminderAt?.value || null,
   };
   try {
     if (id) {
