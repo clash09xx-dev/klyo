@@ -20,6 +20,16 @@ async function run(engine, name) {
     let currency = 'USD';
     const contact = { id: 1, full_name: 'Example Client', email: 'client@example.test', status: 'customer', tags: ['sold'], owner_name: 'Demo', created_at: '2026-10-14' };
     const deal = { id: 1, title: 'Website project', value: '4500.00', currency, stage_id: 1, status: 'open', quantity: 1 };
+    const deals = [deal,
+      { ...deal, id: 2, title: 'Second website project', value: '2300.00' },
+      { ...deal, id: 3, title: 'Branding project', stage_id: 2, value: '800.00' },
+    ];
+    const stages = [
+      { id: 1, name: 'New', color: '#777777' },
+      { id: 2, name: 'In progress', color: '#777777' },
+      { id: 3, name: 'Proposal', color: '#777777' },
+      { id: 4, name: 'Won', color: '#777777' },
+    ];
     const product = { id: 1, name: 'Website', unit_price: '4500.00', currency, unit_label: 'project' };
     const quote = { id: 1, title: 'Draft quote', total: '4500.00', currency, status: 'draft', contact_id: 1, contact_name: contact.full_name };
     const user = { id: 1, name: 'Demo', email: 'demo@example.test', role: 'admin', has_seen_onboarding: true, terms_accepted_at: '2026-01-01', language: 'en' };
@@ -38,7 +48,8 @@ async function run(engine, name) {
         else if (endpoint === '/auth/workspace' || endpoint === '/auth/workspace/settings') data = { workspace: { id: 1, name: 'Demo', default_currency: currency } };
         else if (endpoint === '/auth/workspace/currency') {
           currency = route.request().postDataJSON().currency;
-          deal.currency = product.currency = quote.currency = currency;
+          deals.forEach(item => { item.currency = currency; });
+          product.currency = quote.currency = currency;
           data = { currency };
         } else if (endpoint === '/billing/status') data = { is_comped: true };
         else if (endpoint === '/contacts/themes') data = { themes: [] };
@@ -49,9 +60,13 @@ async function run(engine, name) {
         else if (endpoint === '/stats') data = { total: 1, leads: 0, negotiating: 0, offersSent: 0, series: [0, 0, 1] };
         else if (endpoint === '/companies') data = { companies: [] };
         else if (endpoint === '/products') data = { products: [product] };
-        else if (endpoint === '/deals/stages') data = { stages: [{ id: 1, name: 'In progress', color: '#777777' }] };
-        else if (endpoint === '/deals') data = { deals: [deal] };
-        else if (endpoint === '/deals/1') data = { deal };
+        else if (endpoint === '/deals/stages') data = { stages };
+        else if (endpoint === '/deals') data = { deals };
+        else if (/^\/deals\/\d+\/stage$/.test(endpoint) && route.request().method() === 'PATCH') {
+          const item = deals.find(item => item.id === Number(endpoint.split('/')[2]));
+          item.stage_id = route.request().postDataJSON().stage_id;
+          data = { deal: item };
+        } else if (endpoint === '/deals/1') data = { deal };
         else if (endpoint === '/quotes') data = { quotes: [quote] };
         else if (endpoint === '/quotes/1') data = { quote, lineItems: [{ description: 'Website', quantity: 1, line_total: 4500 }] };
         else { status = 404; data = { error: `Missing fixture: ${endpoint}` }; }
@@ -113,6 +128,26 @@ async function run(engine, name) {
     await page.locator('[data-view="deals"]').click();
     await page.waitForFunction(() => document.querySelector('.deal-card-value'));
     assert.match(await page.locator('.deal-card-value').first().textContent(), /USD|\$/);
+    // Stages remain side by side; cards stack vertically and drag/drop still works.
+    const columns = await page.locator('.deals-column').evaluateAll(items => items.map(item => {
+      const box = item.getBoundingClientRect(); return { x: box.x, y: box.y, width: box.width };
+    }));
+    assert.equal(columns.length, 4);
+    assert.equal(columns[0].y, columns[1].y);
+    assert.ok(columns[1].x > columns[0].x);
+    const firstCards = await page.locator('.deals-column[data-stage-id="1"] .deal-card').evaluateAll(items => items.map(item => {
+      const box = item.getBoundingClientRect(); return { x: box.x, y: box.y };
+    }));
+    assert.equal(firstCards[0].x, firstCards[1].x);
+    assert.ok(firstCards[1].y > firstCards[0].y);
+    if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, `${name}-deals.png`), animations: 'disabled' });
+    await page.locator('.deal-card[data-id="2"]').dragTo(page.locator('.deals-column[data-stage-id="3"] .deals-column-body'));
+    await page.waitForFunction(() => document.querySelector('.deals-column[data-stage-id="3"] .deal-card[data-id="2"]'));
+    assert.equal(deals[1].stage_id, 3);
+    await page.setViewportSize({ width: 760, height: 1000 });
+    assert.equal(await page.locator('#dealsBoard').evaluate(board => board.scrollWidth > board.clientWidth), true);
+    assert.equal(await page.locator('#dealsBoard').evaluate(board => getComputedStyle(board).overflowX), 'auto');
+    await page.setViewportSize({ width: 1440, height: 1000 });
     // Call the actual settings save handler after choosing PLN.
     const settingsLoaded = page.waitForResponse('**/api/auth/workspace/settings');
     await page.locator('#appearanceBtn').click();
@@ -135,7 +170,7 @@ async function run(engine, name) {
     await page.selectOption('#quoteCurrencySelect', 'EUR');
     assert.match(await page.locator('#quoteTotalValue').textContent(), /€/);
     assert.deepEqual(errors, [], `${name}: all flows must be free of uncaught errors`);
-    console.log(`${name}: PASS — reload, failed auxiliary request, visible pipeline error, currency persistence, quote currency, Blanc/Noir`);
+    console.log(`${name}: PASS — reload, failed auxiliary request, visible pipeline error, currency persistence, quote currency, Blanc/Noir, vertical cards and drag/drop`);
   } finally { await browser.close(); }
 }
 (async () => { await run(chromium, 'chromium'); await run(webkit, 'webkit'); })().catch(error => { console.error(error); process.exitCode = 1; });
