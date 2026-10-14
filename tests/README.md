@@ -1,6 +1,6 @@
 # Regression checks
 
-`npm test` runs the currency validation and transaction tests. To also run the API checks against PostgreSQL, set `TEST_DATABASE_URL` to a local disposable database:
+`npm test` runs validation, language-prompt and transaction tests. To also run the API checks against PostgreSQL, set `TEST_DATABASE_URL` to a local disposable database:
 
 ```sh
 TEST_DATABASE_URL=postgresql://localhost/klyo_test npm test
@@ -19,3 +19,7 @@ npm run test:browser
 They check first load and reload, failed auxiliary requests, visible pipeline load errors, settings currency changes, persistence across reload, quote currency totals, Blanc/Noir contrast, vertical deal cards, all stages fitting the viewport width, full-height columns, internal card scrolling and empty-state recovery and drag/drop between stages. Optional environment variables: `KLYO_QA_SCREENSHOTS` saves screenshots; `KLYO_CHROMIUM_PATH` and `KLYO_WEBKIT_PATH` select existing browser executables.
 
 Changing the workspace currency relabels all existing deals and products and all never-sent draft quotes. It does not apply exchange rates. Previously sent quotes keep their original currency. Saving the same currency again repairs older records left behind by the previous default-only implementation.
+
+Personal-workspace checks cover per-user persistence, legacy theme migration, menu and column order, custom colors, strict validation, cross-account isolation and owner-only Platform access. AI route tests use a stubbed generator: they check original instructions, saved fallback language, role/workspace boundaries and persisted unsent drafts; they do not call a paid model or evaluate its generated language.
+
+Browser checks also cover personal layout after reload, failed saves and Cancel/Reset, right and collapsed navigation, column visibility, palette contrast, out-of-order search responses, owner/nonowner Platform visibility, the interactive landing preview, sample email languages, mobile overflow and reduced motion. Set `KLYO_PERSONAL_PREVIEW` to an existing output directory to generate the two synthetic product screenshots used on the landing.

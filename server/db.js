@@ -415,6 +415,7 @@ async function init() {
      )`
   );
   await require("./migrations/salesWorkspace")(pool);
+  await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS workspace_preferences JSONB NOT NULL DEFAULT '{}'::jsonb");
 }
 
 module.exports = { pool, query, init };

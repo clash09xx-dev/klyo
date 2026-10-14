@@ -17,6 +17,9 @@ async function run(engine, name) {
     let failCompanies = false;
     let failContacts = false;
     let theme = 'blanc';
+    let preferences = {};
+    let failPreferences = false;
+    const contactQueries=[];
     let currency = 'USD';
     const contact = { id: 1, full_name: 'Example Client', email: 'client@example.test', status: 'customer', tags: ['sold'], company_name:'Harbor Studio', phone:'+44 7700 900123', notes:'Interested in a website refresh. Prepare a proposal after the discovery call.', owner_name: 'Demo', created_at: '2026-10-14' };
     const deal = { id: 1, title: 'Website project', value: '4500.00', currency, stage_id: 1, status: 'open', quantity: 1, assigned_name:'Demo', contact_name:contact.full_name, stage_entered_at:new Date(Date.now()-3*86400000).toISOString() };
@@ -48,7 +51,8 @@ async function run(engine, name) {
         let status = 200;
         if ((failCompanies && endpoint === '/companies') || (failContacts && endpoint === '/contacts')) {
           status = 500; data = { error: 'Fixture failure' };
-        } else if (endpoint === '/auth/me') data = { user: { ...user, theme } };
+        } else if (endpoint === '/auth/me') data = { user: { ...user, theme, workspace_preferences:preferences } };
+        else if(endpoint === '/auth/preferences' && route.request().method()==='PUT'){if(failPreferences){status=500;data={error:'Fixture save failed'};}else{preferences=route.request().postDataJSON();theme=preferences.palette.preset;data={preferences};}}
         else if (endpoint === '/sales/views' && route.request().method() === 'GET') data = { views: savedViews };
         else if (endpoint === '/sales/views' && route.request().method() === 'POST') { const view = { id: savedViews.length + 1, ...route.request().postDataJSON() }; savedViews.push(view); data = { view }; }
         else if (endpoint === '/sales/templates' && route.request().method() === 'GET') data = { templates: emailTemplates };
@@ -71,7 +75,12 @@ async function run(engine, name) {
         } else if (endpoint === '/billing/status') data = { is_comped: true };
         else if (endpoint === '/contacts/themes') data = { themes: [] };
         else if (endpoint === '/contacts/tags') data = { tags: ['sold'] };
-        else if (endpoint === '/contacts') data = { contacts: [contact] };
+        else if (endpoint === '/contacts') {
+          contactQueries.push(url.search);
+          if(url.searchParams.get('search')==='slow'){await new Promise(resolve=>setTimeout(resolve,180));data={contacts:[{...contact,full_name:'Slow stale result'}]};}
+          else if(url.searchParams.get('search')==='latest')data={contacts:[{...contact,full_name:'Latest result'}]};
+          else data = { contacts: [contact] };
+        }
         else if (endpoint === '/contacts/1') data = { contact, activity: [], offers: drafts, quotes: [quote] };
         else if (endpoint === '/contacts/1/timeline') data = { events: [] };
         else if (endpoint === '/stats') data = { total: 1, leads: 0, negotiating: 0, offersSent: 0, series: [0, 0, 1] };
@@ -107,6 +116,12 @@ async function run(engine, name) {
     await page.waitForFunction(() => document.querySelectorAll('#contactsBody tr').length === 1);
     assert.equal(await page.locator('#statTotal').textContent(), '1');
     assert.deepEqual(errors, [], `${name}: boot must not throw`);
+    contactQueries.length=0;
+    await page.evaluate(async()=>{filters.search='slow';const slow=loadContacts();filters.search='latest';const fast=loadContacts();await Promise.all([slow,fast]);});
+    assert.match(await page.locator('#contactsBody').textContent(),/Latest result/);
+    assert.deepEqual(contactQueries.sort(),['?search=latest','?search=slow']);
+    await page.evaluate(async()=>{filters.search='';await loadContacts();});
+
 
     // A failed auxiliary endpoint must not prevent contacts and stats loading.
     failCompanies = true;
@@ -151,15 +166,16 @@ async function run(engine, name) {
       const colors = await page.evaluate(() => {
         const root = getComputedStyle(document.documentElement);
         return {
-          expected: root.getPropertyValue('--on-accent').trim(),
+          expected: (()=>{const probe=document.createElement('span');probe.style.color=root.getPropertyValue('--on-accent');document.body.appendChild(probe);const color=getComputedStyle(probe).color;probe.remove();return color;})(),
+          contrast:KlyoPreferences.contrast(root.getPropertyValue('--accent-1').trim(),root.getPropertyValue('--on-accent').trim()),
           logo: getComputedStyle(document.querySelector('.brand-mark svg')).stroke,
           button: getComputedStyle(document.querySelector('.scan-btn')).color,
           composer: getComputedStyle(document.querySelector('.composer')).backgroundImage,
         };
       });
-      const expected = selectedTheme === 'blanc' ? 'rgb(255, 255, 255)' : 'rgb(10, 10, 10)';
-      assert.equal(colors.logo, 'rgb(36, 38, 43)');
-      assert.equal(colors.button, expected);
+      assert.equal(colors.logo,colors.expected);
+      assert.equal(colors.button,colors.expected);
+      assert.ok(colors.contrast>=4.5);
       assert.ok(!colors.composer.includes('18, 26, 44'));
       if(name==='chromium'&&selectedTheme==='blanc'&&process.env.KLYO_PREVIEW_DIR)await page.locator('#panelOverlay .panel').screenshot({path:path.join(process.env.KLYO_PREVIEW_DIR,'contact-preview.png'),animations:'disabled'});
       if (screenshotDir) {
@@ -239,6 +255,7 @@ async function run(engine, name) {
     const settingsLoaded = page.waitForResponse('**/api/auth/workspace/settings');
     await page.locator('#appearanceBtn').click();
     await settingsLoaded;
+    await page.locator('[data-settings-tab=account]').click();
     await page.selectOption('#workspaceCurrencySelect', 'PLN');
     await page.locator('#saveCurrencyBtn').click();
     await page.waitForFunction(() => workspaceDefaultCurrency === 'PLN' && !els.saveCurrencyBtn.disabled);
@@ -326,6 +343,84 @@ async function run(engine, name) {
       await page.locator('.toast').evaluateAll(items=>items.forEach(item=>item.remove()));
       if (screenshotDir) await page.screenshot({path:path.join(screenshotDir,`${name}-${view}-refreshed.png`),animations:'disabled'});
     }
+    // A saved personal workspace survives reload without granting Platform access.
+    await page.locator('#appearanceBtn').click();
+    await page.locator('[data-preset="custom"]').click();
+    await page.locator('#hex-background').fill('#112233');
+    await page.locator('#hex-surface').fill('#1c2d40');
+    await page.locator('#hex-accent').fill('#82efb1');
+    await page.selectOption('#pref-sidebar','right');
+    await page.selectOption('#pref-density','comfortable');
+    await page.selectOption('#pref-start_view','deals');
+    await page.selectOption('#pref-summary_position','below');
+    await page.selectOption('#pref-overview_layout','stacked');
+    await page.locator('#prefList-nav [data-visible=calendar]').uncheck();
+    await page.locator('#prefList-widgets [data-visible=losses]').uncheck();
+    await page.locator('[data-layout=collapsed]').check();
+    await page.locator('#prefList-nav [data-key="deals"] [data-move="-1"]').click();
+    await page.locator('#prefList-nav li[data-key=tasks]').dragTo(page.locator('#prefList-nav li[data-key=pipeline]'));
+    await page.locator('#prefList-columns [data-key="stage"] [data-move="-1"]').click();
+    await page.locator('#prefList-columns [data-visible="tags"]').uncheck();
+    await page.locator('#prefList-widgets [data-key="losses"] [data-move="-1"]').click();
+    await page.locator('#savePreferencesBtn').click();
+    await page.waitForFunction(()=>!document.querySelector('#savePreferencesBtn').disabled);
+    assert.equal(preferences.palette.custom.background,'#112233');assert.equal(preferences.layout.sidebar,'right');
+    await page.locator('#closeAppearanceBtn').click();
+    await page.reload();
+    await page.waitForFunction(()=>document.body.dataset.view==='deals');
+    assert.equal(await page.evaluate(()=>document.body.dataset.sidebar),'right');
+    assert.equal(await page.evaluate(()=>document.body.dataset.sidebarCollapsed),'true');
+    assert.equal(await page.locator('#platformNavItem').isVisible(),false);
+    assert.equal(await page.evaluate(()=>document.documentElement.style.getPropertyValue('--bg')),'#112233');
+    const side=await page.locator('.sidebar').boundingBox();assert.ok(side.x>1200&&side.width<=70);
+    if(name==='chromium'&&process.env.KLYO_PERSONAL_PREVIEW)await page.screenshot({path:path.join(process.env.KLYO_PERSONAL_PREVIEW,'personal-workspace.png'),animations:'disabled'});
+    await page.locator('#appearanceBtn').click();
+    if(name==='chromium'&&process.env.KLYO_PERSONAL_PREVIEW)await page.locator('.settings-modal').screenshot({path:path.join(process.env.KLYO_PERSONAL_PREVIEW,'personal-settings.png'),animations:'disabled'});
+    if(screenshotDir)await page.screenshot({path:path.join(screenshotDir,`${name}-personal-settings.png`),animations:'disabled'});
+    await page.setViewportSize({width:390,height:844});
+    assert.ok(await page.locator('.settings-modal').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
+    assert.ok(await page.locator('#savePreferencesBtn').isVisible());
+    if(screenshotDir)await page.screenshot({path:path.join(screenshotDir,`${name}-personal-settings-mobile.png`),animations:'disabled'});
+    await page.setViewportSize({width:1440,height:1000});
+    await page.locator('#closeAppearanceBtn').click();
+    assert.equal(await page.locator('.nav-item[data-view=calendar]').isVisible(),false);
+    assert.deepEqual(await page.locator('.personal-nav>.nav-item').evaluateAll(items=>items.map(el=>el.dataset.view)),preferences.layout.nav_order);
+    await page.locator('.nav-item[data-view=overview]').click();
+    await page.locator('#personalOverview').waitFor();
+    assert.equal(await page.locator('#personalOverview').getAttribute('data-layout'),'stacked');
+    assert.equal(await page.locator('#personalOverview [data-widget=losses]').isVisible(),false);
+    assert.deepEqual(await page.locator('#personalOverview>[data-widget]').evaluateAll(items=>items.map(el=>el.dataset.widget)),preferences.layout.overview_order);
+    await page.locator('.nav-item[data-view="pipeline"]').click();
+    await page.locator('#contactsBody tr').first().waitFor();
+    assert.equal(await page.locator('#contactsTable th[data-column="tags"]').isVisible(),false);
+    assert.deepEqual(await page.locator('#contactsTable thead th').evaluateAll(items=>items.map(el=>el.dataset.column)),preferences.layout.contact_columns);
+    const positions=await page.evaluate(()=>({table:document.querySelector('#pipelineView .table-card').getBoundingClientRect().top,summary:document.querySelector('#pipelineView .stat-grid').getBoundingClientRect().top}));assert.ok(positions.summary>positions.table);
+    await page.locator('#appearanceBtn').click();
+    failPreferences=true;
+    await page.locator('#hex-background').fill('#441122');
+    await page.locator('#savePreferencesBtn').click();
+    await page.waitForFunction(()=>document.querySelector('#preferencesError').textContent.includes('Fixture save failed'));
+    await page.locator('#closeAppearanceBtn').click();
+    assert.equal(await page.evaluate(()=>document.documentElement.style.getPropertyValue('--bg')),'#112233');
+    failPreferences=false;
+    await page.locator('#appearanceBtn').click();
+    await page.locator('#resetPreferencesBtn').click();
+    await page.locator('#savePreferencesBtn').click();
+    await page.waitForFunction(()=>!document.querySelector('#savePreferencesBtn').disabled);
+    await page.locator('#closeAppearanceBtn').click();
+    await page.reload();await page.waitForFunction(()=>document.querySelectorAll('#contactsBody tr').length===1);
+    assert.equal(await page.evaluate(()=>document.body.dataset.sidebar),'left');
+    assert.equal(await page.locator('#contactsTable th[data-column="tags"]').isVisible(),true);
+    user.is_platform_admin=true;await page.reload();await page.locator('#contactsBody tr').first().waitFor();
+    assert.equal(await page.locator('#platformNavItem').isVisible(),true);
+    await page.locator('#appearanceBtn').click();assert.equal(await page.locator('#prefList-nav [data-key=platform]').count(),0);await page.locator('#closeAppearanceBtn').click();
+    user.is_platform_admin=false;await page.reload();await page.locator('#contactsBody tr').first().waitFor();
+    assert.equal(await page.locator('#platformNavItem').isVisible(),false);
+    // Mixed light panels and dark canvas keep their text contrasts separate.
+    await page.evaluate(()=>{const p=KlyoPreferences.defaults('custom').palette;p.custom.background='#000000';p.custom.surface='#ffffff';KlyoCustomize.applyLegacy('day');for(const[k,v]of Object.entries(KlyoPreferences.tokens(p)))document.documentElement.style.setProperty(k,v);});
+    assert.equal(await page.locator('#contactsBody td').first().evaluate(el=>getComputedStyle(el).color),'rgb(17, 24, 39)');
+    await page.reload();await page.locator('#contactsBody tr').first().waitFor();
+
     await context.clearCookies();
     await page.evaluate(() => localStorage.removeItem('klyo_token'));
     await page.goto('http://klyo.test/login');
@@ -341,15 +436,43 @@ async function run(engine, name) {
     await page.setViewportSize({width:1440,height:1000});
     await page.goto('http://klyo.test/');
     await page.locator('h1').waitFor();
+    await page.locator('#themeGallery .gallery-theme').first().waitFor();
+    await page.locator('.demo-theme-tabs [data-demo-theme=day]').click();
+    assert.equal(await page.locator('#workspaceDemo').evaluate(el=>el.style.getPropertyValue('--demo-bg')),'#edf1f7');
+    await page.locator('#demoPosition').click();
+    assert.equal(await page.locator('#workspaceDemo').getAttribute('data-position'),'right');
+    await page.selectOption('#demoDensity','comfortable');
+    assert.equal(await page.locator('#workspaceDemo').getAttribute('data-density'),'comfortable');
+    await page.locator('#demoSwapColumns').click();
+    assert.equal(await page.locator('.demo-table th').last().getAttribute('data-demo-column'),'company');
+    await page.locator('#demoAccent').evaluate(el=>{el.value='#ff6655';el.dispatchEvent(new Event('input',{bubbles:true}));});
+    assert.equal(await page.locator('#workspaceDemo').evaluate(el=>el.style.getPropertyValue('--demo-accent')),'#ff6655');
+    await page.locator('#demoFocus').click();
+    assert.equal(await page.locator('#demoFocus').getAttribute('aria-pressed'),'true');
+    await page.locator('[data-email-lang=es]').click();
+    assert.match(await page.locator('#emailBody').textContent(),/Hola/);
+    await page.locator('[data-email-lang=en]').click();
+    assert.match(await page.locator('#emailSubject').textContent(),/website/);
+    await page.locator('[data-email-lang=pl]').click();
+    assert.match(await page.locator('#emailBody').textContent(),/Dzień dobry/);
+    await page.locator('#motionToggle').click();
+    assert.equal(await page.locator('html').getAttribute('data-motion'),'off');
+    for(const img of await page.locator('main img').all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.complete&&el.naturalWidth>0?Promise.resolve():new Promise((resolve,reject)=>{el.onload=resolve;el.onerror=()=>reject(new Error('Missing image '+el.src));}));}
+    await page.evaluate(()=>scrollTo(0,0));
     if (screenshotDir) await page.locator('.toast').evaluateAll(items=>items.forEach(item=>item.remove()));
     if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, `${name}-landing.png`), fullPage: true, animations: 'disabled' });
     await page.setViewportSize({ width: 390, height: 844 });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
     await page.locator('summary').first().click();
     if (screenshotDir) await page.locator('.toast').evaluateAll(items=>items.forEach(item=>item.remove()));
+    await page.evaluate(()=>scrollTo(0,0));
     if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, `${name}-landing-mobile.png`), fullPage: true, animations: 'disabled' });
+    await page.emulateMedia({reducedMotion:'reduce'});
+    await page.reload();await page.locator('#themeGallery .gallery-theme').first().waitFor();
+    assert.equal(await page.locator('html').getAttribute('data-motion'),'off');
+    assert.equal(await page.locator('.personal-section').evaluate(el=>getComputedStyle(el).opacity),'1');
     assert.deepEqual(errors, []);
-    console.log(`${name}: PASS — reload, failed auxiliary request, visible pipeline error, currency persistence, quote currency, Blanc/Noir, fitted stages, tasks, loss reasons, templates, saved views, overview, landing desktop/mobile, no automatic sends`);
+    console.log(`${name}: PASS — reload, failed auxiliary request, visible pipeline error, currency persistence, quote currency, Blanc/Noir, fitted stages, tasks, loss reasons, templates, saved views, personal colors and layout persistence/cancel/reset, menu/column/widget order and visibility, owner-only Platform, search races, interactive landing desktop/mobile, reduced motion, no automatic sends`);
   } finally { await browser.close(); }
 }
 (async () => { await run(chromium, 'chromium'); await run(webkit, 'webkit'); })().catch(error => { console.error(error); process.exitCode = 1; });
