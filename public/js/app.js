@@ -327,13 +327,13 @@ function showLimitOrError(err, fallbackEl) {
 
   wireEvents();
 
-  await Promise.all([loadTeam(), loadThemes(), loadWorkspace(), loadBillingStatus(), loadCompanies(), loadProducts(), loadWorkspaceCurrency()]);
-  try {
-    await Promise.all([loadStats(), loadContacts()]);
-  } catch {
-    // Most likely a lapsed trial/subscription — loadBillingStatus() above
-    // already put up a clear banner explaining that, so just leave the
-    // dashboard empty rather than breaking the rest of the page.
+  // A failed auxiliary request must never prevent the pipeline from loading.
+  const bootResults = await Promise.allSettled([
+    loadTeam(), loadThemes(), loadWorkspace(), loadBillingStatus(),
+    loadCompanies(), loadProducts(), loadWorkspaceCurrency(), loadStats(), loadContacts(),
+  ]);
+  if (bootResults.some(result => result.status === "rejected")) {
+    toast("Some dashboard data could not be loaded. Refresh to try again.", "error");
   }
 
   handleGmailRedirectParam();
@@ -651,8 +651,27 @@ async function handleSaveCurrency() {
   const currency = els.workspaceCurrencySelect.value;
   els.saveCurrencyBtn.disabled = true;
   try {
-    await API.put("/auth/workspace/currency", { currency });
-    toast(`Default currency set to ${currency}`);
+    const saved = await API.put("/auth/workspace/currency", { currency });
+    workspaceDefaultCurrency = saved.currency;
+    products.forEach(product => { product.currency = saved.currency; });
+    dealsCache.forEach(deal => { deal.currency = saved.currency; });
+    els.quoteCurrencySelect.value = saved.currency;
+    els.productCurrency.value = saved.currency;
+    recomputeQuoteTotals();
+    if (currentView === "deals") await loadDeals();
+    if (currentView === "quotes") await loadQuotes();
+    if (currentView === "products") renderProductsView();
+    if (currentView === "clients") await loadClients();
+    if (!els.productsModalOverlay.classList.contains("hidden")) renderProductsList();
+    if (currentPanelContactId) {
+      const { quotes } = await API.get(`/contacts/${currentPanelContactId}`);
+      renderPanelQuotes(quotes || []);
+    }
+    if (currentDealPanelId) await openDealPanel(currentDealPanelId);
+    if (!els.quotePanelOverlay.classList.contains("hidden")) {
+      await openQuotePanel(els.quotePanelOverlay.dataset.quoteId);
+    }
+    toast(`Workspace currency set to ${saved.currency}. Amounts unchanged.`);
   } catch (err) {
     els.currencyError.textContent = err.message;
   } finally {
@@ -1456,8 +1475,8 @@ function handleTourBack() {
 
 /* ---------- data loaders ---------- */
 async function loadTeam() {
-  const { team: t } = await API.get("/auth/team");
-  team = t;
+  const { team: members } = await API.get("/auth/team");
+  team = members;
   populateOwnerOptions(els.filterOwner, { placeholder: t("ui.all_owners") });
   // Populate history + deals user filters
   els.historyUserFilter.innerHTML =
@@ -1541,7 +1560,7 @@ function renderSparkline(svg, series) {
     .join(" ");
   svg.innerHTML = `
     <defs><linearGradient id="sparkGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#4fd8ff"/><stop offset="100%" stop-color="#8b6bff"/>
+      <stop offset="0%" stop-color="var(--accent-1)"/><stop offset="100%" stop-color="var(--accent-2)"/>
     </linearGradient></defs>
     <polyline points="${points}" fill="none" stroke="url(#sparkGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   `;
@@ -1916,7 +1935,7 @@ function renderPanelQuotes(quotes) {
     <div class="detail-item" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" data-quote-id="${q.id}">
       <span>${escapeHtml(q.title)}</span>
       <span style="display:flex; align-items:center; gap:8px;">
-        <span class="mono">$${Number(q.total).toFixed(2)}</span>
+        <span class="mono">${fmtMoney(q.total, q.currency, 2)}</span>
         <span class="quote-status-badge ${q.status}">${q.status}</span>
       </span>
     </div>`
@@ -2198,7 +2217,7 @@ function renderProductsList() {
     ? visible.map(p => `
     <div class="product-row">
       <span style="font-weight:500;">${escapeHtml(p.name)}${p.description ? `<div class="muted" style="font-size:11px;">${escapeHtml(p.description)}</div>` : ""}</span>
-      <span class="mono" style="font-size:12.5px;">$${Number(p.unit_price).toFixed(2)}</span>
+      <span class="mono" style="font-size:12.5px;">${fmtMoney(p.unit_price, p.currency, 2)}</span>
       <span class="muted" style="font-size:12px;">${escapeHtml(p.unit_label)}</span>
       <span class="muted" style="font-size:12px;">${p.service_interval_months ? `every ${p.service_interval_months}mo` : "—"}</span>
       <span>${p.category ? `<span class="product-cat-badge">${escapeHtml(p.category)}</span>` : ""}</span>
@@ -2417,6 +2436,7 @@ function buildLineItemRow(item, index) {
 }
 
 function recomputeQuoteTotals() {
+  const currency = els.quoteCurrencySelect.value || workspaceDefaultCurrency;
   let subtotal = 0;
   let total = 0;
   els.quoteItemsContainer.querySelectorAll(".quote-line-row").forEach((row, index) => {
@@ -2428,11 +2448,11 @@ function recomputeQuoteTotals() {
     const lineTotal = gross * (1 - discount / 100);
     subtotal += gross;
     total += lineTotal;
-    row.querySelector(".line-total-display").textContent = `$${lineTotal.toFixed(2)}`;
+    row.querySelector(".line-total-display").textContent = fmtMoney(lineTotal, currency, 2);
   });
-  els.quoteSubtotalValue.textContent = `$${subtotal.toFixed(2)}`;
-  els.quoteDiscountValue.textContent = `−$${(subtotal - total).toFixed(2)}`;
-  els.quoteTotalValue.textContent = `$${total.toFixed(2)}`;
+  els.quoteSubtotalValue.textContent = fmtMoney(subtotal, currency, 2);
+  els.quoteDiscountValue.textContent = `−${fmtMoney(subtotal - total, currency, 2)}`;
+  els.quoteTotalValue.textContent = fmtMoney(total, currency, 2);
 }
 
 function collectQuoteRecipientIds() {
@@ -2543,7 +2563,7 @@ function renderQuotesTable(quotes) {
     <tr data-id="${q.id}">
       <td class="name-cell" style="--stage-color:var(--accent-1)">${escapeHtml(q.title)}</td>
       <td>${escapeHtml(q.contact_name)}${q.company_name ? ` <span class="muted">· ${escapeHtml(q.company_name)}</span>` : ""}</td>
-      <td class="mono">$${Number(q.total).toFixed(2)}</td>
+      <td class="mono">${fmtMoney(q.total, q.currency, 2)}</td>
       <td><span class="quote-status-badge ${q.status}">${t("ui.status_" + q.status) || q.status}</span></td>
       <td class="muted mono">${formatDate(q.updated_at)}</td>
     </tr>`
@@ -2557,9 +2577,9 @@ async function openQuotePanel(id) {
   els.quotePanelFor.textContent = quote.company_name ? `${quote.contact_name} · ${quote.company_name}` : quote.contact_name;
   els.quotePanelBadge.innerHTML = `<span class="quote-status-badge ${quote.status}">${t("ui.status_" + quote.status) || quote.status}</span>`;
   els.quotePanelItems.innerHTML = lineItems
-    .map((i) => `<div style="display:flex; justify-content:space-between;"><span>${escapeHtml(i.description)} <span class="muted">x${i.quantity}</span></span><span class="mono">$${Number(i.line_total).toFixed(2)}</span></div>`)
+    .map((i) => `<div style="display:flex; justify-content:space-between;"><span>${escapeHtml(i.description)} <span class="muted">x${i.quantity}</span></span><span class="mono">${fmtMoney(i.line_total, quote.currency, 2)}</span></div>`)
     .join("");
-  els.quotePanelTotal.textContent = `$${Number(quote.total).toFixed(2)}`;
+  els.quotePanelTotal.textContent = fmtMoney(quote.total, quote.currency, 2);
   els.quotePanelOverlay.dataset.quoteId = quote.id;
 
   // Print / PDF link
@@ -3098,6 +3118,7 @@ function wireEvents() {
     currentQuoteLineItems.push({ product_id: "", description: "", quantity: 1, unit_price: 0, discount_percent: 0 });
     renderQuoteLineItems();
   });
+  els.quoteCurrencySelect.addEventListener("change", recomputeQuoteTotals);
   els.quoteSaveDraftBtn.addEventListener("click", () => saveQuote(false));
   els.quoteForm.addEventListener("submit", (e) => { e.preventDefault(); saveQuote(true); });
   els.quotesBody.addEventListener("click", (e) => {
@@ -3186,7 +3207,7 @@ function renderDealsBoard() {
 
   const totalDeals = dealsCache.length;
   els.dealsEmptyState.classList.toggle("hidden", totalDeals > 0 || dealsStagesCache.length > 0);
-  els.dealsBoard.style.display = (totalDeals === 0 && dealsStagesCache.length === 0) ? "none" : "block";
+  els.dealsBoard.style.display = (totalDeals === 0 && dealsStagesCache.length === 0) ? "none" : "flex";
 
   visibleStages.forEach(stage => {
     const stageDeals = dealsCache.filter(d => {
@@ -3287,9 +3308,9 @@ function dealCardHTML(d) {
   </div>`;
 }
 
-function fmtMoney(val, currency) {
+function fmtMoney(val, currency, minimumFractionDigits = 0) {
   try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency: currency || "USD", minimumFractionDigits: 0 }).format(val);
+    return new Intl.NumberFormat(undefined, { style: "currency", currency: currency || workspaceDefaultCurrency, minimumFractionDigits }).format(val);
   } catch { return `${currency || ""} ${val}`; }
 }
 

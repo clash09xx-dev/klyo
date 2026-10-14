@@ -6,6 +6,8 @@ const { requireAuth } = require("../middleware/auth");
 const { requirePaidAccess } = require("../middleware/billing");
 const { sendOfferEmail } = require("../services/mailer");
 
+const { normalizeCurrency } = require("../services/workspaceCurrency");
+
 const router = express.Router();
 router.use(requireAuth);
 router.use(requirePaidAccess);
@@ -104,7 +106,7 @@ router.get("/", async (req, res) => {
 
 // POST /api/quotes — create a draft with line items + recipients in one go
 router.post("/", async (req, res) => {
-  const { contact_id, company_id, title, intro_message, line_items, recipient_ids } = req.body || {};
+  const { contact_id, company_id, title, intro_message, line_items, recipient_ids, currency } = req.body || {};
   if (!contact_id) return res.status(400).json({ error: "A quote needs a primary contact." });
   if (!Array.isArray(line_items) || !line_items.length) {
     return res.status(400).json({ error: "Add at least one line item." });
@@ -116,11 +118,14 @@ router.post("/", async (req, res) => {
   ]);
   if (!contactCheck.rows.length) return res.status(404).json({ error: "Contact not found." });
 
+  const workspace = await db.query("SELECT default_currency FROM workspaces WHERE id = $1", [req.user.workspace_id]);
+  const quoteCurrency = normalizeCurrency(currency ?? workspace.rows[0]?.default_currency ?? "USD");
+  if (!quoteCurrency) return res.status(400).json({ error: "Choose a supported currency." });
   const { computed, subtotal, total, discountTotal } = computeTotals(line_items);
 
   const quoteResult = await db.query(
-    `INSERT INTO quotes (workspace_id, contact_id, company_id, created_by, title, intro_message, subtotal, discount_total, total, public_token)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+    `INSERT INTO quotes (workspace_id, contact_id, company_id, created_by, title, intro_message, subtotal, discount_total, total, public_token, currency)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
     [
       req.user.workspace_id,
       contact_id,
@@ -132,6 +137,7 @@ router.post("/", async (req, res) => {
       discountTotal,
       total,
       crypto.randomBytes(18).toString("hex"),
+      quoteCurrency,
     ]
   );
   const quoteId = quoteResult.rows[0].id;
@@ -159,16 +165,18 @@ router.put("/:id", async (req, res) => {
   if (!quote) return res.status(404).json({ error: "Quote not found." });
   if (quote.status !== "draft") return res.status(400).json({ error: "Only draft quotes can be edited." });
 
-  const { title, intro_message, company_id, line_items, recipient_ids } = req.body || {};
+  const { title, intro_message, company_id, line_items, recipient_ids, currency } = req.body || {};
   if (!Array.isArray(line_items) || !line_items.length) {
     return res.status(400).json({ error: "Add at least one line item." });
   }
+  const quoteCurrency = normalizeCurrency(currency ?? quote.currency);
+  if (!quoteCurrency) return res.status(400).json({ error: "Choose a supported currency." });
   const { computed, subtotal, total, discountTotal } = computeTotals(line_items);
 
   await db.query(
-    `UPDATE quotes SET title=$1, intro_message=$2, company_id=$3, subtotal=$4, discount_total=$5, total=$6, updated_at=now()
+    `UPDATE quotes SET title=$1, intro_message=$2, company_id=$3, subtotal=$4, discount_total=$5, total=$6, currency=$8, updated_at=now()
      WHERE id=$7`,
-    [title?.trim() || "Quote", intro_message?.trim() || null, company_id || null, subtotal, discountTotal, total, req.params.id]
+    [title?.trim() || "Quote", intro_message?.trim() || null, company_id || null, subtotal, discountTotal, total, req.params.id, quoteCurrency]
   );
   await replaceLineItemsAndRecipients(req.params.id, computed, recipient_ids);
 
@@ -290,6 +298,9 @@ router.post("/:id/decline", async (req, res) => {
 // Plain-text rendering — chosen deliberately over an HTML table so this
 // reuses the exact same send pipeline (Gmail/SMTP) with zero changes.
 function renderQuoteEmailText(quote, lineItems, recipients) {
+  const money = value => new Intl.NumberFormat("en-US", {
+    style: "currency", currency: quote.currency || "USD", minimumFractionDigits: 2,
+  }).format(Number(value));
   const greetingName = recipients.length ? recipients.map((r) => r.full_name.split(" ")[0]).join(" / ") : "there";
   const lines = [];
   lines.push(`Hi ${greetingName},`, "");
@@ -298,13 +309,13 @@ function renderQuoteEmailText(quote, lineItems, recipients) {
 
   for (const item of lineItems) {
     const discountNote = item.discount_percent > 0 ? ` (${item.discount_percent}% off)` : "";
-    lines.push(`- ${item.description}${discountNote} — qty ${item.quantity} x $${Number(item.unit_price).toFixed(2)} = $${Number(item.line_total).toFixed(2)}`);
+    lines.push(`- ${item.description}${discountNote} — qty ${item.quantity} x ${money(item.unit_price)} = ${money(item.line_total)}`);
   }
   lines.push("");
   if (Number(quote.discount_total) > 0) {
-    lines.push(`Subtotal: $${Number(quote.subtotal).toFixed(2)}`, `Discount: -$${Number(quote.discount_total).toFixed(2)}`);
+    lines.push(`Subtotal: ${money(quote.subtotal)}`, `Discount: -${money(quote.discount_total)}`);
   }
-  lines.push(`Total: $${Number(quote.total).toFixed(2)}`, "", "Happy to answer any questions — just reply to this email.");
+  lines.push(`Total: ${money(quote.total)}`, "", "Happy to answer any questions — just reply to this email.");
   return lines.join("\n");
 }
 

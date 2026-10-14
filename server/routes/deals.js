@@ -129,7 +129,7 @@ router.post("/", async (req, res) => {
 
   const result = await db.query(
     `INSERT INTO deals (workspace_id, title, contact_id, company_id, product_id, stage_id, assigned_to, value, currency, quantity, expected_close_date, notes)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9, (SELECT default_currency FROM workspaces WHERE id=$1)),$10,$11,$12) RETURNING *`,
     [
       req.user.workspace_id,
       title.trim(),
@@ -139,7 +139,7 @@ router.post("/", async (req, res) => {
       stage_id || null,
       assigned_to || null,
       value || null,
-      currency || "USD",
+      currency || null,
       quantity || 1,
       expected_close_date || null,
       notes?.trim() || null,
@@ -184,7 +184,7 @@ router.put("/:id", async (req, res) => {
 
   const result = await db.query(
     `UPDATE deals SET title=$1, contact_id=$2, company_id=$3, product_id=$4, stage_id=$5,
-       assigned_to=$6, value=$7, currency=$8, quantity=$9, expected_close_date=$10,
+       assigned_to=$6, value=$7, currency=COALESCE($8, currency), quantity=$9, expected_close_date=$10,
        notes=$11, status=COALESCE($12, status), updated_at=now()
      WHERE id=$13 RETURNING *`,
     [
@@ -195,7 +195,7 @@ router.put("/:id", async (req, res) => {
       stage_id || null,
       assigned_to || null,
       value || null,
-      currency || "USD",
+      currency || existing.rows[0].currency,
       quantity || 1,
       expected_close_date || null,
       notes?.trim() || null,
