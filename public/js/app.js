@@ -1669,6 +1669,7 @@ function switchView(view) {
   els.addContactBtn.style.display = view === "pipeline" ? "" : "none";
 
   currentView = view;
+  document.body.dataset.view = view;
   const copy = getViewCopy(view);
   els.viewTitle.textContent = copy.title;
   els.viewSub.textContent = copy.sub;
@@ -3207,7 +3208,7 @@ function renderDealsBoard() {
 
   const totalDeals = dealsCache.length;
   els.dealsEmptyState.classList.toggle("hidden", totalDeals > 0 || dealsStagesCache.length > 0);
-  els.dealsBoard.style.display = (totalDeals === 0 && dealsStagesCache.length === 0) ? "none" : "flex";
+  els.dealsBoard.parentElement.classList.toggle("hidden", visibleStages.length === 0);
 
   visibleStages.forEach(stage => {
     const stageDeals = dealsCache.filter(d => {

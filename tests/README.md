@@ -16,6 +16,6 @@ npx playwright install chromium webkit
 npm run test:browser
 ```
 
-They check first load and reload, failed auxiliary requests, visible pipeline load errors, settings currency changes, persistence across reload, quote currency totals, Blanc/Noir contrast, vertical deal cards, horizontal board scrolling and drag/drop between stages. Optional environment variables: `KLYO_QA_SCREENSHOTS` saves screenshots; `KLYO_CHROMIUM_PATH` and `KLYO_WEBKIT_PATH` select existing browser executables.
+They check first load and reload, failed auxiliary requests, visible pipeline load errors, settings currency changes, persistence across reload, quote currency totals, Blanc/Noir contrast, vertical deal cards, all stages fitting the viewport width, full-height columns, internal card scrolling and empty-state recovery and drag/drop between stages. Optional environment variables: `KLYO_QA_SCREENSHOTS` saves screenshots; `KLYO_CHROMIUM_PATH` and `KLYO_WEBKIT_PATH` select existing browser executables.
 
 Changing the workspace currency relabels all existing deals and products and all never-sent draft quotes. It does not apply exchange rates. Previously sent quotes keep their original currency. Saving the same currency again repairs older records left behind by the previous default-only implementation.
