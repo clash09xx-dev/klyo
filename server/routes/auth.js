@@ -8,6 +8,8 @@ const { requireAuth, requireAdmin } = require("../middleware/auth");
 const { assertWithinLimit, LimitExceededError } = require("../services/limits");
 const { isConfigured: isGoogleConfigured, getSigninConsentUrl, getGoogleProfile } = require("../services/google");
 
+const { normalizeCurrency, setWorkspaceCurrency } = require("../services/workspaceCurrency");
+
 const router = express.Router();
 
 function signToken(user) {
@@ -246,13 +248,18 @@ router.get("/workspace/settings", requireAuth, async (req, res) => {
   res.json({ workspace });
 });
 
-// PUT /api/auth/workspace/currency — admin-only, sets the default currency for new quotes
+// PUT /api/auth/workspace/currency — relabel workspace amounts without FX conversion.
 router.put("/workspace/currency", requireAuth, async (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Only the workspace admin can change this." });
-  const { currency } = req.body || {};
-  if (!currency || !currency.trim()) return res.status(400).json({ error: "Currency code is required." });
-  await db.query("UPDATE workspaces SET default_currency = $1 WHERE id = $2", [currency.trim().toUpperCase(), req.user.workspace_id]);
-  res.json({ currency: currency.trim().toUpperCase() });
+  const currency = normalizeCurrency(req.body?.currency);
+  if (!currency) return res.status(400).json({ error: "Choose a supported currency." });
+  try {
+    await setWorkspaceCurrency(db.pool, req.user.workspace_id, currency);
+    res.json({ currency });
+  } catch (err) {
+    console.error("Workspace currency update failed:", err.message);
+    res.status(500).json({ error: "Currency could not be saved. Please try again." });
+  }
 });
 
 // POST /api/auth/workspace/regenerate-invite — admin-only, in case a code leaks

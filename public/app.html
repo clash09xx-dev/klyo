@@ -1342,7 +1342,7 @@
     <div id="currencySettingsSection" class="hidden">
       <div class="section-title">Organization</div>
       <div class="field">
-        <label for="workspaceCurrencySelect">Default currency for quotes</label>
+        <label for="workspaceCurrencySelect">Workspace currency</label>
         <select id="workspaceCurrencySelect">
           <option value="USD">USD — US Dollar</option>
           <option value="EUR">EUR — Euro</option>
@@ -1366,6 +1366,7 @@
           <option value="SGD">SGD — Singapore Dollar</option>
         </select>
       </div>
+      <p class="muted" style="font-size:12.5px;">Applies to all existing deals, products and unsent draft quotes, and to new records. Amounts stay the same; no exchange-rate conversion is applied. Previously sent quotes keep their currency.</p>
       <div class="form-error" id="currencyError"></div>
       <button class="btn btn-sm" id="saveCurrencyBtn" data-i18n="settings.save_currency">Save currency</button>
     </div>
