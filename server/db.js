@@ -358,20 +358,9 @@ async function init() {
     CREATE INDEX IF NOT EXISTS idx_calendar_workspace ON calendar_events(workspace_id, start_at);
   `);
 
-  // Tasks: WhatsApp reminder fields
-  await pool.query(`
-    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS reminder_at      TIMESTAMPTZ;
-    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ;
-  `);
-
-  // Users: WhatsApp phone
-  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS whatsapp_phone TEXT;`);
-
   // Users: Terms acceptance timestamp
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ;`);
 
-  // Workspaces: WhatsApp provider setting
-  await pool.query(`ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS whatsapp_provider TEXT;`);
 
   // Contacts: extended fields (tags, contact info, address, classification)
   await pool.query(`
@@ -393,7 +382,6 @@ async function init() {
     ALTER TABLE contacts ADD COLUMN IF NOT EXISTS lead_source     TEXT;
     ALTER TABLE contacts ADD COLUMN IF NOT EXISTS department      TEXT;
     ALTER TABLE contacts ADD COLUMN IF NOT EXISTS preferred_language TEXT;
-    ALTER TABLE contacts ADD COLUMN IF NOT EXISTS whatsapp        TEXT;
     ALTER TABLE contacts ADD COLUMN IF NOT EXISTS telegram        TEXT;
     ALTER TABLE contacts ADD COLUMN IF NOT EXISTS internal_notes  TEXT;
   `);
@@ -426,6 +414,7 @@ async function init() {
        SELECT 1 FROM pipeline_stages p WHERE p.workspace_id = w.id
      )`
   );
+  await require("./migrations/salesWorkspace")(pool);
 }
 
 module.exports = { pool, query, init };

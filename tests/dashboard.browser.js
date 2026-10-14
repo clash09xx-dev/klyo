@@ -24,6 +24,8 @@ async function run(engine, name) {
       { ...deal, id: 2, title: 'Second website project', value: '2300.00' },
       { ...deal, id: 3, title: 'Branding project', stage_id: 2, value: '800.00' },
     ];
+    const savedViews = [], emailTemplates = [], dealEvents = [], drafts = [];
+    let draftCount = 0, sentCount = 0;
     const stages = [
       { id: 1, name: 'Contacted', color: '#777777' },
       { id: 2, name: 'Interested', color: '#777777' },
@@ -35,7 +37,7 @@ async function run(engine, name) {
     const product = { id: 1, name: 'Website', unit_price: '4500.00', currency, unit_label: 'project' };
     const quote = { id: 1, title: 'Draft quote', total: '4500.00', currency, status: 'draft', contact_id: 1, contact_name: contact.full_name };
     const user = { id: 1, name: 'Demo', email: 'demo@example.test', role: 'admin', has_seen_onboarding: true, terms_accepted_at: '2026-01-01', language: 'en' };
-    await context.addInitScript(() => localStorage.setItem('klyo_token', 'local-fixture'));
+    await context.addInitScript(() => { if(location.pathname === '/app') localStorage.setItem('klyo_token', 'local-fixture'); });
     await page.route('**/*', async route => {
       const url = new URL(route.request().url());
       if (url.hostname !== 'klyo.test') return route.abort();
@@ -46,6 +48,18 @@ async function run(engine, name) {
         if ((failCompanies && endpoint === '/companies') || (failContacts && endpoint === '/contacts')) {
           status = 500; data = { error: 'Fixture failure' };
         } else if (endpoint === '/auth/me') data = { user: { ...user, theme } };
+        else if (endpoint === '/sales/views' && route.request().method() === 'GET') data = { views: savedViews };
+        else if (endpoint === '/sales/views' && route.request().method() === 'POST') { const view = { id: savedViews.length + 1, ...route.request().postDataJSON() }; savedViews.push(view); data = { view }; }
+        else if (endpoint === '/sales/templates' && route.request().method() === 'GET') data = { templates: emailTemplates };
+        else if (endpoint === '/sales/templates' && route.request().method() === 'POST') { const template = { id: emailTemplates.length + 1, ...route.request().postDataJSON() }; emailTemplates.push(template); data = { template }; }
+        else if (endpoint === '/sales/summary') data = { totals: deals.map(d => ({ currency: d.currency, status: d.status, count: 1, value: d.value })), stages: stages.map(stage => ({ ...stage, count: deals.filter(d => d.stage_id === stage.id && d.status === 'open').length, currency, value: 0 })), losses: deals.filter(d => d.status === 'lost').map(d => ({ reason: d.lost_reason, count: 1 })), overdue: 0, without_next_step: 2 };
+        else if (endpoint === '/offers' && route.request().method() === 'POST') { const offer={id:++draftCount,status:'draft',...route.request().postDataJSON()};drafts.unshift(offer);data={offer}; }
+        else if (/^\/offers\/\d+$/.test(endpoint) && route.request().method() === 'PUT') { const offer=drafts.find(item=>String(item.id)===endpoint.split('/')[2]);Object.assign(offer,route.request().postDataJSON());data={offer}; }
+        else if (/^\/offers\/\d+\/send$/.test(endpoint)) { sentCount++; data = {}; }
+        else if (endpoint === '/deals/1/history') data = { events: dealEvents };
+        else if (endpoint === '/deals/1/next-step') { const body = route.request().postDataJSON(); Object.assign(deal, { next_task_id: 1, next_task_title: body.title, next_task_due: body.due_date, overdue_tasks: 1 }); data = { task: { id: 1 } }; }
+        else if (endpoint === '/tasks/1/status') { Object.assign(deal, { next_task_id: null, next_task_title: null, next_task_due: null, overdue_tasks: 0 }); data = { ok: true }; }
+        else if (endpoint === '/deals/1' && route.request().method() === 'PUT') { Object.assign(deal, route.request().postDataJSON()); dealEvents.push({ id: 1, from_stage: 'Contacted', to_stage: 'Contacted', from_status: 'open', to_status: deal.status, reason: deal.lost_reason, created_at: new Date().toISOString(), user_name: 'Demo' }); data = { deal }; }
         else if (endpoint === '/auth/team') data = { team: [user] };
         else if (endpoint === '/auth/workspace' || endpoint === '/auth/workspace/settings') data = { workspace: { id: 1, name: 'Demo', default_currency: currency } };
         else if (endpoint === '/auth/workspace/currency') {
@@ -57,7 +71,7 @@ async function run(engine, name) {
         else if (endpoint === '/contacts/themes') data = { themes: [] };
         else if (endpoint === '/contacts/tags') data = { tags: ['sold'] };
         else if (endpoint === '/contacts') data = { contacts: [contact] };
-        else if (endpoint === '/contacts/1') data = { contact, activity: [], offers: [], quotes: [quote] };
+        else if (endpoint === '/contacts/1') data = { contact, activity: [], offers: drafts, quotes: [quote] };
         else if (endpoint === '/contacts/1/timeline') data = { events: [] };
         else if (endpoint === '/stats') data = { total: 1, leads: 0, negotiating: 0, offersSent: 0, series: [0, 0, 1] };
         else if (endpoint === '/companies') data = { companies: [] };
@@ -69,13 +83,19 @@ async function run(engine, name) {
           item.stage_id = route.request().postDataJSON().stage_id;
           data = { deal: item };
         } else if (endpoint === '/deals/1') data = { deal };
+        else if (endpoint === '/tasks') data = { tasks: [{ id: 1, title: 'Review the project proposal', status: 'todo', priority: 'medium', assigned_name: 'Demo', due_date: '2026-10-15', contact_name: contact.full_name }] };
+        else if (endpoint === '/clients') data = { clients: [] };
+        else if (endpoint === '/calendar') data = { events: [] };
+        else if (endpoint === '/reminders/due') data = { reminders: [] };
+        else if (endpoint === '/history') data = { entries: [], total: 0 };
+        else if (endpoint === '/team-stats') data = { team: [] };
         else if (endpoint === '/quotes') data = { quotes: [quote] };
         else if (endpoint === '/quotes/1') data = { quote, lineItems: [{ description: 'Website', quantity: 1, line_total: 4500 }] };
         else { status = 404; data = { error: `Missing fixture: ${endpoint}` }; }
         return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) });
       }
-      const file = path.join(publicDir, url.pathname === '/app' ? 'app.html' : url.pathname);
-      const contentType = file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html';
+      const file = path.join(publicDir, url.pathname === '/app' ? 'app.html' : url.pathname === '/' ? 'index.html' : url.pathname === '/login' ? 'login.html' : url.pathname);
+      const contentType = file.endsWith('.png') ? 'image/png' : file.endsWith('.svg') ? 'image/svg+xml' : file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html';
       return route.fulfill({ contentType, body: fs.readFileSync(file) });
     });
     await page.goto('http://klyo.test/app');
@@ -127,7 +147,7 @@ async function run(engine, name) {
       }
     }
     await page.evaluate(() => closePanel());
-    await page.locator('[data-view="deals"]').click();
+    await page.locator('.nav-item[data-view="deals"]').first().click();
     await page.waitForFunction(() => document.querySelector('.deal-card-value'));
     assert.match(await page.locator('.deal-card-value').first().textContent(), /USD|\$/);
     // Stages remain side by side; cards stack vertically and drag/drop still works.
@@ -142,10 +162,18 @@ async function run(engine, name) {
     }));
     assert.equal(firstCards[0].x, firstCards[1].x);
     assert.ok(firstCards[1].y > firstCards[0].y);
+    if (screenshotDir) await page.locator('.toast').evaluateAll(items=>items.forEach(item=>item.remove()));
     if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, `${name}-deals.png`), animations: 'disabled' });
     await page.locator('.deal-card[data-id="2"]').dragTo(page.locator('.deals-column[data-stage-id="3"] .deals-column-body'));
     await page.waitForFunction(() => document.querySelector('.deals-column[data-stage-id="3"] .deal-card[data-id="2"]'));
     assert.equal(deals[1].stage_id, 3);
+    await page.locator('#dealAttentionFilter').selectOption('no_next');
+    await page.locator('#saveDealViewBtn').click();
+    await page.locator('#salesNameInput').fill('Needs a next step');
+    await page.locator('#salesNameSubmit').click();
+    await page.waitForFunction(() => document.querySelectorAll('#savedDealView option').length === 2);
+    assert.equal(savedViews[0].filters.attention, 'no_next');
+    await page.locator('#dealAttentionFilter').selectOption('');
     // Every stage fits horizontally and fills the available viewport height.
     for (const viewport of [
       { width: 1512, height: 836 }, { width: 1280, height: 800 },
@@ -166,7 +194,9 @@ async function run(engine, name) {
     }
     await page.setViewportSize({ width: 1512, height: 836 });
     await page.evaluate(() => applyTheme('blanc'));
+    if (screenshotDir) await page.locator('.toast').evaluateAll(items=>items.forEach(item=>item.remove()));
     if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, `${name}-deals-fit-screen.png`), animations: 'disabled' });
+    if (name === 'chromium' && process.env.KLYO_PRODUCT_PREVIEW) await page.screenshot({ path: process.env.KLYO_PRODUCT_PREVIEW, animations: 'disabled' });
     // Overflowing cards scroll inside their stage without growing the page.
     await page.evaluate(() => {
       for (let id = 100; id < 130; id++) dealsCache.push({ ...dealsCache[0], id, stage_id: 1, title: `Test project ${id}` });
@@ -198,15 +228,93 @@ async function run(engine, name) {
     assert.equal(await page.evaluate(() => workspaceDefaultCurrency), 'PLN');
     await page.reload();
     await page.waitForFunction(() => document.querySelectorAll('#contactsBody tr').length === 1);
-    await page.locator('[data-view="deals"]').click();
+    await page.locator('.nav-item[data-view="deals"]').first().click();
     await page.waitForFunction(() => document.querySelector('.deal-card-value'));
     assert.match(await page.locator('.deal-card-value').first().textContent(), /zł|PLN/);
+    // Manual tasks and loss reasons are persisted through the actual UI handlers.
+    await page.locator('.deal-card[data-id="1"]').click();
+    await page.locator('#nextStepTitle').fill('Review the brief');
+    await page.locator('#nextStepDue').fill('2026-10-13');
+    await page.locator('#nextStepSubmit').click();
+    await page.waitForFunction(() => document.querySelector('#nextStepCurrent').textContent.includes('Review the brief'));
+    assert.equal(await page.locator('.deal-card[data-id="1"] .is-overdue').count(), 1);
+    await page.locator('#nextStepComplete').click();
+    await page.waitForFunction(() => document.querySelector('#nextStepComplete').classList.contains('hidden'));
+    await page.locator('#closeDealPanelBtn').click();
+    await page.locator('.nav-item[data-view="pipeline"]').click();
+    await page.locator('#contactsBody tr').click();
+    assert.equal(await page.locator('body').innerText().then(text => /WhatsApp/i.test(text)), false);
+    await page.locator('#writeManualBtn').click();
+    await page.locator('#draftSubject').fill('Hello {first_name}');
+    await page.locator('#draftBody').fill('Hi {first_name}, here is the proposal from {sender}.');
+    await page.locator('#saveEmailTemplateBtn').click();
+    await page.locator('#salesNameInput').fill('Proposal introduction');
+    await page.locator('#salesNameSubmit').click();
+    await page.waitForFunction(() => document.querySelectorAll('#emailTemplateSelect option').length === 2);
+    await page.selectOption('#emailTemplateSelect', '1');
+    await page.locator('#applyTemplateBtn').click();
+    await page.waitForFunction(() => document.querySelector('#draftSubject').value === 'Hello Example');
+    await page.locator('#saveManualDraftBtn').click();
+    await page.waitForFunction(() => !document.querySelector('#saveManualDraftBtn').disabled);
+    assert.equal(drafts[0].subject,'Hello Example');
+    await page.evaluate(() => closePanel());
+    await page.locator('#contactsBody tr').click();
+    await page.waitForFunction(() => !document.querySelector('#panelOverlay').classList.contains('hidden') && currentPanelContactId === 1);
+    assert.equal(await page.locator('#draftSubject').inputValue(),'Hello Example');
+    assert.equal(sentCount, 0, 'No automatic emails are sent');
+    await page.evaluate(() => closePanel());
+    await page.locator('.nav-item[data-view="deals"]').click();
+    await page.locator('.deal-card[data-id="1"]').click();
+    await page.locator('#markDealLostBtn').click();
+    await page.locator('#lossReasonInput').fill('Budget postponed');
+    await page.locator('#lossReasonForm button[type="submit"], #lossReasonForm button:not([type])').click();
+    await page.waitForFunction(() => document.querySelector('#lossReasonOverlay').classList.contains('hidden'));
+    assert.equal(deal.status, 'lost');
+    assert.equal(deal.lost_reason, 'Budget postponed');
+    await page.locator('.nav-item[data-view="overview"]').click();
+    await page.waitForFunction(() => document.querySelector('#salesLossReasons').textContent.includes('Budget postponed'));
+    if (screenshotDir) await page.locator('.toast').evaluateAll(items=>items.forEach(item=>item.remove()));
+    if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, `${name}-overview.png`), animations: 'disabled' });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator('.mobile-menu-toggle').click();
+    await page.locator('.nav-item[data-view="overview"]').click();
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    if (screenshotDir) await page.locator('.toast').evaluateAll(items=>items.forEach(item=>item.remove()));
+    if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, `${name}-overview-mobile.png`), animations: 'disabled' });
+    await page.setViewportSize({ width: 1440, height: 1000 });
     await page.evaluate(() => { openQuoteModal(); currentQuoteLineItems[0].unit_price = 4500; renderQuoteLineItems(); });
     assert.match(await page.locator('#quoteTotalValue').textContent(), /zł|PLN/);
     await page.selectOption('#quoteCurrencySelect', 'EUR');
     assert.match(await page.locator('#quoteTotalValue').textContent(), /€/);
     assert.deepEqual(errors, [], `${name}: all flows must be free of uncaught errors`);
-    console.log(`${name}: PASS — reload, failed auxiliary request, visible pipeline error, currency persistence, quote currency, Blanc/Noir, full-height fitted stages, internal card scrolling and drag/drop`);
+    await page.evaluate(() => closeQuoteModal());
+    for (const view of ['companies','tasks','quotes','products','calendar','history']) {
+      await page.locator(`.nav-item[data-view="${view}"]`).click();
+      await page.waitForFunction(view => {
+        if(document.body.dataset.view !== view) return false;
+        const selectors={companies:'#companiesEmptyState:not(.hidden)',tasks:'#tasksBody tr',quotes:'#quotesBody tr',products:'#productsBody tr',calendar:'#calendarGrid>div',history:'#historyEmptyState:not(.hidden)'};
+        return !!document.querySelector(selectors[view]);
+      }, view);
+      await page.locator('.toast').evaluateAll(items=>items.forEach(item=>item.remove()));
+      if (screenshotDir) await page.screenshot({path:path.join(screenshotDir,`${name}-${view}-refreshed.png`),animations:'disabled'});
+    }
+    await context.clearCookies();
+    await page.evaluate(() => localStorage.removeItem('klyo_token'));
+    await page.goto('http://klyo.test/login');
+    await page.locator('#goLoginBtn').click();
+    assert.ok(await page.evaluate(() => document.querySelector('.auth-card').getBoundingClientRect().bottom < document.querySelector('.auth-shell').lastElementChild.getBoundingClientRect().top));
+    if (screenshotDir) await page.screenshot({path:path.join(screenshotDir,`${name}-login.png`),animations:'disabled'});
+    await page.goto('http://klyo.test/');
+    await page.locator('h1').waitFor();
+    if (screenshotDir) await page.locator('.toast').evaluateAll(items=>items.forEach(item=>item.remove()));
+    if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, `${name}-landing.png`), fullPage: true, animations: 'disabled' });
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    await page.locator('summary').first().click();
+    if (screenshotDir) await page.locator('.toast').evaluateAll(items=>items.forEach(item=>item.remove()));
+    if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, `${name}-landing-mobile.png`), fullPage: true, animations: 'disabled' });
+    assert.deepEqual(errors, []);
+    console.log(`${name}: PASS — reload, failed auxiliary request, visible pipeline error, currency persistence, quote currency, Blanc/Noir, fitted stages, tasks, loss reasons, templates, saved views, overview, landing desktop/mobile, no automatic sends`);
   } finally { await browser.close(); }
 }
 (async () => { await run(chromium, 'chromium'); await run(webkit, 'webkit'); })().catch(error => { console.error(error); process.exitCode = 1; });

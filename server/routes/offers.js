@@ -1,7 +1,7 @@
 // server/routes/offers.js
 const express = require("express");
 const db = require("../db");
-const { requireAuth } = require("../middleware/auth");
+const { requireAuth, requireEditor } = require("../middleware/auth");
 const { requirePaidAccess } = require("../middleware/billing");
 const { sendOfferEmail } = require("../services/mailer");
 
@@ -9,8 +9,20 @@ const router = express.Router();
 router.use(requireAuth);
 router.use(requirePaidAccess);
 
+// Manual drafting never sends mail; sending requires the existing explicit send action.
+router.post("/", requireEditor, async (req, res) => {
+  const { contact_id, subject = "", body = "" } = req.body || {};
+  if (typeof subject !== "string" || typeof body !== "string" || subject.length > 500 || body.length > 20000) return res.status(400).json({ error: "Message is too long." });
+  try {
+    const contact = await db.query("SELECT id FROM contacts WHERE id=$1 AND workspace_id=$2", [contact_id, req.user.workspace_id]);
+    if (!contact.rows.length) return res.status(404).json({ error: "Contact not found." });
+    const result = await db.query("INSERT INTO offers (workspace_id,contact_id,created_by,subject,body,ai_generated,status) VALUES ($1,$2,$3,$4,$5,false,'draft') RETURNING *", [req.user.workspace_id,contact_id,req.user.id,subject,body]);
+    res.status(201).json({ offer: result.rows[0] });
+  } catch (err) { res.status(500).json({ error: "Could not create this draft." }); }
+});
+
 // PUT /api/offers/:id — edit a draft's subject/body before sending
-router.put("/:id", async (req, res) => {
+router.put("/:id", requireEditor, async (req, res) => {
   const result = await db.query("SELECT * FROM offers WHERE id = $1 AND workspace_id = $2", [
     req.params.id,
     req.user.workspace_id,
@@ -22,6 +34,7 @@ router.put("/:id", async (req, res) => {
   }
 
   const { subject, body } = req.body || {};
+  if ((subject != null && (typeof subject !== "string" || subject.length > 500)) || (body != null && (typeof body !== "string" || body.length > 20000))) return res.status(400).json({ error: "Invalid message or message is too long." });
   const updated = await db.query("UPDATE offers SET subject = $1, body = $2 WHERE id = $3 RETURNING *", [
     subject ?? offer.subject,
     body ?? offer.body,
@@ -31,7 +44,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // POST /api/offers/:id/send — actually email the contact
-router.post("/:id/send", async (req, res) => {
+router.post("/:id/send", requireEditor, async (req, res) => {
   const result = await db.query("SELECT * FROM offers WHERE id = $1 AND workspace_id = $2", [
     req.params.id,
     req.user.workspace_id,
