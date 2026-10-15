@@ -6,8 +6,8 @@
 }
 .workspace-switch {
   display: flex;
-  background: var(--bg);
-  border: 1px solid var(--border);
+  background: var(--nav-bg);
+  border: 1px solid var(--nav-border);
   border-radius: var(--radius);
   padding: 3px;
   gap: 3px;
@@ -49,7 +49,7 @@ body[data-space="personal"] .nav-item[data-view="team"] {
 .warranty-bell {
   position: relative;
   flex-shrink: 0;
-  margin-left: 8px;
+  margin-left: 0;
   width: 31px;
   height: 31px;
   border: 1px solid var(--border);
@@ -512,3 +512,25 @@ body[data-sidebar-collapsed="true"] .workspace-switch-wrap > .btn {
   font-size: 20px;
   cursor: pointer;
 }
+
+.topbar-actions {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+.page-heading .warranty-bell {
+  order: 1;
+}
+.workspace-switch button:focus-visible {
+  outline: 2px solid var(--nav-text);
+  outline-offset: 1px;
+}
+@media (max-width: 600px) {
+  .topbar-actions {
+    flex-basis: 100%;
+  }
+  .page-heading {
+    flex: 1;
+  }
+}
+
+#deletePipelineBtn { background:var(--surface); color:var(--danger); border:1px solid var(--danger); }

@@ -152,6 +152,69 @@ const publicDir = path.join(__dirname, "../public"),
             .getAttribute("aria-pressed"),
           "true",
         );
+        // Header controls share the requested edges, including the custom white/black palette.
+        assert.equal(
+          await page.locator(".page-heading #warrantyBell").count(),
+          1,
+        );
+        const heading = await page.locator("#viewTitle").boundingBox(),
+          bell = await page.locator("#warrantyBell").boundingBox(),
+          actions = await page.locator(".topbar-actions").boundingBox(),
+          bar = await page.locator(".topbar").boundingBox();
+        assert.ok(
+          bell.x > heading.x + heading.width &&
+            bell.x - heading.x - heading.width < 25,
+        );
+        assert.ok(
+          Math.abs(actions.x + actions.width - (bar.x + bar.width - 30)) < 3,
+        );
+        await page.evaluate(() => {
+          const p = KlyoPreferences.defaults("custom").palette;
+          p.custom.background = "#ffffff";
+          p.custom.surface = "#ffffff";
+          p.custom.sidebar = "#111111";
+          p.custom.accent = "#560a2d";
+          for (const [k, v] of Object.entries(KlyoPreferences.tokens(p)))
+            document.documentElement.style.setProperty(k, v);
+        });
+        const switchColors = await page
+          .locator(".workspace-switch")
+          .evaluate((el) => {
+            const rgb = (v) =>
+              "#" +
+              v
+                .match(/\d+/g)
+                .slice(0, 3)
+                .map((n) => Number(n).toString(16).padStart(2, "0"))
+                .join("");
+            return {
+              background: rgb(getComputedStyle(el).backgroundColor),
+              text: rgb(
+                getComputedStyle(el.querySelector('[aria-pressed="false"]'))
+                  .color,
+              ),
+            };
+          });
+        assert.ok(
+          await page.evaluate(
+            (c) => KlyoPreferences.contrast(c.background, c.text) >= 4.5,
+            switchColors,
+          ),
+        );
+        await page.screenshot({
+          path: path.join(out, `${name}-header-and-switch.png`),
+          animations: "disabled",
+        });
+        for (const width of [390, 768]) {
+          await page.setViewportSize({ width, height: 844 });
+          assert.ok(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= innerWidth + 1,
+            ),
+          );
+        }
+        await page.setViewportSize({ width: 1440, height: 1000 });
+        await page.evaluate(() => KlyoCustomize.applyLegacy("graphite"));
         // Create a real product and its own typed custom field through the UI.
         await page.locator(".nav-item[data-view=products]").click();
         await page.locator("#addProductViewBtn").click();
@@ -461,6 +524,65 @@ const publicDir = path.join(__dirname, "../public"),
           path: path.join(out, `${name}-owner-audit.png`),
           animations: "disabled",
         });
+        // Delete a populated pipeline through the actual interface and keep its deal.
+        await page.locator(".nav-item[data-view=deals]").click();
+        await page
+          .locator("#salesPipelineSelect option")
+          .first()
+          .waitFor({ state: "attached" });
+        const originalPipeline = await page
+          .locator("#salesPipelineSelect")
+          .inputValue();
+        await page.locator("#addPipelineBtn").click();
+        await page.locator("#pipelineName").fill("Retired hardware");
+        await page.locator("#pipelineSave").click();
+        await page
+          .locator("#pipelineOverlay.hidden")
+          .waitFor({ state: "attached" });
+        const removedPipeline = await page
+          .locator("#salesPipelineSelect")
+          .inputValue();
+        await page.locator("#addDealBtn").click();
+        await page.locator("#dealSubmitBtn:not([disabled])").waitFor();
+        await page.locator("#dealTitle").fill("Keep this opportunity");
+        await page.locator("#dealStageSelect").selectOption({ index: 1 });
+        await page.locator("#dealSubmitBtn").click();
+        await page
+          .locator("#dealModalOverlay.hidden")
+          .waitFor({ state: "attached" });
+        await page.locator("#removePipelineBtn").click();
+        await page.locator("#pipelineDeleteSection:not(.hidden)").waitFor();
+        await page
+          .locator("#pipelineDeleteTarget")
+          .selectOption(originalPipeline);
+        await page.screenshot({
+          path: path.join(out, `${name}-delete-pipeline.png`),
+          animations: "disabled",
+        });
+        page.once("dialog", (dialog) => dialog.accept());
+        await page.locator("#deletePipelineBtn").click();
+        await page
+          .locator("#pipelineOverlay.hidden")
+          .waitFor({ state: "attached" });
+        assert.equal(
+          await page
+            .locator(
+              '#salesPipelineSelect option[value="' + removedPipeline + '"]',
+            )
+            .count(),
+          0,
+        );
+        await page
+          .locator(".deal-card")
+          .filter({ hasText: "Keep this opportunity" })
+          .waitFor();
+        await page.locator("#removePipelineBtn").click();
+        await page.locator("#pipelineOverlay:not(.hidden)").waitFor();
+        assert.equal(
+          await page.locator("#deletePipelineBtn").isDisabled(),
+          true,
+        );
+        await page.locator("#pipelineCancel").click();
         // The landing customization tab and actual demo remain usable at narrow widths.
         await page.goto(base + "/customization");
         await page.locator("#customDemoName").fill("Fleet size");

@@ -30,8 +30,16 @@ const KlyoPipelines = (() => {
       standard: "Standard sales stages",
       save: "Save pipeline",
       cancel: "Cancel",
-      remove: "Delete empty pipeline",
-      confirm: "Delete this empty pipeline and its stages?",
+      remove: "Delete pipeline",
+      moveTo: "Move deals to",
+      dealCount: "Deals in this pipeline",
+      keepDeals:
+        "Deals and their history will be preserved. Matching stages are kept; other staged deals move to the first stage in the destination pipeline.",
+      keepOne:
+        "Keep at least one pipeline. Add another before deleting this one.",
+      deleted: "Pipeline deleted",
+      confirm:
+        "Delete this pipeline and its stages? Deals will be moved to the selected pipeline.",
       parent: "Parent company",
       none: "Independent company",
       children: "Sub-companies",
@@ -58,8 +66,16 @@ const KlyoPipelines = (() => {
       standard: "Standardowe etapy sprzedaży",
       save: "Zapisz lejek",
       cancel: "Anuluj",
-      remove: "Usuń pusty lejek",
-      confirm: "Usunąć ten pusty lejek i jego etapy?",
+      remove: "Usuń lejek",
+      moveTo: "Przenieś transakcje do",
+      dealCount: "Transakcje w tym lejku",
+      keepDeals:
+        "Transakcje i ich historia zostaną zachowane. Zgodne etapy pozostaną dopasowane; pozostałe transakcje z etapem trafią do pierwszego etapu wybranego lejka.",
+      keepOne:
+        "Zachowaj co najmniej jeden lejek. Dodaj kolejny, zanim usuniesz ten.",
+      deleted: "Usunięto lejek",
+      confirm:
+        "Usunąć ten lejek i jego etapy? Transakcje zostaną przeniesione do wybranego lejka.",
       parent: "Firma nadrzędna",
       none: "Firma niezależna",
       children: "Podfirmy",
@@ -99,6 +115,7 @@ const KlyoPipelines = (() => {
     g("pipelinePurpose").open = false;
     g("editPipelineBtn").disabled = !current || !editor();
     g("addPipelineBtn").disabled = !editor();
+    g("removePipelineBtn").disabled = !current || !editor();
   }
   async function load(force = false) {
     if (force) list = [];
@@ -130,20 +147,36 @@ const KlyoPipelines = (() => {
     g("salesPipelineSelect").setAttribute("aria-label", l("pipeline"));
     if (list.length) render();
   }
-  async function open(edit = false) {
+  async function open(edit = false, deleting = false) {
     try {
       await load(true);
       const p = edit ? list.find((p) => p.id === selectedId) : null;
       g("pipelineId").value = p?.id || "";
       g("pipelineName").value = p?.name || "";
+      g("pipelineName").readOnly = deleting;
+      g("pipelineText").closest(".field").classList.toggle("hidden", deleting);
       g("pipelineText").value = p?.description || "";
-      g("pipelineModalTitle").textContent = l(edit ? "edit" : "add");
+      g("pipelineModalTitle").textContent = l(
+        deleting ? "remove" : edit ? "edit" : "add",
+      );
       g("pipelineFormError").textContent = "";
       g("pipelineCopyField").classList.toggle("hidden", !!p);
-      g("deletePipelineBtn").classList.toggle(
+      g("deletePipelineBtn").classList.toggle("hidden", !p);
+      g("deletePipelineBtn").disabled = !p || list.length <= 1;
+      g("pipelineDeleteSection").classList.toggle(
         "hidden",
-        !p || p.is_default || p.deal_count > 0,
+        !p || (!deleting && list.length > 1),
       );
+      g("pipelineSave").classList.toggle("hidden", deleting);
+      g("pipelineDeleteHint").textContent =
+        list.length <= 1
+          ? l("keepOne")
+          : `${l("dealCount")}: ${p?.deal_count || 0}. ${l("keepDeals")}`;
+      g("pipelineDeleteTarget").innerHTML = list
+        .filter((other) => other.id !== p?.id)
+        .map((other) => `<option value="${other.id}">${h(other.name)}</option>`)
+        .join("");
+      g("pipelineDeleteTarget").disabled = list.length <= 1;
       g("pipelineCopy").innerHTML =
         `<option value="">${h(l("standard"))}</option>` +
         list
@@ -235,6 +268,7 @@ const KlyoPipelines = (() => {
     });
     g("addPipelineBtn").addEventListener("click", () => open());
     g("editPipelineBtn").addEventListener("click", () => open(true));
+    g("removePipelineBtn").addEventListener("click", () => open(true, true));
     const close = () => g("pipelineOverlay").classList.add("hidden");
     g("pipelineCancel").addEventListener("click", close);
     g("closePipelineBtn").addEventListener("click", close);
@@ -246,6 +280,7 @@ const KlyoPipelines = (() => {
     });
     g("pipelineForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+      if(g("pipelineSave").classList.contains("hidden"))return;
       const button = g("pipelineSave");
       button.disabled = true;
       g("pipelineFormError").textContent = "";
@@ -273,16 +308,29 @@ const KlyoPipelines = (() => {
       }
     });
     g("deletePipelineBtn").addEventListener("click", async () => {
+      if (g("pipelineDeleteSection").classList.contains("hidden")) {
+        g("pipelineDeleteSection").classList.remove("hidden");
+        g("pipelineSave").classList.add("hidden");
+        g("pipelineName").readOnly=true;
+        g("pipelineText").closest(".field").classList.add("hidden");
+        g("pipelineModalTitle").textContent=l("remove");
+        g("pipelineDeleteTarget").focus();
+        return;
+      }
       if (!confirm(l("confirm"))) return;
       const button = g("deletePipelineBtn");
       button.disabled = true;
       try {
-        await API.del(`/pipelines/${g("pipelineId").value}`);
+        await API.del(`/pipelines/${g("pipelineId").value}`, {
+          move_to_pipeline_id: g("pipelineDeleteTarget").value,
+        });
         selectedId = null;
         await load(true);
         els.dealStageFilter.value = "";
+        g("savedDealView").value = "";
         await loadDeals();
         close();
+        toast(l("deleted"));
       } catch (e) {
         g("pipelineFormError").textContent = e.message;
       } finally {
