@@ -24,7 +24,7 @@ function isCurrentlyComped(workspace) {
 
 async function assertWithinLimit(workspaceId, kind, client = db) {
   const wsResult = await client.query(
-    "SELECT id, plan, is_comped, comped_until, tier, extra_seats FROM workspaces WHERE id = (SELECT COALESCE(billing_workspace_id,id) FROM workspaces WHERE id=$1)",
+    "SELECT id, plan, is_comped, comped_until, tier FROM workspaces WHERE id = (SELECT COALESCE(billing_workspace_id,id) FROM workspaces WHERE id=$1)",
     [workspaceId],
   );
   const workspace = wsResult.rows[0];
@@ -42,12 +42,9 @@ async function assertWithinLimit(workspaceId, kind, client = db) {
       "SELECT COUNT(*) AS n FROM users WHERE workspace_id = $1",
       [billingId],
     );
-    if (
-      Number(rows[0].n) >=
-      tier.maxSeats + Number(workspace.extra_seats || 0)
-    ) {
+    if (Number(rows[0].n) >= tier.maxSeats) {
       throw new LimitExceededError(
-        `Your ${tier.label} plan allows up to ${tier.maxSeats + Number(workspace.extra_seats || 0)} team member${tier.maxSeats === 1 ? "" : "s"}. Upgrade to add more.`,
+        `This plan has reached its maximum of ${tier.maxSeats} user${tier.maxSeats === 1 ? "" : "s"}. Upgrade to a higher plan to add more users.`,
       );
     }
   }

@@ -1213,11 +1213,8 @@ async function openPricingModal() {
   els.pricingModalOverlay.classList.remove("hidden");
   els.pricingGrid.innerHTML = '<p class="muted">Loading plans…</p>';
   try {
-    const [{ tiers,extraSeatPrice }, status] = await Promise.all([API.get("/billing/tiers"), API.get("/billing/status")]);
-    pricingCache = { tiers, status,extraSeatPrice };
-    document.getElementById("checkoutExtraSeats").value=0;
-    document.getElementById("checkoutSeatUnit").textContent=extraSeatPrice;
-    document.getElementById("checkoutExtraSeats").disabled=API.getUser()?.can_manage_billing===false;
+    const [{ tiers }, status] = await Promise.all([API.get("/billing/tiers"), API.get("/billing/status")]);
+    pricingCache = { tiers, status };
     renderPricingGrid();
   } catch (err) {
     els.pricingGrid.innerHTML = `<p class="muted">${escapeHtml(err.message)}</p>`;
@@ -1226,8 +1223,7 @@ async function openPricingModal() {
 
 function renderPricingGrid() {
   if (!pricingCache) return;
-  const { tiers, status,extraSeatPrice } = pricingCache;
-  const extra=Math.max(0,Math.floor(Number(document.getElementById("checkoutExtraSeats").value)||0));
+  const { tiers, status } = pricingCache;
   const oneTime = pricingBillingMode === "one_time";
 
   els.billingModeToggle.querySelectorAll("button").forEach((b) => {
@@ -1239,14 +1235,14 @@ function renderPricingGrid() {
     .map((t) => {
       const isCurrent = status.plan === "active" && status.tier === t.key && (oneTime ? status.billing_mode === "one_time" : status.billing_mode !== "one_time");
       const features = [
-        t.maxSeats == null ? "Unlimited team members" : `Up to ${t.maxSeats+extra} team member${t.maxSeats === 1 ? "" : "s"}`,
+        t.maxSeats == null ? "Unlimited team members" : `Up to ${t.maxSeats} team member${t.maxSeats === 1 ? "" : "s"}`,
         t.maxContacts == null ? "Unlimited contacts" : `Up to ${t.maxContacts.toLocaleString()} contacts`,
         t.maxAiDraftsPerMonth == null ? "Unlimited AI drafts" : `${t.maxAiDraftsPerMonth.toLocaleString()} AI drafts / month`,
       ];
       return `
         <div class="tier-card ${isCurrent ? "current" : ""}">
           <h3>${escapeHtml(t.label)}</h3>
-          <div class="tier-price">$${t.price+(t.maxSeats==null?0:extra*extraSeatPrice)}<span> ${oneTime ? "one-time" : "/ month"}</span></div>
+          <div class="tier-price">$${t.price}<span> ${oneTime ? "one-time" : "/ month"}</span></div>
           <div class="tier-tagline">${escapeHtml(t.tagline)}${oneTime ? " — one month of access, doesn't renew." : ""}</div>
           <ul>
             ${features
@@ -1277,8 +1273,8 @@ async function handleChooseTier(tierKey, btn) {
   btn.disabled = true;
   btn.textContent = "Redirecting…";
   try {
-    const { url,pending } = await API.post(pricingCache.status.has_subscription?"/billing/plan":"/billing/checkout", { tier: tierKey, billing_mode: pricingBillingMode,extra_seats:pricingCache.tiers.find(t=>t.key===tierKey)?.maxSeats==null?0:Number(document.getElementById("checkoutExtraSeats").value)||0 });
-    if(url)window.location.href=url;else if(pending)toast("Complete the pending payment in Stripe before the change takes effect.");else{closePricingModal();await loadBillingStatus();}
+    const { url,pending } = await API.post(pricingCache.status.has_subscription?"/billing/plan":"/billing/checkout", { tier: tierKey, billing_mode: pricingBillingMode });
+    if(url)window.location.href=url;else if(pending)toast("Complete the pending payment in Stripe before the change takes effect.");else{closePricingModal();await loadBillingStatus();await KlyoWorkspace.teamAdmin();}
   } catch (err) {
     toast(err.message, "error");
     btn.disabled = false;

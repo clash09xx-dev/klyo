@@ -507,7 +507,6 @@ test(
           const { TIERS, TIER_ORDER } = require("../server/config/tiers");
           assert.deepEqual(response.data, {
             tiers: TIER_ORDER.map((key) => ({ key, ...TIERS[key] })),
-            extraSeatPrice: 5,
             currency: "USD",
           });
           assert.deepEqual(

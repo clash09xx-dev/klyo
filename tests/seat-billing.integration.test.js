@@ -1,7 +1,7 @@
 const test = require("node:test"),
   assert = require("node:assert/strict");
 test(
-  "paid seat entitlement and Stripe checkout are owner-controlled and payment-gated",
+  "plan user limits require upgrading and cannot be bypassed through retired seat billing",
   { skip: !process.env.TEST_DATABASE_URL },
   async (t) => {
     const { Pool } = require("pg"),
@@ -191,56 +191,158 @@ test(
             ])
           ).rows[0].extra_seats,
         );
+      const join = (email) =>
+        req("/auth/register", "POST", {
+          name: "New teammate",
+          email,
+          password: "test-only",
+          invite_code: "SEATS",
+        });
       await t.test(
-        "additional seats are $5; even a team admin cannot buy or inspect owner billing",
+        "summary uses the plan cap only and billing stays owner-only",
         async () => {
-          const summary = await req("/billing/seats");
-          assert.equal(summary.status, 200);
-          assert.equal(summary.data.unit_price, 5);
-          assert.equal(summary.data.included, 1);
-          assert.equal(summary.data.used, 2);
-          assert.equal(
-            (await req("/billing/seats", "POST", { extra_seats: 2 }, 1)).status,
-            403,
-          );
+          await db.query("UPDATE workspaces SET extra_seats=99 WHERE id=$1", [
+            ws.id,
+          ]);
+          const r = await req("/billing/seats");
+          assert.equal(r.status, 200);
+          assert.equal(r.data.included, 1);
+          assert.equal(r.data.used, 2);
+          assert.equal(r.data.total_monthly, 9);
+          assert.equal(r.data.limit_reached, true);
+          assert.equal("unit_price" in r.data, false);
+          assert.equal("extra" in r.data, false);
           assert.equal(
             (await req("/billing/seats", "GET", undefined, 1)).status,
             403,
           );
-          assert.equal(calls.length, 0);
+          assert.equal(
+            (await req("/billing/plan", "POST", { tier: "plus" }, 1)).status,
+            403,
+          );
+          assert.equal(
+            (await req("/billing/checkout", "POST", { tier: "plus" }, 1))
+              .status,
+            403,
+          );
         },
       );
       await t.test(
-        "unpaid seat changes do not increase invitations or local entitlement",
+        "retired seat endpoint never calls Stripe; stale purchase inputs cannot bypass plan caps",
         async () => {
-          const r = await req("/billing/seats", "POST", { extra_seats: 2 });
-          assert.equal(r.status, 200, JSON.stringify(r));
-          assert.equal(r.data.pending, true);
-          assert.equal(r.data.url, "https://invoice.stripe.test/pay");
-          assert.equal(await readSeats(), 0);
-          const update = calls.find((c) => c[0] === "update");
-          assert.equal(update[1].payment_behavior, "pending_if_incomplete");
-          assert.equal(update[1].proration_behavior, "always_invoice");
-          assert.equal(update[1].items[0].quantity, 2);
-          const join = await req("/auth/register", "POST", {
-            name: "Blocked",
-            email: "blocked@seats.test",
-            password: "test-only",
-            invite_code: "SEATS",
-          });
-          assert.equal(join.status, 403);
+          const start = calls.length;
+          for (const extra of [0, 2, -1, 1.5, 1001]) {
+            const r = await req("/billing/seats", "POST", {
+              extra_seats: extra,
+            });
+            assert.equal(r.status, 410);
+            assert.equal(r.data.code, "PLAN_UPGRADE_REQUIRED");
+          }
+          for (const route of ["/billing/checkout", "/billing/plan"])
+            for (const extra of [2, -1, 1.5, 1001])
+              assert.equal(
+                (await req(route, "POST", { tier: "plus", extra_seats: extra }))
+                  .status,
+                400,
+              );
+          assert.equal(calls.length, start);
+          const r = await join("blocked@seats.test");
+          assert.equal(r.status, 403);
+          assert.equal(r.data.code, "LIMIT_EXCEEDED");
+          assert.match(r.data.error, /maximum.*Upgrade to a higher plan/);
+          assert.equal(
+            (
+              await db.query(
+                "SELECT COUNT(*)::int n FROM users WHERE workspace_id=$1",
+                [ws.id],
+              )
+            ).rows[0].n,
+            2,
+          );
         },
       );
       await t.test(
-        "verified paid subscription event unlocks exact quantity, not request metadata",
+        "only a completed higher-plan payment increases capacity; legacy add-ons are removed",
         async () => {
           sub.items.data.push({
             id: "si_extra",
             price: prices.extra,
-            quantity: 2,
+            quantity: 99,
           });
+          let r = await req("/billing/plan", "POST", { tier: "plus" });
+          assert.equal(r.status, 200);
+          assert.equal(r.data.pending, true);
+          assert.equal(
+            (await db.query("SELECT tier FROM workspaces WHERE id=$1", [ws.id]))
+              .rows[0].tier,
+            "personal",
+          );
+          assert.equal((await join("still-blocked@seats.test")).status, 403);
+          const update = calls.find((c) => c[0] === "update");
+          assert.deepEqual(update[1].items, [
+            { id: "si_base", price: "price_plus", quantity: 1 },
+            { id: "si_extra", deleted: true },
+          ]);
+          pending = false;
+          r = await req("/billing/plan", "POST", { tier: "plus" });
+          assert.equal(r.status, 200);
+          assert.equal(r.data.pending, false);
+          assert.equal(
+            (await db.query("SELECT tier FROM workspaces WHERE id=$1", [ws.id]))
+              .rows[0].tier,
+            "plus",
+          );
+          assert.equal(await readSeats(), 0);
+          assert.equal((await join("allowed@seats.test")).status, 201);
+          const noOpStart = calls.length;
+          assert.equal(
+            (await req("/billing/plan", "POST", { tier: "plus" })).status,
+            200,
+          );
+          assert.equal(calls.length, noOpStart);
+          assert.equal(
+            (await req("/billing/plan", "POST", { tier: "personal" })).status,
+            400,
+          );
+        },
+      );
+      await t.test(
+        "concurrent invitations cannot exceed the plan limit",
+        async () => {
+          await db.query(
+            "INSERT INTO users(workspace_id,name,email,password_hash) VALUES($1,'Fourth','fourth@seats.test','fixture')",
+            [ws.id],
+          );
+          const replies = await Promise.all([
+            join("race-one@seats.test"),
+            join("race-two@seats.test"),
+          ]);
+          assert.deepEqual(replies.map((r) => r.status).sort(), [201, 403]);
+          assert.equal((await req("/billing/seats")).data.limit_reached, true);
+          assert.equal(
+            (
+              await db.query(
+                "SELECT COUNT(*)::int n FROM users WHERE workspace_id=$1",
+                [ws.id],
+              )
+            ).rows[0].n,
+            5,
+          );
+        },
+      );
+      await t.test(
+        "subscription webhooks cannot restore retired add-on entitlement; verified events stay idempotent",
+        async () => {
+          sub.items.data.push({
+            id: "si_legacy",
+            price: prices.extra,
+            quantity: 100,
+          });
+          await db.query("UPDATE workspaces SET extra_seats=100 WHERE id=$1", [
+            ws.id,
+          ]);
           const event = {
-            id: "evt_paid_seats",
+            id: "evt_legacy",
             type: "customer.subscription.updated",
             data: { object: sub },
           };
@@ -248,19 +350,12 @@ test(
             (await req("/billing/webhook", "POST", event)).status,
             200,
           );
-          assert.equal(await readSeats(), 2);
-          const joined = await req("/auth/register", "POST", {
-            name: "Allowed",
-            email: "allowed@seats.test",
-            password: "test-only",
-            invite_code: "SEATS",
-          });
-          assert.equal(joined.status, 201, JSON.stringify(joined));
+          assert.equal(await readSeats(), 0);
+          assert.equal((await join("legacy-blocked@seats.test")).status, 403);
           assert.equal(
             (await req("/billing/webhook", "POST", event)).status,
             200,
           );
-          assert.equal(await readSeats(), 2);
           assert.equal(
             (
               await req(
@@ -276,135 +371,86 @@ test(
         },
       );
       await t.test(
-        "cannot buy negative seats, reduce below use, or create a second base subscription",
+        "checkout contains only the selected plan and rejects plans too small for the team",
         async () => {
-          for (const extra of [-1, 1.5, 1001])
-            assert.equal(
-              (await req("/billing/seats", "POST", { extra_seats: extra }))
-                .status,
-              400,
-            );
           assert.equal(
-            (await req("/billing/seats", "POST", { extra_seats: 0 })).status,
-            400,
-          );
-          assert.equal(
-            (
-              await req("/billing/checkout", "POST", {
-                tier: "plus",
-                extra_seats: 0,
-              })
-            ).status,
+            (await req("/billing/checkout", "POST", { tier: "plus" })).status,
             409,
           );
-        },
-      );
-      await t.test(
-        "plan changes keep pending payments gated and activate the paid Stripe plan",
-        async () => {
-          let r = await req("/billing/plan", "POST", {
-            tier: "plus",
-            extra_seats: 2,
-          });
-          assert.equal(r.status, 200);
-          assert.equal(r.data.pending, true);
-          assert.equal(
-            (await db.query("SELECT tier FROM workspaces WHERE id=$1", [ws.id]))
-              .rows[0].tier,
-            "personal",
-          );
-          pending = false;
-          r = await req("/billing/plan", "POST", {
-            tier: "plus",
-            extra_seats: 2,
-          });
-          assert.equal(r.status, 200);
-          assert.equal(
-            (await db.query("SELECT tier FROM workspaces WHERE id=$1", [ws.id]))
-              .rows[0].tier,
-            "plus",
-          );
-        },
-      );
-      await t.test('repeated seat changes use fresh operations and identical quantities are a no-op',async()=>{
- pending=false;const start=calls.length;
- for(const extra of [3,2,3])assert.equal((await req('/billing/seats','POST',{extra_seats:extra})).status,200);
- const updates=calls.slice(start).filter(c=>c[0]==='update');assert.equal(updates.length,3);assert.equal(new Set(updates.map(c=>c[2].idempotencyKey)).size,3);assert.equal(await readSeats(),3);
- assert.equal((await req('/billing/seats','POST',{extra_seats:3})).status,200);assert.equal(calls.slice(start).filter(c=>c[0]==='update').length,3);
- });
- await t.test(
-        "checkout shows a base plan plus seat line, validates actual configured prices and is idempotent",
-        async () => {
           await db.query(
             "UPDATE workspaces SET stripe_subscription_id=NULL WHERE id=$1",
             [ws.id],
           );
-          const r = await req("/billing/checkout", "POST", {
-            tier: "plus",
-            extra_seats: 2,
-          });
-          assert.equal(r.status, 200, JSON.stringify(r));
+          assert.equal(
+            (await req("/billing/checkout", "POST", { tier: "personal" }))
+              .status,
+            400,
+          );
+          const r = await req("/billing/checkout", "POST", { tier: "plus" });
+          assert.equal(r.status, 200);
           const call = calls.find((c) => c[0] === "checkout");
           assert.deepEqual(call[1].line_items, [
             { price: "price_plus", quantity: 1 },
-            { price: "price_extra", quantity: 2 },
           ]);
-          assert.equal(call[1].metadata.extra_seats, "2");
+          assert.equal("extra_seats" in call[1].metadata, false);
           assert.ok(call[2].idempotencyKey.includes("klyo-checkout"));
-          assert.equal(call[1].success_url.endsWith("/app?upgraded=1"), true);
           prices.price_plus.unit_amount = 9900;
-          const bad = await req("/billing/checkout", "POST", {
-            tier: "plus",
-            extra_seats: 2,
-          });
-          assert.equal(bad.status, 502);
+          assert.equal(
+            (await req("/billing/checkout", "POST", { tier: "plus" })).status,
+            502,
+          );
           prices.price_plus.unit_amount = 2900;
         },
       );
       await t.test(
-        "duplicate one-time payment webhooks do not extend access twice; unpaid sessions do not activate",
+        "unpaid/duplicate one-time webhooks do not grant access twice or restore add-ons",
         async () => {
           const session = {
-              client_reference_id: String(ws.id),
-              customer: "cus_mock",
-              payment_status: "unpaid",
-              metadata: {
-                tier: "personal",
-                billing_mode: "one_time",
-                extra_seats: "3",
-              },
+            client_reference_id: String(ws.id),
+            customer: "cus_mock",
+            payment_status: "unpaid",
+            metadata: {
+              tier: "plus",
+              billing_mode: "one_time",
+              extra_seats: "100",
             },
-            unpaid = {
-              id: "evt_unpaid_once",
-              type: "checkout.session.completed",
-              data: { object: session },
-            };
-          await db.query("UPDATE workspaces SET plan='past_due' WHERE id=$1", [
-            ws.id,
-          ]);
-          await req("/billing/webhook", "POST", unpaid);
+          };
+          await db.query(
+            "UPDATE workspaces SET plan='past_due',extra_seats=100 WHERE id=$1",
+            [ws.id],
+          );
+          assert.equal(
+            (
+              await req("/billing/webhook", "POST", {
+                id: "evt_unpaid",
+                type: "checkout.session.completed",
+                data: { object: session },
+              })
+            ).status,
+            200,
+          );
           assert.equal(
             (await db.query("SELECT plan FROM workspaces WHERE id=$1", [ws.id]))
               .rows[0].plan,
             "past_due",
           );
-          const paid = {
-            id: "evt_paid_once",
+          const event = {
+            id: "evt_onetime",
             type: "checkout.session.async_payment_succeeded",
             data: { object: { ...session, payment_status: "paid" } },
           };
           assert.equal(
-            (await req("/billing/webhook", "POST", paid)).status,
+            (await req("/billing/webhook", "POST", event)).status,
             200,
           );
-          assert.equal(await readSeats(), 3);
+          assert.equal(await readSeats(), 0);
           const end = (
             await db.query(
               "SELECT current_period_end FROM workspaces WHERE id=$1",
               [ws.id],
             )
           ).rows[0].current_period_end.toISOString();
-          await req("/billing/webhook", "POST", paid);
+          await req("/billing/webhook", "POST", event);
           assert.equal(
             (
               await db.query(
@@ -413,6 +459,34 @@ test(
               )
             ).rows[0].current_period_end.toISOString(),
             end,
+          );
+          assert.equal((await join("one-time-blocked@seats.test")).status, 403);
+        },
+      );
+      await t.test(
+        "trial, comped and unlimited plans keep their existing unlimited access",
+        async () => {
+          const { assertWithinLimit } = require("../server/services/limits");
+          for (const patch of [
+            "plan='trial'",
+            "plan='active',is_comped=true,comped_until=NULL",
+            "is_comped=false,tier='ultra'",
+          ]) {
+            await db.query("UPDATE workspaces SET " + patch + " WHERE id=$1", [
+              ws.id,
+            ]);
+            await assertWithinLimit(ws.id, "seats");
+            const r = await req("/billing/seats");
+            assert.equal(r.data.limit_reached, false);
+            assert.equal(r.data.unlimited, true);
+          }
+          await db.query(
+            "UPDATE workspaces SET tier='plus',is_comped=true,comped_until=now()-interval '1 day' WHERE id=$1",
+            [ws.id],
+          );
+          await assert.rejects(
+            () => assertWithinLimit(ws.id, "seats"),
+            /Upgrade to a higher plan/,
           );
         },
       );

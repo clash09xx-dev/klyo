@@ -66,16 +66,12 @@ router.get("/overview", async (req, res) => {
       "SELECT COUNT(*) AS n FROM workspaces WHERE billing_workspace_id IS NULL AND created_at >= now() - interval '30 days'",
     ),
     db.query(
-      "SELECT tier,extra_seats FROM workspaces WHERE billing_workspace_id IS NULL AND plan = 'active' AND NOT (is_comped AND (comped_until IS NULL OR comped_until > now()))",
+      "SELECT tier FROM workspaces WHERE billing_workspace_id IS NULL AND plan = 'active' AND NOT (is_comped AND (comped_until IS NULL OR comped_until > now()))",
     ),
   ]);
 
   const estimatedMrr = activeWorkspaces.rows.reduce(
-    (sum, row) =>
-      sum +
-      getTier(row.tier).price +
-      Number(row.extra_seats || 0) *
-        require("../services/seatBilling").EXTRA_SEAT_USD,
+    (sum, row) => sum + getTier(row.tier).price,
     0,
   );
 
