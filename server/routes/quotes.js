@@ -1,322 +1,459 @@
-// server/routes/quotes.js
-const express = require("express");
-const crypto = require("crypto");
+// Quotation workspace: validated drafts, branded PDF documents and manual email delivery.
+const express = require("express"),
+  crypto = require("crypto");
 const db = require("../db");
-const { requireAuth } = require("../middleware/auth");
+const {
+  requireAuth,
+  requireEditor,
+  requireAdmin,
+} = require("../middleware/auth");
 const { requirePaidAccess } = require("../middleware/billing");
 const { sendOfferEmail } = require("../services/mailer");
-
 const { normalizeCurrency } = require("../services/workspaceCurrency");
-
+const Q = require("../../public/js/quote-core");
+const S = require("../services/quoteStore");
+const {
+  generateQuotePdf,
+  safeName,
+  documentFor,
+} = require("../services/quotePdf");
 const router = express.Router();
-router.use(requireAuth);
-router.use(requirePaidAccess);
-
-async function logActivity(workspaceId, contactId, userId, type, description) {
-  await db.query(
-    "INSERT INTO activity_log (workspace_id, contact_id, user_id, type, description) VALUES ($1, $2, $3, $4, $5)",
-    [workspaceId, contactId, userId, type, description]
+router.use(requireAuth, requirePaidAccess);
+router.use((req, res, next) =>
+  req.method === "GET" ? next() : requireEditor(req, res, next),
+);
+const run = (fn) => (req, res, next) =>
+  Promise.resolve(fn(req, res)).catch(next);
+router.param("id", (req, res, next, value) => {
+  if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)))
+    return res.status(404).json({ error: "Quote not found." });
+  next();
+});
+const fail = (message, status = 400) => {
+  throw Object.assign(new Error(message), { status });
+};
+const logActivity = (client, workspace, contact, user, type, description) =>
+  client.query(
+    "INSERT INTO activity_log(workspace_id,contact_id,user_id,type,description) VALUES($1,$2,$3,$4,$5)",
+    [workspace, contact, user, type, description],
   );
-}
-
-// Recomputes line totals server-side so the numbers can't be tampered
-// with from the browser, and returns the quote-level totals to match.
-function computeTotals(lineItems) {
-  let subtotal = 0;
-  let total = 0;
-  const computed = lineItems.map((item, i) => {
-    const quantity = Number(item.quantity) || 0;
-    const unitPrice = Number(item.unit_price) || 0;
-    const discountPercent = Math.min(100, Math.max(0, Number(item.discount_percent) || 0));
-    const gross = quantity * unitPrice;
-    const lineTotal = gross * (1 - discountPercent / 100);
-    subtotal += gross;
-    total += lineTotal;
-    return {
-      product_id: item.product_id || null,
-      description: (item.description || "").trim() || "Item",
-      quantity,
-      unit_price: unitPrice,
-      discount_percent: discountPercent,
-      line_total: Math.round(lineTotal * 100) / 100,
-      sort_order: i,
-    };
-  });
-  subtotal = Math.round(subtotal * 100) / 100;
-  total = Math.round(total * 100) / 100;
-  return { computed, subtotal, total, discountTotal: Math.round((subtotal - total) * 100) / 100 };
-}
-
-async function replaceLineItemsAndRecipients(quoteId, lineItems, recipientIds) {
-  await db.query("DELETE FROM quote_line_items WHERE quote_id = $1", [quoteId]);
-  await db.query("DELETE FROM quote_recipients WHERE quote_id = $1", [quoteId]);
-
-  for (const item of lineItems) {
-    await db.query(
-      `INSERT INTO quote_line_items (quote_id, product_id, description, quantity, unit_price, discount_percent, line_total, sort_order)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-      [quoteId, item.product_id, item.description, item.quantity, item.unit_price, item.discount_percent, item.line_total, item.sort_order]
+router.get(
+  "/document-defaults",
+  run(async (req, res) => {
+    const r = await db.query(
+      "SELECT name,quote_defaults FROM workspaces WHERE id=$1",
+      [req.user.workspace_id],
     );
-  }
-  for (const contactId of recipientIds || []) {
-    await db.query("INSERT INTO quote_recipients (quote_id, contact_id) VALUES ($1, $2)", [quoteId, contactId]);
-  }
-}
-
-async function getFullQuote(id, workspaceId) {
-  const quoteResult = await db.query(
-    `SELECT q.*, c.full_name AS contact_name, c.email AS contact_email, co.name AS company_name
-     FROM quotes q
-     JOIN contacts c ON c.id = q.contact_id
-     LEFT JOIN companies co ON co.id = q.company_id
-     WHERE q.id = $1 AND q.workspace_id = $2`,
-    [id, workspaceId]
-  );
-  const quote = quoteResult.rows[0];
-  if (!quote) return null;
-
-  const items = await db.query("SELECT * FROM quote_line_items WHERE quote_id = $1 ORDER BY sort_order", [id]);
-  const recipients = await db.query(
-    `SELECT c.id, c.full_name, c.email, c.title, c.is_decision_maker
-     FROM quote_recipients qr JOIN contacts c ON c.id = qr.contact_id WHERE qr.quote_id = $1`,
-    [id]
-  );
-  return { quote, lineItems: items.rows, recipients: recipients.rows };
-}
-
+    if (!r.rows.length) fail("Workspace not found.", 404);
+    res.json({ workspace: r.rows[0] });
+  }),
+);
+router.put(
+  "/document-defaults",
+  requireAdmin,
+  run(async (req, res) => {
+    const d = Q.normalizeDocument(req.body);
+    d.buyer = { name: "", details: "", email: "", phone: "", tax_id: "" };
+    d.reference = "";
+    d.issued_on = "";
+    d.valid_until = "";
+    d.scope = "";
+    await db.query("UPDATE workspaces SET quote_defaults=$1 WHERE id=$2", [
+      JSON.stringify(d),
+      req.user.workspace_id,
+    ]);
+    res.json({ document: d });
+  }),
+);
 // GET /api/quotes — list, optionally filtered to one contact or company
 router.get("/", async (req, res) => {
   const { contact_id, company_id, status } = req.query;
   let sql = `
-    SELECT q.*, c.full_name AS contact_name, co.name AS company_name
+    SELECT q.id,q.title,q.status,q.total,q.currency,q.updated_at,q.created_at,q.contact_id,q.company_id,q.tax_rate,q.tax_total,c.full_name AS contact_name,co.name AS company_name
     FROM quotes q
     JOIN contacts c ON c.id = q.contact_id
-    LEFT JOIN companies co ON co.id = q.company_id
+    LEFT JOIN companies co ON co.id = q.company_id AND co.workspace_id=q.workspace_id
     WHERE q.workspace_id = $1
   `;
   const params = [req.user.workspace_id];
-  if (contact_id) { params.push(contact_id); sql += ` AND q.contact_id = $${params.length}`; }
-  if (company_id) { params.push(company_id); sql += ` AND q.company_id = $${params.length}`; }
-  if (status) { params.push(status); sql += ` AND q.status = $${params.length}`; }
+  if (contact_id) {
+    params.push(contact_id);
+    sql += ` AND q.contact_id = $${params.length}`;
+  }
+  if (company_id) {
+    params.push(company_id);
+    sql += ` AND q.company_id = $${params.length}`;
+  }
+  if (status) {
+    params.push(status);
+    sql += ` AND q.status = $${params.length}`;
+  }
   sql += ` ORDER BY q.updated_at DESC`;
 
   const result = await db.query(sql, params);
   res.json({ quotes: result.rows });
 });
 
-// POST /api/quotes — create a draft with line items + recipients in one go
-router.post("/", async (req, res) => {
-  const { contact_id, company_id, title, intro_message, line_items, recipient_ids, currency } = req.body || {};
-  if (!contact_id) return res.status(400).json({ error: "A quote needs a primary contact." });
-  if (!Array.isArray(line_items) || !line_items.length) {
-    return res.status(400).json({ error: "Add at least one line item." });
-  }
-
-  const contactCheck = await db.query("SELECT id FROM contacts WHERE id = $1 AND workspace_id = $2", [
-    contact_id,
-    req.user.workspace_id,
-  ]);
-  if (!contactCheck.rows.length) return res.status(404).json({ error: "Contact not found." });
-
-  const workspace = await db.query("SELECT default_currency FROM workspaces WHERE id = $1", [req.user.workspace_id]);
-  const quoteCurrency = normalizeCurrency(currency ?? workspace.rows[0]?.default_currency ?? "USD");
-  if (!quoteCurrency) return res.status(400).json({ error: "Choose a supported currency." });
-  const { computed, subtotal, total, discountTotal } = computeTotals(line_items);
-
-  const quoteResult = await db.query(
-    `INSERT INTO quotes (workspace_id, contact_id, company_id, created_by, title, intro_message, subtotal, discount_total, total, public_token, currency)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
-    [
+async function saveDraft(req, id) {
+  return S.transaction(async (client) => {
+    const existing = id
+      ? (
+          await client.query(
+            "SELECT * FROM quotes WHERE id=$1 AND workspace_id=$2 FOR UPDATE",
+            [id, req.user.workspace_id],
+          )
+        ).rows[0]
+      : null;
+    if (id && !existing) fail("Quote not found.", 404);
+    if (existing && existing.status !== "draft")
+      fail("Only draft quotes can be edited.");
+    const b = req.body || {},
+      contactId = Number(b.contact_id || existing?.contact_id),
+      companyId = b.company_id || null;
+    const totals = Q.computeTotals(
+        b.line_items,
+        b.tax_rate ?? existing?.tax_rate ?? 0,
+      ),
+      recipients = b.recipient_ids || [];
+    const contact = await S.validateLinks(
+      client,
       req.user.workspace_id,
-      contact_id,
-      company_id || null,
+      contactId,
+      companyId,
+      totals.computed,
+      recipients,
+    );
+    const workspace = (
+      await client.query(
+        "SELECT name,default_currency,quote_defaults FROM workspaces WHERE id=$1",
+        [req.user.workspace_id],
+      )
+    ).rows[0];
+    const currency = normalizeCurrency(
+      b.currency ?? existing?.currency ?? workspace.default_currency ?? "USD",
+    );
+    if (!currency) fail("Choose a supported currency.");
+    const d = Q.normalizeDocument({
+      ...Q.defaultsDocument(workspace, contact, b.document?.language),
+      ...(existing?.document || {}),
+      ...(b.document || {}),
+    });
+    const title = Q.text(b.title, 240) || Q.labels(d.language).quote,
+      intro = Q.text(b.intro_message, 6000);
+    if (id) {
+      await client.query(
+        "UPDATE quotes SET title=$1,intro_message=$2,contact_id=$3,company_id=$4,subtotal=$5,discount_total=$6,total=$7,currency=$8,document=$9,tax_rate=$10,tax_total=$11,updated_at=now() WHERE id=$12",
+        [
+          title,
+          intro || null,
+          contactId,
+          companyId,
+          totals.subtotal,
+          totals.discountTotal,
+          totals.total,
+          currency,
+          JSON.stringify(d),
+          totals.tax_rate,
+          totals.tax_total,
+          id,
+        ],
+      );
+    } else {
+      const r = await client.query(
+        "INSERT INTO quotes(workspace_id,contact_id,company_id,created_by,title,intro_message,subtotal,discount_total,total,currency,document,tax_rate,tax_total,public_token) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id",
+        [
+          req.user.workspace_id,
+          contactId,
+          companyId,
+          req.user.id,
+          title,
+          intro || null,
+          totals.subtotal,
+          totals.discountTotal,
+          totals.total,
+          currency,
+          JSON.stringify(d),
+          totals.tax_rate,
+          totals.tax_total,
+          crypto.randomBytes(18).toString("hex"),
+        ],
+      );
+      id = r.rows[0].id;
+    }
+    await S.replaceItems(client, id, totals.computed, recipients);
+    await logActivity(
+      client,
+      req.user.workspace_id,
+      contactId,
       req.user.id,
-      title?.trim() || "Quote",
-      intro_message?.trim() || null,
-      subtotal,
-      discountTotal,
-      total,
-      crypto.randomBytes(18).toString("hex"),
-      quoteCurrency,
-    ]
-  );
-  const quoteId = quoteResult.rows[0].id;
-  await replaceLineItemsAndRecipients(quoteId, computed, recipient_ids);
-  await logActivity(req.user.workspace_id, contact_id, req.user.id, "quote_created", `${req.user.name} created a quote ("${title || "Quote"}").`);
-
-  const full = await getFullQuote(quoteId, req.user.workspace_id);
-  res.status(201).json(full);
-});
-
-// GET /api/quotes/:id
-router.get("/:id", async (req, res) => {
-  const full = await getFullQuote(req.params.id, req.user.workspace_id);
-  if (!full) return res.status(404).json({ error: "Quote not found." });
-  res.json(full);
-});
-
-// PUT /api/quotes/:id — edit a draft (title, intro, line items, recipients)
-router.put("/:id", async (req, res) => {
-  const existing = await db.query("SELECT * FROM quotes WHERE id = $1 AND workspace_id = $2", [
-    req.params.id,
-    req.user.workspace_id,
-  ]);
-  const quote = existing.rows[0];
-  if (!quote) return res.status(404).json({ error: "Quote not found." });
-  if (quote.status !== "draft") return res.status(400).json({ error: "Only draft quotes can be edited." });
-
-  const { title, intro_message, company_id, line_items, recipient_ids, currency } = req.body || {};
-  if (!Array.isArray(line_items) || !line_items.length) {
-    return res.status(400).json({ error: "Add at least one line item." });
-  }
-  const quoteCurrency = normalizeCurrency(currency ?? quote.currency);
-  if (!quoteCurrency) return res.status(400).json({ error: "Choose a supported currency." });
-  const { computed, subtotal, total, discountTotal } = computeTotals(line_items);
-
-  await db.query(
-    `UPDATE quotes SET title=$1, intro_message=$2, company_id=$3, subtotal=$4, discount_total=$5, total=$6, currency=$8, updated_at=now()
-     WHERE id=$7`,
-    [title?.trim() || "Quote", intro_message?.trim() || null, company_id || null, subtotal, discountTotal, total, req.params.id, quoteCurrency]
-  );
-  await replaceLineItemsAndRecipients(req.params.id, computed, recipient_ids);
-
-  const full = await getFullQuote(req.params.id, req.user.workspace_id);
-  res.json(full);
-});
-
-// DELETE /api/quotes/:id
-router.delete("/:id", async (req, res) => {
-  const existing = await db.query("SELECT id FROM quotes WHERE id = $1 AND workspace_id = $2", [
-    req.params.id,
-    req.user.workspace_id,
-  ]);
-  if (!existing.rows.length) return res.status(404).json({ error: "Quote not found." });
-  await db.query("DELETE FROM quotes WHERE id = $1", [req.params.id]);
-  res.json({ ok: true });
-});
-
-// Shared by both the preview route and the actual send, so what you
-// approve in the preview is byte-for-byte what goes out.
+      existing ? "quote_updated" : "quote_created",
+      `${req.user.name} ${existing ? "updated" : "created"} the quote "${title}".`,
+    );
+    return S.getFullQuote(id, req.user.workspace_id, client);
+  });
+}
+router.post(
+  "/",
+  run(async (req, res) => res.status(201).json(await saveDraft(req))),
+);
+router.get(
+  "/:id",
+  run(async (req, res) => {
+    const full = await S.getFullQuote(req.params.id, req.user.workspace_id);
+    if (!full) fail("Quote not found.", 404);
+    res.json(full);
+  }),
+);
+router.put(
+  "/:id",
+  run(async (req, res) => res.json(await saveDraft(req, req.params.id))),
+);
+router.delete(
+  "/:id",
+  run(async (req, res) => {
+    const r = await db.query(
+      "DELETE FROM quotes WHERE id=$1 AND workspace_id=$2 RETURNING id",
+      [req.params.id, req.user.workspace_id],
+    );
+    if (!r.rows.length) fail("Quote not found.", 404);
+    res.json({ ok: true });
+  }),
+);
+router.get(
+  "/:id/pdf",
+  run(async (req, res) => {
+    const full = await S.getFullQuote(req.params.id, req.user.workspace_id);
+    if (!full) fail("Quote not found.", 404);
+    const pdf = await generateQuotePdf(full.quote, full.lineItems);
+    res
+      .set({
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `${req.query.inline === "1" ? "inline" : "attachment"}; filename="${safeName(full.quote)}"`,
+        "Cache-Control": "private, no-store",
+        "X-Content-Type-Options": "nosniff",
+      })
+      .send(pdf);
+  }),
+);
+router.post(
+  "/:id/duplicate",
+  run(async (req, res) => {
+    const original = await S.getFullQuote(req.params.id, req.user.workspace_id);
+    if (!original) fail("Quote not found.", 404);
+    const d = documentFor(original.quote);
+    d.reference = "";
+    d.issued_on = new Date().toISOString().slice(0, 10);
+    d.valid_until = "";
+    req.body = {
+      ...original.quote,
+      title:
+        Q.text(String(original.quote.title || "").slice(0, 230), 230) +
+        " (copy)",
+      line_items: original.lineItems,
+      recipient_ids: original.recipients.map((r) => r.id),
+      document: d,
+    };
+    res.status(201).json(await saveDraft(req));
+  }),
+);
 function buildSendableEmail(full) {
-  const { quote, lineItems, recipients } = full;
-  const toList = recipients.length
-    ? recipients.map((r) => r.email).filter(Boolean)
-    : [quote.contact_email ? [quote.contact_email] : []].flat();
-  const toNames = recipients.length ? recipients.map((r) => r.full_name) : [quote.contact_name];
+  const { quote, lineItems, recipients } = full,
+    d = documentFor(quote),
+    L = Q.labels(d.language),
+    money = (v) => Q.money(v, quote.currency, d.language);
+  const lines = [
+    d.language === "pl" ? "Dzień dobry," : "Hello,",
+    "",
+    quote.intro_message || "",
+    ...lineItems.map(
+      (i) =>
+        `${i.description}: ${i.quantity} x ${money(i.unit_price)}${Number(i.discount_percent) ? ` (-${i.discount_percent}%)` : ""} = ${money(i.line_total)}`,
+    ),
+    "",
+  ];
+  if (Number(quote.discount_total) > 0)
+    lines.push(`${L.discount}: -${money(quote.discount_total)}`);
+  if (Number(quote.tax_rate) > 0)
+    lines.push(
+      `${L.tax} (${Number(quote.tax_rate)}%): ${money(quote.tax_total)}`,
+    );
+  lines.push(`${L.total}: ${money(quote.total)}`, "", L.emailClosing);
   return {
-    to: toList,
-    toNames,
-    subject: quote.title || "Your quote",
-    body: renderQuoteEmailText(quote, lineItems, recipients),
+    to: recipients.length
+      ? recipients.map((r) => r.email).filter(Boolean)
+      : quote.contact_email
+        ? [quote.contact_email]
+        : [],
+    toNames: recipients.length
+      ? recipients.map((r) => r.full_name)
+      : [quote.contact_name],
+    subject: quote.title || L.quote,
+    body: lines.filter((v) => v !== undefined).join("\n"),
+    attachment: { filename: safeName(quote) },
+    revision: quote.updated_at,
   };
 }
-
-// GET /api/quotes/:id/preview — exactly what "Send" will send, before it sends
-router.get("/:id/preview", async (req, res) => {
-  const full = await getFullQuote(req.params.id, req.user.workspace_id);
-  if (!full) return res.status(404).json({ error: "Quote not found." });
-
-  const email = buildSendableEmail(full);
-  if (!email.to.length) return res.status(400).json({ error: "No email address on file for this quote's recipients." });
-
-  res.json(email);
-});
-
-// POST /api/quotes/:id/send — emails every addressed recipient (falls back
-// to the primary contact if no specific decision-makers were picked)
-router.post("/:id/send", async (req, res) => {
-  const full = await getFullQuote(req.params.id, req.user.workspace_id);
-  if (!full) return res.status(404).json({ error: "Quote not found." });
-  const { quote } = full;
-
-  const email = buildSendableEmail(full);
-  if (!email.to.length) return res.status(400).json({ error: "No email address on file for this quote's recipients." });
-
-  // The preview screen allows light edits to the subject/body before
-  // confirming send — use those if provided, otherwise the original.
-  const subject = (req.body && req.body.subject) || email.subject;
-  const body = (req.body && req.body.body) || email.body;
-
-  try {
-    const wsResult = await db.query("SELECT gmail_refresh_token, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from_name, smtp_from_email, smtp_secure FROM workspaces WHERE id = $1", [req.user.workspace_id]);
-    await sendOfferEmail(email.to.join(", "), subject, body, wsResult.rows[0]);
-
-    await db.query("UPDATE quotes SET status='sent', sent_at=now() WHERE id=$1", [quote.id]);
+router.get(
+  "/:id/preview",
+  run(async (req, res) => {
+    const full = await S.getFullQuote(req.params.id, req.user.workspace_id);
+    if (!full) fail("Quote not found.", 404);
+    const email = buildSendableEmail(full);
+    if (!email.to.length)
+      fail("No email address on file for this quote’s recipients.");
+    res.json(email);
+  }),
+);
+router.post(
+  "/:id/send",
+  run(async (req, res) => {
+    await S.transaction(async (client) => {
+      const locked = await client.query(
+        "SELECT id FROM quotes WHERE id=$1 AND workspace_id=$2 FOR UPDATE",
+        [req.params.id, req.user.workspace_id],
+      );
+      if (!locked.rows.length) fail("Quote not found.", 404);
+      const full = await S.getFullQuote(
+        req.params.id,
+        req.user.workspace_id,
+        client,
+      );
+      if (!full) fail("Quote not found.", 404);
+      const { quote } = full;
+      if (quote.status !== "draft")
+        fail(
+          "This quote has already been sent. Duplicate it to prepare a new version.",
+        );
+      if (
+        req.body?.revision &&
+        new Date(req.body.revision).getTime() !==
+          new Date(quote.updated_at).getTime()
+      )
+        fail(
+          "The quote changed after preview. Open a fresh preview before sending.",
+          409,
+        );
+      const email = buildSendableEmail(full);
+      if (!email.to.length)
+        fail("No email address on file for this quote’s recipients.");
+      const subject = Q.text(req.body?.subject ?? email.subject, 500),
+        body = Q.text(req.body?.body ?? email.body, 30000);
+      if (!subject || !body) fail("Enter an email subject and body.");
+      const attachments =
+        req.body?.attach_pdf === false
+          ? []
+          : [
+              {
+                filename: safeName(quote),
+                content: await generateQuotePdf(quote, full.lineItems),
+                contentType: "application/pdf",
+              },
+            ];
+      const ws = await client.query(
+        "SELECT gmail_refresh_token,smtp_host,smtp_port,smtp_user,smtp_pass,smtp_from_name,smtp_from_email,smtp_secure FROM workspaces WHERE id=$1",
+        [req.user.workspace_id],
+      );
+      try {
+        await sendOfferEmail(
+          email.to.join(", "),
+          subject,
+          body,
+          ws.rows[0],
+          attachments,
+        );
+      } catch (error) {
+        fail(error.message || "Could not send this quote.", 502);
+      }
+      await client.query(
+        "UPDATE quotes SET status='sent',sent_at=now(),updated_at=now() WHERE id=$1",
+        [quote.id],
+      );
+      await logActivity(
+        client,
+        req.user.workspace_id,
+        quote.contact_id,
+        req.user.id,
+        "quote_sent",
+        `${req.user.name} sent the quote "${subject}".`,
+      );
+    });
+    res.json({ ok: true });
+  }),
+);
+router.post(
+  "/:id/accept",
+  run(async (req, res) => {
+    await S.transaction(async (client) => {
+      const q = (
+        await client.query(
+          "SELECT * FROM quotes WHERE id=$1 AND workspace_id=$2 FOR UPDATE",
+          [req.params.id, req.user.workspace_id],
+        )
+      ).rows[0];
+      if (!q) fail("Quote not found.", 404);
+      if (q.status !== "sent")
+        fail("Only a sent quote can be marked accepted.");
+      await client.query(
+        "UPDATE quotes SET status='accepted',accepted_at=now(),updated_at=now() WHERE id=$1",
+        [q.id],
+      );
+      const items = await client.query(
+        "SELECT i.*,p.service_interval_months FROM quote_line_items i JOIN products p ON p.id=i.product_id WHERE i.quote_id=$1 AND p.workspace_id=$2",
+        [q.id, req.user.workspace_id],
+      );
+      for (const i of items.rows)
+        await client.query(
+          "INSERT INTO purchases(workspace_id,contact_id,product_id,quote_id,description,quantity,next_service_due_at) VALUES($1,$2,$3,$4,$5,$6,CASE WHEN $7::int>0 THEN now()+make_interval(months=>$7::int) ELSE NULL END)",
+          [
+            req.user.workspace_id,
+            q.contact_id,
+            i.product_id,
+            q.id,
+            i.description,
+            i.quantity,
+            i.service_interval_months || 0,
+          ],
+        );
+      await logActivity(
+        client,
+        req.user.workspace_id,
+        q.contact_id,
+        req.user.id,
+        "quote_accepted",
+        `${req.user.name} marked the quote "${q.title}" accepted.`,
+      );
+    });
+    res.json({ ok: true });
+  }),
+);
+router.post(
+  "/:id/decline",
+  run(async (req, res) => {
+    const q = await db.query(
+      "UPDATE quotes SET status='declined',updated_at=now() WHERE id=$1 AND workspace_id=$2 AND status='sent' RETURNING contact_id,title",
+      [req.params.id, req.user.workspace_id],
+    );
+    if (!q.rows.length)
+      fail("Only a sent quote in this workspace can be declined.");
     await logActivity(
+      db,
       req.user.workspace_id,
-      quote.contact_id,
+      q.rows[0].contact_id,
       req.user.id,
-      "quote_sent",
-      `${req.user.name} sent the quote "${subject}" to ${email.to.join(", ")}.`
+      "quote_declined",
+      `${req.user.name} marked the quote declined.`,
     );
     res.json({ ok: true });
-  } catch (err) {
-    res.status(502).json({ error: err.message || "Could not send the quote right now." });
-  }
+  }),
+);
+router.use((error, req, res, next) => {
+  if (!error.status) console.error("Quote operation failed:", error.message);
+  res
+    .status(error.status || 500)
+    .json({
+      error: error.status
+        ? error.message
+        : "Could not complete the quote operation.",
+    });
 });
-
-// POST /api/quotes/:id/accept — marks it won, and creates purchase records
-// (this is what feeds the automatic maintenance-reminder system later)
-router.post("/:id/accept", async (req, res) => {
-  const full = await getFullQuote(req.params.id, req.user.workspace_id);
-  if (!full) return res.status(404).json({ error: "Quote not found." });
-  const { quote, lineItems } = full;
-
-  await db.query("UPDATE quotes SET status='accepted', accepted_at=now() WHERE id=$1", [quote.id]);
-
-  for (const item of lineItems) {
-    if (!item.product_id) continue; // one-off line items with no catalog product don't get tracked for service reminders
-    const productResult = await db.query("SELECT service_interval_months FROM products WHERE id = $1", [item.product_id]);
-    const months = productResult.rows[0]?.service_interval_months;
-    const dueAt = months ? `now() + interval '${Number(months)} months'` : "NULL";
-
-    await db.query(
-      `INSERT INTO purchases (workspace_id, contact_id, product_id, quote_id, description, quantity, next_service_due_at)
-       VALUES ($1, $2, $3, $4, $5, $6, ${dueAt})`,
-      [req.user.workspace_id, quote.contact_id, item.product_id, quote.id, item.description, item.quantity]
-    );
-  }
-
-  await logActivity(req.user.workspace_id, quote.contact_id, req.user.id, "quote_accepted", `${req.user.name} marked the quote "${quote.title}" as accepted.`);
-  res.json({ ok: true });
-});
-
-// POST /api/quotes/:id/decline
-router.post("/:id/decline", async (req, res) => {
-  const existing = await db.query("SELECT * FROM quotes WHERE id = $1 AND workspace_id = $2", [
-    req.params.id,
-    req.user.workspace_id,
-  ]);
-  const quote = existing.rows[0];
-  if (!quote) return res.status(404).json({ error: "Quote not found." });
-
-  await db.query("UPDATE quotes SET status='declined' WHERE id=$1", [quote.id]);
-  await logActivity(req.user.workspace_id, quote.contact_id, req.user.id, "quote_declined", `${req.user.name} marked the quote "${quote.title}" as declined.`);
-  res.json({ ok: true });
-});
-
-// Plain-text rendering — chosen deliberately over an HTML table so this
-// reuses the exact same send pipeline (Gmail/SMTP) with zero changes.
-function renderQuoteEmailText(quote, lineItems, recipients) {
-  const money = value => new Intl.NumberFormat("en-US", {
-    style: "currency", currency: quote.currency || "USD", minimumFractionDigits: 2,
-  }).format(Number(value));
-  const greetingName = recipients.length ? recipients.map((r) => r.full_name.split(" ")[0]).join(" / ") : "there";
-  const lines = [];
-  lines.push(`Hi ${greetingName},`, "");
-  if (quote.intro_message) lines.push(quote.intro_message, "");
-  lines.push("Here's the breakdown:", "");
-
-  for (const item of lineItems) {
-    const discountNote = item.discount_percent > 0 ? ` (${item.discount_percent}% off)` : "";
-    lines.push(`- ${item.description}${discountNote} — qty ${item.quantity} x ${money(item.unit_price)} = ${money(item.line_total)}`);
-  }
-  lines.push("");
-  if (Number(quote.discount_total) > 0) {
-    lines.push(`Subtotal: ${money(quote.subtotal)}`, `Discount: -${money(quote.discount_total)}`);
-  }
-  lines.push(`Total: ${money(quote.total)}`, "", "Happy to answer any questions — just reply to this email.");
-  return lines.join("\n");
-}
-
 module.exports = router;

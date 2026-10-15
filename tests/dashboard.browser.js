@@ -4,6 +4,8 @@ const { chromium, webkit } = require('playwright');
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
+const Q=require('../public/js/quote-core');
+const {generateQuotePdf}=require('../server/services/quotePdf');
 const publicDir = path.join(__dirname, '../public');
 const screenshotDir = process.env.KLYO_QA_SCREENSHOTS;
 
@@ -40,6 +42,8 @@ async function run(engine, name) {
     ];
     const product = { id: 1, name: 'Website', unit_price: '4500.00', currency, unit_label: 'project' };
     const quote = { id: 1, title: 'Draft quote', total: '4500.00', currency, status: 'draft', contact_id: 1, contact_name: contact.full_name };
+    let quoteDefaults={},quoteSentCount=0,lastQuoteSend=null;
+    const quoteStore=new Map([[1,quote]]),quoteLines=new Map([[1,[{description:'Website',quantity:1,unit_price:4500,discount_percent:0,line_total:4500}]]]);
     const user = { id: 1, name: 'Demo', email: 'demo@example.test', role: 'admin', has_seen_onboarding: true, terms_accepted_at: '2026-01-01', language: 'en' };
     await context.addInitScript(() => { if(location.pathname === '/app') localStorage.setItem('klyo_token', 'local-fixture'); });
     await page.route('**/*', async route => {
@@ -99,13 +103,22 @@ async function run(engine, name) {
         else if (endpoint === '/reminders/due') data = { reminders: [] };
         else if (endpoint === '/history') data = { entries: [], total: 0 };
         else if (endpoint === '/team-stats') data = { team: [] };
-        else if (endpoint === '/quotes') data = { quotes: [quote] };
-        else if (endpoint === '/quotes/1') data = { quote, lineItems: [{ description: 'Website', quantity: 1, line_total: 4500 }] };
+        else if(endpoint==='/quotes/document-defaults'){if(route.request().method()==='PUT')quoteDefaults=route.request().postDataJSON();data={workspace:{name:'Demo Studio',quote_defaults:quoteDefaults},document:quoteDefaults};}
+        else if(endpoint==='/quotes'&&route.request().method()==='POST'){
+          const body=route.request().postDataJSON(),totals=Q.computeTotals(body.line_items,body.tax_rate),id=Math.max(...quoteStore.keys())+1;
+          const saved={id,...body,...totals,discount_total:totals.discountTotal,status:'draft',public_token:'b'.repeat(36),created_at:'2026-10-15',updated_at:'2026-10-15T08:00:00.000Z',contact_name:contact.full_name,contact_email:contact.email};quoteStore.set(id,saved);quoteLines.set(id,totals.computed);data={quote:saved,lineItems:totals.computed,recipients:[]};
+        }
+        else if(/^\/quotes\/\d+\/pdf$/.test(endpoint)){const id=Number(endpoint.split('/')[2]),q=quoteStore.get(id);const pdf=await generateQuotePdf(q,quoteLines.get(id));return route.fulfill({status:200,contentType:'application/pdf',headers:{'Content-Disposition':`inline; filename="${Q.reference(q)}.pdf"`},body:pdf});}
+        else if(/^\/quotes\/\d+\/preview$/.test(endpoint)){const q=quoteStore.get(Number(endpoint.split('/')[2]));data={to:[contact.email],toNames:[contact.full_name],subject:q.title,body:'Dzień dobry, w załączniku przesyłamy ofertę.',attachment:{filename:Q.reference(q)+'.pdf'},revision:q.updated_at};}
+        else if(/^\/quotes\/\d+\/send$/.test(endpoint)){quoteSentCount++;lastQuoteSend=route.request().postDataJSON();quoteStore.get(Number(endpoint.split('/')[2])).status='sent';data={ok:true};}
+        else if(/^\/quotes\/\d+\/duplicate$/.test(endpoint)){const original=quoteStore.get(Number(endpoint.split('/')[2])),id=Math.max(...quoteStore.keys())+1;const copy={...original,id,status:'draft',title:original.title+' (copy)',document:{...original.document,reference:''}};quoteStore.set(id,copy);quoteLines.set(id,quoteLines.get(original.id));data={quote:copy};}
+        else if(/^\/quotes\/\d+$/.test(endpoint)){const id=Number(endpoint.split('/')[2]);if(route.request().method()==='PUT'){const body=route.request().postDataJSON(),totals=Q.computeTotals(body.line_items,body.tax_rate);Object.assign(quoteStore.get(id),body,totals,{discount_total:totals.discountTotal});quoteLines.set(id,totals.computed);}data={quote:quoteStore.get(id),lineItems:quoteLines.get(id),recipients:[]};}
+        else if (endpoint === '/quotes') data = { quotes: [...quoteStore.values()] };
         else { status = 404; data = { error: `Missing fixture: ${endpoint}` }; }
         return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) });
       }
       const file = path.join(publicDir, url.pathname === '/app' ? 'app.html' : url.pathname === '/' ? 'index.html' : ['/login','/signup'].includes(url.pathname) ? 'login.html' : url.pathname);
-      const contentType = file.endsWith('.png') ? 'image/png' : file.endsWith('.svg') ? 'image/svg+xml' : file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html';
+      const contentType = file.endsWith('.png') ? 'image/png' : file.endsWith('.svg') ? 'image/svg+xml' : (file.endsWith('.js')||file.endsWith('.mjs')) ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html';
       return route.fulfill({ contentType, body: fs.readFileSync(file) });
     });
     await page.goto('http://klyo.test/app');
@@ -421,6 +434,45 @@ async function run(engine, name) {
     assert.equal(await page.locator('#contactsBody td').first().evaluate(el=>getComputedStyle(el).color),'rgb(17, 24, 39)');
     await page.reload();await page.locator('#contactsBody tr').first().waitFor();
 
+    // Real PDF generation through fixture API: draft save, preview, download and approved attachment.
+    await page.locator('.nav-item[data-view=quotes]').click();await page.locator('#addQuoteBtn').click();
+    await page.locator('#quoteModalOverlay:not(.hidden)').waitFor();
+    await page.selectOption('#quoteContactSelect','1');await page.locator('#quoteTitleInput').fill('Oferta strony internetowej');
+    await page.selectOption('#doc-layout','executive');await page.selectOption('#doc-language','pl');
+    await page.locator('#doc-reference').fill('OF-TEST-0042');await page.locator('#quoteTaxRate').fill('23');
+    await page.locator('.line-desc-input').fill('Projekt i wdrożenie strony');await page.locator('.line-price-input').fill('4500');await page.locator('.line-discount-input').fill('10');
+    await page.locator('.quote-document-details').first().locator('summary').click();
+    await page.locator('#doc-seller-name').fill('Studio Testowe Łódź');
+    await page.locator('.quote-document-details').last().locator('summary').click();const proposalTerms='Dwie rundy poprawek. Szczegóły do akceptacji. '.repeat(60).trim();await page.locator('#doc-terms').fill(proposalTerms);
+    const logo=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=160;c.height=60;const x=c.getContext('2d');x.fillStyle='#2455d6';x.fillRect(0,0,160,60);x.fillStyle='white';x.font='bold 24px Arial';x.fillText('STUDIO',20,38);return c.toDataURL('image/png').split(',')[1];});
+    await page.locator('#quoteLogoFile').setInputFiles({name:'studio.png',mimeType:'image/png',buffer:Buffer.from(logo,'base64')});try{await page.locator('#quoteLogoPreview:not([hidden])').waitFor();}catch(error){console.error('Logo error:',await page.locator('#quoteDesignError').textContent());throw error;}
+    await page.locator('#saveQuoteDefaultsBtn').click();await page.waitForFunction(()=>!document.querySelector('#saveQuoteDefaultsBtn').disabled);
+    assert.equal(quoteDefaults.seller.name,'Studio Testowe Łódź');
+    await page.locator('#quoteSavePdfBtn').click();await page.waitForFunction(()=>document.querySelector('#quotePdfFrame').dataset.rendered==='true'&&!document.querySelector('#downloadPreviewPdfBtn').disabled);
+    assert.equal(quoteSentCount,0);assert.match(await page.locator('#quotePdfFilename').textContent(),/OF-TEST-0042/);
+    const savedQuote=[...quoteStore.values()].at(-1);assert.equal(savedQuote.total,4981.5);assert.equal(savedQuote.status,'draft');assert.equal(savedQuote.document.terms,proposalTerms);assert.match(savedQuote.document.logo_data_url,/^data:image\/png/);
+    await page.locator('.pdf-next').click();await page.waitForFunction(()=>document.querySelector('#quotePdfFrame').dataset.page==='2'&&document.querySelector('#quotePdfFrame').dataset.rendered==='true');
+    await page.locator('.pdf-prev').click();await page.waitForFunction(()=>document.querySelector('#quotePdfFrame').dataset.page==='1'&&document.querySelector('#quotePdfFrame').dataset.rendered==='true');
+    await page.selectOption('.pdf-zoom','1.25');await page.waitForFunction(()=>document.querySelector('#quotePdfFrame').dataset.rendered==='true');
+    const downloadPromise=page.waitForEvent('download');await page.locator('#downloadPreviewPdfBtn').click();const download=await downloadPromise;
+    assert.equal(download.suggestedFilename(),'OF-TEST-0042.pdf');assert.equal(fs.readFileSync(await download.path()).subarray(0,5).toString(),'%PDF-');
+    if(screenshotDir)await page.screenshot({path:path.join(screenshotDir,`${name}-pdf-preview.png`),animations:'disabled'});
+    await page.locator('#closeQuotePdfBtn').click();
+    await page.setViewportSize({width:390,height:844});assert.ok(await page.locator('.quote-modal').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
+    if(screenshotDir)await page.screenshot({path:path.join(screenshotDir,`${name}-pdf-builder-mobile.png`),animations:'disabled'});
+    await page.setViewportSize({width:1440,height:1000});
+    await page.locator('#quoteSendBtn').click();await page.locator('#quotePreviewOverlay:not(.hidden)').waitFor();
+    assert.equal(await page.locator('#quoteAttachPdf').isChecked(),true);assert.match(await page.locator('#quoteAttachmentName').textContent(),/OF-TEST-0042/);assert.equal(quoteSentCount,0);
+    await page.locator('#confirmSendQuoteBtn').click();await page.waitForFunction(()=>document.querySelector('#quotePreviewOverlay').classList.contains('hidden'));
+    assert.equal(quoteSentCount,1);assert.equal(lastQuoteSend.attach_pdf,true);assert.ok(lastQuoteSend.revision);
+    await page.locator(`#quotesBody tr[data-id="${savedQuote.id}"]`).click();await page.locator('#quoteDuplicateBtn').click();
+    await page.waitForFunction(()=>document.querySelector('#quotePanelTitle').textContent.includes('(copy)'));
+    assert.equal([...quoteStore.values()].at(-1).status,'draft');assert.equal(quoteSentCount,1);
+    const copyId=[...quoteStore.values()].at(-1).id;
+    await page.locator('#sendQuoteFromPanelBtn').click();await page.locator('#quotePreviewOverlay:not(.hidden)').waitFor();
+    await page.locator('#backToEditQuoteBtn').click();await page.locator('#quoteModalOverlay:not(.hidden)').waitFor();
+    assert.equal(await page.locator('#quoteId').inputValue(),String(copyId));assert.equal(quoteSentCount,1);
+    await page.locator('#closeQuoteModalBtn').click();
     await context.clearCookies();
     await page.evaluate(() => localStorage.removeItem('klyo_token'));
     await page.goto('http://klyo.test/login');
@@ -436,6 +488,7 @@ async function run(engine, name) {
     await page.setViewportSize({width:1440,height:1000});
     await page.goto('http://klyo.test/');
     await page.locator('h1').waitFor();
+    assert.equal(await page.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)');
     await page.locator('#themeGallery .gallery-theme').first().waitFor();
     await page.locator('.demo-theme-tabs [data-demo-theme=day]').click();
     assert.equal(await page.locator('#workspaceDemo').evaluate(el=>el.style.getPropertyValue('--demo-bg')),'#edf1f7');
@@ -472,7 +525,7 @@ async function run(engine, name) {
     assert.equal(await page.locator('html').getAttribute('data-motion'),'off');
     assert.equal(await page.locator('.personal-section').evaluate(el=>getComputedStyle(el).opacity),'1');
     assert.deepEqual(errors, []);
-    console.log(`${name}: PASS — reload, failed auxiliary request, visible pipeline error, currency persistence, quote currency, Blanc/Noir, fitted stages, tasks, loss reasons, templates, saved views, personal colors and layout persistence/cancel/reset, menu/column/widget order and visibility, owner-only Platform, search races, interactive landing desktop/mobile, reduced motion, no automatic sends`);
+    console.log(`${name}: PASS — reload, failed auxiliary request, visible pipeline error, currency persistence, quote currency, Blanc/Noir, fitted stages, tasks, loss reasons, templates, saved views, personal colors and layout persistence/cancel/reset, menu/column/widget order and visibility, owner-only Platform, search races, PDF creation/download/approved attachment, white interactive landing desktop/mobile, reduced motion, no automatic sends`);
   } finally { await browser.close(); }
 }
-(async () => { await run(chromium, 'chromium'); await run(webkit, 'webkit'); })().catch(error => { console.error(error); process.exitCode = 1; });
+(async () => { if(!process.env.KLYO_BROWSER||process.env.KLYO_BROWSER==='chromium')await run(chromium, 'chromium');if(!process.env.KLYO_BROWSER||process.env.KLYO_BROWSER==='webkit')await run(webkit, 'webkit'); })().catch(error => { console.error(error); process.exitCode = 1; });

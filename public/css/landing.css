@@ -375,3 +375,7 @@ to{opacity:1;transform:none}
 *,*:before,*:after{animation:none!important;transition:none!important}
 .has-reveals .reveal{opacity:1;transform:none}
 }
+
+/* Light landing canvas; product previews retain their selected workspace palette. */
+:root{color-scheme:light;--ink:#ffffff;--panel:#f5f6f8;--line:#dce1e7;--text:#171b22;--muted:#59616f;--lime:#c7f35b;--orange:#b84b12}
+body{background:#fff}.site-header{background:#fffffff5}.wordmark{color:#171b22}.brand-symbol{color:#17210a}.nav-center a,.login-link{color:#4b5563}.nav-center a:hover,.login-link:hover{color:#111827}.launch-note{color:#485738}.hero-color{color:#4b7014}.hero-color:after{background:#a9d641}.hero-copy .trial-note{color:#5c6751}.button-outline{border-color:#c5cbd3;color:#252c35}.button-dark{background:#171b22;color:#d4f783}.hero-product{color:#f4f5f1}.custom-palette-callout>a,.workflow-features article>span{color:#42620c}.workflow-features article>span{border-color:#aabf87}.workflow-section{background:#f3f5f7}.workflow-shot{box-shadow:0 0 0 7px #e3e7ec}.email-languages button{color:#343e4b;border-color:#c8d0da}.email-demo{color:#f4f5f1}.email-languages button[aria-pressed=true]{color:#1b250c}.lime-text{color:#4d7115}.questions-list summary:after{color:#4d7115}.closing{background:#c7f35b}.site-footer .wordmark{color:#171b22}.gallery-mini{color-scheme:dark}.gallery-theme:hover,.gallery-theme[aria-pressed=true]{border-color:#5a7f20}.gallery-theme:focus-visible{outline-color:#4d7115}

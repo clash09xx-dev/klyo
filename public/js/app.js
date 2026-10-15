@@ -325,6 +325,7 @@ function showLimitOrError(err, fallbackEl) {
   wireEvents();
   KlyoSales.init();
   KlyoCustomize.init();
+  KlyoQuoteStudio.init();
 
   // A failed auxiliary request must never prevent the pipeline from loading.
   const bootResults = await Promise.allSettled([
@@ -2273,7 +2274,7 @@ async function handleDeleteProduct(id) {
 }
 
 /* ---------- quote builder ---------- */
-function openQuoteModal(prefill) {
+async function openQuoteModal(prefill) {
   els.quoteFormError.textContent = "";
   els.quoteId.value = "";
   els.quoteModalTitle.textContent = t("modal.new_quote");
@@ -2298,6 +2299,7 @@ function openQuoteModal(prefill) {
   } else {
     currentQuoteLineItems = [{ product_id: "", description: "", quantity: 1, unit_price: 0, discount_percent: 0 }];
   }
+  await KlyoQuoteStudio.open(null,allContactsCache.find(c=>String(c.id)===els.quoteContactSelect.value)||{});
   renderQuoteLineItems();
   els.quoteModalOverlay.classList.remove("hidden");
 }
@@ -2310,6 +2312,7 @@ function populateQuoteContactSelect() {
 }
 
 function handleQuoteContactChange() {
+  KlyoQuoteStudio.contactChanged();
   const contactId = Number(els.quoteContactSelect.value) || null;
   const contact = allContactsCache.find((c) => c.id === contactId);
 
@@ -2368,10 +2371,10 @@ function buildLineItemRow(item, index) {
       <option value="">Custom item</option>
       ${products.map((p) => `<option value="${p.id}" ${String(p.id) === String(item.product_id) ? "selected" : ""}>${escapeHtml(p.name)}</option>`).join("")}
     </select>
-    <input class="line-desc-input" type="text" placeholder="Description" value="${escapeHtml(item.description || "")}" />
-    <input class="line-qty-input" type="number" min="0" step="1" value="${item.quantity ?? 1}" />
-    <input class="line-price-input" type="number" min="0" step="0.01" value="${item.unit_price ?? 0}" />
-    <input class="line-discount-input" type="number" min="0" max="100" step="1" value="${item.discount_percent ?? 0}" />
+    <input class="line-desc-input" maxlength="2000" type="text" placeholder="Description" value="${escapeHtml(item.description || "")}" />
+    <input class="line-qty-input" aria-label="Quantity" type="number" min="0.01" step="0.01" value="${item.quantity ?? 1}" />
+    <input class="line-price-input" aria-label="Unit price" type="number" min="0" step="0.01" value="${item.unit_price ?? 0}" />
+    <input class="line-discount-input" aria-label="Discount %" type="number" min="0" max="100" step="1" value="${item.discount_percent ?? 0}" />
     <span class="line-total-display mono">$0.00</span>
     <button type="button" class="line-remove-btn" title="Remove">×</button>
   `;
@@ -2419,23 +2422,13 @@ function buildLineItemRow(item, index) {
 }
 
 function recomputeQuoteTotals() {
-  const currency = els.quoteCurrencySelect.value || workspaceDefaultCurrency;
-  let subtotal = 0;
-  let total = 0;
-  els.quoteItemsContainer.querySelectorAll(".quote-line-row").forEach((row, index) => {
-    const item = currentQuoteLineItems[index];
-    const qty = Number(item.quantity) || 0;
-    const price = Number(item.unit_price) || 0;
-    const discount = Math.min(100, Math.max(0, Number(item.discount_percent) || 0));
-    const gross = qty * price;
-    const lineTotal = gross * (1 - discount / 100);
-    subtotal += gross;
-    total += lineTotal;
-    row.querySelector(".line-total-display").textContent = fmtMoney(lineTotal, currency, 2);
-  });
-  els.quoteSubtotalValue.textContent = fmtMoney(subtotal, currency, 2);
-  els.quoteDiscountValue.textContent = `−${fmtMoney(subtotal - total, currency, 2)}`;
-  els.quoteTotalValue.textContent = fmtMoney(total, currency, 2);
+  const currency=els.quoteCurrencySelect.value||workspaceDefaultCurrency;
+  try{
+    const totals=KlyoQuoteCore.computeTotals(currentQuoteLineItems,Number(document.getElementById('quoteTaxRate')?.value||0));
+    els.quoteItemsContainer.querySelectorAll('.quote-line-row').forEach((row,index)=>row.querySelector('.line-total-display').textContent=fmtMoney(totals.computed[index].line_total,currency,2));
+    els.quoteSubtotalValue.textContent=fmtMoney(totals.subtotal,currency,2);els.quoteDiscountValue.textContent='−'+fmtMoney(totals.discountTotal,currency,2);els.quoteTotalValue.textContent=fmtMoney(totals.total,currency,2);
+    document.getElementById('quoteTaxRow').hidden=!totals.tax_rate;document.getElementById('quoteTaxLabel').textContent=(KlyoI18n.getLang()==='pl'?'Podatek':'Tax')+` (${totals.tax_rate}%)`;document.getElementById('quoteTaxValue').textContent=fmtMoney(totals.tax_total,currency,2);
+  }catch{els.quoteTotalValue.textContent='—';}
 }
 
 function collectQuoteRecipientIds() {
@@ -2461,7 +2454,9 @@ async function saveQuote(alsoSend) {
     recipient_ids: els.quoteRecipientsField.classList.contains("hidden") ? [] : collectQuoteRecipientIds(),
   };
 
+  try{Object.assign(payload,KlyoQuoteStudio.collect());KlyoQuoteCore.computeTotals(payload.line_items,payload.tax_rate);}catch(error){els.quoteFormError.textContent=error.message;return;}
   const id = els.quoteId.value;
+  document.getElementById('quoteSavePdfBtn').disabled=true;
   els.quoteSendBtn.disabled = true;
   els.quoteSaveDraftBtn.disabled = true;
   try {
@@ -2473,7 +2468,9 @@ async function saveQuote(alsoSend) {
       quoteId = created.quote.id;
     }
 
-    if (alsoSend) {
+    els.quoteId.value=quoteId;
+    if(alsoSend==='pdf'){await KlyoQuoteStudio.preview(quoteId);}
+    else if (alsoSend) {
       await openQuoteSendPreview(quoteId);
     } else {
       closeQuoteModal();
@@ -2486,6 +2483,7 @@ async function saveQuote(alsoSend) {
   } finally {
     els.quoteSendBtn.disabled = false;
     els.quoteSaveDraftBtn.disabled = false;
+    document.getElementById('quoteSavePdfBtn').disabled=false;
   }
 }
 
@@ -2495,6 +2493,7 @@ async function openQuoteSendPreview(quoteId) {
   try {
     const email = await API.get(`/quotes/${quoteId}/preview`);
     quotePendingSendId = quoteId;
+    KlyoQuoteStudio.emailPreview(email);
     els.quotePreviewTo.textContent = email.toNames && email.toNames.length ? `${email.toNames.join(", ")} (${email.to.join(", ")})` : email.to.join(", ");
     els.quotePreviewSubject.value = email.subject;
     els.quotePreviewBody.value = email.body;
@@ -2506,9 +2505,10 @@ async function openQuoteSendPreview(quoteId) {
 }
 function closeQuotePreview() { els.quotePreviewOverlay.classList.add("hidden"); quotePendingSendId = null; }
 
-function backToEditFromPreview() {
-  closeQuotePreview();
-  els.quoteModalOverlay.classList.remove("hidden");
+async function backToEditFromPreview() {
+  const id=quotePendingSendId;closeQuotePreview();if(!id)return;
+  els.quotePanelOverlay.dataset.quoteId=id;
+  try{await handleEditQuoteFromPanel();}catch(error){toast(error.message,'error');}
 }
 
 async function confirmSendQuote() {
@@ -2519,6 +2519,7 @@ async function confirmSendQuote() {
     await API.post(`/quotes/${quotePendingSendId}/send`, {
       subject: els.quotePreviewSubject.value,
       body: els.quotePreviewBody.value,
+      ...KlyoQuoteStudio.sendOptions(),
     });
     closeQuotePreview();
     toast("Quote sent");
@@ -2650,6 +2651,7 @@ async function handleEditQuoteFromPanel() {
   currentQuoteLineItems = lineItems.map((i) => ({
     product_id: i.product_id, description: i.description, quantity: i.quantity, unit_price: i.unit_price, discount_percent: i.discount_percent,
   }));
+  await KlyoQuoteStudio.open(quote,allContactsCache.find(c=>c.id===quote.contact_id)||{});
   renderQuoteLineItems();
   els.quoteModalOverlay.classList.remove("hidden");
 }

@@ -1,167 +1,25 @@
-// server/services/quoteRenderer.js
-// Generates a self-contained, print-ready HTML page for a quote.
-// Used by the public /q/:token route — no auth required.
-
-function esc(str) {
-  return String(str || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function fmt(amount, currency) {
-  try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency || "USD",
-      minimumFractionDigits: 2,
-    }).format(amount);
-  } catch {
-    return `${currency || ""} ${Number(amount).toFixed(2)}`;
-  }
-}
-
-function fmtDate(d) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-}
-
-function statusBadge(status) {
-  const map = {
-    draft:    { color: "#6b7280", label: "Draft" },
-    sent:     { color: "#3b82f6", label: "Sent" },
-    accepted: { color: "#10b981", label: "Accepted" },
-    declined: { color: "#ef4444", label: "Declined" },
-  };
-  const s = map[status] || map.draft;
-  return `<span style="display:inline-block; padding:3px 10px; border-radius:99px; background:${s.color}22; color:${s.color}; font-size:12px; font-weight:600; border:1px solid ${s.color}44;">${s.label}</span>`;
-}
-
+const Q = require("../../public/js/quote-core");
+const { documentFor } = require("./quotePdf");
+const esc = (value) =>
+  String(value ?? "").replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
 function renderQuoteHTML(quote, autoPrint = false) {
-  const currency = quote.currency || "USD";
-  const items = quote.line_items || [];
-
-  const lineRows = items.map(item => `
-    <tr>
-      <td>${esc(item.description)}</td>
-      <td class="num">${Number(item.quantity).toFixed(2)}</td>
-      <td class="num">${fmt(item.unit_price, currency)}</td>
-      <td class="num">${Number(item.discount_percent) > 0 ? `${Number(item.discount_percent).toFixed(1)}%` : "—"}</td>
-      <td class="num bold">${fmt(item.line_total, currency)}</td>
-    </tr>`).join("");
-
-  const discountRow = Number(quote.discount_total) > 0
-    ? `<tr class="subtotal-row"><td colspan="4" class="right muted">Discounts</td><td class="num muted">−${fmt(quote.discount_total, currency)}</td></tr>`
-    : "";
-
-  return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>${esc(quote.title || "Quote")} · ${esc(quote.workspace_name)}</title>
-<meta name="robots" content="noindex" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: "Inter", sans-serif; font-size: 14px; line-height: 1.6; color: #111827; background: #f9fafb; }
-  .page { max-width: 800px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 16px rgba(0,0,0,.08); overflow: hidden; }
-  .header { padding: 36px 48px 28px; border-bottom: 2px solid #f3f4f6; display: flex; justify-content: space-between; align-items: flex-start; }
-  .brand { font-size: 22px; font-weight: 700; color: #111; }
-  .header-right { text-align: right; }
-  .quote-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-  .meta { font-size: 12.5px; color: #6b7280; }
-  .body { padding: 32px 48px; }
-  .section { margin-bottom: 28px; }
-  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #9ca3af; margin-bottom: 8px; }
-  .to-block { font-size: 15px; font-weight: 600; }
-  .to-block .email { font-size: 13px; font-weight: 400; color: #6b7280; }
-  .intro { background: #f9fafb; border-left: 3px solid #6366f1; padding: 14px 18px; border-radius: 0 8px 8px 0; font-size: 14px; color: #374151; white-space: pre-wrap; }
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  th { text-align: left; padding: 8px 12px; background: #f9fafb; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #9ca3af; border-bottom: 2px solid #f3f4f6; }
-  td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
-  .num { text-align: right; font-variant-numeric: tabular-nums; }
-  .right { text-align: right; }
-  .muted { color: #9ca3af; }
-  .bold { font-weight: 600; }
-  .subtotal-row td { border-bottom: none; padding-top: 4px; padding-bottom: 4px; }
-  .total-row td { border-top: 2px solid #111827; font-size: 16px; font-weight: 700; padding-top: 12px; }
-  .footer { padding: 24px 48px; background: #f9fafb; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; }
-  .footer .muted { font-size: 12px; color: #9ca3af; }
-  .print-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; background: #111827; color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
-  @media print {
-    body { background: #fff; }
-    .page { box-shadow: none; border-radius: 0; margin: 0; max-width: 100%; }
-    .print-btn, .no-print { display: none !important; }
-    .footer { background: #fff; }
-  }
-</style>
-${autoPrint ? "<script>window.addEventListener('load', () => { setTimeout(() => window.print(), 400); });</script>" : ""}
-</head>
-<body>
-<div class="page">
-  <div class="header">
-    <div>
-      <div class="brand">${esc(quote.workspace_name)}</div>
-      <div class="meta" style="margin-top:4px;">Quote · ${fmtDate(quote.created_at)}</div>
-      <div style="margin-top:8px;">${statusBadge(quote.status)}</div>
-    </div>
-    <div class="header-right">
-      <div class="quote-title">${esc(quote.title || "Quote")}</div>
-      ${quote.sent_at ? `<div class="meta">Sent ${fmtDate(quote.sent_at)}</div>` : ""}
-      ${quote.accepted_at ? `<div class="meta" style="color:#10b981;">Accepted ${fmtDate(quote.accepted_at)}</div>` : ""}
-    </div>
-  </div>
-
-  <div class="body">
-    <div class="section">
-      <div class="section-label">Prepared for</div>
-      <div class="to-block">
-        ${esc(quote.contact_name)}
-        ${quote.company_name ? `<span class="muted"> · ${esc(quote.company_name)}</span>` : ""}
-        ${quote.contact_email ? `<div class="email">${esc(quote.contact_email)}</div>` : ""}
-      </div>
-    </div>
-
-    ${quote.intro_message ? `
-    <div class="section">
-      <div class="section-label">Message</div>
-      <div class="intro">${esc(quote.intro_message)}</div>
-    </div>` : ""}
-
-    <div class="section">
-      <table>
-        <thead>
-          <tr>
-            <th style="width:40%;">Description</th>
-            <th class="num">Qty</th>
-            <th class="num">Unit price</th>
-            <th class="num">Discount</th>
-            <th class="num">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${lineRows}
-          <tr class="subtotal-row"><td colspan="4" class="right muted">Subtotal</td><td class="num muted">${fmt(quote.subtotal, currency)}</td></tr>
-          ${discountRow}
-          <tr class="total-row"><td colspan="4" class="right">Total</td><td class="num">${fmt(quote.total, currency)}</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="footer">
-    <span class="muted">Generated by Klyo · klyolabs.com</span>
-    <button class="print-btn no-print" onclick="window.print()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-      Print / Save PDF
-    </button>
-  </div>
-</div>
-</body>
-</html>`;
+  const d = documentFor(quote),
+    L = Q.labels(d.language),
+    money = (v) => esc(Q.money(v, quote.currency, d.language));
+  const party = (p) =>
+    `<h3>${esc(p.name)}</h3><p>${esc(p.details)}</p>${p.tax_id ? `<p>${L.taxId}: ${esc(p.tax_id)}</p>` : ""}<p>${esc(p.email)}${p.email && p.phone ? " · " : ""}${esc(p.phone)}</p>`;
+  const section = (title, value) =>
+    value
+      ? `<section><h2>${esc(title)}</h2><p class="prose">${esc(value)}</p></section>`
+      : "";
+  return `<!doctype html><html lang="${d.language}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(quote.title)} · ${esc(d.seller.name)}</title><style>
+ *{box-sizing:border-box}body{margin:0;background:#edf0f5;font:14px/1.65 Arial,sans-serif;color:#253347}main{max-width:880px;background:white;margin:30px auto;box-shadow:0 4px 30px #192c4212;border-top:5px solid ${d.accent}}header{padding:40px 48px 28px}header img{max-width:150px;max-height:60px;margin-bottom:20px}header>.brand{font-size:20px;font-weight:700}header>small{color:${d.accent};display:block;margin:26px 0 8px;text-transform:uppercase;letter-spacing:.12em}h1{font-size:34px;line-height:1.2;overflow-wrap:anywhere;margin:0 0 25px}.meta{display:flex;gap:35px;flex-wrap:wrap;font-size:12px}.meta b{display:block;color:#6a7789;font-size:10px;text-transform:uppercase}.content{padding:0 48px 40px}.parties{display:grid;grid-template-columns:1fr 1fr;gap:40px;padding-block:25px;border-block:1px solid #dce2e9}.parties h3{margin:5px 0;font-size:16px}.parties p{margin:3px 0;white-space:pre-wrap;overflow-wrap:anywhere}.label,h2{text-transform:uppercase;letter-spacing:.07em;font-size:11px;color:#657487}section{margin-top:28px}.prose{white-space:pre-wrap;overflow-wrap:anywhere}table{width:100%;border-collapse:collapse;margin-top:15px;font-size:12px}thead{background:#edf1f6}th,td{padding:12px 9px;border-bottom:1px solid #e2e8ef;vertical-align:top}th{text-align:left;color:#647287;font-size:10px}td:first-child{width:43%;white-space:pre-wrap;overflow-wrap:anywhere}.num{text-align:right}.totals{margin:25px 0 0 auto;max-width:350px}.totals div{display:flex;justify-content:space-between;gap:20px;padding:6px 12px}.totals .final{background:#152235;color:white;font-size:19px;font-weight:700;margin-top:8px;padding:13px 12px}footer{padding:20px 48px;border-top:1px solid #e2e8ef;color:#748092;font-size:11px}.actions{display:flex;justify-content:center;gap:12px;margin:20px}.actions a,.actions button{background:#152235;color:white;padding:11px 20px;border:0;border-radius:4px;font:inherit;text-decoration:none;cursor:pointer}.executive header{background:#152235;color:white}.executive header>small{color:#bac7d8}.executive header img{padding:8px;background:white;border-radius:4px}.executive .meta b{color:#a4b5ca}@media(max-width:600px){main{margin:0}header,.content,footer{padding-inline:22px}.parties{grid-template-columns:1fr;gap:18px}h1{font-size:27px}.table-wrap{overflow:auto}table{min-width:540px}}@media print{body{background:white}main{box-shadow:none;margin:0;max-width:100%}.actions{display:none}thead{display:table-header-group}tr{break-inside:avoid}h2{break-after:avoid}}
+ </style></head><body><div class="actions"><a href="/q/${esc(quote.public_token)}/pdf">${L.download}</a><button onclick="window.print()">${L.print}</button></div><main class="${d.layout}"><header>${d.logo_data_url ? `<img src="${esc(d.logo_data_url)}" alt="${esc(d.seller.name)}">` : `<div class="brand">${esc(d.seller.name)}</div>`}<small>${L.quote} · ${esc(L[quote.status] || quote.status)}</small><h1>${esc(quote.title)}</h1><div class="meta"><div><b>${L.reference}</b>${esc(Q.reference(quote))}</div><div><b>${L.issued}</b>${esc(d.issued_on)}</div>${d.valid_until ? `<div><b>${L.valid}</b>${esc(d.valid_until)}</div>` : ""}</div></header><div class="content"><div class="parties"><div><span class="label">${L.from}</span>${party(d.seller)}</div><div><span class="label">${L.to}</span>${party(d.buyer)}</div></div>${section("", quote.intro_message)}${section(L.scope, d.scope)}<section><h2>${L.items}</h2><div class="table-wrap"><table><thead><tr><th>${L.description}</th><th class="num">${L.qty}</th><th class="num">${L.price}</th><th class="num">${L.discount}</th><th class="num">${L.amount}</th></tr></thead><tbody>${(quote.line_items || []).map((i) => `<tr><td>${esc(i.description)}</td><td class="num">${Number(i.quantity)}</td><td class="num">${money(i.unit_price)}</td><td class="num">${Number(i.discount_percent) || 0}%</td><td class="num">${money(i.line_total)}</td></tr>`).join("")}</tbody></table></div><div class="totals"><div><span>${L.subtotal}</span><span>${money(quote.subtotal)}</span></div>${Number(quote.discount_total) ? `<div><span>${L.discount}</span><span>-${money(quote.discount_total)}</span></div>` : ""}${Number(quote.tax_rate) ? `<div><span>${L.tax} (${Number(quote.tax_rate)}%)</span><span>${money(quote.tax_total)}</span></div>` : ""}<div class="final"><span>${L.total}</span><span>${money(quote.total)}</span></div></div></section>${section(L.payment, d.payment)}${section(L.delivery, d.delivery)}${section(L.terms, d.terms)}</div><footer>${esc(d.footer || d.seller.email || d.seller.name)}</footer></main>${autoPrint ? "<script>addEventListener('load',()=>print())</script>" : ""}</body></html>`;
 }
-
 module.exports = { renderQuoteHTML };

@@ -1,0 +1,381 @@
+.quote-modal {
+  width: min(1000px, 96vw);
+  max-width: 1000px;
+}
+.quote-modal > .modal-head {
+  position: sticky;
+  top: -32px;
+  background: var(--surface);
+  z-index: 2;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+}
+.quote-document-design {
+  border: 1px solid var(--border);
+  padding: 17px;
+  border-radius: 5px;
+  margin: 18px 0;
+  background: var(--bg-soft);
+}
+.quote-document-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 14px;
+}
+.quote-document-heading h3 {
+  font-size: 15px;
+}
+.quote-document-heading p {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+.quote-design-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.quote-design-fields label,
+.quote-party-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.quote-design-fields input,
+.quote-design-fields select,
+.quote-party-grid input,
+.quote-party-grid textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  font-size: 12px;
+}
+.quote-design-fields input[type="color"] {
+  height: 34px;
+  padding: 3px;
+}
+.quote-logo-control {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+  padding-top: 14px;
+  font-size: 11px;
+}
+.quote-logo-control img {
+  max-width: 100px;
+  max-height: 45px;
+  object-fit: contain;
+  background: white;
+  padding: 4px;
+  border-radius: 3px;
+}
+.quote-logo-control input {
+  max-width: 220px;
+  font-size: 10px;
+}
+.quote-logo-control input::file-selector-button {
+  font: inherit;
+  border: 1px solid var(--border);
+  padding: 6px;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 3px;
+}
+.quote-document-details {
+  border-bottom: 1px solid var(--border);
+  padding: 14px 0;
+}
+.quote-document-details > summary {
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  list-style-position: inside;
+}
+.quote-document-details[open] > summary {
+  margin-bottom: 15px;
+}
+.quote-party-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+.quote-party-grid h4 {
+  font-size: 12px;
+  margin: 0 0 14px;
+}
+.quote-party-grid .field {
+  margin-bottom: 10px;
+}
+.quote-party-grid textarea {
+  min-height: 75px;
+  resize: vertical;
+}
+.quote-wide-field {
+  margin: 12px 0;
+}
+.quote-wide-field label {
+  font-size: 11px;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 6px;
+}
+.quote-wide-field textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 12px;
+  min-height: 80px;
+  resize: vertical;
+}
+.quote-design-error {
+  font-size: 11px;
+  color: var(--danger);
+  margin-top: 10px;
+}
+.quote-attachment {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  font-size: 11px;
+  margin-bottom: 15px;
+}
+.quote-attachment label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.quote-attachment input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--accent-1);
+}
+.quote-attachment > span {
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+.quote-pdf-modal {
+  width: min(1100px, 95vw);
+  max-width: 1100px;
+  max-height: 94dvh;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+}
+.quote-pdf-modal .modal-head {
+  flex: none;
+  margin-bottom: 10px;
+}
+.quote-pdf-modal h2 {
+  font-size: 16px;
+}
+.quote-pdf-modal .muted {
+  font-size: 10px;
+  margin-top: 3px;
+}
+.quote-pdf-modal .quote-pdf-viewer {
+  width: 100%;
+  height: 70dvh;
+  min-height: 250px;
+  border: 1px solid var(--border);
+  background: #e4e7eb;
+}
+.quote-pdf-mobile-hint {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 7px;
+}
+.quote-pdf-modal .modal-actions {
+  margin-top: 10px;
+}
+.quote-modal .modal-actions {
+  position: sticky;
+  bottom: -32px;
+  z-index: 2;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 16px 0;
+  flex-wrap: wrap;
+}
+.quote-line-row {
+  grid-template-columns: 18px 125px minmax(160px, 1fr) 65px 90px 65px 100px 26px;
+}
+.quote-line-headers {
+  grid-template-columns: 18px 125px minmax(160px, 1fr) 65px 90px 65px 100px 26px;
+}
+.quote-line-row .line-desc-input {
+  font-size: 12px;
+}
+.quote-line-row input,
+.quote-line-row select {
+  min-width: 0;
+}
+.quote-save-default-note {
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-top: 10px;
+}
+#quotePdfOverlay {
+  z-index: 80;
+}
+@media (max-width: 800px) {
+  .quote-line-row {
+    grid-template-columns: 18px 1fr 1fr 70px;
+    gap: 9px;
+    padding: 13px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .quote-line-headers {
+    display: none;
+  }
+  .quote-line-row .line-desc-input {
+    grid-column: 2/-1;
+  }
+  .quote-line-row .line-product-select {
+    grid-column: 2/4;
+    grid-row: 1;
+  }
+  .quote-line-row .line-remove-btn {
+    grid-column: 4;
+    grid-row: 1;
+    justify-self: end;
+  }
+  .quote-line-row .line-qty-input {
+    grid-column: 2;
+    grid-row: 3;
+  }
+  .quote-line-row .line-price-input {
+    grid-column: 3;
+    grid-row: 3;
+  }
+  .quote-line-row .line-discount-input {
+    grid-column: 4;
+    grid-row: 3;
+  }
+  .quote-line-row .line-total-display {
+    grid-column: 2/-1;
+    grid-row: 4;
+  }
+  .quote-line-row .drag-handle {
+    grid-row: 1/5;
+    display: block;
+  }
+  .quote-design-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+  .quote-document-heading {
+    align-items: start;
+  }
+  .quote-document-heading > .btn {
+    max-width: 130px;
+    white-space: normal;
+  }
+  .quote-party-grid {
+    grid-template-columns: 1fr;
+  }
+  .quote-modal .modal-actions {
+    bottom: -24px;
+  }
+  .quote-modal > .modal-head {
+    top: -24px;
+  }
+}
+@media (max-width: 500px) {
+  .quote-modal {
+    padding: 18px;
+  }
+  .quote-modal > .modal-head {
+    top: -18px;
+  }
+  .quote-design-fields {
+    gap: 10px;
+  }
+  .quote-document-design {
+    padding: 12px;
+  }
+  .quote-design-fields input,
+  .quote-design-fields select {
+    font-size: 11px;
+  }
+  .quote-logo-control {
+    flex-wrap: wrap;
+  }
+  .quote-modal .modal-actions {
+    bottom: -18px;
+    gap: 8px;
+  }
+  .quote-modal .modal-actions .btn {
+    font-size: 10px;
+    padding: 8px;
+  }
+  .quote-pdf-modal {
+    width: 96vw;
+    padding: 12px;
+  }
+  .quote-pdf-modal .quote-pdf-viewer {
+    height: 65dvh;
+  }
+  .quote-line-row {
+    grid-template-columns: 12px 1fr 1fr 56px;
+    padding: 10px;
+    gap: 7px;
+  }
+}
+
+.quote-pdf-viewer {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #182438;
+}
+.pdf-page-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 9px;
+  background: #f4f6f8;
+  border-bottom: 1px solid #cdd3dc;
+  flex: none;
+  font-size: 11px;
+}
+.pdf-page-toolbar button,
+.pdf-page-toolbar select {
+  background: white;
+  color: #233047;
+  border: 1px solid #c5cdda;
+  border-radius: 3px;
+  padding: 5px 9px;
+  font-size: 11px;
+}
+.pdf-page-toolbar button:disabled {
+  opacity: 0.35;
+}
+.pdf-canvas-scroll {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  padding: 18px;
+  text-align: center;
+}
+.pdf-canvas-scroll canvas {
+  display: block;
+  margin: auto;
+  background: white;
+  box-shadow: 0 2px 10px #11182726;
+}
+.pdf-loading {
+  padding: 25px;
+  text-align: center;
+  font-size: 12px;
+  color: #3e4b5c;
+}
