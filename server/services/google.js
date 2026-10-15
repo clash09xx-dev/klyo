@@ -101,16 +101,18 @@ async function getGoogleProfile(code) {
  * @param {string} refreshToken - stored on the workspace row
  * @param {string} to, subject, body
  */
-async function sendViaGmail(refreshToken, to, subject, body) {
+async function buildGmailMessage(to, subject, body, attachments = []) {
+  const MailComposer = require('nodemailer/lib/mail-composer');
+  return new MailComposer({to,subject,text:body,attachments}).compile().build();
+}
+async function sendViaGmail(refreshToken, to, subject, body, attachments = []) {
   const client = getOAuthClient();
   client.setCredentials({ refresh_token: refreshToken });
 
   const gmail = google.gmail({ version: "v1", auth: client });
 
-  const message = [`To: ${to}`, `Subject: ${encodeSubject(subject)}`, "Content-Type: text/plain; charset=utf-8", "", body].join(
-    "\r\n"
-  );
-  const encodedMessage = Buffer.from(message).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const message = await buildGmailMessage(to, subject, body, attachments);
+  const encodedMessage = message.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
   await gmail.users.messages.send({ userId: "me", requestBody: { raw: encodedMessage } });
 }
@@ -120,4 +122,4 @@ function encodeSubject(subject) {
   return `=?UTF-8?B?${Buffer.from(subject, "utf-8").toString("base64")}?=`;
 }
 
-module.exports = { isConfigured, getConsentUrl, exchangeCodeForTokens, sendViaGmail, getSigninConsentUrl, getGoogleProfile };
+module.exports = { isConfigured, getConsentUrl, exchangeCodeForTokens, sendViaGmail, buildGmailMessage, getSigninConsentUrl, getGoogleProfile };

@@ -31,7 +31,7 @@ function getEnvTransporter() {
  * @param {string} body - plain text
  * @param {object} [workspace] - workspace row with smtp_* and/or gmail_refresh_token fields
  */
-async function sendOfferEmail(to, subject, body, workspace) {
+async function sendOfferEmail(to, subject, body, workspace, attachments = []) {
   if (!to) throw new Error("This contact has no email address on file.");
 
   const html = body
@@ -49,13 +49,13 @@ async function sendOfferEmail(to, subject, body, workspace) {
     });
     const fromEmail = workspace.smtp_from_email || workspace.smtp_user;
     const fromName  = workspace.smtp_from_name  || "Klyo";
-    await t.sendMail({ from: `"${fromName}" <${fromEmail}>`, to, subject, text: body, html });
+    await t.sendMail({ from: `"${fromName}" <${fromEmail}>`, to, subject, text: body, html, attachments });
     return;
   }
 
   // 2. Legacy Gmail OAuth
   if (workspace?.gmail_refresh_token) {
-    await sendViaGmail(workspace.gmail_refresh_token, to, subject, body);
+    await sendViaGmail(workspace.gmail_refresh_token, to, subject, body, attachments);
     return;
   }
 
@@ -68,7 +68,7 @@ async function sendOfferEmail(to, subject, body, workspace) {
   }
   const fromName  = process.env.SMTP_FROM_NAME  || "Klyo";
   const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER;
-  await t.sendMail({ from: `"${fromName}" <${fromEmail}>`, to, subject, text: body, html });
+  await t.sendMail({ from: `"${fromName}" <${fromEmail}>`, to, subject, text: body, html, attachments });
 }
 
 function escapeHtml(str) {

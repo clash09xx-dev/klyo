@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/css/style.css" />
 <link rel="stylesheet" href="/css/workspace.css" />
 <link rel="stylesheet" href="/css/personalize.css" />
+<link rel="stylesheet" href="/css/quote-studio.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Cloudflare Web Analytics — see public/login.html for setup notes. -->
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "YOUR_TOKEN_HERE"}'></script>
@@ -1133,7 +1134,7 @@
         </div>
         <div class="field">
           <label for="quoteTitleInput">Title</label>
-          <input id="quoteTitleInput" type="text" placeholder="Q3 service package" />
+          <input id="quoteTitleInput" maxlength="240" type="text" placeholder="Q3 service package" />
         </div>
       </div>
 
@@ -1144,7 +1145,7 @@
 
       <div class="field">
         <label for="quoteIntroInput">Intro message (optional)</label>
-        <textarea id="quoteIntroInput" placeholder="A short note to open the email with" style="min-height:54px;"></textarea>
+        <textarea maxlength="6000" id="quoteIntroInput" placeholder="A short note to open the email with" style="min-height:54px;"></textarea>
       </div>
 
       <div class="field" style="margin-bottom:10px;">
@@ -1171,6 +1172,7 @@
         </select>
       </div>
 
+      <div id="quoteDocumentControls"></div>
       <div class="section-title">Line items</div>
       <div class="quote-line-headers">
         <span></span><span>Product</span><span>Description</span><span>Qty</span><span>Unit price</span><span>Disc. %</span><span>Total</span><span></span>
@@ -1181,6 +1183,7 @@
       <div class="quote-totals">
         <div><span>Subtotal</span><span class="mono" id="quoteSubtotalValue">$0.00</span></div>
         <div><span>Discount</span><span class="mono" id="quoteDiscountValue">−$0.00</span></div>
+        <div id="quoteTaxRow" hidden><span id="quoteTaxLabel">Tax</span><span class="mono" id="quoteTaxValue"></span></div>
         <div class="quote-total-final"><span>Total</span><span class="mono" id="quoteTotalValue">$0.00</span></div>
       </div>
 
@@ -1188,6 +1191,7 @@
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" id="quoteCancelBtn">Cancel</button>
         <button type="button" class="btn" id="quoteSaveDraftBtn">Save draft</button>
+        <button type="button" class="btn" id="quoteSavePdfBtn" data-quote-label="savePdf">Save & preview PDF</button>
         <button type="submit" class="btn btn-primary" id="quoteSendBtn">Save & preview</button>
       </div>
     </form>
@@ -1217,8 +1221,11 @@
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <a class="btn btn-ghost btn-sm" id="quotePrintLink" href="#" target="_blank" rel="noopener">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          Print / PDF
+          Open share link
         </a>
+        <button class="btn btn-ghost btn-sm" id="quoteDownloadPdfBtn" data-quote-label="download">Download PDF</button>
+        <button class="btn btn-ghost btn-sm" id="quoteViewPdfBtn" data-quote-label="previewPdf">Preview PDF</button>
+        <button class="btn btn-ghost btn-sm" id="quoteDuplicateBtn" data-quote-label="duplicate">Duplicate</button>
         <button class="btn btn-ghost btn-sm hidden" id="editQuoteBtn">Edit</button>
         <button class="btn btn-ghost btn-sm hidden" id="declineQuoteBtn">Mark declined</button>
         <button class="btn btn-primary btn-sm hidden" id="acceptQuoteBtn">Mark accepted</button>
@@ -1559,6 +1566,7 @@
       <label for="quotePreviewBody">Body</label>
       <textarea id="quotePreviewBody" style="min-height:220px;"></textarea>
     </div>
+    <div class="quote-attachment"><label><input type="checkbox" id="quoteAttachPdf" checked> <span data-quote-label="attach">Attach proposal PDF</span></label><span id="quoteAttachmentName"></span><button type="button" class="btn btn-ghost btn-sm" id="quoteEmailPdfPreview" data-quote-label="previewPdf">Preview PDF</button></div>
     <div class="form-error" id="quotePreviewError"></div>
     <div class="modal-actions">
       <button type="button" class="btn btn-ghost" id="backToEditQuoteBtn">Back to edit</button>
@@ -1762,6 +1770,9 @@
 <script src="/js/i18n.js"></script>
 <div class="overlay hidden" id="salesNameOverlay"><div class="modal"><div class="modal-head"><h2 id="salesNameTitle">Save</h2></div><form id="salesNameForm"><div class="field"><label for="salesNameInput" data-sales-label="name">Name</label><input id="salesNameInput" required maxlength="80"/></div><div class="form-error" id="salesNameError"></div><div class="modal-actions"><button type="button" class="btn btn-ghost" id="salesNameCancel" data-sales-label="cancel">Cancel</button><button class="btn btn-primary" id="salesNameSubmit" data-sales-label="save">Save</button></div></form></div></div>
 <div class="overlay hidden" id="lossReasonOverlay"><div class="modal"><div class="modal-head"><h2 data-sales-label="markLost">Mark as lost</h2></div><form id="lossReasonForm"><div class="field"><label for="lossReasonInput" data-sales-label="lostReason">Reason for losing this deal</label><textarea id="lossReasonInput" required maxlength="1000"></textarea></div><div class="form-error" id="lossReasonError"></div><div class="modal-actions"><button type="button" class="btn btn-ghost" id="lossReasonCancel" data-sales-label="cancel">Cancel</button><button class="btn btn-primary" data-sales-label="markLost">Mark as lost</button></div></form></div></div>
+<div class="overlay hidden" id="quotePdfOverlay"><div class="modal quote-pdf-modal"><div class="modal-head"><div><h2 data-quote-label="previewPdf">Preview PDF</h2><p id="quotePdfFilename" class="muted"></p></div><button type="button" class="modal-close" id="closeQuotePdfBtn" aria-label="Close PDF">×</button></div><div id="quotePdfError" class="form-error"></div><div id="quotePdfFrame" class="quote-pdf-viewer" role="region" aria-label="Proposal PDF preview"></div><p class="quote-pdf-mobile-hint" data-quote-label="mobilePdf">If your browser cannot display the preview, download the PDF to open it.</p><div class="modal-actions"><button type="button" class="btn btn-primary" id="downloadPreviewPdfBtn" data-quote-label="download">Download PDF</button></div></div></div>
+<script src="/js/quote-core.js"></script>
+<script src="/js/quote-studio.js"></script>
 <script src="/js/preferences-core.js"></script>
 <script src="/js/customize.js"></script>
 <script src="/js/sales.js"></script>
