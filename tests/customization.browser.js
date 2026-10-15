@@ -455,7 +455,7 @@ const publicDir = path.join(__dirname, "../public"),
         await page.locator("#teamAuditRows tr").first().waitFor();
         assert.match(
           await page.locator("#teamAuditRows").textContent(),
-          /POST|PUT/,
+          /Added|Updated|Review recorded/,
         );
         await page.screenshot({
           path: path.join(out, `${name}-owner-audit.png`),
