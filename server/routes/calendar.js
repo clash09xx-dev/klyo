@@ -1,10 +1,10 @@
 // server/routes/calendar.js
 const express = require("express");
 const db = require("../db");
-const { requireAuth } = require("../middleware/auth");
+const { requireAuth,requireEditor } = require("../middleware/auth");
 
 const router = express.Router();
-router.use(requireAuth);
+router.use(requireAuth,require("../middleware/billing").requirePaidAccess);
 
 // GET /api/calendar?start=&end=
 router.get("/", async (req, res) => {
@@ -38,7 +38,7 @@ router.get("/", async (req, res) => {
 });
 
 // POST /api/calendar
-router.post("/", async (req, res) => {
+router.post("/", requireEditor, async (req, res) => {
   try {
     const { title, description, start_at, end_at, all_day, color, contact_id, company_id, deal_id, task_id } = req.body || {};
     if (!title?.trim()) return res.status(400).json({ error: "Title is required." });
@@ -65,7 +65,7 @@ router.post("/", async (req, res) => {
 });
 
 // PUT /api/calendar/:id
-router.put("/:id", async (req, res) => {
+router.put("/:id", requireEditor, async (req, res) => {
   try {
     const existing = await db.query(
       "SELECT id FROM calendar_events WHERE id = $1 AND workspace_id = $2",
@@ -97,7 +97,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // DELETE /api/calendar/:id
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireEditor, async (req, res) => {
   try {
     const existing = await db.query(
       "SELECT id FROM calendar_events WHERE id = $1 AND workspace_id = $2",

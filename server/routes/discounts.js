@@ -1,7 +1,7 @@
 // server/routes/discounts.js
 const express = require("express");
 const db = require("../db");
-const { requireAuth } = require("../middleware/auth");
+const { requireAuth,requireEditor } = require("../middleware/auth");
 const { requirePaidAccess } = require("../middleware/billing");
 
 const router = express.Router();
@@ -34,7 +34,7 @@ router.get("/", async (req, res) => {
 });
 
 // POST /api/discounts — either contact_id or company_id, plus a product + percent
-router.post("/", async (req, res) => {
+router.post("/", requireEditor, async (req, res) => {
   const { contact_id, company_id, product_id, discount_percent, notes } = req.body || {};
   if (!contact_id && !company_id) {
     return res.status(400).json({ error: "Pick a customer or a company to attach this discount to." });
@@ -50,7 +50,7 @@ router.post("/", async (req, res) => {
 });
 
 // DELETE /api/discounts/:id
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireEditor, async (req, res) => {
   const existing = await db.query("SELECT id FROM customer_discounts WHERE id = $1 AND workspace_id = $2", [
     req.params.id,
     req.user.workspace_id,

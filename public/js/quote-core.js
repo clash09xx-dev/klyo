@@ -45,6 +45,9 @@
     };
     const result = {
       version: 1,
+      sections: value.sections || ["scope","items","payment","delivery","terms"],
+      headings: Object.fromEntries(Object.entries(value.headings||{}).filter(([k])=>["scope","items","payment","delivery","terms"].includes(k)).map(([k,v])=>[k,text(v,80)])),
+      body_size: Number(value.body_size||9.5),
       layout: value.layout || "studio",
       accent: value.accent || "#2455d6",
       language: value.language || "en",
@@ -60,6 +63,8 @@
       footer: text(value.footer, 300),
       logo_data_url: text(value.logo_data_url, 400000),
     };
+    if(!Array.isArray(result.sections)||!result.sections.includes("items")||new Set(result.sections).size!==result.sections.length||result.sections.some(k=>!["scope","items","payment","delivery","terms"].includes(k)))fail("Keep pricing in the document and choose valid sections.");
+    if(!Number.isFinite(result.body_size)||result.body_size<8||result.body_size>12)fail("Choose a body font size from 8 to 12 points.");
     if (!["studio", "executive"].includes(result.layout))
       fail("Choose a document style.");
     if (!["en", "pl"].includes(result.language))
@@ -114,7 +119,7 @@
       fail(`Enter a valid ${name} with up to two decimal places.`);
     return Number(value);
   }
-  function computeTotals(items, taxRate = 0) {
+  function computeTotals(items, taxRate = 0, discount = {}) {
     if (!Array.isArray(items) || !items.length || items.length > 150)
       fail("Add between 1 and 150 line items.");
     const tax = number(taxRate ?? 0, "tax rate", 100);
@@ -147,6 +152,12 @@
         sort_order: i,
       };
     });
+    const discountType=discount.type||discount.discount_type||'none';
+    if(!['none','percent','fixed'].includes(discountType))fail('Choose a valid quote discount type.');
+    const discountValue=number(discount.value??discount.discount_value??0,'quote discount',discountType==='percent'?100:9999999999.99);
+    const quoteDiscountCents=discountType==='none'?0:discountType==='percent'?Math.round(netCents*discountValue/100):Math.round(discountValue*100);
+    if(quoteDiscountCents>netCents)fail('The quote discount cannot exceed the amount after line discounts.');
+    const lineDiscountTotal=(subtotalCents-netCents)/100;netCents-=quoteDiscountCents;
     const taxCents = Math.round((netCents * tax) / 100),
       totalCents = netCents + taxCents;
     if (
@@ -159,6 +170,8 @@
       computed,
       subtotal: subtotalCents / 100,
       discountTotal: (subtotalCents - netCents) / 100,
+      line_discount_total: lineDiscountTotal,
+      discount_type:discountType,discount_value:discountType==='none'?0:discountValue,quote_discount_total:quoteDiscountCents/100,
       net_total: netCents / 100,
       tax_rate: tax,
       tax_total: taxCents / 100,

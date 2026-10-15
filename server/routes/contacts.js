@@ -6,10 +6,16 @@ const { requirePaidAccess } = require("../middleware/billing");
 const { assertWithinLimit, LimitExceededError } = require("../services/limits");
 const { generateOfferEmail } = require("../services/openai");
 
-const router = express.Router();
+const router = require('../middleware/safeRouter')();
 router.use(requireAuth);
 router.use(requirePaidAccess);
 
+const F=require('../services/customFields');
+const {canLinkUser}=require('../services/spaces');
+async function validateContactLinks(user,companyId,ownerId){
+ if(companyId&&!(await db.query('SELECT id FROM companies WHERE id=$1 AND workspace_id=$2',[companyId,user.workspace_id])).rows.length)throw Object.assign(new Error('Company is not available in this workspace.'),{status:400});
+ if(ownerId&&!await canLinkUser(db,ownerId,user.workspace_id))throw Object.assign(new Error('Owner is not available in this workspace.'),{status:400});
+}
 const VALID_STATUSES = ["lead", "contacted", "negotiating", "customer", "lost"];
 
 async function logActivity(workspaceId, contactId, userId, type, description) {
@@ -27,7 +33,7 @@ router.get("/", async (req, res) => {
     SELECT c.*, u.name AS owner_name, co.name AS company_name
     FROM contacts c
     LEFT JOIN users u ON u.id = c.owner_id
-    LEFT JOIN companies co ON co.id = c.company_id
+    LEFT JOIN companies co ON co.id = c.company_id AND co.workspace_id=c.workspace_id
     WHERE c.workspace_id = $1
   `;
   const params = [req.user.workspace_id];
@@ -70,7 +76,7 @@ router.get("/export", async (req, res) => {
             c.status, c.marketing_theme, c.notes, c.is_decision_maker,
             co.name AS company_name, u.name AS owner_name, c.created_at
      FROM contacts c
-     LEFT JOIN companies co ON co.id = c.company_id
+     LEFT JOIN companies co ON co.id = c.company_id AND co.workspace_id=c.workspace_id
      LEFT JOIN users u ON u.id = c.owner_id
      WHERE c.workspace_id = $1
      ORDER BY c.last_name, c.first_name`,
@@ -122,7 +128,7 @@ function buildFullName(first, last, fallback) {
 }
 
 // POST /api/contacts — create
-router.post("/", async (req, res) => {
+router.post("/", requireEditor, async (req, res) => {
   const {
     first_name, last_name, full_name, email, phone, company, marketing_theme, status, notes,
     owner_id, company_id, title, is_decision_maker,
@@ -148,19 +154,21 @@ router.post("/", async (req, res) => {
   const lastName = (last_name || "").trim() || (derivedFullName.includes(" ") ? derivedFullName.split(" ").slice(1).join(" ") : null);
   const normalizedTags = Array.isArray(tags) ? tags.map(t => String(t).trim()).filter(Boolean) : [];
 
+  await validateContactLinks(req.user,company_id,owner_id||req.user.id);
+  const custom=await F.validate(db,req.user.workspace_id,'contact',req.body.custom_fields);
   const result = await db.query(
     `INSERT INTO contacts (
        workspace_id, full_name, first_name, last_name, email, phone, company, marketing_theme, status, notes,
        owner_id, company_id, title, is_decision_maker,
        tags, secondary_email, secondary_phone, website, linkedin, instagram, facebook, twitter,
        city, country, state, postal_code, address, customer_type, priority, lead_source,
-       department, preferred_language, telegram, internal_notes
+       department, preferred_language, telegram, internal_notes, custom_fields
      ) VALUES (
        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
        $11,$12,$13,$14,
        $15,$16,$17,$18,$19,$20,$21,$22,
        $23,$24,$25,$26,$27,$28,$29,$30,
-       $31,$32,$33,$34
+       $31,$32,$33,$34,$35
      ) RETURNING *`,
     [
       req.user.workspace_id, derivedFullName, firstName||null, lastName||null,
@@ -175,7 +183,7 @@ router.post("/", async (req, res) => {
       postal_code?.trim()||null, address?.trim()||null,
       customer_type?.trim()||null, priority?.trim()||"medium", lead_source?.trim()||null,
       department?.trim()||null, preferred_language?.trim()||null,
-      telegram?.trim()||null, internal_notes?.trim()||null,
+      telegram?.trim()||null, internal_notes?.trim()||null,JSON.stringify(custom),
     ]
   );
 
@@ -189,7 +197,7 @@ router.get("/:id", async (req, res) => {
   const cResult = await db.query(
     `SELECT c.*, u.name AS owner_name, co.name AS company_name FROM contacts c
      LEFT JOIN users u ON u.id = c.owner_id
-     LEFT JOIN companies co ON co.id = c.company_id
+     LEFT JOIN companies co ON co.id = c.company_id AND co.workspace_id=c.workspace_id
      WHERE c.id = $1 AND c.workspace_id = $2`,
     [req.params.id, req.user.workspace_id]
   );
@@ -213,7 +221,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // PUT /api/contacts/:id — update
-router.put("/:id", async (req, res) => {
+router.put("/:id", requireEditor, async (req, res) => {
   const existingResult = await db.query("SELECT * FROM contacts WHERE id = $1 AND workspace_id = $2", [
     req.params.id,
     req.user.workspace_id,
@@ -238,6 +246,8 @@ router.put("/:id", async (req, res) => {
   const lastName = (last_name || "").trim() || (derivedFullName.includes(" ") ? derivedFullName.split(" ").slice(1).join(" ") : null);
   const normalizedTags = Array.isArray(tags) ? tags.map(t => String(t).trim()).filter(Boolean) : (existing.tags || []);
 
+  await validateContactLinks(req.user,company_id,owner_id||existing.owner_id);
+  const custom=await F.validate(db,req.user.workspace_id,'contact',req.body.custom_fields,existing.custom_fields);
   const updated = await db.query(
     `UPDATE contacts SET
        full_name=$1, first_name=$2, last_name=$3, email=$4, phone=$5, company=$6,
@@ -248,7 +258,7 @@ router.put("/:id", async (req, res) => {
        city=$22, country=$23, state=$24, postal_code=$25, address=$26,
        customer_type=$27, priority=$28, lead_source=$29,
        department=$30, preferred_language=$31, telegram=$32, internal_notes=$33,
-       updated_at=now()
+       custom_fields=$35, updated_at=now()
      WHERE id=$34 RETURNING *`,
     [
       derivedFullName, firstName||null, lastName||null,
@@ -266,7 +276,7 @@ router.put("/:id", async (req, res) => {
       lead_source?.trim()||null,
       department?.trim()||null, preferred_language?.trim()||null,
       telegram?.trim()||null, internal_notes?.trim()||null,
-      req.params.id,
+      req.params.id,JSON.stringify(custom),
     ]
   );
 
@@ -312,7 +322,7 @@ router.post("/:id/offers/generate", requireEditor, async (req, res) => {
   try {
     const { instructions } = req.body || {};
     if(instructions != null && (typeof instructions !== "string" || instructions.length>12000))return res.status(400).json({error:"Enter a text instruction under 12,000 characters."});
-    const wsResult = await db.query("SELECT w.ai_context,u.language FROM workspaces w JOIN users u ON u.workspace_id=w.id AND u.id=$2 WHERE w.id=$1", [req.user.workspace_id,req.user.id]);
+    const wsResult = await db.query("SELECT w.ai_context,u.language FROM workspaces w JOIN users u ON u.id=$2 WHERE w.id=$1", [req.user.workspace_id,req.user.id]);
     const aiContext = wsResult.rows[0]?.ai_context || null;
     const draft = await generateOfferEmail(contact, instructions, req.user.name, aiContext, wsResult.rows[0]?.language || contact.preferred_language || "en");
 

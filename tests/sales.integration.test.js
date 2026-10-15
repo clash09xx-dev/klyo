@@ -34,6 +34,7 @@ test('manual sales workspace: persistence, history, permissions and isolation', 
     const base=`http://127.0.0.1:${server.address().port}/api`;
     async function request(path,method='GET',body,options={}){
       const workspace_id=options.workspace||1,id=options.id||(workspace_id===2?3:1),role=options.role||'admin';
+      await db.query('UPDATE users SET role=$1 WHERE id=$2',[role,id]);
       const token=jwt.sign({id,workspace_id,role,name:'Test user'},process.env.JWT_SECRET);
       const response=await fetch(base+path,{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});
       const raw=await response.text();let data;try{data=JSON.parse(raw);}catch{data=raw;}
@@ -100,7 +101,7 @@ test('manual sales workspace: persistence, history, permissions and isolation', 
       assert.equal((await request(`/offers/${draft.data.offer.id}/send`,'POST',{}, {role:'viewer'})).status,403);
       const saved=await request(`/offers/${draft.data.offer.id}`,'PUT',{subject:'Saved manually',body:'A saved message.'});assert.equal(saved.status,200);assert.equal(saved.data.offer.status,'draft');assert.equal(saved.data.offer.sent_at,null);
       assert.equal((await request('/contacts/1')).data.offers[0].subject,'Saved manually');
-      assert.equal((await request('/offers','POST',{contact_id:2,subject:'No',body:'No'})).status,404);
+      assert.equal((await request('/offers','POST',{contact_id:2,subject:'No',body:'No'})).status,400);
       const created=await request('/contacts','POST',{full_name:'New client',telegram:'example',internal_notes:'Private note'});assert.equal(created.status,201,JSON.stringify(created.data));
       const edit=await request(`/contacts/${created.data.contact.id}`,'PUT',{full_name:'Updated client',telegram:'updated',internal_notes:'Updated note'});assert.equal(edit.status,200,JSON.stringify(edit.data));assert.equal(edit.data.contact.telegram,'updated');assert.equal(edit.data.contact.internal_notes,'Updated note');
       assert.equal((await request('/auth/whatsapp-phone','PUT',{whatsapp_phone:'+48123456789'})).status,404);

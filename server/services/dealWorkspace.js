@@ -41,6 +41,7 @@ function normalizeDeal(input, previous = {}) {
 async function checkLinks(client, workspaceId, deal) {
   for (const [field, table] of Object.entries({ contact_id: 'contacts', company_id: 'companies', product_id: 'products', stage_id: 'pipeline_stages', assigned_to: 'users' })) {
     if (deal[field] == null) continue;
+    if(field==='assigned_to'){if(!await require('./spaces').canLinkUser(client,deal[field],workspaceId))throw invalid('Owner is not available in this workspace.');continue;}
     const result = await client.query(`SELECT id FROM ${table} WHERE id=$1 AND workspace_id=$2`, [deal[field], workspaceId]);
     if (!result.rows.length) throw invalid('A linked record is not available in this workspace.');
   }

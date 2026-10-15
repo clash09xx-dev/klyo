@@ -372,24 +372,22 @@ klyo/
 └── package.json
 ```
 
-## What's deliberately not built yet
+## Custom workspaces, proposals and warranty reviews
 
-- **A "super-admin" panel** to manage every customer workspace from one
-  screen (right now, comping someone is a one-line terminal command — fine
-  for a handful of accounts, worth building properly once you have many).
-- **Lead-capture forms / CSV import** — you've said manual entry is fine
-  for now; the code is structured so adding either later is a contained
-  change, not a rewrite.
-- **A way to downgrade or cancel a plan from inside the app** — right now
-  that happens in the Stripe customer portal directly; worth wiring into
-  the app once you have real subscribers to support.
-- **Standing/saved discount rules have a backend but no UI yet** — you can
-  already give any customer a custom discount on any line item right
-  inside the quote builder (that works today). What's not built: a
-  separate screen to save "this customer always gets 15% off X" as a rule
-  that auto-suggests next time. The API (`/api/discounts`) is ready; it
-  just needs a frontend.
-- **Two UI modes (Simple/Advanced) were deliberately not built** — see the
-  reasoning in-conversation: a single interface with progressive
-  disclosure (and tier-gating quotes/discounts to Plus and up, if you want
-  that) does the same job without doubling the maintenance burden forever.
+Existing workspace IDs retain their Team data. The additive migration creates Personal workspaces lazily for individual users. All authenticated product requests resolve the actual account and role from the database; `X-Klyo-Scope: team|personal` chooses the space, never an arbitrary workspace ID. Removing a teammate preserves their account and private records and invalidates their old session.
+
+The Team owner controls invitations, roles, ownership transfer, audit and billing. This is separate from the global Platform account configured by `PLATFORM_ADMIN_EMAIL`. Members and editors can update shared business records; viewers cannot. Personal records and saved proposal templates are private to their owner. Team-to-Personal copies preserve links, generate draft offers with new public tokens, exclude credentials and never send email; subsequent copies retain private edits.
+
+Custom fields support text, long text, number, date, choices and checkbox values. Quote templates preserve branding, editable wording, section order, headings, typography and items. Whole-offer percentage or fixed discounts apply after line discounts and before tax, using integer cents. Sent quotes retain their saved content.
+
+Warranty records link a client's product and serial number to a warranty period and optional review interval. Due items produce an in-app coloured notice and persistent bell; recording a review keeps history and the next date. No automatic follow-up email is sent.
+
+Published plans remain $9/$29/$79/$199 per month with 1/5/20/unlimited seats included. Additional seats cost $5/month each. The owner explicitly approves Stripe checkout or a prorated subscription change. Pending payments do not unlock seats. Stripe Prices are validated against the published plan; the additional-seat Price is created lazily through Stripe when needed. Configure the existing `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` and plan price IDs before selling access. Process `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.updated` and `customer.subscription.deleted` webhooks. Events are deduplicated transactionally.
+
+Public feature page: `/customization`.
+
+## Validation
+
+Run `npm test` with `TEST_DATABASE_URL` pointing to a disposable local PostgreSQL instance to exercise real database integration tests. Each test creates and drops an isolated schema. Without this variable, database integration tests are skipped.
+
+`node tests/dashboard.browser.js` checks existing workflows in Chromium and WebKit with fixtures. `node tests/customization.browser.js` uses `TEST_DATABASE_URL` and actual HTTP routes for field creation, proposal templates/PDF, discounts, warranties, both spaces and independent copies. Browser tests require Playwright; optional `KLYO_CHROMIUM_PATH` and `KLYO_WEBKIT_PATH` select installed browser engines. No live payments, emails or AI calls occur in these tests.

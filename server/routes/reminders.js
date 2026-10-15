@@ -9,11 +9,11 @@
 // ---------------------------------------------------------
 const express = require("express");
 const db = require("../db");
-const { requireAuth } = require("../middleware/auth");
+const { requireAuth,requireEditor } = require("../middleware/auth");
 const { requirePaidAccess } = require("../middleware/billing");
 const { sendOfferEmail } = require("../services/mailer");
 
-const router = express.Router();
+const router = require('../middleware/safeRouter')();
 router.use(requireAuth);
 router.use(requirePaidAccess);
 
@@ -36,7 +36,7 @@ router.get("/due", async (req, res) => {
 });
 
 // POST /api/reminders/:purchaseId/send
-router.post("/:purchaseId/send", async (req, res) => {
+router.post("/:purchaseId/send", requireEditor, async (req, res) => {
   const result = await db.query(
     `SELECT pu.*, c.full_name AS contact_name, c.email AS contact_email, p.name AS product_name
      FROM purchases pu

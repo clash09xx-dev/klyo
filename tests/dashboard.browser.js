@@ -48,7 +48,7 @@ async function run(engine, name) {
     const quote = { id: 1, title: 'Draft quote', total: '4500.00', currency, status: 'draft', contact_id: 1, contact_name: contact.full_name };
     let quoteDefaults={},quoteSentCount=0,lastQuoteSend=null;
     const quoteStore=new Map([[1,quote]]),quoteLines=new Map([[1,[{description:'Website',quantity:1,unit_price:4500,discount_percent:0,line_total:4500}]]]);
-    const user = { id: 1, name: 'Demo', email: 'demo@example.test', role: 'admin', has_seen_onboarding: true, terms_accepted_at: '2026-01-01', language: 'en' };
+    const user = { workspace_id:1,scope:'team',is_team_owner:true,can_manage_billing:true,id: 1, name: 'Demo', email: 'demo@example.test', role: 'admin', has_seen_onboarding: true, terms_accepted_at: '2026-01-01', language: 'en' };
     await context.addInitScript(() => { if(location.pathname === '/app') localStorage.setItem('klyo_token', 'local-fixture'); });
     await page.route('**/*', async route => {
       const url = new URL(route.request().url());
@@ -60,6 +60,13 @@ async function run(engine, name) {
         if ((failCompanies && endpoint === '/companies') || (failContacts && endpoint === '/contacts')) {
           status = 500; data = { error: 'Fixture failure' };
         } else if (endpoint === '/auth/me') data = { user: { ...user, theme, workspace_preferences:preferences } };
+        else if(endpoint === '/spaces')data={active:'team',team:{id:1,name:'Demo',owner_user_id:1},personal:{id:2,name:'Private'},is_team_owner:true};
+        else if(endpoint === '/custom-fields')data={fields:[]};
+        else if(endpoint === '/quote-templates')data={templates:[]};
+        else if(endpoint === '/warranty/notifications')data={items:[],count:0,today:'2026-10-15'};
+        else if(endpoint === '/warranty')data={items:[],today:'2026-10-15'};
+        else if(endpoint === '/spaces/audit')data={entries:[]};
+        else if(endpoint === '/billing/seats')data={used:1,included:1,extra:0,unit_price:5,unlimited:true,total_monthly:0};
         else if(endpoint === '/auth/preferences' && route.request().method()==='PUT'){if(failPreferences){status=500;data={error:'Fixture save failed'};}else{preferences=route.request().postDataJSON();theme=preferences.palette.preset;data={preferences};}}
         else if (endpoint === '/sales/views' && route.request().method() === 'GET') data = { views: savedViews };
         else if (endpoint === '/sales/views' && route.request().method() === 'POST') { const view = { id: savedViews.length + 1, ...route.request().postDataJSON() }; savedViews.push(view); data = { view }; }
@@ -80,7 +87,7 @@ async function run(engine, name) {
           deals.forEach(item => { item.currency = currency; });
           product.currency = quote.currency = currency;
           data = { currency };
-        } else if (endpoint === '/billing/tiers') {if(failPricing){status=503;data={error:'Unavailable'};}else{const {TIERS,TIER_ORDER}=require('../server/config/tiers');data={tiers:TIER_ORDER.map(key=>({key,...TIERS[key]}))};}}
+        } else if (endpoint === '/billing/tiers') {if(failPricing){status=503;data={error:'Unavailable'};}else{const {TIERS,TIER_ORDER}=require('../server/config/tiers');data={tiers:TIER_ORDER.map(key=>({key,...TIERS[key]})),extraSeatPrice:5,currency:'USD'};}}
         else if (endpoint === '/billing/status') data = { is_comped: true };
         else if (endpoint === '/contacts/themes') data = { themes: [] };
         else if (endpoint === '/contacts/tags') data = { tags: ['sold'] };
@@ -458,7 +465,7 @@ async function run(engine, name) {
     await page.locator('.line-desc-input').fill('Projekt i wdrożenie strony');await page.locator('.line-price-input').fill('4500');await page.locator('.line-discount-input').fill('10');
     await page.locator('.quote-document-details').first().locator('summary').click();
     await page.locator('#doc-seller-name').fill('Studio Testowe Łódź');
-    await page.locator('.quote-document-details').last().locator('summary').click();const proposalTerms='Dwie rundy poprawek. Szczegóły do akceptacji. '.repeat(60).trim();await page.locator('#doc-terms').fill(proposalTerms);
+    await page.locator('.quote-document-details').filter({has:page.locator('#doc-terms')}).locator('summary').click();const proposalTerms='Dwie rundy poprawek. Szczegóły do akceptacji. '.repeat(60).trim();await page.locator('#doc-terms').fill(proposalTerms);
     const logo=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=160;c.height=60;const x=c.getContext('2d');x.fillStyle='#2455d6';x.fillRect(0,0,160,60);x.fillStyle='white';x.font='bold 24px Arial';x.fillText('STUDIO',20,38);return c.toDataURL('image/png').split(',')[1];});
     await page.locator('#quoteLogoFile').setInputFiles({name:'studio.png',mimeType:'image/png',buffer:Buffer.from(logo,'base64')});try{await page.locator('#quoteLogoPreview:not([hidden])').waitFor();}catch(error){console.error('Logo error:',await page.locator('#quoteDesignError').textContent());throw error;}
     await page.locator('#saveQuoteDefaultsBtn').click();await page.waitForFunction(()=>!document.querySelector('#saveQuoteDefaultsBtn').disabled);

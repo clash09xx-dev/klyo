@@ -14,9 +14,9 @@
 <link rel="stylesheet" href="/css/workspace.css" />
 <link rel="stylesheet" href="/css/personalize.css" />
 <link rel="stylesheet" href="/css/quote-studio.css" />
+<link rel="stylesheet" href="/css/workspace-tools.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Cloudflare Web Analytics — see public/login.html for setup notes. -->
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "YOUR_TOKEN_HERE"}'></script>
 </head>
 <body>
 
@@ -660,6 +660,8 @@
           <textarea id="productNotes" class="input" rows="3" placeholder="Internal notes, specs, terms…"></textarea>
         </div>
       </div>
+      <div class="field"><label for="productWarrantyMonths">Warranty period · months (60 = 5 years)</label><input id="productWarrantyMonths" type="number" min="1" max="1200" step="1"></div>
+      <section id="productCustomFields" class="record-custom-fields"></section>
       <input type="hidden" id="productId">
       <div class="modal-foot" style="margin-top:16px;">
         <button type="button" class="btn btn-ghost" id="cancelProductBtn">Cancel</button>
@@ -914,6 +916,7 @@
         </div>
       </details>
 
+      <section id="contactCustomFields" class="record-custom-fields"></section>
       <div class="form-error" id="contactFormError"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close-modal>Cancel</button>
@@ -1130,6 +1133,7 @@
     </div>
     <form id="quoteForm">
       <input type="hidden" id="quoteId" />
+      <div id="quoteTemplateControls"></div>
       <div class="field-row">
         <div class="field">
           <label for="quoteContactSelect">For contact</label>
@@ -1183,6 +1187,7 @@
       <div class="quote-items" id="quoteItemsContainer"></div>
       <button type="button" class="btn btn-ghost btn-sm" id="addLineItemBtn">+ Add line item</button>
 
+      <div class="quote-discount-controls"><label for="quoteDiscountType">Whole-quote discount / Rabat całej oferty</label><select id="quoteDiscountType"><option value="none">No extra discount / Brak</option><option value="percent">Percentage / Procent</option><option value="fixed">Fixed amount / Kwota</option></select><input id="quoteDiscountAmount" type="number" min="0" step="0.01" value="0" aria-label="Whole quote discount value"></div>
       <div class="quote-totals">
         <div><span>Subtotal</span><span class="mono" id="quoteSubtotalValue">$0.00</span></div>
         <div><span>Discount</span><span class="mono" id="quoteDiscountValue">−$0.00</span></div>
@@ -1522,7 +1527,7 @@
       <button type="button" class="btn btn-sm btn-primary" data-mode="subscription" style="flex:1;">Monthly (auto-renews)</button>
       <button type="button" class="btn btn-sm btn-ghost" data-mode="one_time" style="flex:1;">One month only</button>
     </div>
-    <div class="pricing-grid" id="pricingGrid"></div>
+    <div class="checkout-extra-seats"><label for="checkoutExtraSeats">Additional seats above the plan · <span id="checkoutSeatUnit">5</span> USD / person / month</label><input id="checkoutExtraSeats" type="number" min="0" max="1000" step="1" value="0"><p class="muted">Prices below include the selected extra seats. Unlimited-seat plans need no extras. Stripe shows the final payment before you confirm.</p></div><div class="pricing-grid" id="pricingGrid"></div>
   </div>
 </div>
 
@@ -1776,12 +1781,14 @@
 <div class="overlay hidden" id="lossReasonOverlay"><div class="modal"><div class="modal-head"><h2 data-sales-label="markLost">Mark as lost</h2></div><form id="lossReasonForm"><div class="field"><label for="lossReasonInput" data-sales-label="lostReason">Reason for losing this deal</label><textarea id="lossReasonInput" required maxlength="1000"></textarea></div><div class="form-error" id="lossReasonError"></div><div class="modal-actions"><button type="button" class="btn btn-ghost" id="lossReasonCancel" data-sales-label="cancel">Cancel</button><button class="btn btn-primary" data-sales-label="markLost">Mark as lost</button></div></form></div></div>
 <div class="overlay hidden" id="quotePdfOverlay"><div class="modal quote-pdf-modal"><div class="modal-head"><div><h2 data-quote-label="previewPdf">Preview PDF</h2><p id="quotePdfFilename" class="muted"></p></div><button type="button" class="modal-close" id="closeQuotePdfBtn" aria-label="Close PDF">×</button></div><div id="quotePdfError" class="form-error"></div><div id="quotePdfFrame" class="quote-pdf-viewer" role="region" aria-label="Proposal PDF preview"></div><p class="quote-pdf-mobile-hint" data-quote-label="mobilePdf">If your browser cannot display the preview, download the PDF to open it.</p><div class="modal-actions"><button type="button" class="btn btn-primary" id="downloadPreviewPdfBtn" data-quote-label="download">Download PDF</button></div></div></div>
 <script src="/js/quote-core.js"></script>
+<script src="/js/quote-templates.js"></script>
 <script src="/js/quote-studio.js"></script>
 <script src="/js/preferences-core.js"></script>
 <script src="/js/customize.js"></script>
 <script src="/js/sales.js"></script>
 <div class="overlay hidden" id="pipelineOverlay"><div class="modal"><div class="modal-head"><h2 id="pipelineModalTitle">Add another pipeline</h2><button type="button" class="modal-close" id="closePipelineBtn" aria-label="Close">×</button></div><form id="pipelineForm"><input id="pipelineId" type="hidden"/><div class="field"><label for="pipelineName" data-pipeline-label="name">Pipeline name</label><input id="pipelineName" required maxlength="100"/></div><div class="field"><label for="pipelineText" data-pipeline-label="description">What do you sell here?</label><textarea id="pipelineText" maxlength="2000"></textarea></div><div class="field" id="pipelineCopyField"><label for="pipelineCopy" data-pipeline-label="copy">Starting stages</label><select id="pipelineCopy"></select></div><div id="pipelineFormError" class="form-error"></div><div class="modal-actions"><button type="button" class="btn btn-danger btn-sm hidden" id="deletePipelineBtn" data-pipeline-label="remove">Delete empty pipeline</button><button type="button" class="btn btn-ghost" id="pipelineCancel" data-pipeline-label="cancel">Cancel</button><button class="btn btn-primary" id="pipelineSave" data-pipeline-label="save">Save pipeline</button></div></form></div></div>
 <script src="/js/pipelines.js"></script>
+<script src="/js/workspace-tools.js"></script>
 <script src="/js/app.js"></script>
 </body>
 </html>

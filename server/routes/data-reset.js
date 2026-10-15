@@ -6,7 +6,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const db = require("../db");
-const { requireAuth } = require("../middleware/auth");
+const { requireAuth, requireEditor } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -51,7 +51,7 @@ const DELETERS = {
 const VALID_KEYS = Object.keys(DELETERS);
 
 // POST /api/settings/reset
-router.post("/reset", requireAuth, async (req, res) => {
+router.post("/reset", requireAuth, requireEditor, async (req, res) => {
   const { items, password, reset_all } = req.body;
   const wid = req.user.workspace_id;
 

@@ -4,7 +4,7 @@ const db = require("../db");
 const { requireAuth, requireEditor } = require("../middleware/auth");
 
 const router = express.Router();
-router.use(requireAuth);
+router.use(requireAuth,require("../middleware/billing").requirePaidAccess);
 
 const VALID_STATUS   = ["todo", "in_progress", "done"];
 const VALID_PRIORITY = ["low", "medium", "high"];

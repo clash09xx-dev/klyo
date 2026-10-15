@@ -36,6 +36,7 @@ test('currency API persists values, isolates workspaces and rolls back failures 
     const base = `http://127.0.0.1:${server.address().port}`;
     const token = role => jwt.sign({ id: 1, workspace_id: 1, name: 'Admin', role }, process.env.JWT_SECRET);
     async function request(endpoint, method = 'GET', body, role = 'admin') {
+      if(role)await db.query('UPDATE users SET role=$1 WHERE id=1',[role]);
       const response = await fetch(base + '/api' + endpoint, {
         method, headers: { 'Content-Type': 'application/json', ...(role ? { Authorization: `Bearer ${token(role)}` } : {}) },
         body: body === undefined ? undefined : JSON.stringify(body),

@@ -52,6 +52,7 @@ test(
         const listener = app.listen(0, "127.0.0.1", () => resolve(listener));
       });
       async function req(path, method = "GET", body, options = {}) {
+        await db.query("UPDATE users SET role=$1 WHERE id=$2",[options.role||"admin",options.workspace===2?2:1]);
         const workspace_id = options.workspace || 1,
           token = jwt.sign(
             {
@@ -502,7 +503,7 @@ test(
           assert.equal(response.status, 200);
           const { TIERS, TIER_ORDER } = require("../server/config/tiers");
           assert.deepEqual(response.data, {
-            tiers: TIER_ORDER.map((key) => ({ key, ...TIERS[key] })),
+            tiers: TIER_ORDER.map((key) => ({ key, ...TIERS[key] })),extraSeatPrice:5,currency:"USD",
           });
           assert.deepEqual(
             response.data.tiers.map((t) => t.price),

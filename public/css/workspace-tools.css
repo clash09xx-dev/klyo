@@ -1,0 +1,514 @@
+.workspace-switch-wrap {
+  padding: 0 16px 16px;
+  display: grid;
+  gap: 7px;
+  flex-shrink: 0;
+}
+.workspace-switch {
+  display: flex;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px;
+  gap: 3px;
+}
+.workspace-switch button {
+  flex: 1;
+  border: 0;
+  border-radius: var(--radius);
+  padding: 7px 8px;
+  font: inherit;
+  font-size: 12px;
+  background: transparent;
+  color: var(--nav-text);
+  cursor: pointer;
+}
+.workspace-switch button[aria-pressed="true"] {
+  background: var(--accent-1);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.workspace-switch button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+#workspaceScopeLabel {
+  color: var(--nav-muted, var(--text-dim));
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+.workspace-switch-wrap > .btn {
+  color: var(--nav-text);
+  justify-content: flex-start;
+  padding: 3px 0;
+  font-size: 11px;
+}
+body[data-space="personal"] .nav-item[data-view="team"] {
+  display: none !important;
+}
+.warranty-bell {
+  position: relative;
+  flex-shrink: 0;
+  margin-left: 8px;
+  width: 31px;
+  height: 31px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.warranty-bell svg {
+  height: 16px;
+  width: 16px;
+}
+.warranty-bell.has-alert {
+  border-color: #e49b19;
+  color: #b87305;
+  background: #fff6dc;
+}
+.warranty-bell > span {
+  position: absolute;
+  right: -6px;
+  top: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 10px;
+  font-size: 9px;
+  background: #d94c34;
+  color: #fff;
+  line-height: 16px;
+}
+.warranty-bell > span[hidden] {
+  display: none;
+}
+.record-custom-fields {
+  margin-block: 16px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border);
+}
+.custom-fields-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.record-custom-fields > .muted {
+  font-size: 11px;
+}
+.record-custom-fields input[type="checkbox"],
+.tool-check input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+}
+.custom-field-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.custom-field-checkbox label {
+  margin: 0;
+}
+.field-list-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.field-list-row > div {
+  flex: 1;
+}
+.field-list-row span {
+  display: block;
+  color: var(--text-dim);
+  font-size: 10px;
+}
+.tool-check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  margin-block: 12px;
+}
+.workspace-tools-overlay .modal {
+  width: 640px;
+  max-width: calc(100vw - 28px);
+}
+.workspace-tools-overlay .muted {
+  font-size: 11px;
+  line-height: 1.7;
+}
+#copyRecordList {
+  max-height: 240px;
+  overflow: auto;
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+}
+#copyRecordList label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+}
+#copyRecordList input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+#copySearch {
+  width: 100%;
+}
+.copy-summary {
+  font-size: 12px;
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.warranty-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+.warranty-heading h2 {
+  font-size: 18px;
+  margin: 0;
+}
+.warranty-heading p {
+  font-size: 12px;
+  margin: 7px 0 0;
+}
+.warranty-section {
+  margin-bottom: 30px;
+}
+.warranty-section .filter-bar input {
+  font-size: 12px;
+  padding: 8px;
+  max-width: 320px;
+  min-width: 0;
+}
+#warrantyList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
+  gap: 12px;
+}
+.warranty-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--review-color);
+  border-radius: var(--radius);
+  padding: 17px;
+  background: var(--surface);
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+}
+.warranty-card.is-due {
+  border-left-width: 6px;
+  box-shadow: inset 0 0 0 1px var(--review-color);
+}
+.warranty-card h3 {
+  margin: 7px 0;
+  font-size: 15px;
+}
+.warranty-card p {
+  color: var(--text-dim);
+  margin: 6px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.warranty-state {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.07em;
+}
+.warranty-card.is-due .warranty-state {
+  background: var(--review-color);
+  color: var(--review-ink, #101828);
+  padding: 4px 6px;
+  border-radius: 2px;
+}
+.warranty-client {
+  border: 0;
+  padding: 0;
+  text-align: left;
+  background: none;
+  color: var(--accent-1);
+  font: inherit;
+  cursor: pointer;
+}
+.warranty-actions {
+  display: flex;
+  gap: 8px;
+}
+.legacy-reminders-heading {
+  font-size: 14px;
+}
+.warranty-alert {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  text-align: left;
+  padding: 14px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--review-color);
+  color: var(--text);
+  background: var(--surface);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.warranty-alert > span {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+.warranty-history {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  margin-top: 12px;
+  font-size: 11px;
+}
+.warranty-history p {
+  white-space: pre-wrap;
+}
+.seat-manager {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 15px;
+}
+.seat-manager .field {
+  margin: 0;
+  max-width: 300px;
+}
+.seat-manager p {
+  width: 100%;
+  font-size: 11px;
+}
+#teamSeatSummary {
+  font-size: 12px;
+}
+.team-transfer {
+  margin-top: 12px;
+}
+.quote-template-picker {
+  padding: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+}
+.quote-template-picker > label {
+  font-size: 12px;
+  font-weight: 600;
+}
+.quote-template-picker > div:not(.form-error) {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+}
+.quote-template-picker select,
+.quote-template-picker input {
+  flex: 1;
+  min-width: 160px;
+  font-size: 12px;
+  padding: 8px;
+}
+.quote-template-picker .muted {
+  font-size: 10px;
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+.quote-discount-controls {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.quote-discount-controls label {
+  font-size: 11px;
+}
+.quote-discount-controls select {
+  font-size: 11px;
+  padding: 8px;
+}
+.quote-discount-controls input {
+  width: 110px;
+  font-size: 12px;
+  padding: 8px;
+}
+.quote-section-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.quote-section-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 140px;
+  flex-shrink: 0;
+  margin: 0;
+  font-size: 11px;
+}
+.quote-section-row label input {
+  width: 14px;
+  height: 14px;
+}
+.quote-section-row > input {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  padding: 8px;
+}
+#quoteBodySize {
+  width: 90px;
+  margin-left: 10px;
+  padding: 6px;
+}
+.quote-section-row .btn {
+  padding: 6px;
+}
+@media (max-width: 700px) {
+  .workspace-switch-wrap {
+    padding-inline: 12px;
+  }
+  .warranty-heading {
+    align-items: start;
+    gap: 10px;
+  }
+  .warranty-heading h2 {
+    font-size: 16px;
+  }
+  .warranty-heading p {
+    font-size: 11px;
+  }
+  .warranty-heading > .btn {
+    font-size: 10px;
+    padding: 7px;
+  }
+  .warranty-bell {
+    margin-left: 2px;
+    flex-shrink: 0;
+  }
+  .quote-template-picker {
+    padding: 10px;
+  }
+  .quote-template-picker .btn {
+    font-size: 10px;
+    padding: 6px;
+  }
+  .quote-section-row {
+    flex-wrap: wrap;
+  }
+  .quote-section-row label {
+    width: 100%;
+  }
+  .quote-section-row > input {
+    flex: 1;
+  }
+  .seat-manager {
+    align-items: start;
+  }
+  .workspace-tools-overlay .field-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+body[data-sidebar-collapsed="true"] .workspace-switch-wrap {
+  padding: 0 0 10px;
+}
+body[data-sidebar-collapsed="true"] .workspace-switch {
+  flex-direction: column;
+}
+body[data-sidebar-collapsed="true"] .workspace-switch button {
+  padding: 6px 2px;
+  font-size: 9px;
+}
+body[data-sidebar-collapsed="true"] #workspaceScopeLabel,
+body[data-sidebar-collapsed="true"] #copyTeamBtn,
+body[data-sidebar-collapsed="true"] #createTeamBtn {
+  font-size: 8px;
+  white-space: normal;
+  text-align: center;
+}
+body[data-sidebar-collapsed="true"] .workspace-switch-wrap > .btn {
+  justify-content: center;
+}
+.checkout-extra-seats {
+  padding: 14px;
+  border: 1px solid var(--border);
+  margin: 14px 0;
+  font-size: 12px;
+}
+.checkout-extra-seats input {
+  width: 80px;
+  margin-left: 12px;
+  padding: 7px;
+}
+.checkout-extra-seats p {
+  font-size: 10px;
+  margin-bottom: 0;
+}
+@media (max-width: 700px) {
+  body[data-sidebar-collapsed="true"] .workspace-switch {
+    flex-direction: row;
+  }
+  body[data-sidebar-collapsed="true"] .workspace-switch button {
+    font-size: 12px;
+  }
+}
+#warrantyLiveNotice {
+  position: fixed;
+  right: 22px;
+  top: 85px;
+  width: min(360px, calc(100vw - 32px));
+  padding: 18px 20px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-left: 6px solid var(--review-color);
+  box-shadow: 0 12px 40px #0002;
+  border-radius: var(--radius);
+  z-index: 65;
+  font-size: 12px;
+}
+#warrantyLiveNotice strong {
+  display: block;
+  margin-right: 18px;
+}
+#warrantyLiveNotice p {
+  margin: 8px 0;
+  color: var(--text-dim);
+}
+.warranty-notice-close {
+  position: absolute;
+  right: 8px;
+  top: 7px;
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font-size: 20px;
+  cursor: pointer;
+}
