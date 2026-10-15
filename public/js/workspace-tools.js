@@ -470,6 +470,18 @@ const KlyoWorkspace = (() => {
     g("reviewError").textContent = "";
     show("warrantyReviewOverlay");
   }
+  function auditLabel(entry){
+    const parts=String(entry.resource||'').split('/').filter(Boolean),category=parts[1],detail=parts.at(-1);
+    const names={contacts:l('Contact','Kontakt'),companies:l('Company','Firma'),products:l('Product','Produkt'),deals:l('Deal','Szansa sprzedaży'),quotes:l('Proposal','Oferta'),offers:l('Email draft','Szkic wiadomości'),tasks:l('Task','Zadanie'),calendar:l('Calendar event','Wydarzenie'),'custom-fields':l('Custom field','Własne pole'),'quote-templates':l('Proposal template','Szablon oferty'),warranty:l('Warranty','Gwarancja'),pipelines:l('Sales pipeline','Lejek sprzedaży'),auth:l('Account & team','Konto i zespół'),billing:l('Plan & seats','Plan i miejsca'),spaces:l('Workspace','Przestrzeń'),sales:l('Sales settings','Ustawienia sprzedaży'),integrations:l('Mail connection','Połączenie poczty')};
+    const actions={POST:l('Added','Dodano'),PUT:l('Updated','Zmieniono'),PATCH:l('Updated','Zmieniono'),DELETE:l('Removed','Usunięto')};
+    let action=actions[entry.action]||l('Changed','Zmieniono');
+    if(detail==='review')action=l('Review recorded','Zapisano przegląd');
+    else if(detail==='send')action=l('Sent','Wysłano');
+    else if(detail==='accept')action=l('Accepted','Zaakceptowano');
+    else if(category==='billing'||category==='auth'||category==='spaces')action=l('Updated','Zmieniono');
+    const id=parts.find((p,i)=>i>1&&/^\d+$/.test(p));
+    return {action,record:(names[category]||l('Workspace settings','Ustawienia przestrzeni'))+(id?' #'+id:'')};
+  }
   async function teamAdmin() {
     g("teamAuditSection").hidden = !API.getUser()?.is_team_owner;
     if (!API.getUser()?.is_team_owner) return;
@@ -482,7 +494,7 @@ const KlyoWorkspace = (() => {
         entries
           .map(
             (e) =>
-              `<tr><td>${h(formatDateTime(e.created_at))}</td><td>${h(e.user_name || "")}</td><td>${h(e.action)}</td><td>${h(e.resource)}</td></tr>`,
+              `<tr><td>${h(formatDateTime(e.created_at))}</td><td>${h(e.user_name || "")}</td><td>${h(auditLabel(e).action)}</td><td>${h(auditLabel(e).record)}</td></tr>`,
           )
           .join("") ||
         `<tr><td colspan="4">${l("No administrative activity yet.", "Brak zarejestrowanych działań.")}</td></tr>`;
