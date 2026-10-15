@@ -829,9 +829,9 @@ test(
  const old=process.env.PLATFORM_ADMIN_EMAIL;process.env.PLATFORM_ADMIN_EMAIL='owner@example.test';
  try{
   check(await req('/platform/overview','GET',undefined,{user:3}),403);
-  const overview=check(await req('/platform/overview'),200).data;
+  const overviewResponse=await req('/platform/overview');check(overviewResponse,200);const overview=overviewResponse.data;
   assert.equal(overview.workspaces.total,2);
-  const workspaces=check(await req('/platform/workspaces'),200).data.workspaces;
+  const spacesResponse=await req('/platform/workspaces');check(spacesResponse,200);const workspaces=spacesResponse.data.workspaces;
   assert.equal(workspaces.length,2);
   check(await req('/platform/page-views'),200);
  }finally{if(old===undefined)delete process.env.PLATFORM_ADMIN_EMAIL;else process.env.PLATFORM_ADMIN_EMAIL=old;}
