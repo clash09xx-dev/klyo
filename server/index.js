@@ -63,6 +63,7 @@ app.use("/api/team-stats", teamStatsRoutes);
 app.use("/api/platform", platformRoutes);
 app.use("/api/history", historyRoutes);
 app.use("/api/deals", dealsRoutes);
+app.use("/api/pipelines", require("./routes/pipelines"));
 app.use("/api/tasks", tasksRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/clients", clientsRoutes);

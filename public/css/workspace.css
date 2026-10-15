@@ -170,3 +170,19 @@ tbody td { font-size: 13px; }
 .sidebar .help-fab { position: static; width: 100%; height: auto; background: transparent; border: 0; box-shadow: none; text-align: left; margin: 0; }
 .sidebar .help-fab:hover { background: #2b2e34; color: #fff; }
 #salesOverviewView table { min-width: 0; }
+
+/* Named pipelines: a compact switcher keeps the full-height board in view. */
+.pipeline-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding-bottom:12px;flex-shrink:0}
+.pipeline-toolbar>label{font-size:11px;color:var(--text-dim)}
+.pipeline-toolbar>select{width:210px;max-width:100%;font-weight:600;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;font-size:12px}
+.pipeline-toolbar details{margin-left:auto;position:relative;font-size:11px;color:var(--text-dim)}
+.pipeline-toolbar summary{cursor:pointer;padding:7px 0}
+.pipeline-toolbar details>p{position:absolute;right:0;top:100%;z-index:12;margin:0;width:min(360px,70vw);max-height:220px;overflow:auto;padding:16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);box-shadow:0 8px 24px #0002;white-space:pre-wrap;overflow-wrap:anywhere}
+.company-relation{display:block;font-size:11px;font-weight:400;color:var(--text-dim);margin-top:4px}
+.company-group{margin-block:20px;border-bottom:1px solid var(--border);padding-bottom:16px}
+.company-group-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12px}
+.company-children{display:grid;gap:4px;margin-top:8px}
+.company-child{display:flex;justify-content:space-between;gap:12px;background:var(--surface-2,var(--surface));border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:10px;text-align:left;font:inherit;font-size:12px;cursor:pointer}
+.company-child:hover{border-color:var(--accent-1)}
+.company-parent{font-size:12px;margin:0 0 10px}
+@media(max-width:700px){.pipeline-toolbar>label{width:100%}.pipeline-toolbar>select{flex:1;min-width:130px}.pipeline-toolbar details{margin-left:0}.pipeline-toolbar details>p{left:0;right:auto}.pipeline-toolbar{gap:6px}.pipeline-toolbar .btn{font-size:10px;padding:6px}.pipeline-toolbar details{width:100%}}

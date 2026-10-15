@@ -417,6 +417,7 @@ async function init() {
   await pool.query("ALTER TABLE quotes ADD COLUMN IF NOT EXISTS document JSONB NOT NULL DEFAULT '{}'::jsonb, ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(5,2) NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS tax_total NUMERIC(12,2) NOT NULL DEFAULT 0");
   await pool.query("ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS quote_defaults JSONB NOT NULL DEFAULT '{}'::jsonb");
   await require("./migrations/salesWorkspace")(pool);
+  await require("./migrations/companyPipelines")(pool);
   await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS workspace_preferences JSONB NOT NULL DEFAULT '{}'::jsonb");
 }
 
