@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Klyo Customization — A CRM built around you</title>
+    <meta
+      name="description"
+      content="Your own fields, proposal templates, colours, layouts and sales pipelines. Switch between shared Team and private Personal CRM."
+    />
+    <link rel="canonical" href="https://klyolabs.com/customization" />
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/landing.css" />
+    <link rel="stylesheet" href="/css/customization.css" />
+    <script defer src="/js/customization-demo.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="site-nav page-width" aria-label="Main navigation">
+        <a class="wordmark" href="/" aria-label="Klyo home"
+          ><span class="brand-symbol"
+            ><svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <path d="M2 12h4l2 7 4-14 3 9 2-5h5" /></svg></span
+          >Klyo</a
+        >
+        <div class="nav-center">
+          <a href="/customization">Customization</a
+          ><a href="/#workflow">The workspace</a
+          ><a href="/#proposals">PDF proposals</a
+          ><a href="/#pricing">Pricing</a>
+        </div>
+        <div class="nav-actions">
+          <a class="login-link" href="/login">Log in</a
+          ><a class="button button-lime" href="/signup"
+            >Start free trial <span>↗</span></a
+          >
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section class="custom-hero page-width">
+        <div>
+          <p class="eyebrow">THE WORKSPACE IS YOURS TO SHAPE</p>
+          <h1>A CRM built<br />around <span>you.</span></h1>
+          <p>
+            Your client details. Your sales process. Your proposal. Change the
+            parts you work with every day, and keep your team connected without
+            mixing in your private work.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-lime button-large" href="/signup"
+              >Build my workspace ↗</a
+            ><a class="button button-outline" href="#field-demo"
+              >Try a custom field ↓</a
+            >
+          </div>
+        </div>
+        <div class="custom-preview" id="field-demo">
+          <div class="custom-preview-top">
+            <strong>Client characteristics</strong
+            ><span>Interactive example</span>
+          </div>
+          <div class="example-client">
+            <i>NL</i>
+            <div>
+              <b>Northline Labs</b><span>Client record · sample data</span>
+            </div>
+          </div>
+          <div id="customDemoFields">
+            <div><span>Industry</span><b>Manufacturing</b></div>
+            <div><span>Preferred contact</span><b>Email</b></div>
+          </div>
+          <form id="customDemoForm">
+            <label for="customDemoName">Add a field for your business</label>
+            <div>
+              <input
+                id="customDemoName"
+                placeholder="e.g. Sensor model, fleet size…"
+                maxlength="45"
+                required
+              /><button class="button button-dark">+ Add field</button>
+            </div>
+            <p id="customDemoFeedback" aria-live="polite">
+              Preview only. Create real fields inside your workspace.
+            </p>
+          </form>
+        </div>
+      </section>
+      <section class="custom-capabilities page-width">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CUSTOMIZE THE WAY YOU WORK</p>
+            <h2>Go beyond<br /><span>a different colour.</span></h2>
+          </div>
+          <p>
+            Your CRM should reflect the information you track and the way you
+            sell. Klyo lets you shape the work surface and the records
+            underneath it.
+          </p>
+        </div>
+        <div class="capability-grid">
+          <article>
+            <span>01 / RECORDS</span>
+            <h3>Your own client &amp; product fields</h3>
+            <p>
+              Add text, longer notes, numbers, dates, choice lists and
+              checkboxes. Make a field required when the information matters.
+              Fields belong to the Team or Personal space where you create them.
+            </p>
+          </article>
+          <article>
+            <span>02 / PROPOSALS</span>
+            <h3>Templates with your name on them</h3>
+            <p>
+              Save your logo, brand colour, wording, items and terms. Reorder
+              document sections, write your own headings and adjust body type
+              size. Apply line-item discounts or a percentage or fixed discount
+              to the whole offer.
+            </p>
+          </article>
+          <article>
+            <span>03 / SALES</span>
+            <h3>A pipeline for each process</h3>
+            <p>
+              Create separate pipelines for hardware, services or another sales
+              process. Name them, explain their purpose and set their stages.
+              Connect parent companies and subsidiaries.
+            </p>
+          </article>
+          <article>
+            <span>04 / WORKSPACE</span>
+            <h3>Colours, layout &amp; focus</h3>
+            <p>
+              Start with six themes or build your palette. Move navigation,
+              choose density, reorder or hide menu items and contact columns,
+              and arrange overview widgets.
+            </p>
+          </article>
+        </div>
+      </section>
+      <section class="space-story">
+        <div class="page-width">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">ONE ACCOUNT. TWO CLEAR SPACES.</p>
+              <h2>
+                Team when you share.<br /><span>Personal when it’s yours.</span>
+              </h2>
+            </div>
+            <p>
+              A simple switch keeps shared clients and products separate from
+              your own records. Personal work stays private to you.
+            </p>
+          </div>
+          <div class="space-comparison">
+            <article>
+              <span>TEAM</span>
+              <h3>Work together.</h3>
+              <ul>
+                <li>Shared clients, companies, products and deals</li>
+                <li>
+                  Teammates can edit shared records, subject to their role
+                </li>
+                <li>The owner manages invitations and roles</li>
+                <li>
+                  Owner-only team activity logs and performance statistics
+                </li>
+              </ul>
+            </article>
+            <article>
+              <span>PERSONAL</span>
+              <h3>Keep your own space.</h3>
+              <ul>
+                <li>Only you can view and edit your records</li>
+                <li>Your own fields, proposals and sales pipelines</li>
+                <li>Copy all team products, all clients or selected records</li>
+                <li>
+                  Copies stay independent; private edits don’t change Team
+                </li>
+              </ul>
+            </article>
+          </div>
+          <div class="copy-story">
+            <b>Bring over only what you need.</b>
+            <p>
+              Pick a few products, a set of clients or all business records.
+              Linked companies come with selected clients. Quotes and emails are
+              copied as drafts. Repeating a copy preserves your existing
+              personal edits.
+            </p>
+          </div>
+        </div>
+      </section>
+      <section class="service-story page-width">
+        <div>
+          <p class="eyebrow">AFTER THE SALE STILL MATTERS</p>
+          <h2>Five-year warranty.<br /><span>One-year review.</span></h2>
+          <p>
+            Link the product to the client, add its serial number and set the
+            warranty period. Choose the review date, interval and notification
+            colour. Klyo shows a reminder in the app when it’s due, so you can
+            contact the client yourself.
+          </p>
+          <p>
+            Record the completed review, keep its notes and choose the next
+            date. Nothing is emailed automatically.
+          </p>
+          <a class="button button-outline" href="/signup"
+            >Keep the next review in view ↗</a
+          >
+        </div>
+        <div class="service-example">
+          <span>WARRANTY REVIEW DUE</span>
+          <h3>Temperature sensor</h3>
+          <p>Northline Labs · SN-2048</p>
+          <dl>
+            <div>
+              <dt>Warranty</dt>
+              <dd>5 years</dd>
+            </div>
+            <div>
+              <dt>Review interval</dt>
+              <dd>12 months</dd>
+            </div>
+            <div>
+              <dt>Next step</dt>
+              <dd>Contact client to arrange review</dd>
+            </div>
+          </dl>
+          <small>Example notification · sample data</small>
+        </div>
+      </section>
+      <section class="custom-closing page-width">
+        <h2>Your CRM.<br />Your way of working.</h2>
+        <div>
+          <a class="button button-lime button-large" href="/signup"
+            >Start your 7-day trial ↗</a
+          ><a href="/#pricing">View plans and team seats →</a>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer page-width">
+      <a class="wordmark" href="/">Klyo</a><span>© 2026 Klyo</span>
+      <div>
+        <a href="/privacy">Privacy</a><a href="/terms">Terms</a
+        ><a href="mailto:clash.09xx@gmail.com">Contact</a>
+      </div>
+    </footer>
+  </body>
+</html>

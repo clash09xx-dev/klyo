@@ -15,7 +15,7 @@ router.use(requireAuth);
 router.use(requirePaidAccess);
 
 router.get("/", async (req, res) => {
-  if (req.user.role !== "admin") {
+  if (!req.user.is_team_owner) {
     return res.status(403).json({ error: "Only the workspace admin can view team performance." });
   }
 
@@ -36,7 +36,7 @@ router.get("/", async (req, res) => {
        COUNT(*) FILTER (WHERE a.type = 'meeting_logged') AS meetings_logged,
        COUNT(DISTINCT a.contact_id) FILTER (WHERE a.type IN ('offer_sent','quote_sent','call_logged','meeting_logged')) AS clients_contacted
      FROM users u
-     LEFT JOIN activity_log a ON a.user_id = u.id AND a.created_at >= $2
+     LEFT JOIN activity_log a ON a.user_id = u.id AND a.workspace_id=u.workspace_id AND a.created_at >= $2
      WHERE u.workspace_id = $1
      GROUP BY u.id, u.name
      ORDER BY u.name`,

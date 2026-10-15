@@ -22,7 +22,7 @@ test('personal workspace preferences persist per account, preserve permissions a
    assert.equal((await req('/platform/users')).status,403);assert.equal((await req('/platform/users','GET',undefined,3)).status,403);
   });
   await t.test('cross-workspace identity and invalid layouts cannot change settings',async()=>{
-   assert.equal((await req('/auth/preferences','PUT',P.defaults(),2,2)).status,404);
+   assert.equal((await req('/auth/preferences','PUT',P.defaults(),2,2)).status,401);
    for(const invalid of [{palette:{custom:{background:'red;display:none'}}},{layout:{nav_order:['platform']}},{layout:{hidden_nav:P.NAV}},{layout:{hidden_columns:['name']}},{layout:{overview_order:['metrics','metrics']}}])assert.equal((await req('/auth/preferences','PUT',invalid)).status,400);
    assert.equal((await req('/auth/preferences')).data.preferences.layout.sidebar,'right');
    assert.equal((await req('/auth/preferences','GET',undefined,3)).data.preferences.layout.sidebar,'left');

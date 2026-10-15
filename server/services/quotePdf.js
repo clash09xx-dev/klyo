@@ -25,7 +25,7 @@ function documentFor(quote) {
 }
 async function generateQuotePdf(quote, lineItems) {
   const config = documentFor(quote),
-    L = Q.labels(config.language),
+    L = {...Q.labels(config.language),...Object.fromEntries(Object.entries(config.headings).filter(([,v])=>v))},
     ref = Q.reference({ ...quote, document: config }),
     accent = config.accent;
   return new Promise((resolve, reject) => {
@@ -154,12 +154,12 @@ async function generateQuotePdf(quote, lineItems) {
               continue;
             }
             let end = remaining.length;
-            if (height(remaining, content) > available) {
+            if (height(remaining, content, config.body_size) > available) {
               let lo = 1,
                 hi = remaining.length;
               while (lo < hi) {
                 const mid = Math.ceil((lo + hi) / 2);
-                if (height(remaining.slice(0, mid), content) <= available)
+                if (height(remaining.slice(0, mid), content, config.body_size) <= available)
                   lo = mid;
                 else hi = mid - 1;
               }
@@ -172,7 +172,7 @@ async function generateQuotePdf(quote, lineItems) {
               continue;
             }
             const chunk = remaining.slice(0, end);
-            y = write(chunk, margin, y, content) + 7;
+            y = write(chunk, margin, y, content, config.body_size) + 7;
             remaining = remaining.slice(end).trimStart();
             if (remaining) addPage();
           }
@@ -286,7 +286,8 @@ async function generateQuotePdf(quote, lineItems) {
             party(config.buyer, L.to, margin + partyWidth + 32, y, partyWidth),
           ) + 25;
       paragraph(quote.intro_message);
-      paragraph(config.scope, L.scope);
+      for(const section of config.sections){if(section==='items')investment();else paragraph(config[section],L[section]);}
+      function investment(){
       const columns = [
         { label: L.description, width: 218, align: "left" },
         { label: L.qty, width: 40, align: "right" },
@@ -440,9 +441,7 @@ async function generateQuotePdf(quote, lineItems) {
         { align: "right" },
       );
       y += 63;
-      paragraph(config.payment, L.payment);
-      paragraph(config.delivery, L.delivery);
-      paragraph(config.terms, L.terms);
+      }
       const range = doc.bufferedPageRange();
       for (let i = 0; i < range.count; i++) {
         doc.switchToPage(i);

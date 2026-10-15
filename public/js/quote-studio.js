@@ -125,6 +125,7 @@ const KlyoQuoteStudio = (() => {
       const [key, sub] = el.dataset.doc.split(".");
       el.value = sub ? documentState[key][sub] : documentState[key];
     }
+    KlyoQuoteTemplates.renderDocument(documentState);
     logoPreview();
     labels();
   }
@@ -137,7 +138,7 @@ const KlyoQuoteStudio = (() => {
       if (sub) result[key][sub] = el.value;
       else result[key] = el.value;
     }
-    return Q.normalizeDocument(result);
+    return Q.normalizeDocument(KlyoQuoteTemplates.readDocument(result));
   }
   async function open(quote = null, contact = {}) {
     try {
@@ -158,10 +159,14 @@ const KlyoQuoteStudio = (() => {
       ).slice(0, 10);
     render();
     g("quoteTaxRate").value = Number(quote?.tax_rate) || 0;
+    g("quoteDiscountType").value=quote?.discount_type||"none";g("quoteDiscountAmount").value=quote?.discount_value||0;
+    try{await KlyoQuoteTemplates.open();}catch(e){g("quoteTemplateControls").textContent=e.message;}
   }
+  function applyTemplate(content){const current=read();documentState=Q.normalizeDocument({...content.document,buyer:current.buyer,reference:current.reference,issued_on:new Date().toISOString().slice(0,10),valid_until:''});render();g('quoteTaxRate').value=content.tax_rate||0;g('quoteDiscountType').value=content.discount_type||'none';g('quoteDiscountAmount').value=content.discount_value||0;}
   function collect() {
     documentState = read();
     return {
+      discount_type:KlyoQuoteTemplates.discount().type,discount_value:KlyoQuoteTemplates.discount().value,
       document: documentState,
       tax_rate: Number(g("quoteTaxRate")?.value || 0),
     };
@@ -225,7 +230,7 @@ const KlyoQuoteStudio = (() => {
   async function fetchPdf(id) {
     const response = await fetch(
       `/api/quotes/${encodeURIComponent(id)}/pdf?inline=1`,
-      { headers: { Authorization: "Bearer " + API.token() } },
+      { headers: API.headers() },
     );
     if (!response.ok) {
       let data = {};
@@ -308,6 +313,7 @@ const KlyoQuoteStudio = (() => {
     }
   }
   function init() {
+    for(const id of ["quoteDiscountType","quoteDiscountAmount"])g(id).addEventListener("input",recomputeQuoteTotals);
     labels();
     g("quoteSavePdfBtn").addEventListener("click", () => saveQuote("pdf"));
     g("quoteViewPdfBtn").addEventListener("click", () =>
@@ -396,7 +402,7 @@ const KlyoQuoteStudio = (() => {
   return {
     init,
     open,
-    collect,
+    collect,applyTemplate,
     contactChanged,
     preview,
     download,

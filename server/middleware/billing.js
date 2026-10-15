@@ -18,36 +18,58 @@ const { isCurrentlyComped } = require("../services/limits");
 async function requirePaidAccess(req, res, next) {
   try {
     const result = await db.query(
-      "SELECT plan, is_comped, comped_until, trial_ends_at, current_period_end, stripe_subscription_id FROM workspaces WHERE id = $1",
-      [req.user.workspace_id]
+      "SELECT id, plan, is_comped, comped_until, trial_ends_at, current_period_end, stripe_subscription_id FROM workspaces WHERE id = (SELECT COALESCE(billing_workspace_id,id) FROM workspaces WHERE id=$1)",
+      [req.user.workspace_id],
     );
     const workspace = result.rows[0];
+    const billingId = workspace?.id;
     if (!workspace) {
       return res.status(404).json({ error: "Workspace not found." });
     }
 
+    if (
+      ["POST", "PUT", "PATCH", "DELETE"].includes(req.method) &&
+      req.user.role === "viewer" &&
+      !(req.baseUrl === "/api/sales" && req.path.startsWith("/views"))
+    )
+      return res
+        .status(403)
+        .json({ error: "You don't have permission to change shared records." });
+    await require("./scopedLinks")(req);
     if (isCurrentlyComped(workspace)) return next();
 
     // A time-limited grant just lapsed — clear the flag so the
     // Platform dashboard and Settings stop reporting it as comped.
     if (workspace.is_comped) {
-      await db.query("UPDATE workspaces SET is_comped = FALSE WHERE id = $1", [req.user.workspace_id]);
+      await db.query("UPDATE workspaces SET is_comped = FALSE WHERE id = $1", [
+        billingId,
+      ]);
     }
 
     if (workspace.plan === "active") {
       const isOneTime = !workspace.stripe_subscription_id;
-      const lapsed = workspace.current_period_end && new Date(workspace.current_period_end) < new Date();
+      const lapsed =
+        workspace.current_period_end &&
+        new Date(workspace.current_period_end) < new Date();
       if (isOneTime && lapsed) {
-        await db.query("UPDATE workspaces SET plan = 'past_due' WHERE id = $1", [req.user.workspace_id]);
+        await db.query(
+          "UPDATE workspaces SET plan = 'past_due' WHERE id = $1",
+          [billingId],
+        );
         return res.status(402).json({
-          error: "Your one-month access has run out. Buy another month or switch to a monthly plan to keep going.",
+          error:
+            "Your one-month access has run out. Buy another month or switch to a monthly plan to keep going.",
           code: "PAYMENT_REQUIRED",
         });
       }
       return next();
     }
 
-    if (workspace.plan === "trial" && workspace.trial_ends_at && new Date(workspace.trial_ends_at) > new Date()) {
+    if (
+      workspace.plan === "trial" &&
+      workspace.trial_ends_at &&
+      new Date(workspace.trial_ends_at) > new Date()
+    ) {
       return next();
     }
 
@@ -56,8 +78,14 @@ async function requirePaidAccess(req, res, next) {
       code: "PAYMENT_REQUIRED",
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Could not verify your subscription status." });
+    if (!err.status) console.error(err);
+    res
+      .status(err.status || 500)
+      .json({
+        error: err.status
+          ? err.message
+          : "Could not verify your subscription status.",
+      });
   }
 }
 

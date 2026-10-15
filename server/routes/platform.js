@@ -34,29 +34,50 @@ function computeCompedUntil(duration) {
 }
 
 router.get("/overview", async (req, res) => {
-  const [workspaceCounts, userCount, contactCount, quotesSent, offersSent, signups7d, signups30d, activeWorkspaces] =
-    await Promise.all([
-      db.query(
-        `SELECT
+  const [
+    workspaceCounts,
+    userCount,
+    contactCount,
+    quotesSent,
+    offersSent,
+    signups7d,
+    signups30d,
+    activeWorkspaces,
+  ] = await Promise.all([
+    db.query(
+      `SELECT
            COUNT(*) AS total,
            COUNT(*) FILTER (WHERE plan = 'trial') AS trial,
            COUNT(*) FILTER (WHERE plan = 'active') AS active,
            COUNT(*) FILTER (WHERE plan = 'past_due') AS past_due,
            COUNT(*) FILTER (WHERE is_comped AND (comped_until IS NULL OR comped_until > now())) AS comped
-         FROM workspaces`
-      ),
-      db.query("SELECT COUNT(*) AS n FROM users"),
-      db.query("SELECT COUNT(*) AS n FROM contacts"),
-      db.query("SELECT COUNT(*) AS n FROM quotes WHERE status IN ('sent','accepted','declined')"),
-      db.query("SELECT COUNT(*) AS n FROM offers WHERE status = 'sent'"),
-      db.query("SELECT COUNT(*) AS n FROM workspaces WHERE created_at >= now() - interval '7 days'"),
-      db.query("SELECT COUNT(*) AS n FROM workspaces WHERE created_at >= now() - interval '30 days'"),
-      db.query(
-        "SELECT tier FROM workspaces WHERE plan = 'active' AND NOT (is_comped AND (comped_until IS NULL OR comped_until > now()))"
-      ),
-    ]);
+         FROM workspaces WHERE billing_workspace_id IS NULL`,
+    ),
+    db.query("SELECT COUNT(*) AS n FROM users"),
+    db.query("SELECT COUNT(*) AS n FROM contacts"),
+    db.query(
+      "SELECT COUNT(*) AS n FROM quotes WHERE status IN ('sent','accepted','declined')",
+    ),
+    db.query("SELECT COUNT(*) AS n FROM offers WHERE status = 'sent'"),
+    db.query(
+      "SELECT COUNT(*) AS n FROM workspaces WHERE billing_workspace_id IS NULL AND created_at >= now() - interval '7 days'",
+    ),
+    db.query(
+      "SELECT COUNT(*) AS n FROM workspaces WHERE billing_workspace_id IS NULL AND created_at >= now() - interval '30 days'",
+    ),
+    db.query(
+      "SELECT tier,extra_seats FROM workspaces WHERE billing_workspace_id IS NULL AND plan = 'active' AND NOT (is_comped AND (comped_until IS NULL OR comped_until > now()))",
+    ),
+  ]);
 
-  const estimatedMrr = activeWorkspaces.rows.reduce((sum, row) => sum + getTier(row.tier).price, 0);
+  const estimatedMrr = activeWorkspaces.rows.reduce(
+    (sum, row) =>
+      sum +
+      getTier(row.tier).price +
+      Number(row.extra_seats || 0) *
+        require("../services/seatBilling").EXTRA_SEAT_USD,
+    0,
+  );
 
   res.json({
     workspaces: {
@@ -84,8 +105,9 @@ router.get("/workspaces", async (req, res) => {
      FROM workspaces w
      LEFT JOIN users u ON u.workspace_id = w.id
      LEFT JOIN contacts c ON c.workspace_id = w.id
+     WHERE w.billing_workspace_id IS NULL
      GROUP BY w.id
-     ORDER BY w.created_at DESC`
+     ORDER BY w.created_at DESC`,
   );
   res.json({
     workspaces: result.rows.map((r) => ({
@@ -103,7 +125,7 @@ router.get("/users", async (req, res) => {
             w.name AS workspace_name, w.plan, w.tier
      FROM users u
      JOIN workspaces w ON w.id = u.workspace_id
-     ORDER BY u.created_at DESC`
+     ORDER BY u.created_at DESC`,
   );
   res.json({ users: result.rows });
 });
@@ -113,42 +135,58 @@ router.get("/users", async (req, res) => {
 // dashboard replacement for the comp-workspace CLI script.
 router.post("/workspaces/:id/grant", async (req, res) => {
   const { tier, duration } = req.body || {};
-  if (!TIER_ORDER.includes(tier)) return res.status(400).json({ error: "Pick a valid tier." });
-  if (!Object.keys(GRANT_DURATIONS).includes(duration)) return res.status(400).json({ error: "Pick a valid duration." });
+  if (!TIER_ORDER.includes(tier))
+    return res.status(400).json({ error: "Pick a valid tier." });
+  if (!Object.keys(GRANT_DURATIONS).includes(duration))
+    return res.status(400).json({ error: "Pick a valid duration." });
 
-  const existing = await db.query("SELECT id FROM workspaces WHERE id = $1", [req.params.id]);
-  if (!existing.rows.length) return res.status(404).json({ error: "Workspace not found." });
-
-  const compedUntil = computeCompedUntil(duration);
-  await db.query("UPDATE workspaces SET is_comped = TRUE, tier = $1, comped_until = $2 WHERE id = $3", [
-    tier,
-    compedUntil,
+  const existing = await db.query("SELECT id FROM workspaces WHERE id = $1", [
     req.params.id,
   ]);
+  if (!existing.rows.length)
+    return res.status(404).json({ error: "Workspace not found." });
+
+  const compedUntil = computeCompedUntil(duration);
+  await db.query(
+    "UPDATE workspaces SET is_comped = TRUE, tier = $1, comped_until = $2 WHERE id = $3",
+    [tier, compedUntil, req.params.id],
+  );
 
   res.json({ ok: true, tier, comped_until: compedUntil });
 });
 
 // POST /api/platform/workspaces/:id/revoke — end a grant early
 router.post("/workspaces/:id/revoke", async (req, res) => {
-  const existing = await db.query("SELECT id FROM workspaces WHERE id = $1", [req.params.id]);
-  if (!existing.rows.length) return res.status(404).json({ error: "Workspace not found." });
+  const existing = await db.query("SELECT id FROM workspaces WHERE id = $1", [
+    req.params.id,
+  ]);
+  if (!existing.rows.length)
+    return res.status(404).json({ error: "Workspace not found." });
 
-  await db.query("UPDATE workspaces SET is_comped = FALSE, comped_until = NULL WHERE id = $1", [req.params.id]);
+  await db.query(
+    "UPDATE workspaces SET is_comped = FALSE, comped_until = NULL WHERE id = $1",
+    [req.params.id],
+  );
   res.json({ ok: true });
 });
 
 // GET /api/platform/page-views — the simple built-in visit counter
 router.get("/page-views", async (req, res) => {
   const [today, week, month, total, byPath] = await Promise.all([
-    db.query("SELECT COUNT(*) AS n FROM page_views WHERE created_at >= now() - interval '1 day'"),
-    db.query("SELECT COUNT(*) AS n FROM page_views WHERE created_at >= now() - interval '7 days'"),
-    db.query("SELECT COUNT(*) AS n FROM page_views WHERE created_at >= now() - interval '30 days'"),
+    db.query(
+      "SELECT COUNT(*) AS n FROM page_views WHERE created_at >= now() - interval '1 day'",
+    ),
+    db.query(
+      "SELECT COUNT(*) AS n FROM page_views WHERE created_at >= now() - interval '7 days'",
+    ),
+    db.query(
+      "SELECT COUNT(*) AS n FROM page_views WHERE created_at >= now() - interval '30 days'",
+    ),
     db.query("SELECT COUNT(*) AS n FROM page_views"),
     db.query(
       `SELECT path, COUNT(*) AS n FROM page_views
        WHERE created_at >= now() - interval '30 days'
-       GROUP BY path ORDER BY n DESC LIMIT 10`
+       GROUP BY path ORDER BY n DESC LIMIT 10`,
     ),
   ]);
 

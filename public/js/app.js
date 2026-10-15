@@ -327,6 +327,7 @@ function showLimitOrError(err, fallbackEl) {
   KlyoPipelines.init();
   KlyoCustomize.init();
   KlyoQuoteStudio.init();
+  await KlyoWorkspace.init();
 
   // A failed auxiliary request must never prevent the pipeline from loading.
   const bootResults = await Promise.allSettled([
@@ -860,7 +861,7 @@ function renderProductsView() {
   });
 }
 
-function openProductModal(product) {
+async function openProductModal(product) {
   if (!els.productModalOverlay) return;
   els.productFormError.textContent = "";
   els.productId.value = product?.id || "";
@@ -875,7 +876,10 @@ function openProductModal(product) {
   els.productImageUrl.value   = product?.image_url || "";
   els.productInterval.value   = product?.service_interval_months || "";
   els.productNotes.value      = product?.notes || "";
+  document.getElementById("productWarrantyMonths").value=product?.warranty_months||"";
+  els.productSubmitBtn.disabled=true;
   els.productModalOverlay.classList.remove("hidden");
+  try{await KlyoWorkspace.editFields("product",product);els.productSubmitBtn.disabled=API.getUser()?.role==='viewer';}catch(e){els.productFormError.textContent=e.message;}
 }
 
 function closeProductModal() {
@@ -887,6 +891,8 @@ async function handleProductSubmit(e) {
   els.productFormError.textContent = "";
   const id = els.productId.value;
   const body = {
+    warranty_months:document.getElementById("productWarrantyMonths").value||null,
+    custom_fields:KlyoWorkspace.collectFields("product"),
     name:                    els.productName.value.trim(),
     description:             els.productDesc.value.trim() || null,
     unit_price:              parseFloat(els.productPrice.value) || 0,
@@ -1201,8 +1207,11 @@ async function openPricingModal() {
   els.pricingModalOverlay.classList.remove("hidden");
   els.pricingGrid.innerHTML = '<p class="muted">Loading plans…</p>';
   try {
-    const [{ tiers }, status] = await Promise.all([API.get("/billing/tiers"), API.get("/billing/status")]);
-    pricingCache = { tiers, status };
+    const [{ tiers,extraSeatPrice }, status] = await Promise.all([API.get("/billing/tiers"), API.get("/billing/status")]);
+    pricingCache = { tiers, status,extraSeatPrice };
+    document.getElementById("checkoutExtraSeats").value=0;
+    document.getElementById("checkoutSeatUnit").textContent=extraSeatPrice;
+    document.getElementById("checkoutExtraSeats").disabled=API.getUser()?.can_manage_billing===false;
     renderPricingGrid();
   } catch (err) {
     els.pricingGrid.innerHTML = `<p class="muted">${escapeHtml(err.message)}</p>`;
@@ -1211,7 +1220,8 @@ async function openPricingModal() {
 
 function renderPricingGrid() {
   if (!pricingCache) return;
-  const { tiers, status } = pricingCache;
+  const { tiers, status,extraSeatPrice } = pricingCache;
+  const extra=Math.max(0,Math.floor(Number(document.getElementById("checkoutExtraSeats").value)||0));
   const oneTime = pricingBillingMode === "one_time";
 
   els.billingModeToggle.querySelectorAll("button").forEach((b) => {
@@ -1223,14 +1233,14 @@ function renderPricingGrid() {
     .map((t) => {
       const isCurrent = status.plan === "active" && status.tier === t.key && (oneTime ? status.billing_mode === "one_time" : status.billing_mode !== "one_time");
       const features = [
-        t.maxSeats == null ? "Unlimited team members" : `Up to ${t.maxSeats} team member${t.maxSeats === 1 ? "" : "s"}`,
+        t.maxSeats == null ? "Unlimited team members" : `Up to ${t.maxSeats+extra} team member${t.maxSeats === 1 ? "" : "s"}`,
         t.maxContacts == null ? "Unlimited contacts" : `Up to ${t.maxContacts.toLocaleString()} contacts`,
         t.maxAiDraftsPerMonth == null ? "Unlimited AI drafts" : `${t.maxAiDraftsPerMonth.toLocaleString()} AI drafts / month`,
       ];
       return `
         <div class="tier-card ${isCurrent ? "current" : ""}">
           <h3>${escapeHtml(t.label)}</h3>
-          <div class="tier-price">$${t.price}<span> ${oneTime ? "one-time" : "/ month"}</span></div>
+          <div class="tier-price">$${t.price+(t.maxSeats==null?0:extra*extraSeatPrice)}<span> ${oneTime ? "one-time" : "/ month"}</span></div>
           <div class="tier-tagline">${escapeHtml(t.tagline)}${oneTime ? " — one month of access, doesn't renew." : ""}</div>
           <ul>
             ${features
@@ -1240,7 +1250,7 @@ function renderPricingGrid() {
               )
               .join("")}
           </ul>
-          <button class="btn ${isCurrent ? "btn-ghost" : "btn-primary"} btn-sm" data-tier="${t.key}" ${isCurrent ? "disabled" : ""}>
+          <button class="btn ${isCurrent ? "btn-ghost" : "btn-primary"} btn-sm" data-tier="${t.key}" ${isCurrent||API.getUser()?.can_manage_billing===false ? "disabled" : ""}>
             ${isCurrent ? "Current plan" : oneTime ? `Buy 1 month of ${escapeHtml(t.label)}` : `Subscribe to ${escapeHtml(t.label)}`}
           </button>
         </div>`;
@@ -1261,8 +1271,8 @@ async function handleChooseTier(tierKey, btn) {
   btn.disabled = true;
   btn.textContent = "Redirecting…";
   try {
-    const { url } = await API.post("/billing/checkout", { tier: tierKey, billing_mode: pricingBillingMode });
-    window.location.href = url;
+    const { url,pending } = await API.post(pricingCache.status.has_subscription?"/billing/plan":"/billing/checkout", { tier: tierKey, billing_mode: pricingBillingMode,extra_seats:pricingCache.tiers.find(t=>t.key===tierKey)?.maxSeats==null?0:Number(document.getElementById("checkoutExtraSeats").value)||0 });
+    if(url)window.location.href=url;else if(pending)toast("Complete the pending payment in Stripe before the change takes effect.");else{closePricingModal();await loadBillingStatus();}
   } catch (err) {
     toast(err.message, "error");
     btn.disabled = false;
@@ -1467,7 +1477,7 @@ async function loadTeam() {
     '<option value="">All members</option>' +
     team.map((u) => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
   const me = API.getUser();
-  const isAdmin = me?.role === "admin";
+  const isAdmin = me?.is_team_owner === true;
 
   els.teamBody.innerHTML = team.map((u) => {
     const isSelf = u.id === me?.id;
@@ -1636,6 +1646,7 @@ function getViewCopy(view) {
 let currentView = "pipeline";
 
 function switchView(view) {
+  if(view==='team'&&API.scope()==='personal')view='pipeline';
   if (view === "platform" && API.getUser()?.is_platform_admin !== true) return;
   document.querySelectorAll(".nav-item[data-view]").forEach((i) => i.classList.toggle("active", i.dataset.view === view));
   els.pipelineView.classList.toggle("hidden", view !== "pipeline");
@@ -1655,6 +1666,7 @@ function switchView(view) {
 
   currentView = view;
   KlyoSales.onView(view);
+  KlyoWorkspace.onView(view);
   document.body.dataset.view = view;
   const copy = getViewCopy(view);
   els.viewTitle.textContent = copy.title;
@@ -1720,7 +1732,7 @@ function initTagInput() {
 }
 
 /* ---------- contact modal ---------- */
-function openContactModal(contact) {
+async function openContactModal(contact) {
   els.contactFormError.textContent = "";
   populateOwnerOptions(els.cOwner, { placeholder: t("common.unassigned"), selected: contact ? contact.owner_id : API.getUser()?.id });
   populateCompanySelect();
@@ -1766,7 +1778,9 @@ function openContactModal(contact) {
     const pEl = document.getElementById("cPriority");
     if (pEl) pEl.value = "medium";
   }
+  els.contactSubmitBtn.disabled=true;
   els.contactModalOverlay.classList.remove("hidden");
+  try{await KlyoWorkspace.editFields("contact",contact);els.contactSubmitBtn.disabled=API.getUser()?.role==='viewer';}catch(e){els.contactFormError.textContent=e.message;}
 }
 function closeContactModal() { els.contactModalOverlay.classList.add("hidden"); }
 
@@ -1780,6 +1794,7 @@ async function handleContactSubmit(e) {
 
   const gv = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
   const payload = {
+    custom_fields:KlyoWorkspace.collectFields("contact"),
     first_name: firstName,
     last_name: lastName || null,
     full_name: [firstName, lastName].filter(Boolean).join(" "),
@@ -1831,6 +1846,7 @@ async function openPanel(id) {
   const { contact, activity, offers, quotes } = await API.get(`/contacts/${id}`);
   currentPanelContactId = contact.id;
   currentPanelContact = contact;
+  KlyoWorkspace.showContactFields(contact);
 
   els.panelName.textContent = contact.full_name;
   els.panelSub.textContent = [contact.company_name, contact.owner_name ? `Owner: ${contact.owner_name}` : null].filter(Boolean).join(" · ") || "No company on file";
@@ -2432,7 +2448,7 @@ function buildLineItemRow(item, index) {
 function recomputeQuoteTotals() {
   const currency=els.quoteCurrencySelect.value||workspaceDefaultCurrency;
   try{
-    const totals=KlyoQuoteCore.computeTotals(currentQuoteLineItems,Number(document.getElementById('quoteTaxRate')?.value||0));
+    const totals=KlyoQuoteCore.computeTotals(currentQuoteLineItems,Number(document.getElementById('quoteTaxRate')?.value||0),KlyoQuoteTemplates.discount());
     els.quoteItemsContainer.querySelectorAll('.quote-line-row').forEach((row,index)=>row.querySelector('.line-total-display').textContent=fmtMoney(totals.computed[index].line_total,currency,2));
     els.quoteSubtotalValue.textContent=fmtMoney(totals.subtotal,currency,2);els.quoteDiscountValue.textContent='−'+fmtMoney(totals.discountTotal,currency,2);els.quoteTotalValue.textContent=fmtMoney(totals.total,currency,2);
     document.getElementById('quoteTaxRow').hidden=!totals.tax_rate;document.getElementById('quoteTaxLabel').textContent=(KlyoI18n.getLang()==='pl'?'Podatek':'Tax')+` (${totals.tax_rate}%)`;document.getElementById('quoteTaxValue').textContent=fmtMoney(totals.tax_total,currency,2);
@@ -2462,7 +2478,7 @@ async function saveQuote(alsoSend) {
     recipient_ids: els.quoteRecipientsField.classList.contains("hidden") ? [] : collectQuoteRecipientIds(),
   };
 
-  try{Object.assign(payload,KlyoQuoteStudio.collect());KlyoQuoteCore.computeTotals(payload.line_items,payload.tax_rate);}catch(error){els.quoteFormError.textContent=error.message;return;}
+  try{Object.assign(payload,KlyoQuoteStudio.collect());KlyoQuoteCore.computeTotals(payload.line_items,payload.tax_rate,{type:payload.discount_type,value:payload.discount_value});}catch(error){els.quoteFormError.textContent=error.message;return;}
   const id = els.quoteId.value;
   document.getElementById('quoteSavePdfBtn').disabled=true;
   els.quoteSendBtn.disabled = true;
@@ -2787,7 +2803,7 @@ async function loadHistory(reset = false) {
 
 async function loadPerformance() {
   const user = API.getUser();
-  if (!user || user.role !== "admin") {
+  if (!user?.is_team_owner) {
     els.performanceCard.classList.add("hidden");
     return;
   }
@@ -2870,7 +2886,7 @@ function wireEvents() {
     link.href = `/api/contacts/export`;
     link.setAttribute("download", "contacts.csv");
     // Attach auth header via a fetch-then-blob approach
-    fetch("/api/contacts/export", { headers: { Authorization: `Bearer ${API.token()}` } })
+    fetch("/api/contacts/export", { headers: API.headers() })
       .then((r) => r.blob())
       .then((blob) => {
         link.href = URL.createObjectURL(blob);
@@ -2879,7 +2895,7 @@ function wireEvents() {
       .catch(() => toast("Export failed", "error"));
   });
   els.exportCompaniesBtn.addEventListener("click", () => {
-    fetch("/api/companies/export", { headers: { Authorization: `Bearer ${API.token()}` } })
+    fetch("/api/companies/export", { headers: API.headers() })
       .then((r) => r.blob())
       .then((blob) => {
         const link = document.createElement("a");

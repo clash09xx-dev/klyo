@@ -240,7 +240,7 @@ test(
           ])
             assert.equal(
               (await request("/api/quotes", "POST", body)).status,
-              404,
+              400,
             );
           assert.equal(
             (

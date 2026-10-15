@@ -113,6 +113,7 @@ async function saveDraft(req, id) {
     const totals = Q.computeTotals(
         b.line_items,
         b.tax_rate ?? existing?.tax_rate ?? 0,
+        {type:b.discount_type??existing?.discount_type??'none',value:b.discount_value??existing?.discount_value??0},
       ),
       recipients = b.recipient_ids || [];
     const contact = await S.validateLinks(
@@ -180,6 +181,7 @@ async function saveDraft(req, id) {
       );
       id = r.rows[0].id;
     }
+    await client.query('UPDATE quotes SET discount_type=$1,discount_value=$2,quote_discount_total=$3 WHERE id=$4 AND workspace_id=$5',[totals.discount_type,totals.discount_value,totals.quote_discount_total,id,req.user.workspace_id]);
     await S.replaceItems(client, id, totals.computed, recipients);
     await logActivity(
       client,
@@ -398,7 +400,7 @@ router.post(
         [q.id],
       );
       const items = await client.query(
-        "SELECT i.*,p.service_interval_months FROM quote_line_items i JOIN products p ON p.id=i.product_id WHERE i.quote_id=$1 AND p.workspace_id=$2",
+        "SELECT i.*,p.service_interval_months,p.warranty_months,p.name AS product_name FROM quote_line_items i JOIN products p ON p.id=i.product_id WHERE i.quote_id=$1 AND p.workspace_id=$2",
         [q.id, req.user.workspace_id],
       );
       for (const i of items.rows)
@@ -414,6 +416,10 @@ router.post(
             i.service_interval_months || 0,
           ],
         );
+      for(const i of items.rows.filter(i=>Number(i.warranty_months)>0)){
+        const item=await require('../services/warranty').save(client,req.user,null,{contact_id:q.contact_id,product_id:i.product_id,product_name:i.product_name,quantity:i.quantity,warranty_months:i.warranty_months,review_interval_months:i.service_interval_months});
+        await client.query('UPDATE warranty_items SET quote_id=$1 WHERE id=$2',[q.id,item.id]);
+      }
       await logActivity(
         client,
         req.user.workspace_id,
