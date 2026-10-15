@@ -28,6 +28,7 @@ test('manual sales workspace: persistence, history, permissions and isolation', 
     await db.query("INSERT INTO contacts (id,workspace_id,full_name,email) VALUES (1,1,'Client A','a@client.test'),(2,2,'Client B','b@client.test')");
     await db.query("SELECT setval(pg_get_serial_sequence('contacts','id'),2)");
     await db.query("INSERT INTO pipeline_stages (id,workspace_id,name,sort_order) VALUES (1,1,'Contacted',0),(2,1,'Proposal',1),(3,2,'Other stage',0)");
+    await db.query("SELECT setval(pg_get_serial_sequence('workspaces','id'),(SELECT max(id) FROM workspaces))");
     const app=express();app.use(express.json());
     for(const name of ['deals','sales','offers','tasks','contacts','auth'])app.use('/api/'+name,require('../server/routes/'+name));
     server=await new Promise(resolve=>{const listener=app.listen(0,'127.0.0.1',()=>resolve(listener));});
@@ -36,7 +37,7 @@ test('manual sales workspace: persistence, history, permissions and isolation', 
       const workspace_id=options.workspace||1,id=options.id||(workspace_id===2?3:1),role=options.role||'admin';
       await db.query('UPDATE users SET role=$1 WHERE id=$2',[role,id]);
       const token=jwt.sign({id,workspace_id,role,name:'Test user'},process.env.JWT_SECRET);
-      const response=await fetch(base+path,{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});
+      const response=await fetch(base+path,{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json','X-Klyo-Scope':options.scope||'team'},body:body===undefined?undefined:JSON.stringify(body)});
       const raw=await response.text();let data;try{data=JSON.parse(raw);}catch{data=raw;}
       return{status:response.status,data};
     }
@@ -71,6 +72,26 @@ test('manual sales workspace: persistence, history, permissions and isolation', 
       assert.equal((await request(`/tasks/${task.id}/status`,'PATCH',{status:'done'})).status,200);
       deal=(await request(`/deals/${id}`)).data.deal;assert.equal(deal.next_task_id,null);
       assert.equal((await db.query('SELECT COUNT(*)::int AS n FROM tasks')).rows[0].n,1);
+    });
+    await t.test('task deletion respects team roles and private workspaces and clears linked next steps',async()=>{
+      const created=await request(`/deals/${id}/next-step`,'POST',{title:'Task to delete',due_date:'2026-01-01'});
+      assert.equal(created.status,201);const taskId=created.data.task.id;
+      await db.query("INSERT INTO calendar_events(workspace_id,title,start_at,task_id) VALUES(1,'Linked meeting',now(),$1)",[taskId]);
+      assert.equal((await request(`/tasks/${taskId}`,'DELETE',undefined,{workspace:2})).status,404);
+      assert.equal((await request(`/tasks/${taskId}`,'DELETE',undefined,{role:'viewer'})).status,403);
+      assert.equal((await request(`/tasks/${taskId}`,'DELETE',undefined,{scope:'personal'})).status,404);
+      assert.equal((await request(`/tasks/${taskId}`,'DELETE',undefined,{id:2,role:'member'})).status,200);
+      assert.equal((await request(`/tasks/${taskId}`,'DELETE')).status,404);
+      assert.equal((await request(`/deals/${id}`)).data.deal.next_task_id,null);
+      assert.equal((await db.query('SELECT task_id FROM calendar_events WHERE workspace_id=1')).rows[0].task_id,null);
+      const personal=await request('/tasks','POST',{title:'Only mine'}, {scope:'personal'});
+      assert.equal(personal.status,201);const privateId=personal.data.task.id;
+      assert.equal((await request(`/tasks/${privateId}`,'DELETE')).status,404);
+      assert.equal((await request(`/tasks/${privateId}`,'DELETE',undefined,{id:2,role:'member',scope:'personal'})).status,404);
+      assert.equal((await request(`/tasks/${privateId}`,'DELETE',undefined,{scope:'personal'})).status,200);
+      const shared=await request('/tasks','POST',{title:'Concurrent delete'});
+      const replies=await Promise.all([request(`/tasks/${shared.data.task.id}`,'DELETE'),request(`/tasks/${shared.data.task.id}`,'DELETE')]);
+      assert.deepEqual(replies.map(r=>r.status).sort(),[200,404]);
     });
     await t.test('loss reason is mandatory and summaries keep currencies separate',async()=>{
       assert.equal((await request(`/deals/${id}`,'PUT',{status:'lost'})).status,400);

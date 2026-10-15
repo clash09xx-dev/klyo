@@ -43,7 +43,8 @@ async function run(engine, name) {
     const pipelines=[{id:1,name:'Sales',description:'All existing sales opportunities',is_default:true}];
     const companyRecords=[];let nextCompanyId=1;
     deals.forEach(d=>d.pipeline_id=1);stages.forEach(s=>s.pipeline_id=1);
-    let failPricing=false,seatLimitReached=false;const planRequests=[];
+    let failPricing=false,seatLimitReached=false;const planRequests=[];let failTaskDelete=false,taskDeleteRequests=0;
+    const taskRecords=[{id:1,title:'Review the project proposal',status:'todo',priority:'medium',assigned_name:'Demo',due_date:'2026-10-15'}];
     const product = { id: 1, name: 'Website', unit_price: '4500.00', currency, unit_label: 'project' };
     const quote = { id: 1, title: 'Draft quote', total: '4500.00', currency, status: 'draft', contact_id: 1, contact_name: contact.full_name };
     let quoteDefaults={},quoteSentCount=0,lastQuoteSend=null;
@@ -121,7 +122,12 @@ async function run(engine, name) {
           data = { deal: item };
         } else if (endpoint === '/deals/1') data = { deal };
         else if(/^\/deals\/\d+$/.test(endpoint)){const item=deals.find(d=>d.id===Number(endpoint.split('/')[2]));if(route.request().method()==='PUT'){Object.assign(item,route.request().postDataJSON());item.pipeline_id=Number(item.pipeline_id);item.stage_id=Number(item.stage_id)||null;}data={deal:item};}
-        else if (endpoint === '/tasks') data = { tasks: [{ id: 1, title: 'Review the project proposal', status: 'todo', priority: 'medium', assigned_name: 'Demo', due_date: '2026-10-15', contact_name: contact.full_name }] };
+        else if (endpoint === '/tasks') data = { tasks: taskRecords };
+        else if (/^\/tasks\/\d+$/.test(endpoint) && route.request().method()==='DELETE') {
+          taskDeleteRequests++;
+          if(failTaskDelete){status=500;data={error:'Could not delete this task. Please try again.'};}
+          else{const index=taskRecords.findIndex(t=>String(t.id)===endpoint.split('/')[2]);taskRecords.splice(index,1);data={ok:true};}
+        }
         else if (endpoint === '/clients') data = { clients: [] };
         else if (endpoint === '/calendar') data = { events: [] };
         else if (endpoint === '/reminders/due') data = { reminders: [] };
@@ -552,6 +558,60 @@ async function run(engine, name) {
     await page.locator('#editCompanyBtn').click();await page.locator('#companySubmitBtn:not([disabled])').waitFor();
     assert.equal(await page.locator('#coParent option[value="2"]').count(),0);assert.equal(await page.locator('#coParent').inputValue(),'1');
     await page.locator('#cancelCompanyBtn').click();
+    // Deletion is available in the list and editor; cancel/failure preserve the task.
+    // macOS headless WebKit cannot reliably dismiss native confirm dialogs.
+    // Test its confirm return value/message; Chromium uses the actual browser dialog.
+    async function nextTaskConfirmation(accepted) {
+      if(name==='webkit')await page.evaluate(value=>{
+        window.confirm=message=>{window.lastTaskDeleteConfirmation=message;return value;};
+      },accepted);
+      else page.once('dialog',dialog=>accepted?dialog.accept():dialog.dismiss());
+    }
+    if(await page.locator('#closeCompanyPanelBtn').isVisible())await page.locator('#closeCompanyPanelBtn').click();
+    taskRecords.splice(0,taskRecords.length,
+      {id:40,title:'Task from list',status:'todo',priority:'medium'},
+      {id:41,title:'Task from editor',status:'done',priority:'low'});
+    await page.locator('.nav-item[data-view=tasks]').click();
+    await page.locator('#tasksBody tr[data-task-id="40"]').waitFor();
+    await nextTaskConfirmation(false);
+    await page.locator('.task-delete-btn[data-id="40"]').click();
+    assert.equal(taskDeleteRequests,0);assert.equal(await page.locator('#tasksBody tr').count(),2);
+    failTaskDelete=true;
+    await nextTaskConfirmation(true);
+    await page.locator('.task-delete-btn[data-id="40"]').click();
+    await page.waitForFunction(()=>[...document.querySelectorAll('.toast.error')].some(el=>el.textContent.includes('Could not delete this task')));
+    assert.equal(await page.locator('#tasksBody tr').count(),2);
+    assert.equal(await page.locator('.task-delete-btn[data-id="40"]').isEnabled(),true);
+    failTaskDelete=false;
+    await nextTaskConfirmation(true);
+    await page.locator('.task-delete-btn[data-id="40"]').click();
+    await page.waitForFunction(()=>!document.querySelector('#tasksBody tr[data-task-id="40"]'));
+    await page.locator('.task-edit-btn[data-id="41"]').click();
+    assert.equal(await page.locator('#deleteTaskBtn').isVisible(),true);
+    await page.evaluate(()=>KlyoI18n.setLang('pl',true));
+    assert.equal(await page.locator('#deleteTaskBtn').innerText(),'Usuń zadanie');
+    if(screenshotDir)await page.screenshot({path:path.join(screenshotDir,`${name}-task-delete.png`),animations:'disabled'});
+    failTaskDelete=true;
+    await nextTaskConfirmation(true);
+    await page.locator('#deleteTaskBtn').click();
+    await page.waitForFunction(()=>document.querySelector('#taskFormError').textContent.includes('Could not delete this task'));
+    if(name==='webkit')assert.match(await page.evaluate(()=>window.lastTaskDeleteConfirmation),/Usunąć to zadanie/);
+    assert.equal(await page.locator('#taskModalOverlay').isVisible(),true);
+    failTaskDelete=false;
+    await nextTaskConfirmation(true);
+    await page.locator('#deleteTaskBtn').click();
+    await page.locator('#taskModalOverlay.hidden').waitFor({state:'attached'});
+    await page.locator('#tasksEmptyState:not(.hidden)').waitFor();
+    assert.equal(taskRecords.length,0);
+    await page.reload();await page.locator('#contactsBody tr').first().waitFor();
+    await page.locator('.nav-item[data-view=tasks]').click();await page.locator('#tasksEmptyState:not(.hidden)').waitFor();
+    await page.locator('#tasksEmptyAddBtn').click();assert.equal(await page.locator('#deleteTaskBtn').isVisible(),false);
+    await page.locator('#cancelTaskBtn').click();
+    taskRecords.push({id:42,title:'Read only task',status:'todo',priority:'low'});
+    await page.evaluate(async()=>{API.setUser({...API.getUser(),role:'viewer'});await loadTasks();});
+    assert.equal(await page.locator('.task-delete-btn').count(),0);
+    await page.locator('.task-edit-btn[data-id="42"]').click();assert.equal(await page.locator('#deleteTaskBtn').isVisible(),false);
+    await page.locator('#cancelTaskBtn').click();await page.evaluate(()=>{API.setUser({...API.getUser(),role:'admin'});KlyoI18n.setLang('en',true);});
     await context.clearCookies();
     await page.evaluate(() => localStorage.removeItem('klyo_token'));
     await page.goto('http://klyo.test/login');

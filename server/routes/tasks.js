@@ -111,11 +111,16 @@ router.patch("/:id/status", requireEditor, async (req, res) => {
 
 // DELETE /api/tasks/:id
 router.delete("/:id", requireEditor, async (req, res) => {
-  const existing = await db.query("SELECT id FROM tasks WHERE id = $1 AND workspace_id = $2", [req.params.id, req.user.workspace_id]);
-  if (!existing.rows.length) return res.status(404).json({ error: "Task not found." });
-
-  await db.query("DELETE FROM tasks WHERE id = $1", [req.params.id]);
-  res.json({ ok: true });
+  try {
+    const result = await db.query(
+      "DELETE FROM tasks WHERE id=$1 AND workspace_id=$2 RETURNING id",
+      [req.params.id, req.user.workspace_id],
+    );
+    if (!result.rows.length) return res.status(404).json({ error: "Task not found." });
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: "Could not delete this task. Please try again." });
+  }
 });
 
 module.exports = router;
