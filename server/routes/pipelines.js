@@ -11,16 +11,14 @@ const action = (fn) => async (req, res) => {
     await fn(req, res);
   } catch (e) {
     if (!e.status && e.code !== "23505") console.error("Pipeline:", e.message);
-    res
-      .status(e.code === "23505" ? 409 : e.status || 500)
-      .json({
-        error:
-          e.code === "23505"
-            ? "A pipeline with this name already exists."
-            : e.status
-              ? e.message
-              : "Could not save or load pipelines.",
-      });
+    res.status(e.code === "23505" ? 409 : e.status || 500).json({
+      error:
+        e.code === "23505"
+          ? "A pipeline with this name already exists."
+          : e.status
+            ? e.message
+            : "Could not save or load pipelines.",
+    });
   }
 };
 router.get(
@@ -117,19 +115,74 @@ router.delete(
         req.user.workspace_id,
         optionalId(req.params.id),
       );
-      if (p.is_default)
+      const others = (
+        await client.query(
+          "SELECT * FROM sales_pipelines WHERE workspace_id=$1 AND id<>$2 ORDER BY is_default DESC,created_at,id",
+          [req.user.workspace_id, p.id],
+        )
+      ).rows;
+      if (!others.length)
         throw invalid(
-          "The original pipeline cannot be deleted. You can rename it.",
+          "Keep at least one sales pipeline. Rename this pipeline or add another first.",
         );
-      if (
-        (
-          await client.query(
-            "SELECT id FROM deals WHERE pipeline_id=$1 AND workspace_id=$2 LIMIT 1",
-            [p.id, req.user.workspace_id],
-          )
-        ).rows.length
-      )
-        throw invalid("Move or delete the deals in this pipeline first.", 409);
+      const destinationId = optionalId(req.body?.move_to_pipeline_id);
+      const deals = (
+        await client.query(
+          "SELECT d.*,s.name AS stage_name FROM deals d LEFT JOIN pipeline_stages s ON s.id=d.stage_id AND s.workspace_id=d.workspace_id WHERE d.pipeline_id=$1 AND d.workspace_id=$2 FOR UPDATE OF d",
+          [p.id, req.user.workspace_id],
+        )
+      ).rows;
+      if (!destinationId && (p.is_default || deals.length))
+        throw invalid(
+          "Choose another pipeline for the existing deals and default sales view.",
+          p.is_default ? 400 : 409,
+        );
+      const destination = destinationId
+        ? others.find((other) => other.id === destinationId)
+        : others[0];
+      if (!destination)
+        throw invalid("Choose another pipeline in this workspace.");
+      const stages = (
+        await client.query(
+          "SELECT id,name FROM pipeline_stages WHERE workspace_id=$1 AND pipeline_id=$2 ORDER BY sort_order,id",
+          [req.user.workspace_id, destination.id],
+        )
+      ).rows;
+      for (const deal of deals) {
+        const stage = deal.stage_name
+          ? stages.find(
+              (s) => s.name.toLowerCase() === deal.stage_name.toLowerCase(),
+            ) || stages[0]
+          : null;
+        await client.query(
+          "UPDATE deals SET pipeline_id=$1,stage_id=$2,stage_entered_at=now(),updated_at=now() WHERE id=$3 AND workspace_id=$4",
+          [destination.id, stage?.id || null, deal.id, req.user.workspace_id],
+        );
+        await client.query(
+          `INSERT INTO deal_events(workspace_id,deal_id,user_id,event_type,from_stage,to_stage,from_status,to_status,reason,from_pipeline,to_pipeline) VALUES($1,$2,$3,'changed',$4,$5,$6,$6,$7,$8,$9)`,
+          [
+            req.user.workspace_id,
+            deal.id,
+            req.user.id,
+            deal.stage_name,
+            stage?.name || null,
+            deal.status,
+            "Pipeline removed; deal preserved",
+            p.name,
+            destination.name,
+          ],
+        );
+      }
+      if (p.is_default) {
+        await client.query(
+          "UPDATE sales_pipelines SET is_default=false WHERE id=$1 AND workspace_id=$2",
+          [p.id, req.user.workspace_id],
+        );
+        await client.query(
+          "UPDATE sales_pipelines SET is_default=true WHERE id=$1 AND workspace_id=$2",
+          [destination.id, req.user.workspace_id],
+        );
+      }
       await client.query(
         "DELETE FROM pipeline_stages WHERE pipeline_id=$1 AND workspace_id=$2",
         [p.id, req.user.workspace_id],

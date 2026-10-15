@@ -56,7 +56,15 @@ const KlyoWorkspace = (() => {
     g("createTeamBtn").hidden = !!spaceInfo.team;
     g("workspaceScopeLabel").textContent =
       spaceInfo.active === "personal"
-        ? l("Private · only you", "Prywatne · tylko Ty")
+        ? spaceInfo.team
+          ? l(
+              "Only you · click Team to switch",
+              "Tylko Ty · kliknij Team, aby przełączyć",
+            )
+          : l(
+              "Private · create a team to share",
+              "Prywatne · utwórz zespół, aby współpracować",
+            )
         : spaceInfo.team?.name || "Team";
   }
   function switchSpace(scope) {
@@ -470,17 +478,54 @@ const KlyoWorkspace = (() => {
     g("reviewError").textContent = "";
     show("warrantyReviewOverlay");
   }
-  function auditLabel(entry){
-    const parts=String(entry.resource||'').split('/').filter(Boolean),category=parts[1],detail=parts.at(-1);
-    const names={contacts:l('Contact','Kontakt'),companies:l('Company','Firma'),products:l('Product','Produkt'),deals:l('Deal','Szansa sprzedaży'),quotes:l('Proposal','Oferta'),offers:l('Email draft','Szkic wiadomości'),tasks:l('Task','Zadanie'),calendar:l('Calendar event','Wydarzenie'),'custom-fields':l('Custom field','Własne pole'),'quote-templates':l('Proposal template','Szablon oferty'),warranty:l('Warranty','Gwarancja'),pipelines:l('Sales pipeline','Lejek sprzedaży'),auth:l('Account & team','Konto i zespół'),billing:l('Plan & seats','Plan i miejsca'),spaces:l('Workspace','Przestrzeń'),sales:l('Sales settings','Ustawienia sprzedaży'),integrations:l('Mail connection','Połączenie poczty')};
-    const actions={POST:l('Added','Dodano'),PUT:l('Updated','Zmieniono'),PATCH:l('Updated','Zmieniono'),DELETE:l('Removed','Usunięto')};
-    let action=actions[entry.action]||l('Changed','Zmieniono');
-    if(detail==='review')action=l('Review recorded','Zapisano przegląd');
-    else if(detail==='send')action=l('Sent','Wysłano');
-    else if(detail==='accept')action=l('Accepted','Zaakceptowano');
-    else if(category==='billing'||category==='auth'||category==='spaces')action=l('Updated','Zmieniono');
-    const id=parts.find((p,i)=>i>1&&/^\d+$/.test(p));
-    return {action,record:(names[category]||l('Workspace settings','Ustawienia przestrzeni'))+(id?' #'+id:'')};
+  function auditLabel(entry) {
+    const parts = String(entry.resource || "")
+        .split("/")
+        .filter(Boolean),
+      category = parts[1],
+      detail = parts.at(-1);
+    const names = {
+      contacts: l("Contact", "Kontakt"),
+      companies: l("Company", "Firma"),
+      products: l("Product", "Produkt"),
+      deals: l("Deal", "Szansa sprzedaży"),
+      quotes: l("Proposal", "Oferta"),
+      offers: l("Email draft", "Szkic wiadomości"),
+      tasks: l("Task", "Zadanie"),
+      calendar: l("Calendar event", "Wydarzenie"),
+      "custom-fields": l("Custom field", "Własne pole"),
+      "quote-templates": l("Proposal template", "Szablon oferty"),
+      warranty: l("Warranty", "Gwarancja"),
+      pipelines: l("Sales pipeline", "Lejek sprzedaży"),
+      auth: l("Account & team", "Konto i zespół"),
+      billing: l("Plan & seats", "Plan i miejsca"),
+      spaces: l("Workspace", "Przestrzeń"),
+      sales: l("Sales settings", "Ustawienia sprzedaży"),
+      integrations: l("Mail connection", "Połączenie poczty"),
+    };
+    const actions = {
+      POST: l("Added", "Dodano"),
+      PUT: l("Updated", "Zmieniono"),
+      PATCH: l("Updated", "Zmieniono"),
+      DELETE: l("Removed", "Usunięto"),
+    };
+    let action = actions[entry.action] || l("Changed", "Zmieniono");
+    if (detail === "review") action = l("Review recorded", "Zapisano przegląd");
+    else if (detail === "send") action = l("Sent", "Wysłano");
+    else if (detail === "accept") action = l("Accepted", "Zaakceptowano");
+    else if (
+      category === "billing" ||
+      category === "auth" ||
+      category === "spaces"
+    )
+      action = l("Updated", "Zmieniono");
+    const id = parts.find((p, i) => i > 1 && /^\d+$/.test(p));
+    return {
+      action,
+      record:
+        (names[category] || l("Workspace settings", "Ustawienia przestrzeni")) +
+        (id ? " #" + id : ""),
+    };
   }
   async function teamAdmin() {
     g("teamAuditSection").hidden = !API.getUser()?.is_team_owner;
@@ -533,7 +578,7 @@ const KlyoWorkspace = (() => {
         `<div class="workspace-switch-wrap"><div class="workspace-switch" role="group" aria-label="CRM scope"><button type="button" data-switch-space="team" aria-pressed="${API.scope() === "team"}">Team</button><button type="button" data-switch-space="personal" aria-pressed="${API.scope() === "personal"}">Personal</button></div><span id="workspaceScopeLabel"></span><button type="button" class="btn btn-ghost btn-sm" id="copyTeamBtn" hidden>↙ ${l("Copy from Team", "Kopiuj z Team")}</button><button type="button" class="btn btn-ghost btn-sm" id="createTeamBtn" hidden>+ ${l("Create team", "Utwórz zespół")}</button></div>`,
       );
     document
-      .querySelector(".topbar")
+      .querySelector(".page-heading")
       .insertAdjacentHTML(
         "beforeend",
         `<button type="button" class="warranty-bell" id="warrantyBell" aria-label="Warranty reviews"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M10 21h4"/></svg><span id="warrantyBellCount" hidden></span></button>`,

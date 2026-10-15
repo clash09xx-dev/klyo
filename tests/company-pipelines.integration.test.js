@@ -52,7 +52,10 @@ test(
         const listener = app.listen(0, "127.0.0.1", () => resolve(listener));
       });
       async function req(path, method = "GET", body, options = {}) {
-        await db.query("UPDATE users SET role=$1 WHERE id=$2",[options.role||"admin",options.workspace===2?2:1]);
+        await db.query("UPDATE users SET role=$1 WHERE id=$2", [
+          options.role || "admin",
+          options.workspace === 2 ? 2 : 1,
+        ]);
         const workspace_id = options.workspace || 1,
           token = jwt.sign(
             {
@@ -503,7 +506,9 @@ test(
           assert.equal(response.status, 200);
           const { TIERS, TIER_ORDER } = require("../server/config/tiers");
           assert.deepEqual(response.data, {
-            tiers: TIER_ORDER.map((key) => ({ key, ...TIERS[key] })),extraSeatPrice:5,currency:"USD",
+            tiers: TIER_ORDER.map((key) => ({ key, ...TIERS[key] })),
+            extraSeatPrice: 5,
+            currency: "USD",
           });
           assert.deepEqual(
             response.data.tiers.map((t) => t.price),
@@ -517,6 +522,154 @@ test(
             ).status,
             401,
           );
+        },
+      );
+      await t.test(
+        "delete populated and default pipelines preserves every deal, status, links and event history",
+        async () => {
+          const source = (
+            await req("/pipelines", "POST", { name: "Retired sales" })
+          ).data.pipeline;
+          const target = (
+            await req("/pipelines", "POST", { name: "Continuing sales" })
+          ).data.pipeline;
+          const foreign = (
+            await req("/pipelines", "GET", undefined, { workspace: 2 })
+          ).data.pipelines[0];
+          const sourceStages = (
+            await req("/deals/stages?pipeline_id=" + source.id)
+          ).data.stages;
+          const targetStages = (
+            await req("/deals/stages?pipeline_id=" + target.id)
+          ).data.stages;
+          const unmatched = (
+            await req("/deals/stages", "POST", {
+              name: "Special old stage",
+              pipeline_id: source.id,
+            })
+          ).data.stage;
+          const created = [];
+          for (const [status, stage] of [
+            ["open", sourceStages[1]],
+            ["won", unmatched],
+            ["lost", null],
+          ]) {
+            const response = await req("/deals", "POST", {
+              title: "Preserve " + status,
+              pipeline_id: source.id,
+              stage_id: stage?.id || null,
+              status,
+              value: 4500,
+              currency: "PLN",
+              lost_reason: status === "lost" ? "Budget" : null,
+              notes: "Keep notes",
+            });
+            assert.equal(response.status, 201);
+            created.push(response.data.deal);
+          }
+          assert.equal(
+            (
+              await req(
+                "/pipelines/" + source.id,
+                "DELETE",
+                { move_to_pipeline_id: target.id },
+                { role: "viewer" },
+              )
+            ).status,
+            403,
+          );
+          assert.equal(
+            (
+              await req("/pipelines/" + source.id, "DELETE", {
+                move_to_pipeline_id: foreign.id,
+              })
+            ).status,
+            400,
+          );
+          assert.equal(
+            (
+              await req("/pipelines/" + source.id, "DELETE", {
+                move_to_pipeline_id: source.id,
+              })
+            ).status,
+            400,
+          );
+          assert.equal(
+            (await req("/pipelines/" + source.id, "DELETE")).status,
+            409,
+          );
+          assert.equal(
+            (
+              await req("/pipelines/" + source.id, "DELETE", {
+                move_to_pipeline_id: target.id,
+              })
+            ).status,
+            200,
+          );
+          for (let i = 0; i < created.length; i++) {
+            const original = created[i],
+              current = (await req("/deals/" + original.id)).data.deal;
+            assert.equal(current.pipeline_id, target.id);
+            assert.equal(current.status, original.status);
+            assert.equal(current.value, original.value);
+            assert.equal(current.notes, "Keep notes");
+            assert.equal(current.lost_reason, original.lost_reason);
+            assert.equal(
+              current.stage_id,
+              i === 0
+                ? targetStages[1].id
+                : i === 1
+                  ? targetStages[0].id
+                  : null,
+            );
+            const history = (await req("/deals/" + original.id + "/history"))
+              .data.events;
+            assert.ok(
+              history.some(
+                (e) =>
+                  e.from_pipeline === source.name &&
+                  e.to_pipeline === target.name,
+              ),
+            );
+          }
+          assert.equal(
+            (
+              await db.query(
+                "SELECT id FROM pipeline_stages WHERE pipeline_id=$1",
+                [source.id],
+              )
+            ).rows.length,
+            0,
+          );
+          assert.equal(
+            (
+              await req("/pipelines/" + first.id, "DELETE", {
+                move_to_pipeline_id: target.id,
+              })
+            ).status,
+            200,
+          );
+          assert.equal(
+            (await req("/pipelines")).data.pipelines.find((p) => p.is_default)
+              .id,
+            target.id,
+          );
+          for (const p of (await req("/pipelines")).data.pipelines.filter(
+            (p) => p.id !== target.id,
+          ))
+            assert.equal(
+              (
+                await req("/pipelines/" + p.id, "DELETE", {
+                  move_to_pipeline_id: target.id,
+                })
+              ).status,
+              200,
+            );
+          assert.equal(
+            (await req("/pipelines/" + target.id, "DELETE")).status,
+            400,
+          );
+          assert.equal((await req("/pipelines")).data.pipelines.length, 1);
         },
       );
     } finally {
