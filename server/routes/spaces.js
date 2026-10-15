@@ -90,6 +90,9 @@ router.post("/ownership", requireTeamOwner, async (req, res) => {
       id,
       req.user.workspace_id,
     ]);
+    // Delegated Microsoft access belongs to the connecting owner. The new owner reconnects.
+    await c.query('DELETE FROM sharepoint_connections WHERE workspace_id=$1',[req.user.workspace_id]);
+    await c.query('DELETE FROM sharepoint_uploads WHERE workspace_id=$1 AND completed_file_id IS NULL',[req.user.workspace_id]);
     await c.query("COMMIT");
   } catch (e) {
     await c.query("ROLLBACK");

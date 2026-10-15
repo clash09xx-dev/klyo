@@ -63,6 +63,7 @@ async function run(engine, name) {
         else if(endpoint === '/spaces')data={active:'team',team:{id:1,name:'Demo',owner_user_id:1},personal:{id:2,name:'Private'},is_team_owner:true};
         else if(endpoint === '/custom-fields')data={fields:[]};
         else if(endpoint === '/quote-templates')data={templates:[]};
+        else if(endpoint === '/price-lists')data={price_lists:[]};
         else if(endpoint === '/warranty/notifications')data={items:[],count:0,today:'2026-10-15'};
         else if(endpoint === '/warranty')data={items:[],today:'2026-10-15'};
         else if(endpoint === '/spaces/audit')data={entries:[]};
@@ -174,7 +175,7 @@ async function run(engine, name) {
     await page.reload();
     await page.waitForFunction(() => document.querySelectorAll('#contactsBody tr').length === 1);
 
-    assert.deepEqual(await page.locator('.nav .nav-item[data-view]').evaluateAll(items=>items.map(el=>el.dataset.view).sort()),['overview','pipeline','companies','quotes','reminders','tasks','deals','clients','products','calendar','history','team','platform'].sort());
+    assert.deepEqual(await page.locator('.nav .nav-item[data-view]').evaluateAll(items=>items.map(el=>el.dataset.view).sort()),['overview','pipeline','companies','quotes','reminders','tasks','deals','clients','products','calendar','files','history','team','platform'].sort());
     // The contact database is the primary work surface, with an inline summary rather than tiles.
     await page.evaluate(contact => {
       const samples = [contact,

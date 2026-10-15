@@ -11,7 +11,7 @@ router.get("/:token/pdf", async (req, res) => {
     res
       .set({
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${safeName(full.quote)}"`,
+        "Content-Disposition": `${req.query.inline==="1"?"inline":"attachment"}; filename="${safeName(full.quote)}"`,
         "Cache-Control": "private, no-store",
         "X-Robots-Tag": "noindex",
         "X-Content-Type-Options": "nosniff",

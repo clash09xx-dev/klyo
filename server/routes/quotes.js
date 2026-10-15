@@ -134,6 +134,8 @@ async function saveDraft(req, id) {
       b.currency ?? existing?.currency ?? workspace.default_currency ?? "USD",
     );
     if (!currency) fail("Choose a supported currency.");
+    const listId=Object.hasOwn(b,'price_list_id')?b.price_list_id:existing?.price_list_id;
+    if(listId){const list=(await client.query('SELECT currency FROM price_lists WHERE id=$1 AND workspace_id=$2',[listId,req.user.workspace_id])).rows[0];if(!list)fail('Price list not found.');if(list.currency!==currency)fail('Use the price-list currency for this quote.');}
     const d = Q.normalizeDocument({
       ...Q.defaultsDocument(workspace, contact, b.document?.language),
       ...(existing?.document || {}),
@@ -182,6 +184,7 @@ async function saveDraft(req, id) {
       id = r.rows[0].id;
     }
     await client.query('UPDATE quotes SET discount_type=$1,discount_value=$2,quote_discount_total=$3 WHERE id=$4 AND workspace_id=$5',[totals.discount_type,totals.discount_value,totals.quote_discount_total,id,req.user.workspace_id]);
+    if(Object.hasOwn(b,'price_list_id'))await client.query('UPDATE quotes SET price_list_id=$1 WHERE id=$2 AND workspace_id=$3',[b.price_list_id||null,id,req.user.workspace_id]);
     await S.replaceItems(client, id, totals.computed, recipients);
     await logActivity(
       client,

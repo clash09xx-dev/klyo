@@ -28,6 +28,7 @@ async function generateQuotePdf(quote, lineItems) {
     L = {...Q.labels(config.language),...Object.fromEntries(Object.entries(config.headings).filter(([,v])=>v))},
     ref = Q.reference({ ...quote, document: config }),
     accent = config.accent;
+  if(config.layout === "canvas")return require("./quoteCanvasPdf")(quote,lineItems||quote.line_items||[],config);
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: "A4",

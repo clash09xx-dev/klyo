@@ -12,6 +12,10 @@ function renderQuoteHTML(quote, autoPrint = false) {
   const d = documentFor(quote),
     L = {...Q.labels(d.language),...Object.fromEntries(Object.entries(d.headings).filter(([,v])=>v))},
     money = (v) => esc(Q.money(v, quote.currency, d.language));
+  if(d.layout === "canvas"){
+    const url='/q/'+encodeURIComponent(quote.public_token)+'/pdf';
+    return `<!doctype html><html lang="${d.language}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="referrer" content="no-referrer"><title>${esc(quote.title)}</title><link rel="stylesheet" href="/css/quote-studio.css"><style>*{box-sizing:border-box}body{margin:0;background:#edf0f5;color:#172238;font:14px Arial,sans-serif;display:flex;flex-direction:column;height:100dvh}header{padding:14px 20px;background:white;display:flex;gap:15px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #d0d5dd}header strong{margin-right:auto;overflow-wrap:anywhere}a{color:#244e85}#publicQuoteViewer{flex:1;min-height:0;height:auto;border:0}.pdf-loading{padding:24px}</style></head><body><header><strong>${esc(quote.title)}</strong><a href="${url}?inline=1" target="_blank" rel="noopener">${d.language==='pl'?'Otwórz PDF':'Open PDF'}</a><a href="${url}">${L.download}</a></header><main class="quote-pdf-viewer" id="publicQuoteViewer" data-pdf="${url}" data-language="${d.language}"><p class="pdf-loading">${d.language==='pl'?'Wczytywanie oferty…':'Loading proposal…'}</p></main><script type="module" src="/js/public-canvas-quote.mjs"></script></body></html>`;
+  }
   const party = (p) =>
     `<h3>${esc(p.name)}</h3><p>${esc(p.details)}</p>${p.tax_id ? `<p>${L.taxId}: ${esc(p.tax_id)}</p>` : ""}<p>${esc(p.email)}${p.email && p.phone ? " · " : ""}${esc(p.phone)}</p>`;
   const section = (title, value) =>

@@ -20,6 +20,9 @@ const KlyoQuoteTemplates = (() => {
     templates = list;
     g("quoteTemplateControls").innerHTML =
       `<div class="quote-template-picker"><label for="quoteTemplateSelect">${l("Your proposal templates", "Twoje szablony ofert")}</label><div><select id="quoteTemplateSelect"><option value="">${l("Choose a template", "Wybierz szablon")}</option>${list.map((t) => `<option value="${t.id}">${h(t.name)}</option>`).join("")}</select><button type="button" class="btn btn-ghost btn-sm" id="applyQuoteTemplate">${l("Use template", "Użyj szablonu")}</button></div><div><input id="quoteTemplateName" maxlength="100" placeholder="${l("Template name", "Nazwa szablonu")}" aria-label="Template name"><button type="button" class="btn btn-ghost btn-sm" id="saveQuoteTemplate">${l("Save as new", "Zapisz jako nowy")}</button><button type="button" class="btn btn-ghost btn-sm" id="updateQuoteTemplate">${l("Update template", "Zapisz zmiany szablonu")}</button><button type="button" class="btn btn-ghost btn-sm" id="deleteQuoteTemplate">${l("Delete", "Usuń")}</button></div><p class="muted">${l("Your templates are private. Save branding, sections, terms, items and discounts. Client details and old dates are never saved in a template.", "Twoje szablony są prywatne. Zapisz markę, sekcje, warunki, pozycje i rabaty. Dane klienta i stare daty nie są zapisywane w szablonie.")}</p><div id="quoteTemplateError" class="form-error"></div></div>`;
+    g("quoteTemplateControls").insertAdjacentHTML("beforeend",`<div class="designer-open-actions"><button type="button" class="btn btn-primary btn-sm" id="createOwnTemplate">${l("Create your own template", "Stwórz własny szablon")}</button><button type="button" class="btn btn-ghost btn-sm" id="editOwnLayout">${l("Edit A4 layout", "Edytuj układ A4")}</button></div>`);
+    g("createOwnTemplate").onclick=()=>KlyoQuoteDesigner.open(true);
+    g("editOwnLayout").onclick=()=>KlyoQuoteDesigner.open(false);
     g("quoteTemplateSelect").onchange = () => {
       const t = templates.find(
         (t) => t.id === Number(g("quoteTemplateSelect").value),
@@ -33,6 +36,7 @@ const KlyoQuoteTemplates = (() => {
       if (!t) return;
       try {
         const b = t.content;
+        KlyoPriceLists.resetQuote();
         els.quoteTitleInput.value = b.title || "";
         els.quoteIntroInput.value = b.intro_message || "";
         els.quoteCurrencySelect.value = b.currency || workspaceDefaultCurrency;
