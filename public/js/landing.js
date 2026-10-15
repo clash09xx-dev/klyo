@@ -1,4 +1,4 @@
-/* Lightweight landing interactions. Preview uses sample data and never calls the CRM API. */
+/* Lightweight landing interactions. Preview uses sample data. Pricing reads the public plan configuration. */
 (() => {
   const P=KlyoPreferences, demo=document.getElementById('workspaceDemo');
   let preset='graphite',position='left',density='compact',customAccent=null,swapped=false;
@@ -26,5 +26,17 @@
   motion.addEventListener('click',()=>{const on=document.documentElement.dataset.motion!=='on';preference=on?'on':'off';setMotion(on&&!reduced.matches);try{localStorage.setItem('klyo_landing_motion',preference);}catch{}});
   reduced.addEventListener('change',()=>setMotion(!reduced.matches&&preference!=='off'));
   if('IntersectionObserver'in window){const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('in-view');observer.unobserve(entry.target);}}),{threshold:.08});document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));document.documentElement.classList.add('has-reveals');}
-  render();email('pl');
+  const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  async function loadPricing(){
+    const grid=document.getElementById('pricingGrid'),error=document.getElementById('pricingError');
+    error.hidden=true;grid.setAttribute('aria-busy','true');
+    try{
+      const response=await fetch('/api/billing/tiers');if(!response.ok)throw new Error('Plans unavailable');
+      const {tiers}=await response.json();if(!Array.isArray(tiers)||!tiers.length)throw new Error('Plans unavailable');
+      const count=value=>value==null?'Unlimited':new Intl.NumberFormat('en-US').format(value);
+      grid.innerHTML=tiers.map(t=>`<article class="price-card" data-plan="${escape(t.key)}"><h3>${escape(t.label)}</h3><p class="price-tagline">${escape(t.tagline)}</p><div class="price-amount"><strong>$${escape(t.price)}</strong><span>USD / month</span></div><a class="button button-outline" href="/signup">Start free trial ↗</a><ul><li><b>${escape(count(t.maxSeats))}</b> ${t.maxSeats===1?'user':'users'}</li><li><b>${escape(count(t.maxContacts))}</b> contacts</li><li><b>${escape(count(t.maxAiDraftsPerMonth))}</b> AI email drafts / month</li></ul><p class="price-included">PDF proposals · sales pipelines<br>Personal colours &amp; layout</p></article>`).join('');
+    }catch{grid.innerHTML='';error.hidden=false;}finally{grid.setAttribute('aria-busy','false');}
+  }
+  document.getElementById('retryPricing').addEventListener('click',loadPricing);
+  loadPricing();render();email('pl');
 })();

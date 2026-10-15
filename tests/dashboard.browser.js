@@ -40,6 +40,10 @@ async function run(engine, name) {
       { id: 5, name: 'Closing', color: '#777777' },
       { id: 6, name: 'Closed', color: '#777777' },
     ];
+    const pipelines=[{id:1,name:'Sales',description:'All existing sales opportunities',is_default:true}];
+    const companyRecords=[];let nextCompanyId=1;
+    deals.forEach(d=>d.pipeline_id=1);stages.forEach(s=>s.pipeline_id=1);
+    let failPricing=false;
     const product = { id: 1, name: 'Website', unit_price: '4500.00', currency, unit_label: 'project' };
     const quote = { id: 1, title: 'Draft quote', total: '4500.00', currency, status: 'draft', contact_id: 1, contact_name: contact.full_name };
     let quoteDefaults={},quoteSentCount=0,lastQuoteSend=null;
@@ -76,7 +80,8 @@ async function run(engine, name) {
           deals.forEach(item => { item.currency = currency; });
           product.currency = quote.currency = currency;
           data = { currency };
-        } else if (endpoint === '/billing/status') data = { is_comped: true };
+        } else if (endpoint === '/billing/tiers') {if(failPricing){status=503;data={error:'Unavailable'};}else{const {TIERS,TIER_ORDER}=require('../server/config/tiers');data={tiers:TIER_ORDER.map(key=>({key,...TIERS[key]}))};}}
+        else if (endpoint === '/billing/status') data = { is_comped: true };
         else if (endpoint === '/contacts/themes') data = { themes: [] };
         else if (endpoint === '/contacts/tags') data = { tags: ['sold'] };
         else if (endpoint === '/contacts') {
@@ -88,15 +93,25 @@ async function run(engine, name) {
         else if (endpoint === '/contacts/1') data = { contact, activity: [], offers: drafts, quotes: [quote] };
         else if (endpoint === '/contacts/1/timeline') data = { events: [] };
         else if (endpoint === '/stats') data = { total: 1, leads: 0, negotiating: 0, offersSent: 0, series: [0, 0, 1] };
-        else if (endpoint === '/companies') data = { companies: [] };
+        else if (endpoint === '/companies' && route.request().method()==='POST'){const company={id:nextCompanyId++,...route.request().postDataJSON()};company.parent_company_id=Number(company.parent_company_id)||null;companyRecords.push(company);data={company};}
+        else if (endpoint === '/companies') data = { companies: companyRecords.map(c=>({...c,parent_company_name:companyRecords.find(p=>p.id===c.parent_company_id)?.name,subsidiary_count:companyRecords.filter(ch=>ch.parent_company_id===c.id).length,contact_count:0})) };
+        else if (/^\/companies\/\d+$/.test(endpoint)){const company=companyRecords.find(c=>c.id===Number(endpoint.split('/')[2]));if(route.request().method()==='PUT'){Object.assign(company,route.request().postDataJSON());company.parent_company_id=Number(company.parent_company_id)||null;}data={company,contacts:[],parent:companyRecords.find(c=>c.id===company.parent_company_id)||null,children:companyRecords.filter(c=>c.parent_company_id===company.id)};}
+        else if(endpoint==='/pipelines'&&route.request().method()==='POST'){
+          const body=route.request().postDataJSON(),pipeline={id:Math.max(...pipelines.map(p=>p.id))+1,name:body.name,description:body.description,is_default:false};pipelines.push(pipeline);
+          const source=stages.filter(s=>s.pipeline_id===(Number(body.copy_from)||1)),last=Math.max(...stages.map(s=>s.id));stages.push(...source.map((s,i)=>({...s,id:last+i+1,pipeline_id:pipeline.id})));data={pipeline};
+        }
+        else if(endpoint==='/pipelines')data={pipelines:pipelines.map(p=>({...p,deal_count:deals.filter(d=>d.pipeline_id===p.id).length}))};
+        else if(/^\/pipelines\/\d+$/.test(endpoint)&&route.request().method()==='PUT'){const pipeline=pipelines.find(p=>p.id===Number(endpoint.split('/')[2]));Object.assign(pipeline,route.request().postDataJSON());data={pipeline};}
+        else if (endpoint === '/deals' && route.request().method()==='POST'){const body=route.request().postDataJSON(),item={id:Math.max(...deals.map(d=>d.id))+1,...body,status:'open',pipeline_id:Number(body.pipeline_id),stage_id:Number(body.stage_id)||null};deals.push(item);data={deal:item};}
         else if (endpoint === '/products') data = { products: [product] };
-        else if (endpoint === '/deals/stages') data = { stages };
-        else if (endpoint === '/deals') data = { deals };
+        else if (endpoint === '/deals/stages') data = { stages:stages.filter(s=>s.pipeline_id===(Number(url.searchParams.get('pipeline_id'))||1)) };
+        else if (endpoint === '/deals') data = { deals:deals.filter(d=>!url.searchParams.get('pipeline_id')||d.pipeline_id===Number(url.searchParams.get('pipeline_id'))) };
         else if (/^\/deals\/\d+\/stage$/.test(endpoint) && route.request().method() === 'PATCH') {
           const item = deals.find(item => item.id === Number(endpoint.split('/')[2]));
           item.stage_id = route.request().postDataJSON().stage_id;
           data = { deal: item };
         } else if (endpoint === '/deals/1') data = { deal };
+        else if(/^\/deals\/\d+$/.test(endpoint)){const item=deals.find(d=>d.id===Number(endpoint.split('/')[2]));if(route.request().method()==='PUT'){Object.assign(item,route.request().postDataJSON());item.pipeline_id=Number(item.pipeline_id);item.stage_id=Number(item.stage_id)||null;}data={deal:item};}
         else if (endpoint === '/tasks') data = { tasks: [{ id: 1, title: 'Review the project proposal', status: 'todo', priority: 'medium', assigned_name: 'Demo', due_date: '2026-10-15', contact_name: contact.full_name }] };
         else if (endpoint === '/clients') data = { clients: [] };
         else if (endpoint === '/calendar') data = { events: [] };
@@ -118,7 +133,7 @@ async function run(engine, name) {
         return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) });
       }
       const file = path.join(publicDir, url.pathname === '/app' ? 'app.html' : url.pathname === '/' ? 'index.html' : ['/login','/signup'].includes(url.pathname) ? 'login.html' : url.pathname);
-      const contentType = file.endsWith('.png') ? 'image/png' : file.endsWith('.svg') ? 'image/svg+xml' : (file.endsWith('.js')||file.endsWith('.mjs')) ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html';
+      const contentType = file.endsWith('.pdf') ? 'application/pdf' : file.endsWith('.png') ? 'image/png' : file.endsWith('.svg') ? 'image/svg+xml' : (file.endsWith('.js')||file.endsWith('.mjs')) ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html';
       return route.fulfill({ contentType, body: fs.readFileSync(file) });
     });
     await page.goto('http://klyo.test/app');
@@ -473,6 +488,40 @@ async function run(engine, name) {
     await page.locator('#backToEditQuoteBtn').click();await page.locator('#quoteModalOverlay:not(.hidden)').waitFor();
     assert.equal(await page.locator('#quoteId').inputValue(),String(copyId));assert.equal(quoteSentCount,1);
     await page.locator('#closeQuoteModalBtn').click();
+    // Independent pipelines: purpose, separate stage IDs, deal creation, saved views and reload.
+    await page.evaluate(async()=>{KlyoPipelines.setSelected(1);switchView('deals');await loadDeals();});
+    await page.locator('#addPipelineBtn').click();await page.locator('#pipelineName').fill('Sensors');
+    await page.locator('#pipelineText').fill('Hardware sales from enquiry to purchase order.');await page.locator('#pipelineSave').click();
+    await page.locator('#pipelineOverlay.hidden').waitFor({state:'attached'});assert.equal(await page.locator('#salesPipelineSelect').inputValue(),'2');
+    assert.equal(await page.locator('.deal-card').count(),0);assert.equal(await page.locator('.deals-column').count(),6);
+    await page.locator('#pipelinePurpose summary').click();assert.match(await page.locator('#pipelineDescription').textContent(),/Hardware sales/);
+    await page.locator('#addDealBtn').click();await page.locator('#dealSubmitBtn:not([disabled])').waitFor();
+    assert.equal(await page.locator('#dealPipelineSelect').inputValue(),'2');await page.locator('#dealTitle').fill('Temperature sensor order');
+    await page.selectOption('#dealStageSelect','7');await page.locator('#dealValue').fill('1200');await page.locator('#dealSubmitBtn').click();
+    await page.locator('#dealModalOverlay.hidden').waitFor({state:'attached'});await page.locator('.deal-card').first().waitFor();
+    assert.equal(await page.locator('.deal-card').count(),1);assert.match(await page.locator('.deal-card').first().textContent(),/Temperature sensor/);
+    await page.locator('#saveDealViewBtn').click();await page.locator('#salesNameInput').fill('Sensor sales');await page.locator('#salesNameSubmit').click();
+    await page.waitForFunction(()=>document.querySelectorAll('#savedDealView option').length===3);assert.equal(savedViews[1].filters.pipeline_id,2);
+    await page.selectOption('#salesPipelineSelect','1');await page.waitForFunction(()=>document.querySelectorAll('.deal-card').length===4);
+    await page.selectOption('#savedDealView','2');await page.waitForFunction(()=>document.querySelector('#salesPipelineSelect').value==='2'&&document.querySelectorAll('.deal-card').length===1);
+    await page.reload();await page.locator('#contactsBody tr').first().waitFor();await page.locator('.nav-item[data-view=deals]').click();
+    await page.waitForFunction(()=>document.querySelector('#salesPipelineSelect').value==='2'&&document.querySelectorAll('.deal-card').length===1);
+    if(screenshotDir)await page.screenshot({path:path.join(screenshotDir,`${name}-named-pipeline.png`),animations:'disabled'});
+    await page.locator('.deal-card').first().click();await page.locator('#editDealBtn').click();await page.locator('#dealSubmitBtn:not([disabled])').waitFor();
+    await page.selectOption('#dealPipelineSelect','1');await page.locator('#dealSubmitBtn:not([disabled])').waitFor();
+    assert.equal(await page.locator('#dealStageSelect option[value="7"]').count(),0);await page.selectOption('#dealStageSelect','2');await page.locator('#dealSubmitBtn').click();
+    await page.locator('#dealModalOverlay.hidden').waitFor({state:'attached'});await page.waitForFunction(()=>document.querySelector('#salesPipelineSelect').value==='1'&&document.querySelectorAll('.deal-card').length===5);
+    // Parent and sub-company creation, navigation and edit use the real UI.
+    await page.locator('.nav-item[data-view=companies]').click();await page.locator('#addCompanyBtn').click();await page.locator('#companySubmitBtn:not([disabled])').waitFor();
+    await page.locator('#coName').fill('North Holding');await page.locator('#companySubmitBtn').click();await page.locator('#companyModalOverlay.hidden').waitFor({state:'attached'});
+    await page.locator('#companiesBody tr').first().click();await page.locator('#addSubCompanyBtn').click();await page.locator('#companySubmitBtn:not([disabled])').waitFor();
+    assert.equal(await page.locator('#coParent').inputValue(),'1');await page.locator('#coName').fill('North Sensors');await page.locator('#companySubmitBtn').click();
+    await page.locator('#companyModalOverlay.hidden').waitFor({state:'attached'});await page.locator('#companyGroup [data-company-link="2"]').click();
+    await page.waitForFunction(()=>document.querySelector('#companyPanelName').textContent==='North Sensors');assert.match(await page.locator('.company-parent').textContent(),/North Holding/);
+    if(screenshotDir)await page.screenshot({path:path.join(screenshotDir,`${name}-company-group.png`),animations:'disabled'});
+    await page.locator('#editCompanyBtn').click();await page.locator('#companySubmitBtn:not([disabled])').waitFor();
+    assert.equal(await page.locator('#coParent option[value="2"]').count(),0);assert.equal(await page.locator('#coParent').inputValue(),'1');
+    await page.locator('#cancelCompanyBtn').click();
     await context.clearCookies();
     await page.evaluate(() => localStorage.removeItem('klyo_token'));
     await page.goto('http://klyo.test/login');
@@ -488,6 +537,12 @@ async function run(engine, name) {
     await page.setViewportSize({width:1440,height:1000});
     await page.goto('http://klyo.test/');
     await page.locator('h1').waitFor();
+    await page.locator('.price-card').first().waitFor();assert.equal(await page.locator('.price-card').count(),4);
+    assert.deepEqual(await page.locator('.price-amount strong').allTextContents(),['$9','$29','$79','$199']);
+    // Fetch through the page so the local fixture route serves the actual PDF asset.
+    const pdfHeader=await page.evaluate(async()=>{const r=await fetch('/examples/klyo-proposal.pdf');return(await r.text()).slice(0,5);});assert.equal(pdfHeader,'%PDF-');
+    assert.equal(await page.locator('#proposals a[download]').getAttribute('href'),'/examples/klyo-proposal.pdf');
+
     assert.equal(await page.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)');
     await page.locator('#themeGallery .gallery-theme').first().waitFor();
     await page.locator('.demo-theme-tabs [data-demo-theme=day]').click();
@@ -524,8 +579,10 @@ async function run(engine, name) {
     await page.reload();await page.locator('#themeGallery .gallery-theme').first().waitFor();
     assert.equal(await page.locator('html').getAttribute('data-motion'),'off');
     assert.equal(await page.locator('.personal-section').evaluate(el=>getComputedStyle(el).opacity),'1');
+    failPricing=true;await page.reload();await page.locator('#pricingError:not([hidden])').waitFor();
+    failPricing=false;await page.locator('#retryPricing').click();await page.locator('.price-card').first().waitFor();assert.equal(await page.locator('.price-card').count(),4);
     assert.deepEqual(errors, []);
-    console.log(`${name}: PASS — reload, failed auxiliary request, visible pipeline error, currency persistence, quote currency, Blanc/Noir, fitted stages, tasks, loss reasons, templates, saved views, personal colors and layout persistence/cancel/reset, menu/column/widget order and visibility, owner-only Platform, search races, PDF creation/download/approved attachment, white interactive landing desktop/mobile, reduced motion, no automatic sends`);
+    console.log(`${name}: PASS — reload, failed auxiliary request, visible pipeline error, currency persistence, quote currency, Blanc/Noir, fitted stages, tasks, loss reasons, templates, saved views, personal colors and layout persistence/cancel/reset, menu/column/widget order and visibility, owner-only Platform, search races, PDF creation/download/approved attachment, independent named pipelines and purposes, deal moves and saved pipeline views, parent/sub-company creation and navigation, public pricing and retry, sample PDF, white interactive landing desktop/mobile, reduced motion, no automatic sends`);
   } finally { await browser.close(); }
 }
 (async () => { if(!process.env.KLYO_BROWSER||process.env.KLYO_BROWSER==='chromium')await run(chromium, 'chromium');if(!process.env.KLYO_BROWSER||process.env.KLYO_BROWSER==='webkit')await run(webkit, 'webkit'); })().catch(error => { console.error(error); process.exitCode = 1; });

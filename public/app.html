@@ -384,6 +384,7 @@
 
       <!-- DEALS VIEW -->
       <section id="dealsView" class="hidden">
+        <div class="pipeline-toolbar"><label for="salesPipelineSelect" data-pipeline-label="pipeline">Sales pipeline</label><select id="salesPipelineSelect" aria-label="Sales pipeline"></select><button type="button" class="btn btn-ghost btn-sm" id="editPipelineBtn" data-pipeline-label="edit">Edit pipeline</button><button type="button" class="btn btn-ghost btn-sm" id="addPipelineBtn">+ <span data-pipeline-label="add">Add another pipeline</span></button><details id="pipelinePurpose"><summary data-pipeline-label="purpose">What is this pipeline for?</summary><p id="pipelineDescription"></p></details></div>
         <div class="saved-views-bar"><input id="dealQuickSearch" type="search" aria-label="Search deals" placeholder="Search deals"/><select id="savedDealView" aria-label="Saved views"><option value="">Saved views</option></select><button class="btn btn-ghost btn-sm" id="saveDealViewBtn" data-sales-label="saveView">Save view</button><button class="btn btn-ghost btn-sm" id="deleteDealViewBtn" data-sales-label="deleteView">Delete view</button><span class="muted" id="dealMatchCount"></span></div>
         <div class="filter-bar">
           <select id="dealStageFilter"><option value="" data-i18n="ui.all_stages">All stages</option></select>
@@ -1039,6 +1040,7 @@
         <label for="coName">Company name</label>
         <input id="coName" type="text" placeholder="Lawson & Co." required />
       </div>
+      <div class="field"><label for="coParent" data-pipeline-label="parent">Parent company</label><select id="coParent"><option value="">Independent company</option></select></div>
       <div class="field">
         <label for="coIndustry">Industry (optional)</label>
         <input id="coIndustry" type="text" placeholder="Retail, healthcare, manufacturing…" />
@@ -1074,6 +1076,7 @@
       <div class="notes-box" id="companyPanelNotes"></div>
     </div>
 
+    <section id="companyGroup" class="company-group"></section>
     <div class="section-title">People</div>
     <div class="table-card" style="margin-bottom:16px;">
       <table>
@@ -1655,6 +1658,7 @@
     </div>
     <form id="dealForm">
       <input type="hidden" id="dealId" />
+      <div class="field"><label for="dealPipelineSelect" data-pipeline-label="pipeline">Sales pipeline</label><select id="dealPipelineSelect" required></select></div>
       <div class="field">
         <label for="dealTitle">Deal title</label>
         <input id="dealTitle" type="text" placeholder="e.g. Office fit-out — Lawson & Co." required />
@@ -1776,6 +1780,8 @@
 <script src="/js/preferences-core.js"></script>
 <script src="/js/customize.js"></script>
 <script src="/js/sales.js"></script>
+<div class="overlay hidden" id="pipelineOverlay"><div class="modal"><div class="modal-head"><h2 id="pipelineModalTitle">Add another pipeline</h2><button type="button" class="modal-close" id="closePipelineBtn" aria-label="Close">×</button></div><form id="pipelineForm"><input id="pipelineId" type="hidden"/><div class="field"><label for="pipelineName" data-pipeline-label="name">Pipeline name</label><input id="pipelineName" required maxlength="100"/></div><div class="field"><label for="pipelineText" data-pipeline-label="description">What do you sell here?</label><textarea id="pipelineText" maxlength="2000"></textarea></div><div class="field" id="pipelineCopyField"><label for="pipelineCopy" data-pipeline-label="copy">Starting stages</label><select id="pipelineCopy"></select></div><div id="pipelineFormError" class="form-error"></div><div class="modal-actions"><button type="button" class="btn btn-danger btn-sm hidden" id="deletePipelineBtn" data-pipeline-label="remove">Delete empty pipeline</button><button type="button" class="btn btn-ghost" id="pipelineCancel" data-pipeline-label="cancel">Cancel</button><button class="btn btn-primary" id="pipelineSave" data-pipeline-label="save">Save pipeline</button></div></form></div></div>
+<script src="/js/pipelines.js"></script>
 <script src="/js/app.js"></script>
 </body>
 </html>

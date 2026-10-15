@@ -1,3 +1,4 @@
+const P = require('./pipelines');
 const { normalizeCurrency } = require('./workspaceCurrency');
 function invalid(message, status = 400) { return Object.assign(new Error(message), { status }); }
 function text(value, max, name, required = false) {
@@ -32,7 +33,7 @@ function normalizeDeal(input, previous = {}) {
   return {
     title: text(d.title, 300, 'deal title', true),
     contact_id: optionalId(d.contact_id), company_id: optionalId(d.company_id),
-    product_id: optionalId(d.product_id), stage_id: optionalId(d.stage_id), assigned_to: optionalId(d.assigned_to),
+    pipeline_id: optionalId(d.pipeline_id), product_id: optionalId(d.product_id), stage_id: optionalId(d.stage_id), assigned_to: optionalId(d.assigned_to),
     value, currency, quantity, expected_close_date: validDate(d.expected_close_date),
     notes: text(d.notes || '', 20000, 'notes'), status, lost_reason: reason,
   };
@@ -48,6 +49,7 @@ async function saveDeal(pool, user, id, input) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    const firstPipeline = await P.ensure(client, user.workspace_id);
     let previous = {};
     if (id) {
       previous = (await client.query('SELECT * FROM deals WHERE id=$1 AND workspace_id=$2 FOR UPDATE', [optionalId(id), user.workspace_id])).rows[0];
@@ -56,11 +58,18 @@ async function saveDeal(pool, user, id, input) {
       previous.currency = (await client.query('SELECT default_currency FROM workspaces WHERE id=$1', [user.workspace_id])).rows[0]?.default_currency;
     }
     const deal = normalizeDeal(input, previous);
+    // Legacy clients may supply a stage without a pipeline. Infer it only for new deals.
+    if (!deal.pipeline_id && deal.stage_id) deal.pipeline_id = (await client.query('SELECT pipeline_id FROM pipeline_stages WHERE id=$1 AND workspace_id=$2',[deal.stage_id,user.workspace_id])).rows[0]?.pipeline_id;
+    deal.pipeline_id = deal.pipeline_id || firstPipeline.id;
+    await P.selected(client,user.workspace_id,deal.pipeline_id);
+    if (id && deal.pipeline_id !== previous.pipeline_id && !Object.hasOwn(input,'stage_id')) deal.stage_id = null;
     await checkLinks(client, user.workspace_id, deal);
+    if (deal.stage_id && !(await client.query('SELECT id FROM pipeline_stages WHERE id=$1 AND pipeline_id=$2 AND workspace_id=$3',[deal.stage_id,deal.pipeline_id,user.workspace_id])).rows.length) throw invalid('Choose a stage from this pipeline.');
     const fields = Object.keys(deal);
     const values = Object.values(deal);
     let result;
-    const stageChanged = (previous.stage_id ?? null) !== deal.stage_id;
+    const pipelineChanged = previous.pipeline_id !== deal.pipeline_id;
+    const stageChanged = pipelineChanged || (previous.stage_id ?? null) !== deal.stage_id;
     const statusChanged = previous.status !== deal.status;
     if (id) {
       values.push(id, user.workspace_id);
@@ -75,11 +84,13 @@ async function saveDeal(pool, user, id, input) {
     }
     const saved = result.rows[0];
     if (!id || stageChanged || statusChanged) {
+      const pipelines = (await client.query('SELECT id,name FROM sales_pipelines WHERE workspace_id=$1',[user.workspace_id])).rows;
+      const pipelineName = pipelineId => pipelines.find(p=>p.id===pipelineId)?.name || null;
       const stages = (await client.query('SELECT id, name FROM pipeline_stages WHERE workspace_id=$1', [user.workspace_id])).rows;
       const stageName = stageId => stages.find(stage => stage.id === stageId)?.name || null;
-      await client.query(`INSERT INTO deal_events (workspace_id, deal_id, user_id, event_type, from_stage, to_stage, from_status, to_status, reason)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-      [user.workspace_id, saved.id, user.id, id ? 'changed' : 'created', stageName(previous.stage_id), stageName(deal.stage_id), previous.status || null, deal.status, deal.lost_reason]);
+      await client.query(`INSERT INTO deal_events (workspace_id, deal_id, user_id, event_type, from_stage, to_stage, from_status, to_status, reason, from_pipeline, to_pipeline)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+      [user.workspace_id, saved.id, user.id, id ? 'changed' : 'created', stageName(previous.stage_id), stageName(deal.stage_id), previous.status || null, deal.status, deal.lost_reason, pipelineName(previous.pipeline_id), pipelineName(deal.pipeline_id)]);
     }
     await client.query('COMMIT');
     return saved;

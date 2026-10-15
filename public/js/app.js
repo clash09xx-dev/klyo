@@ -324,6 +324,7 @@ function showLimitOrError(err, fallbackEl) {
 
   wireEvents();
   KlyoSales.init();
+  KlyoPipelines.init();
   KlyoCustomize.init();
   KlyoQuoteStudio.init();
 
@@ -2088,7 +2089,7 @@ function renderCompaniesTable(list) {
     .map(
       (c) => `
     <tr data-id="${c.id}">
-      <td class="name-cell" style="--stage-color:var(--accent-1)">${escapeHtml(c.name)}</td>
+      <td class="name-cell" style="--stage-color:var(--accent-1)">${escapeHtml(c.name)}${c.parent_company_name ? `<small class="company-relation">↳ ${escapeHtml(c.parent_company_name)}</small>` : c.subsidiary_count ? `<small class="company-relation">${KlyoI18n.getLang()==='pl'?'Podfirmy':'Sub-companies'}: ${c.subsidiary_count}</small>` : ''}</td>
       <td>${escapeHtml(c.industry || "—")}</td>
       <td>${c.contact_count} ${t("nav.contacts").toLowerCase()}</td>
     </tr>`
@@ -2106,7 +2107,10 @@ function populateCompanySelect() {
   if (current) els.cCompanySelect.value = current;
 }
 
-function openCompanyModal(company) {
+let companyReturnId = null;
+async function openCompanyModal(company, parentId) {
+  companyReturnId=parentId||null;
+  if(parentId)closeCompanyPanel();
   els.companyFormError.textContent = "";
   if (company) {
     els.companyModalTitle.textContent = t("modal.edit_company");
@@ -2121,14 +2125,17 @@ function openCompanyModal(company) {
     els.companyForm.reset();
     els.companyId.value = "";
   }
+  document.getElementById('coParent').innerHTML='';els.companySubmitBtn.disabled=true;
   els.companyModalOverlay.classList.remove("hidden");
+  try{await KlyoPipelines.companyOptions(company,parentId);els.companySubmitBtn.disabled=API.getUser()?.role==='viewer';}
+  catch(e){els.companyFormError.textContent=e.message;}
 }
 function closeCompanyModal() { els.companyModalOverlay.classList.add("hidden"); }
 
 async function handleCompanySubmit(e) {
   e.preventDefault();
   els.companyFormError.textContent = "";
-  const payload = { name: els.coName.value.trim(), industry: els.coIndustry.value.trim(), notes: els.coNotes.value.trim() };
+  const payload = { parent_company_id: document.getElementById("coParent").value || null, name: els.coName.value.trim(), industry: els.coIndustry.value.trim(), notes: els.coNotes.value.trim() };
   if (!payload.name) { els.companyFormError.textContent = "Company name is required."; return; }
 
   const id = els.companyId.value;
@@ -2139,7 +2146,7 @@ async function handleCompanySubmit(e) {
     closeCompanyModal();
     toast(id ? "Company updated" : "Company added");
     await loadCompanies();
-    if (id && currentCompanyPanelId === Number(id)) openCompanyPanel(id);
+    if (companyReturnId || currentCompanyPanelId) await openCompanyPanel(companyReturnId || currentCompanyPanelId);
   } catch (err) {
     els.companyFormError.textContent = err.message;
   } finally {
@@ -2148,7 +2155,8 @@ async function handleCompanySubmit(e) {
 }
 
 async function openCompanyPanel(id) {
-  const { company, contacts: people } = await API.get(`/companies/${id}`);
+  const { company, contacts: people, parent, children } = await API.get(`/companies/${id}`);
+  KlyoPipelines.companyGroup(company,parent,children);
   currentCompanyPanelId = company.id;
   els.companyPanelName.textContent = company.name;
   els.companyPanelIndustry.textContent = company.industry || "No industry set";
@@ -2171,7 +2179,7 @@ function closeCompanyPanel() { els.companyPanelOverlay.classList.add("hidden"); 
 
 async function handleDeleteCompany() {
   if (!currentCompanyPanelId) return;
-  if (!confirm("Delete this company? Linked contacts stay, they just lose the company link.")) return;
+  if (!confirm("Delete this company? Contacts and sub-companies stay, but their direct link to this company is removed.")) return;
   try {
     await API.del(`/companies/${currentCompanyPanelId}`);
     closeCompanyPanel();
@@ -3053,10 +3061,9 @@ function wireEvents() {
   els.closeCompanyPanelBtn.addEventListener("click", closeCompanyPanel);
   els.companyPanelOverlay.addEventListener("click", (e) => { if (e.target === els.companyPanelOverlay) closeCompanyPanel(); });
   els.deleteCompanyBtn.addEventListener("click", handleDeleteCompany);
-  els.editCompanyBtn.addEventListener("click", () => {
-    const company = companies.find((c) => c.id === currentCompanyPanelId);
-    closeCompanyPanel();
-    openCompanyModal(company);
+  els.editCompanyBtn.addEventListener("click", async () => {
+    try{const {company}=await API.get(`/companies/${currentCompanyPanelId}`);closeCompanyPanel();await openCompanyModal(company);}
+    catch(e){toast(e.message,'error');}
   });
 
   // Products / catalog
@@ -3140,27 +3147,25 @@ let currentDealPanelId = null;
 
 // ---- data loaders ----
 
-async function loadDeals() {
+let dealsLoadVersion = 0;
+async function loadDeals(filters = {}) {
+  const version=++dealsLoadVersion;
   try {
-    const stageRes = await API.get("/deals/stages");
-    dealsStagesCache = stageRes.stages || [];
-
-    const statusVal = els.dealStatusFilter.value;
-    const stageVal  = els.dealStageFilter.value;
-    const ownerVal  = els.dealAssigneeFilter.value;
-    let url = "/deals?";
-    if (stageVal)  url += `stage_id=${stageVal}&`;
-    if (ownerVal)  url += `assigned_to=${ownerVal}&`;
-    if (statusVal) url += `status=${statusVal}&`;
-
-    const res = await API.get(url);
-    dealsCache = res.deals || [];
-
-    renderDealsBoard();
-    refreshDealStageFilter();
-  } catch (err) {
-    toast(err.message, "error");
-  }
+    const pipelineId=await KlyoPipelines.load();
+    if(version!==dealsLoadVersion)return;
+    const stageVal=filters.stage_id ?? els.dealStageFilter.value;
+    const {stages}=await API.get(`/deals/stages?pipeline_id=${pipelineId}`);
+    if(version!==dealsLoadVersion)return;
+    const stageId=(stages||[]).some(s=>String(s.id)===String(stageVal))?stageVal:'';
+    const params=new URLSearchParams({pipeline_id:pipelineId});
+    if(stageId)params.set('stage_id',stageId);
+    if(els.dealAssigneeFilter.value)params.set('assigned_to',els.dealAssigneeFilter.value);
+    if(els.dealStatusFilter.value)params.set('status',els.dealStatusFilter.value);
+    const res=await API.get(`/deals?${params}`);
+    if(version!==dealsLoadVersion)return;
+    dealsStagesCache=stages||[];dealsCache=res.deals||[];
+    refreshDealStageFilter();els.dealStageFilter.value=stageId;renderDealsBoard();
+  } catch(err) {if(version===dealsLoadVersion)toast(err.message,'error');}
 }
 
 function refreshDealStageFilter() {
@@ -3312,7 +3317,7 @@ function escHtml(str) {
 
 // ---- deal modal ----
 
-function openDealModal(deal) {
+async function openDealModal(deal) {
   els.dealId.value = deal?.id || "";
   els.dealModalTitle.textContent = deal ? t("modal.edit_deal") : t("modal.add_deal");
   els.dealSubmitBtn.textContent  = deal ? t("modal.save_changes") : t("modal.add_deal");
@@ -3323,14 +3328,8 @@ function openDealModal(deal) {
   els.dealNotes.value      = deal?.notes || "";
   els.dealFormError.textContent = "";
 
-  // Populate stage select
-  els.dealStageSelect.innerHTML = '<option value="">No stage</option>';
-  dealsStagesCache.forEach(s => {
-    const o = document.createElement("option");
-    o.value = s.id; o.textContent = s.name;
-    if (deal && String(deal.stage_id) === String(s.id)) o.selected = true;
-    els.dealStageSelect.appendChild(o);
-  });
+  els.dealSubmitBtn.disabled=true;
+  const stageLoad=KlyoPipelines.prepareDeal(deal);
 
   // Populate assigned select from team
   els.dealAssignedSelect.innerHTML = '<option value="">Unassigned</option>';
@@ -3370,6 +3369,7 @@ function openDealModal(deal) {
 
   els.dealModalOverlay.classList.remove("hidden");
   els.dealTitle.focus();
+  try{await stageLoad;}catch(e){els.dealFormError.textContent=e.message;}
 }
 
 function closeDealModal() {
@@ -3381,6 +3381,7 @@ async function handleDealSubmit(e) {
   els.dealFormError.textContent = "";
   const id = els.dealId.value;
   const body = {
+    pipeline_id:         document.getElementById("dealPipelineSelect").value,
     title:               els.dealTitle.value.trim(),
     contact_id:          els.dealContactSelect.value || null,
     company_id:          els.dealCompanySelect.value || null,
@@ -3393,18 +3394,20 @@ async function handleDealSubmit(e) {
     expected_close_date: els.dealCloseDate.value || null,
     notes:               els.dealNotes.value.trim() || null,
   };
+  els.dealSubmitBtn.disabled=true;
   try {
     if (id) {
       await API.put(`/deals/${id}`, body);
     } else {
       await API.post("/deals", body);
     }
+    KlyoPipelines.setSelected(body.pipeline_id);
     closeDealModal();
     await loadDeals();
     toast(id ? "Deal updated" : "Deal added");
   } catch (err) {
     els.dealFormError.textContent = err.message;
-  }
+  } finally{els.dealSubmitBtn.disabled=API.getUser()?.role==='viewer';}
 }
 
 // ---- deal detail panel ----
@@ -3428,6 +3431,7 @@ async function openDealPanel(dealId) {
 
     // Detail grid
     const rows = [
+      d.pipeline_name ? ["Pipeline", escHtml(d.pipeline_name)] : null,
       d.value        ? ["Value",    fmtMoney(d.value, d.currency)] : null,
       d.assigned_name ? ["Owner",   escHtml(d.assigned_name)] : null,
       d.expected_close_date ? ["Close",  new Date(d.expected_close_date).toLocaleDateString()] : null,
@@ -3560,7 +3564,7 @@ function renderStagesList() {
       const order = dealsStagesCache.map((st, i) => ({ id: st.id, sort_order: i }));
       renderStagesList(); // immediate visual feedback
       try {
-        await API.put("/deals/stages/reorder", { order });
+        await API.put("/deals/stages/reorder", { order, pipeline_id:KlyoPipelines.selected() });
       } catch (err) { toast(err.message, "error"); await loadDeals(); renderStagesList(); }
     });
 
@@ -3573,7 +3577,7 @@ async function handleAddStage() {
   if (!name) { els.stagesFormError.textContent = "Enter a stage name."; return; }
   els.stagesFormError.textContent = "";
   try {
-    await API.post("/deals/stages", { name, color: els.newStageColor.value });
+    await API.post("/deals/stages", { pipeline_id:KlyoPipelines.selected(), name, color: els.newStageColor.value });
     els.newStageName.value = "";
     await loadDeals();
     renderStagesList();

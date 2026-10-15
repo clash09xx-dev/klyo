@@ -24,7 +24,7 @@ const PRICE_ENV_KEYS = {
 const router = express.Router();
 
 // GET /api/billing/tiers — the pricing menu the frontend renders
-router.get("/tiers", requireAuth, (req, res) => {
+router.get("/tiers", (req, res) => {
   const tiers = TIER_ORDER.map((key) => ({ key, ...TIERS[key] }));
   res.json({ tiers });
 });

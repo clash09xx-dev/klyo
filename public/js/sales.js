@@ -13,6 +13,7 @@ const KlyoSales = (() => {
   const editor = () => API.getUser()?.role !== 'viewer';
   const daysInStage = d => d.stage_entered_at ? Math.max(0,Math.floor((Date.now()-new Date(d.stage_entered_at).getTime())/86400000)) : null;
   function localize() {
+    if(typeof KlyoPipelines!=='undefined')KlyoPipelines.localize();
     document.querySelectorAll('[data-sales-label]').forEach(el => { el.textContent = l(el.dataset.salesLabel); });
     g('dealQuickSearch').placeholder=l('search');
     g('nextStepTitle').placeholder=l('taskTitle');
@@ -51,7 +52,7 @@ const KlyoSales = (() => {
     g('emailTemplateSelect').innerHTML=`<option value="">${l('noTemplates')}</option>`+templates.map(v=>`<option value="${v.id}">${h(v.name)}</option>`).join('');
     if(templates.some(v=>String(v.id)===selected))g('emailTemplateSelect').value=selected;
   }
-  function currentFilters() { return {stage_id:els.dealStageFilter.value,assigned_to:els.dealAssigneeFilter.value,status:els.dealStatusFilter.value,attention:g('dealAttentionFilter').value,search:g('dealQuickSearch').value}; }
+  function currentFilters() { return {pipeline_id:KlyoPipelines.selected(),stage_id:els.dealStageFilter.value,assigned_to:els.dealAssigneeFilter.value,status:els.dealStatusFilter.value,attention:g('dealAttentionFilter').value,search:g('dealQuickSearch').value}; }
   function nameModal(action,title) {
     nameAction=action; g('salesNameTitle').textContent=title;g('salesNameInput').value='';g('salesNameError').textContent='';g('salesNameOverlay').classList.remove('hidden');g('salesNameInput').focus();
   }
@@ -74,7 +75,7 @@ const KlyoSales = (() => {
     try {
       const {events}=await API.get(`/deals/${d.id}/history`);
       if(activeDeal?.id!==d.id)return;
-      g('dealStageHistory').innerHTML=events.length?events.map(e=>`<div class="stage-event"><div>${e.event_type==='created'?l('created'):`${h(e.from_stage||l('noStage'))} → ${h(e.to_stage||l('noStage'))}`}${e.from_status!==e.to_status?` <span class="muted">· ${h(e.to_status)}</span>`:''}${e.reason?`<p>${h(e.reason)}</p>`:''}</div><time>${h(formatDateTime(e.created_at))} · ${h(e.user_name||'')}</time></div>`).join(''):`<p class="muted">${l('noHistory')}</p>`;
+      g('dealStageHistory').innerHTML=events.length?events.map(e=>`<div class="stage-event"><div>${e.event_type==='created'?l('created'):`${h(e.from_stage||l('noStage'))} → ${h(e.to_stage||l('noStage'))}`}${e.from_pipeline&&e.to_pipeline&&e.from_pipeline!==e.to_pipeline?`<p>${h(e.from_pipeline)} → ${h(e.to_pipeline)}</p>`:''}${e.from_status!==e.to_status?` <span class="muted">· ${h(e.to_status)}</span>`:''}${e.reason?`<p>${h(e.reason)}</p>`:''}</div><time>${h(formatDateTime(e.created_at))} · ${h(e.user_name||'')}</time></div>`).join(''):`<p class="muted">${l('noHistory')}</p>`;
     } catch(error) { g('dealStageHistory').textContent=error.message; }
   }
   async function loadOverview() {
@@ -87,7 +88,7 @@ const KlyoSales = (() => {
       g('salesOverdueCount').textContent=data.overdue;g('salesNoNextCount').textContent=data.without_next_step;
       g('salesWonValue').innerHTML=data.totals.filter(r=>r.status==='won').map(r=>`<span>${h(fmtMoney(r.value,r.currency,2))}</span>`).join('')||'—';
       const stages=new Map();for(const stage of data.stages){if(!stages.has(stage.id))stages.set(stage.id,{...stage,count:0,amounts:[]});const item=stages.get(stage.id);item.count+=Number(stage.count);if(stage.currency)item.amounts.push(fmtMoney(stage.value,stage.currency,2));}
-      g('salesStageRows').innerHTML=[...stages.values()].map(stage=>`<tr><td>${h(stage.name)}</td><td>${stage.count}</td><td>${stage.amounts.map(h).join('<br>')||'—'}</td></tr>`).join('')||`<tr><td colspan="3">${l('noData')}</td></tr>`;
+      g('salesStageRows').innerHTML=[...stages.values()].map(stage=>`<tr><td>${h(stage.pipeline_name?stage.pipeline_name+' / '+stage.name:stage.name)}</td><td>${stage.count}</td><td>${stage.amounts.map(h).join('<br>')||'—'}</td></tr>`).join('')||`<tr><td colspan="3">${l('noData')}</td></tr>`;
       g('salesLossReasons').innerHTML=data.losses.map(reason=>`<div class="loss-reason-row"><span>${h(reason.reason)}</span><strong>${reason.count}</strong></div>`).join('')||`<p class="muted">${l('noLosses')}</p>`;
     }catch(error){g('salesOverviewError').textContent=error.message;}
   }
@@ -107,7 +108,7 @@ const KlyoSales = (() => {
     g('dealAttentionFilter').addEventListener('change',renderDealsBoard);
     g('savedDealView').addEventListener('change',async()=>{
       const view=views.find(v=>String(v.id)===g('savedDealView').value);if(!view)return;
-      const f=view.filters;els.dealStageFilter.value=f.stage_id||'';els.dealAssigneeFilter.value=f.assigned_to||'';els.dealStatusFilter.value=f.status||'';g('dealAttentionFilter').value=f.attention||'';g('dealQuickSearch').value=f.search||'';await loadDeals();
+      const f=view.filters;if(f.pipeline_id)KlyoPipelines.setSelected(f.pipeline_id);els.dealAssigneeFilter.value=f.assigned_to||'';els.dealStatusFilter.value=f.status||'';g('dealAttentionFilter').value=f.attention||'';g('dealQuickSearch').value=f.search||'';await loadDeals({stage_id:f.stage_id||''});
     });
     g('saveDealViewBtn').addEventListener('click',()=>nameModal(async name=>{await API.post('/sales/views',{name,filters:currentFilters()});await loadViews();toast(l('viewSaved'));},l('saveView')));
     g('deleteDealViewBtn').addEventListener('click',async()=>{const id=g('savedDealView').value;if(!id)return;try{await API.del(`/sales/views/${id}`);await loadViews();}catch(error){toast(error.message,'error');}});

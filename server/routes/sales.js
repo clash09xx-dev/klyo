@@ -13,9 +13,9 @@ router.get('/summary', action(async(req,res)=>{
   const wid=req.user.workspace_id;
   const [totals,stages,losses,tasks]=await Promise.all([
     db.query(`SELECT currency,status,COUNT(*)::int AS count,COALESCE(SUM(value),0) AS value FROM deals WHERE workspace_id=$1 GROUP BY currency,status ORDER BY currency,status`,[wid]),
-    db.query(`SELECT s.id,s.name,s.color,COUNT(d.id)::int AS count,d.currency,COALESCE(SUM(d.value),0) AS value
-      FROM pipeline_stages s LEFT JOIN deals d ON d.stage_id=s.id AND d.workspace_id=s.workspace_id AND d.status='open'
-      WHERE s.workspace_id=$1 GROUP BY s.id,d.currency ORDER BY s.sort_order,s.id`,[wid]),
+    db.query(`SELECT s.id,s.name,s.color,p.name AS pipeline_name,COUNT(d.id)::int AS count,d.currency,COALESCE(SUM(d.value),0) AS value
+      FROM pipeline_stages s LEFT JOIN sales_pipelines p ON p.id=s.pipeline_id AND p.workspace_id=s.workspace_id LEFT JOIN deals d ON d.stage_id=s.id AND d.workspace_id=s.workspace_id AND d.status='open'
+      WHERE s.workspace_id=$1 GROUP BY s.id,p.name,d.currency ORDER BY p.name,s.sort_order,s.id`,[wid]),
     db.query(`SELECT COALESCE(NULLIF(lost_reason,''),'Not recorded') AS reason,COUNT(*)::int AS count FROM deals WHERE workspace_id=$1 AND status='lost' GROUP BY 1 ORDER BY count DESC LIMIT 10`,[wid]),
     db.query(`SELECT
       (SELECT COUNT(*)::int FROM tasks WHERE workspace_id=$1 AND status!='done' AND due_date<CURRENT_DATE) AS overdue,
@@ -29,7 +29,7 @@ router.get('/views', action(async(req,res)=>{
 router.post('/views', action(async(req,res)=>{
   const name=text(req.body.name,80,'view name',true);
   const filters={};
-  for (const key of ['stage_id','assigned_to','status','attention','search']) {
+  for (const key of ['pipeline_id','stage_id','assigned_to','status','attention','search']) {
     if(req.body.filters?.[key] != null) filters[key]=String(req.body.filters[key]).slice(0,200);
   }
   if(!['','open','won','lost','all'].includes(filters.status||'')) throw invalid('Invalid status.');
