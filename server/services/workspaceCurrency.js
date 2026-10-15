@@ -25,7 +25,7 @@ async function setWorkspaceCurrency(pool, workspaceId, currency) {
     await client.query("UPDATE deals SET currency = $1 WHERE workspace_id = $2", [currency, workspaceId]);
     await client.query("UPDATE products SET currency = $1 WHERE workspace_id = $2", [currency, workspaceId]);
     await client.query(
-      "UPDATE quotes SET currency = $1 WHERE workspace_id = $2 AND status = 'draft' AND sent_at IS NULL",
+      "UPDATE quotes SET price_list_id = CASE WHEN currency = $1 THEN price_list_id ELSE NULL END, currency = $1 WHERE workspace_id = $2 AND status = 'draft' AND sent_at IS NULL",
       [currency, workspaceId]
     );
     await client.query("COMMIT");

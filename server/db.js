@@ -419,6 +419,7 @@ async function init() {
   await require("./migrations/salesWorkspace")(pool);
   await require("./migrations/companyPipelines")(pool);
   await require("./migrations/personalCustomization")(pool);
+  await require("./migrations/documentsAndFiles")(pool);
   await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS workspace_preferences JSONB NOT NULL DEFAULT '{}'::jsonb");
 }
 

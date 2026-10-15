@@ -2,7 +2,7 @@
   "name": "klyo",
   "version": "1.0.0",
   "private": true,
-  "description": "Klyo \u2014 multi-tenant CRM with AI-drafted client offers, email sending, and subscription billing.",
+  "description": "Klyo — multi-tenant CRM with AI-drafted client offers, email sending, and subscription billing.",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
@@ -12,9 +12,10 @@
     "test:browser": "node tests/dashboard.browser.js"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
+    "@azure/msal-node": "^7.1.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

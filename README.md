@@ -391,3 +391,15 @@ Public feature page: `/customization`.
 Run `npm test` with `TEST_DATABASE_URL` pointing to a disposable local PostgreSQL instance to exercise real database integration tests. Each test creates and drops an isolated schema. Without this variable, database integration tests are skipped.
 
 `node tests/dashboard.browser.js` checks existing workflows in Chromium and WebKit with fixtures. `node tests/customization.browser.js` uses `TEST_DATABASE_URL` and actual HTTP routes for field creation, proposal templates/PDF, discounts, warranties, both spaces and independent copies. Browser tests require Playwright; optional `KLYO_CHROMIUM_PATH` and `KLYO_WEBKIT_PATH` select installed browser engines. No live payments, emails or AI calls occur in these tests.
+
+## Custom A4 proposals, price lists and SharePoint
+
+In **Quotes**, choose **Create your own template** for a blank A4 canvas. Add and position text, images, shapes, automatic client/date/price fields, one repeating pricing table and totals. Exact dimensions are in millimetres. Multi-page designs and table overflow use the same saved geometry in the PDF export and public PDF preview. Templates stay private to the user and active Team/Personal space.
+
+In **Products → Price lists / Import**, upload CSV or XLSX, map columns, inspect errors and approve selected rows. SKUs identify existing products; a unique product name is the fallback. Separate lists can have separate currencies and prices. Existing product metadata and quote snapshots are preserved; updating catalogue base prices is an explicit option. A quote selects a list and saves its own line prices. Workspace currency changes detach an affected draft from its old price list without changing numeric amounts.
+
+**Files** connects a workspace to a SharePoint library/folder, supports manual chunked uploads and links files to CRM records. Team owners manage shared connections; Personal connections stay separate. Microsoft tokens and upload sessions are encrypted server-side. Owner transfer disconnects delegated Microsoft access until the new owner reconnects.
+
+This deployment does not include Microsoft credentials. Follow [the SharePoint setup guide](docs/sharepoint-setup.md) to register an Entra Web application and configure Railway. The same guide is available at `/docs/sharepoint-setup`. The integration uses delegated access and requires a real Microsoft account/tenant to complete live validation; automated checks use simulated Graph responses.
+
+The vendored spreadsheet reader is SheetJS CE 0.20.3 (Apache-2.0); source URL, checksum and licence are in `public/vendor/sheetjs`. Node.js 20 or newer is required by the Microsoft authentication library.

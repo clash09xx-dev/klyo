@@ -118,7 +118,7 @@ const KlyoQuoteStudio = (() => {
     const party = (key) =>
       `<div><h4>${t(key)}</h4>${["name", "details", "email", "phone", "tax_id"].map((k) => (k === "details" ? `<label class="field">${t(k)}<textarea data-doc="${key}.${k}" maxlength="1600"></textarea></label>` : `<div class="field">${field(key + "." + k, t(k), "text", k === "name" ? 160 : k === "email" ? 254 : 80)}</div>`)).join("")}</div>`;
     g("quoteDocumentControls").innerHTML =
-      `<div class="quote-document-design"><div class="quote-document-heading"><div><h3>${t("design")}</h3><p>${t("designHint")}</p></div><button type="button" class="btn btn-ghost btn-sm" id="saveQuoteDefaultsBtn" ${API.getUser()?.role === "admin" ? "" : "hidden"}>${t("saveDefault")}</button></div><div class="quote-design-fields"><label>${t("style")}<select data-doc="layout" id="doc-layout"><option value="studio">Studio</option><option value="executive">Executive</option></select></label><label>${t("language")}<select data-doc="language" id="doc-language"><option value="pl">Polski</option><option value="en">English</option></select></label>${field("accent", t("accent"), "color")}${field("reference", t("reference"), "text", 60)}${field("issued_on", t("issued"), "date")}${field("valid_until", t("valid"), "date")}<label>${t("tax")}<input type="number" min="0" max="100" step="0.01" id="quoteTaxRate" value="0"></label></div><div class="quote-logo-control"><img id="quoteLogoPreview" alt="Company logo" hidden><label>${t("logo")} <input type="file" id="quoteLogoFile" accept="image/png,image/jpeg"></label><button type="button" class="btn btn-ghost btn-sm" id="removeQuoteLogo">${t("removeLogo")}</button></div><p class="quote-save-default-note">${t("defaultNote")}</p><div id="quoteDesignError" class="quote-design-error"></div></div><details class="quote-document-details"><summary>${t("parties")}</summary><div class="quote-party-grid">${party("seller")}${party("buyer")}</div></details><details class="quote-document-details"><summary>${t("scopeTerms")}</summary>${["scope", "payment", "delivery", "terms", "footer"].map((k) => `<div class="quote-wide-field"><label for="doc-${k}">${t(k)}</label><textarea id="doc-${k}" data-doc="${k}" maxlength="${{ scope: 8000, payment: 1500, delivery: 1500, terms: 6000, footer: 300 }[k]}"></textarea></div>`).join("")}</details>`;
+      `<div class="quote-document-design"><div class="quote-document-heading"><div><h3>${t("design")}</h3><p>${t("designHint")}</p></div><button type="button" class="btn btn-ghost btn-sm" id="saveQuoteDefaultsBtn" ${API.getUser()?.role === "admin" ? "" : "hidden"}>${t("saveDefault")}</button></div><div class="quote-design-fields"><label>${t("style")}<select data-doc="layout" id="doc-layout"><option value="studio">Studio</option><option value="executive">Executive</option><option value="canvas" ${documentState.canvas?"":"disabled"}>Custom A4</option></select></label><label>${t("language")}<select data-doc="language" id="doc-language"><option value="pl">Polski</option><option value="en">English</option></select></label>${field("accent", t("accent"), "color")}${field("reference", t("reference"), "text", 60)}${field("issued_on", t("issued"), "date")}${field("valid_until", t("valid"), "date")}<label>${t("tax")}<input type="number" min="0" max="100" step="0.01" id="quoteTaxRate" value="0"></label></div><div class="quote-logo-control"><img id="quoteLogoPreview" alt="Company logo" hidden><label>${t("logo")} <input type="file" id="quoteLogoFile" accept="image/png,image/jpeg"></label><button type="button" class="btn btn-ghost btn-sm" id="removeQuoteLogo">${t("removeLogo")}</button></div><p class="quote-save-default-note">${t("defaultNote")}</p><div id="quoteDesignError" class="quote-design-error"></div></div><details class="quote-document-details"><summary>${t("parties")}</summary><div class="quote-party-grid">${party("seller")}${party("buyer")}</div></details><details class="quote-document-details"><summary>${t("scopeTerms")}</summary>${["scope", "payment", "delivery", "terms", "footer"].map((k) => `<div class="quote-wide-field"><label for="doc-${k}">${t(k)}</label><textarea id="doc-${k}" data-doc="${k}" maxlength="${{ scope: 8000, payment: 1500, delivery: 1500, terms: 6000, footer: 300 }[k]}"></textarea></div>`).join("")}</details>`;
     for (const el of g("quoteDocumentControls").querySelectorAll(
       "[data-doc]",
     )) {
@@ -158,6 +158,7 @@ const KlyoQuoteStudio = (() => {
         quote.created_at || new Date().toISOString(),
       ).slice(0, 10);
     render();
+    await KlyoPriceLists.openQuote(quote);
     g("quoteTaxRate").value = Number(quote?.tax_rate) || 0;
     g("quoteDiscountType").value=quote?.discount_type||"none";g("quoteDiscountAmount").value=quote?.discount_value||0;
     try{await KlyoQuoteTemplates.open();}catch(e){g("quoteTemplateControls").textContent=e.message;}
@@ -166,6 +167,7 @@ const KlyoQuoteStudio = (() => {
   function collect() {
     documentState = read();
     return {
+      ...KlyoPriceLists.collect(),
       discount_type:KlyoQuoteTemplates.discount().type,discount_value:KlyoQuoteTemplates.discount().value,
       document: documentState,
       tax_rate: Number(g("quoteTaxRate")?.value || 0),
@@ -403,6 +405,12 @@ const KlyoQuoteStudio = (() => {
     init,
     open,
     collect,applyTemplate,
+    applyCanvas(value){
+      const tax=Number(g('quoteTaxRate')?.value||0),discount=KlyoQuoteTemplates.discount();
+      documentState=Q.normalizeDocument(value);render();
+      g('quoteTaxRate').value=tax;g('quoteDiscountType').value=discount.type;g('quoteDiscountAmount').value=discount.value;
+      recomputeQuoteTotals();
+    },
     contactChanged,
     preview,
     download,

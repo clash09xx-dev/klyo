@@ -62,6 +62,7 @@ async function save(user, id, input) {
   if (!currency) throw invalid("Choose a supported currency.");
   const values = {
     name: text(b.name, 300, "product name", true),
+    sku: text(b.sku||"",100,"SKU"),
     description: text(b.description || "", 10000, "description"),
     unit_price: price,
     unit_label: text(b.unit_label || "unit", 100, "unit"),
@@ -87,6 +88,7 @@ async function save(user, id, input) {
   const keys = Object.keys(values),
     params = Object.values(values);
   params.push(user.workspace_id);
+  try {
   if (id) {
     params.push(id);
     return (
@@ -102,6 +104,7 @@ async function save(user, id, input) {
       params,
     )
   ).rows[0];
+  }catch(e){if(e.code==="23505")throw invalid("A product with this SKU already exists.",409);throw e;}
 }
 router.post("/", requireEditor, async (req, res) =>
   res.status(201).json({ product: await save(req.user, null, req.body) }),
@@ -122,6 +125,7 @@ router.post("/:id/duplicate", requireEditor, async (req, res) => {
     .json({
       product: await save(req.user, null, {
         ...old,
+        sku: "",
         name: old.name.slice(0, 290) + " (copy)",
       }),
     });

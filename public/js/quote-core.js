@@ -30,7 +30,7 @@
       !value ||
       typeof value !== "object" ||
       Array.isArray(value) ||
-      JSON.stringify(value).length > 450000
+      JSON.stringify(value).length > 3000000
     )
       fail("Invalid PDF document settings.");
     const party = (v) => {
@@ -45,6 +45,7 @@
     };
     const result = {
       version: 1,
+      canvas: value.canvas ? (typeof module === "object" && module.exports ? require("./quote-canvas-core") : globalThis.KlyoCanvasCore).normalize(value.canvas) : null,
       sections: value.sections || ["scope","items","payment","delivery","terms"],
       headings: Object.fromEntries(Object.entries(value.headings||{}).filter(([k])=>["scope","items","payment","delivery","terms"].includes(k)).map(([k,v])=>[k,text(v,80)])),
       body_size: Number(value.body_size||9.5),
@@ -65,8 +66,9 @@
     };
     if(!Array.isArray(result.sections)||!result.sections.includes("items")||new Set(result.sections).size!==result.sections.length||result.sections.some(k=>!["scope","items","payment","delivery","terms"].includes(k)))fail("Keep pricing in the document and choose valid sections.");
     if(!Number.isFinite(result.body_size)||result.body_size<8||result.body_size>12)fail("Choose a body font size from 8 to 12 points.");
-    if (!["studio", "executive"].includes(result.layout))
+    if (!["studio", "executive", "canvas"].includes(result.layout))
       fail("Choose a document style.");
+    if(result.layout === "canvas" && !result.canvas)fail("Create an A4 layout first.");
     if (!["en", "pl"].includes(result.language))
       fail("Choose Polish or English for the PDF.");
     if (!/^#[a-f\d]{6}$/i.test(result.accent))
@@ -84,6 +86,7 @@
       result.valid_until < result.issued_on
     )
       fail("The valid-until date must not precede the issue date.");
+    if(result.layout === "canvas" && !result.canvas.pages.some(p=>p.elements.some(e=>["items","totals"].includes(e.type)||(e.type==="field"&&e.field==="total")||(e.type==="text"&&e.text.includes("{{total}}")))))fail("Add pricing or a total-price field to your A4 design.");
     return result;
   }
   function defaultsDocument(workspace = {}, contact = {}, language = "en") {

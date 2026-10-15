@@ -322,6 +322,8 @@ function showLimitOrError(err, fallbackEl) {
     return;
   }
 
+  KlyoFiles.init();
+  KlyoPriceLists.init();
   wireEvents();
   KlyoSales.init();
   KlyoPipelines.init();
@@ -340,6 +342,7 @@ function showLimitOrError(err, fallbackEl) {
 
   KlyoCustomize.startup();
   handleGmailRedirectParam();
+  KlyoFiles.redirect().catch(e=>toast(e.message,"error"));
 
   // Show terms acceptance modal for users who haven't accepted yet
   if (!currentUser.terms_accepted_at) {
@@ -865,9 +868,11 @@ async function openProductModal(product) {
   if (!els.productModalOverlay) return;
   els.productFormError.textContent = "";
   els.productId.value = product?.id || "";
+  KlyoFiles.recordButton("product",product?.id,"productModalOverlay",product?.name);
   els.productModalTitle.textContent = product ? "Edit product" : "Add product";
   els.productSubmitBtn.textContent  = product ? "Save changes" : "Add product";
   els.productName.value       = product?.name || "";
+  document.getElementById("productSku").value=product?.sku||"";
   els.productDesc.value       = product?.description || "";
   els.productPrice.value      = product?.unit_price ?? 0;
   els.productCurrency.value   = product?.currency || workspaceDefaultCurrency || "USD";
@@ -894,6 +899,7 @@ async function handleProductSubmit(e) {
     warranty_months:document.getElementById("productWarrantyMonths").value||null,
     custom_fields:KlyoWorkspace.collectFields("product"),
     name:                    els.productName.value.trim(),
+    sku: document.getElementById("productSku").value.trim(),
     description:             els.productDesc.value.trim() || null,
     unit_price:              parseFloat(els.productPrice.value) || 0,
     currency:                els.productCurrency.value || "USD",
@@ -1627,6 +1633,7 @@ function populateOwnerOptions(selectEl, { placeholder, selected }) {
 /* ---------- view switching ---------- */
 function getViewCopy(view) {
   const map = {
+    files: { title: t("nav.files"), sub: "" },
     overview: { title: KlyoI18n.getLang() === "pl" ? "Wyniki" : "Overview", sub: "" },
     pipeline:  { title: t("nav.pipeline"),  sub: t("view_sub.pipeline") },
     companies: { title: t("nav.companies"), sub: t("view_sub.companies") },
@@ -1661,11 +1668,13 @@ function switchView(view) {
   els.clientsView.classList.toggle("hidden", view !== "clients");
   els.productsView.classList.toggle("hidden", view !== "products");
   els.calendarView.classList.toggle("hidden", view !== "calendar");
+  document.getElementById("filesView")?.classList.toggle("hidden",view!=="files");
   els.searchBoxWrap.style.display = view === "pipeline" ? "" : "none";
   els.addContactBtn.style.display = view === "pipeline" ? "" : "none";
 
   currentView = view;
   KlyoSales.onView(view);
+  KlyoFiles.onView(view);
   KlyoWorkspace.onView(view);
   document.body.dataset.view = view;
   const copy = getViewCopy(view);
@@ -1845,6 +1854,7 @@ async function handleContactSubmit(e) {
 async function openPanel(id) {
   const { contact, activity, offers, quotes } = await API.get(`/contacts/${id}`);
   currentPanelContactId = contact.id;
+  KlyoFiles.recordButton("contact",contact.id,"panelOverlay",contact.full_name);
   currentPanelContact = contact;
   KlyoWorkspace.showContactFields(contact);
 
@@ -2174,6 +2184,7 @@ async function openCompanyPanel(id) {
   const { company, contacts: people, parent, children } = await API.get(`/companies/${id}`);
   KlyoPipelines.companyGroup(company,parent,children);
   currentCompanyPanelId = company.id;
+  KlyoFiles.recordButton("company",company.id,"companyPanelOverlay",company.name);
   els.companyPanelName.textContent = company.name;
   els.companyPanelIndustry.textContent = company.industry || "No industry set";
   if (company.notes) {
@@ -2370,7 +2381,7 @@ function populateLineItemProductOptions() {
   els.quoteItemsContainer.querySelectorAll(".line-product-select").forEach((select) => {
     const current = select.value;
     select.innerHTML =
-      '<option value="">Custom item</option>' + products.map((p) => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
+      '<option value="">Custom item</option>' + KlyoPriceLists.productsForQuote(products).map((p) => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
     if (current) select.value = current;
   });
 }
@@ -2393,7 +2404,7 @@ function buildLineItemRow(item, index) {
     <span class="drag-handle">⠿</span>
     <select class="line-product-select">
       <option value="">Custom item</option>
-      ${products.map((p) => `<option value="${p.id}" ${String(p.id) === String(item.product_id) ? "selected" : ""}>${escapeHtml(p.name)}</option>`).join("")}
+      ${KlyoPriceLists.productsForQuote(products).map((p) => `<option value="${p.id}" ${String(p.id) === String(item.product_id) ? "selected" : ""}>${escapeHtml(p.name)}</option>`).join("")}
     </select>
     <input class="line-desc-input" maxlength="2000" type="text" placeholder="Description" value="${escapeHtml(item.description || "")}" />
     <input class="line-qty-input" aria-label="Quantity" type="number" min="0.01" step="0.01" value="${item.quantity ?? 1}" />
@@ -2410,7 +2421,7 @@ function buildLineItemRow(item, index) {
   const discountInput = row.querySelector(".line-discount-input");
 
   productSelect.addEventListener("change", () => {
-    const product = products.find((p) => String(p.id) === productSelect.value);
+    const product = KlyoPriceLists.productsForQuote(products).find((p) => String(p.id) === productSelect.value);
     currentQuoteLineItems[index].product_id = productSelect.value || null;
     if (product) {
       currentQuoteLineItems[index].description = product.name;
@@ -2582,6 +2593,7 @@ function renderQuotesTable(quotes) {
 async function openQuotePanel(id) {
   const { quote, lineItems } = await API.get(`/quotes/${id}`);
   els.quotePanelTitle.textContent = quote.title;
+  KlyoFiles.recordButton("quote",quote.id,"quotePanelOverlay",quote.title);
   els.quotePanelFor.textContent = quote.company_name ? `${quote.contact_name} · ${quote.company_name}` : quote.contact_name;
   els.quotePanelBadge.innerHTML = `<span class="quote-status-badge ${quote.status}">${t("ui.status_" + quote.status) || quote.status}</span>`;
   els.quotePanelItems.innerHTML = lineItems
@@ -3433,6 +3445,7 @@ async function openDealPanel(dealId) {
     const res = await API.get(`/deals/${dealId}`);
     const d = res.deal;
     currentDealPanelId = d.id;
+    KlyoFiles.recordButton("deal",d.id,"dealPanelOverlay",d.title);
 
     els.dealPanelTitle.textContent = d.title;
     const sub = [d.contact_name, d.company_name].filter(Boolean).join(" · ") || "—";

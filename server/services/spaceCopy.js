@@ -7,6 +7,7 @@ const modes = ["everything", "products", "contacts", "companies"];
 const tables = {
   company: "companies",
   product: "products",
+  price_list: "price_lists",
   contact: "contacts",
   pipeline: "sales_pipelines",
   stage: "pipeline_stages",
@@ -268,7 +269,49 @@ async function copy(pool, user, body) {
       for (const r of pick("product"))
         await clone("product", r, {
           custom_fields: fields("product", r.custom_fields),
+          sku:
+            r.sku &&
+            (
+              await c.query(
+                "SELECT id FROM products WHERE workspace_id=$1 AND lower(sku)=lower($2)",
+                [tid, r.sku],
+              )
+            ).rows.length
+              ? ""
+              : r.sku,
         });
+    if (mode === "everything" || mode === "products")
+      for (const r of rows.price_list) {
+        const items = (
+          await c.query(
+            "SELECT * FROM price_list_items WHERE price_list_id=$1",
+            [r.id],
+          )
+        ).rows.filter((item) => maps.product.has(item.product_id));
+        if (mode === "products" && !items.length) continue;
+        let name = r.name;
+        for (
+          let i = 1;
+          (
+            await c.query(
+              "SELECT id FROM price_lists WHERE workspace_id=$1 AND lower(name)=lower($2)",
+              [tid, name],
+            )
+          ).rows.length;
+          i++
+        )
+          name = r.name.slice(0, 80) + " · Team " + i;
+        const listId = await clone("price_list", r, {
+          name,
+          created_by: user.id,
+        });
+        if (fresh.price_list.has(r.id))
+          for (const item of items)
+            await c.query(
+              "INSERT INTO price_list_items(price_list_id,product_id,unit_price) VALUES($1,$2,$3)",
+              [listId, maps.product.get(item.product_id), item.unit_price],
+            );
+      }
     // Preflight limits before inserting any clients. Everything rolls back on failure.
     if (selectedContacts.size) {
       const root = (
@@ -341,6 +384,7 @@ async function copy(pool, user, body) {
           contact_id: maps.contact.get(r.contact_id),
           company_id: maps.company.get(r.company_id) || null,
           created_by: user.id,
+          price_list_id: maps.price_list.get(r.price_list_id) || null,
           status: "draft",
           public_token: crypto.randomBytes(18).toString("hex"),
           sent_at: null,
