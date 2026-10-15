@@ -544,9 +544,11 @@ const KlyoWorkspace = (() => {
           .join("") ||
         `<tr><td colspan="4">${l("No administrative activity yet.", "Brak zarejestrowanych działań.")}</td></tr>`;
       g("teamSeatSummary").textContent =
-        `${seats.used} ${l("people", "osób")} · ${l("included", "w planie")}: ${seats.included ?? "∞"} · ${l("additional", "dodatkowe")}: ${seats.extra} · ${seats.total_monthly} USD / ${l("month", "miesiąc")}`;
-      g("extraSeatCount").value = seats.extra;
-      g("seatManager").hidden = seats.unlimited;
+        `${seats.used} ${l("users", "użytkowników")} · ${l("plan limit", "limit planu")}: ${seats.unlimited ? "∞" : seats.included}`;
+      labels();
+      g("teamUserLimitNotice").hidden = !seats.limit_reached;
+      g("copyInviteBtn").disabled = !!seats.limit_reached;
+      g("upgradeTeamPlanBtn").onclick = openPricingModal;
     } catch (e) {
       g("teamAdminError").textContent = e.message;
     }
@@ -589,7 +591,7 @@ const KlyoWorkspace = (() => {
     );
     g("teamView").insertAdjacentHTML(
       "beforeend",
-      `<section id="teamAuditSection" hidden><div class="section-title">${l("Team owner · administration", "Właściciel zespołu · administracja")}</div><div id="teamSeatSummary"></div><div id="seatManager" class="seat-manager" hidden>${field(l("Additional seats · 5 USD each / month", "Dodatkowe miejsca · 5 USD za osobę / mies."), "extraSeatCount", "number", 'min="0" max="1000" step="1"')}<button type="button" class="btn btn-primary btn-sm" id="buySeatsBtn">${l("Review seat change", "Sprawdź zmianę miejsc")}</button><p id="seatChangePrice" class="muted"></p></div><div id="teamAdminError" class="form-error"></div><div class="section-title">${l("Administrative activity", "Logi administracyjne")}</div><div class="table-card"><table><thead><tr><th>${l("When", "Kiedy")}</th><th>${l("Who", "Kto")}</th><th>${l("Action", "Działanie")}</th><th>${l("Resource", "Zasób")}</th></tr></thead><tbody id="teamAuditRows"></tbody></table></div><div class="team-transfer"><button type="button" class="btn btn-ghost btn-sm" id="transferTeamBtn">${l("Transfer team ownership", "Przekaż własność zespołu")}</button></div></section>`,
+      `<section id="teamAuditSection" hidden><div class="section-title">${l("Team owner · administration", "Właściciel zespołu · administracja")}</div><div id="teamSeatSummary"></div><div id="teamAdminError" class="form-error"></div><div class="section-title">${l("Administrative activity", "Logi administracyjne")}</div><div class="table-card"><table><thead><tr><th>${l("When", "Kiedy")}</th><th>${l("Who", "Kto")}</th><th>${l("Action", "Działanie")}</th><th>${l("Resource", "Zasób")}</th></tr></thead><tbody id="teamAuditRows"></tbody></table></div><div class="team-transfer"><button type="button" class="btn btn-ghost btn-sm" id="transferTeamBtn">${l("Transfer team ownership", "Przekaż własność zespołu")}</button></div></section>`,
     );
     document.body.insertAdjacentHTML(
       "beforeend",
@@ -648,7 +650,6 @@ const KlyoWorkspace = (() => {
   async function init() {
     mount();
     document.body.dataset.space = API.scope();
-    g("checkoutExtraSeats").addEventListener("input", renderPricingGrid);
     document
       .querySelectorAll("[data-switch-space]")
       .forEach((b) => (b.onclick = () => switchSpace(b.dataset.switchSpace)));
@@ -792,38 +793,6 @@ const KlyoWorkspace = (() => {
         g("reviewError").textContent = e.message;
       } finally {
         g("reviewSave").disabled = false;
-      }
-    };
-    g("buySeatsBtn").onclick = async () => {
-      const extra = Number(g("extraSeatCount").value);
-      if (!Number.isInteger(extra) || extra < 0 || extra > 1000) return;
-      const info = await API.get("/billing/seats");
-      const total = info.base_price + extra * info.unit_price;
-      g("seatChangePrice").textContent =
-        `${l("New recurring total", "Nowa cena cykliczna")}: ${total} USD / ${l("month", "miesiąc")}. ${l("A prorated amount may be due now.", "Może zostać naliczona proporcjonalna dopłata za bieżący okres.")}`;
-      if (
-        !confirm(
-          l(
-            `Confirm ${extra} extra seats at $5 each/month. New total: $${total}/month. Stripe may collect a prorated payment now.`,
-            `Potwierdź ${extra} dodatkowych miejsc po 5 USD/mies. Nowa cena: ${total} USD/mies. Stripe może teraz pobrać proporcjonalną dopłatę.`,
-          ),
-        )
-      )
-        return;
-      g("buySeatsBtn").disabled = true;
-      try {
-        const r = await API.post("/billing/seats", { extra_seats: extra });
-        if (r.url) window.location.href = r.url;
-        else if (r.pending)
-          g("teamAdminError").textContent = l(
-            "Payment is pending. Complete it in Stripe before inviting additional people.",
-            "Płatność oczekuje. Zakończ ją w Stripe przed zaproszeniem dodatkowych osób.",
-          );
-        else await teamAdmin();
-      } catch (e) {
-        g("teamAdminError").textContent = e.message;
-      } finally {
-        g("buySeatsBtn").disabled = false;
       }
     };
     g("transferTeamBtn").onclick = () => {

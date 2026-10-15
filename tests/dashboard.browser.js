@@ -43,7 +43,7 @@ async function run(engine, name) {
     const pipelines=[{id:1,name:'Sales',description:'All existing sales opportunities',is_default:true}];
     const companyRecords=[];let nextCompanyId=1;
     deals.forEach(d=>d.pipeline_id=1);stages.forEach(s=>s.pipeline_id=1);
-    let failPricing=false;
+    let failPricing=false,seatLimitReached=false;const planRequests=[];
     const product = { id: 1, name: 'Website', unit_price: '4500.00', currency, unit_label: 'project' };
     const quote = { id: 1, title: 'Draft quote', total: '4500.00', currency, status: 'draft', contact_id: 1, contact_name: contact.full_name };
     let quoteDefaults={},quoteSentCount=0,lastQuoteSend=null;
@@ -67,7 +67,7 @@ async function run(engine, name) {
         else if(endpoint === '/warranty/notifications')data={items:[],count:0,today:'2026-10-15'};
         else if(endpoint === '/warranty')data={items:[],today:'2026-10-15'};
         else if(endpoint === '/spaces/audit')data={entries:[]};
-        else if(endpoint === '/billing/seats')data={used:1,included:1,extra:0,unit_price:5,unlimited:true,total_monthly:0};
+        else if(endpoint === '/billing/seats')data={used:1,included:1,limit_reached:seatLimitReached,unlimited:!seatLimitReached,total_monthly:9};
         else if(endpoint === '/auth/preferences' && route.request().method()==='PUT'){if(failPreferences){status=500;data={error:'Fixture save failed'};}else{preferences=route.request().postDataJSON();theme=preferences.palette.preset;data={preferences};}}
         else if (endpoint === '/sales/views' && route.request().method() === 'GET') data = { views: savedViews };
         else if (endpoint === '/sales/views' && route.request().method() === 'POST') { const view = { id: savedViews.length + 1, ...route.request().postDataJSON() }; savedViews.push(view); data = { view }; }
@@ -82,14 +82,15 @@ async function run(engine, name) {
         else if (endpoint === '/tasks/1/status') { Object.assign(deal, { next_task_id: null, next_task_title: null, next_task_due: null, overdue_tasks: 0 }); data = { ok: true }; }
         else if (endpoint === '/deals/1' && route.request().method() === 'PUT') { Object.assign(deal, route.request().postDataJSON()); dealEvents.push({ id: 1, from_stage: 'Contacted', to_stage: 'Contacted', from_status: 'open', to_status: deal.status, reason: deal.lost_reason, created_at: new Date().toISOString(), user_name: 'Demo' }); data = { deal }; }
         else if (endpoint === '/auth/team') data = { team: [user] };
-        else if (endpoint === '/auth/workspace' || endpoint === '/auth/workspace/settings') data = { workspace: { id: 1, name: 'Demo', default_currency: currency } };
+        else if (endpoint === '/auth/workspace' || endpoint === '/auth/workspace/settings') data = { workspace: { id: 1, name: 'Demo', invite_code:'DEMO-CODE', default_currency: currency } };
         else if (endpoint === '/auth/workspace/currency') {
           currency = route.request().postDataJSON().currency;
           deals.forEach(item => { item.currency = currency; });
           product.currency = quote.currency = currency;
           data = { currency };
-        } else if (endpoint === '/billing/tiers') {if(failPricing){status=503;data={error:'Unavailable'};}else{const {TIERS,TIER_ORDER}=require('../server/config/tiers');data={tiers:TIER_ORDER.map(key=>({key,...TIERS[key]})),extraSeatPrice:5,currency:'USD'};}}
-        else if (endpoint === '/billing/status') data = { is_comped: true };
+        } else if (endpoint === '/billing/tiers') {if(failPricing){status=503;data={error:'Unavailable'};}else{const {TIERS,TIER_ORDER}=require('../server/config/tiers');data={tiers:TIER_ORDER.map(key=>({key,...TIERS[key]})),currency:'USD'};}}
+        else if (endpoint === '/billing/status') data = seatLimitReached ? {plan:'active',tier:'personal',billing_mode:'subscription',has_subscription:true,is_comped:false} : {is_comped:true};
+        else if (endpoint === '/billing/plan' && route.request().method()==='POST') {planRequests.push(route.request().postDataJSON());seatLimitReached=false;data={pending:false,url:null};}
         else if (endpoint === '/contacts/themes') data = { themes: [] };
         else if (endpoint === '/contacts/tags') data = { tags: ['sold'] };
         else if (endpoint === '/contacts') {
@@ -152,6 +153,27 @@ async function run(engine, name) {
     await page.waitForFunction(() => document.querySelectorAll('#contactsBody tr').length === 1);
     assert.equal(await page.locator('#statTotal').textContent(), '1');
     assert.deepEqual(errors, [], `${name}: boot must not throw`);
+    // Full plans offer an upgrade instead of buying individual users.
+    seatLimitReached=true;
+    await page.locator('.nav-item[data-view=team]').click();
+    await page.locator('#teamUserLimitNotice:not([hidden])').waitFor();
+    assert.match(await page.locator('#teamUserLimitNotice').innerText(),/maximum number of users/);
+    assert.equal(await page.locator('#copyInviteBtn').isDisabled(),true);
+    assert.equal(await page.locator('#buySeatsBtn,#extraSeatCount,#checkoutExtraSeats').count(),0);
+    await page.evaluate(async()=>{KlyoI18n.setLang('pl',true);await KlyoWorkspace.teamAdmin();});
+    assert.match(await page.locator('#teamUserLimitNotice').innerText(),/osiągnięto maksymalną liczbę użytkowników/);
+    if(screenshotDir)await page.screenshot({path:path.join(screenshotDir,`${name}-plan-user-limit.png`),animations:'disabled'});
+    await page.locator('#upgradeTeamPlanBtn').click();
+    await page.locator('#pricingGrid .tier-card').first().waitFor();
+    assert.deepEqual(await page.locator('#pricingGrid .tier-price').allTextContents(),['$9 / month','$29 / month','$79 / month','$199 / month']);
+    assert.match(await page.locator('#pricingGrid .tier-card').nth(1).innerText(),/Up to 5 team members/);
+    await page.locator('#pricingGrid [data-tier=plus]').click();
+    await page.locator('#pricingModalOverlay.hidden').waitFor({state:'attached'});
+    await page.waitForFunction(()=>document.querySelector('#teamUserLimitNotice').hidden);
+    assert.deepEqual(planRequests,[{tier:'plus',billing_mode:'subscription'}]);
+    assert.equal(await page.locator('#copyInviteBtn').isDisabled(),false);
+    await page.evaluate(()=>KlyoI18n.setLang('en',true));
+    await page.locator('.nav-item[data-view=pipeline]').click();
     contactQueries.length=0;
     await page.evaluate(async()=>{filters.search='slow';const slow=loadContacts();filters.search='latest';const fast=loadContacts();await Promise.all([slow,fast]);});
     assert.match(await page.locator('#contactsBody').textContent(),/Latest result/);
@@ -547,6 +569,8 @@ async function run(engine, name) {
     await page.locator('h1').waitFor();
     await page.locator('.price-card').first().waitFor();assert.equal(await page.locator('.price-card').count(),4);
     assert.deepEqual(await page.locator('.price-amount strong').allTextContents(),['$9','$29','$79','$199']);
+    assert.equal(await page.locator('#extraSeatLandingPrice').count(),0);
+    assert.match(await page.locator('.pricing-footnote').innerText(),/Upgrade your plan as your team grows/);
     // Fetch through the page so the local fixture route serves the actual PDF asset.
     const pdfHeader=await page.evaluate(async()=>{const r=await fetch('/examples/klyo-proposal.pdf');return(await r.text()).slice(0,5);});assert.equal(pdfHeader,'%PDF-');
     assert.equal(await page.locator('#proposals a[download]').getAttribute('href'),'/examples/klyo-proposal.pdf');

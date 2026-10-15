@@ -2,12 +2,12 @@ const db = require("../db"),
   { getTier } = require("../config/tiers"),
   { invalid } = require("./dealWorkspace"),
   { isCurrentlyComped } = require("./limits");
-const EXTRA_SEAT_USD = 5;
-function quantity(value) {
-  const n = Number(value ?? 0);
-  if (!Number.isInteger(n) || n < 0 || n > 1000)
-    throw invalid("Choose 0–1000 additional seats.");
-  return n;
+// Retired add-on input is rejected even when sent by an older browser.
+function assertPlanOnly(value) {
+  if (value != null && Number(value) !== 0)
+    throw invalid(
+      "Additional user purchases are no longer available. Upgrade to a higher plan to add more users.",
+    );
 }
 async function summary(wid, client = db) {
   const w = (await client.query("SELECT * FROM workspaces WHERE id=$1", [wid]))
@@ -24,28 +24,21 @@ async function summary(wid, client = db) {
     workspace: w,
     used,
     included: tier.maxSeats,
-    extra: quantity(w.extra_seats),
-    unit_price: EXTRA_SEAT_USD,
     currency: "USD",
     base_price: tier.price,
-    total_monthly: isCurrentlyComped(w)
-      ? 0
-      : tier.price + quantity(w.extra_seats) * EXTRA_SEAT_USD,
+    total_monthly: isCurrentlyComped(w) ? 0 : tier.price,
+    limit_reached:
+      tier.maxSeats != null &&
+      !isCurrentlyComped(w) &&
+      w.plan === "active" &&
+      Number(used) >= tier.maxSeats,
     unlimited:
       tier.maxSeats == null || isCurrentlyComped(w) || w.plan === "trial",
   };
 }
-function subscriptionSeats(sub) {
-  if (sub.pending_update || !["active", "trialing"].includes(sub.status))
-    return null;
-  const item = sub.items?.data?.find(
-    (i) => i.price?.metadata?.klyo_extra_seat === "1",
-  );
-  return quantity(item?.quantity || 0);
-}
 async function applySubscription(sub, client = db) {
-  const extra = subscriptionSeats(sub);
-  if (extra === null) return;
+  if (sub.pending_update || !["active", "trialing"].includes(sub.status))
+    return;
   const tier = Object.keys(require("../config/tiers").TIERS).find((key) =>
     sub.items?.data?.some(
       (i) => i.price.id === process.env["STRIPE_PRICE_ID_" + key.toUpperCase()],
@@ -57,14 +50,8 @@ async function applySubscription(sub, client = db) {
       [tier, sub.id],
     );
   await client.query(
-    "UPDATE workspaces SET extra_seats=$1 WHERE stripe_subscription_id=$2",
-    [extra, sub.id],
+    "UPDATE workspaces SET extra_seats=0 WHERE stripe_subscription_id=$1",
+    [sub.id],
   );
 }
-module.exports = {
-  EXTRA_SEAT_USD,
-  quantity,
-  summary,
-  subscriptionSeats,
-  applySubscription,
-};
+module.exports = { assertPlanOnly, summary, applySubscription };
