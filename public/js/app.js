@@ -146,7 +146,7 @@ const els = {
   taskPrioritySelect: $("taskPrioritySelect"), taskDueDate: $("taskDueDate"),
   taskStatusSelect: $("taskStatusSelect"), taskContactSelect: $("taskContactSelect"),
   taskDealSelect: $("taskDealSelect"), taskFormError: $("taskFormError"),
-  taskSubmitBtn: $("taskSubmitBtn"), cancelTaskBtn: $("cancelTaskBtn"), taskModalTitle: $("taskModalTitle"),
+  taskSubmitBtn: $("taskSubmitBtn"), deleteTaskBtn: $("deleteTaskBtn"), cancelTaskBtn: $("cancelTaskBtn"), taskModalTitle: $("taskModalTitle"),
 
   // Deals
   dealsView: $("dealsView"), dealsBoard: $("dealsBoard"), dealsEmptyState: $("dealsEmptyState"),
@@ -3642,6 +3642,7 @@ async function handleAddStage() {
    ============================================================ */
 
 let tasksCache = [];
+const deletingTaskIds = new Set();
 
 async function loadTasks() {
   const assignee = els.taskAssigneeFilter.value;
@@ -3689,13 +3690,24 @@ function renderTasksTable() {
       <td class="muted" style="font-size:12px;">${escHtml(linked)}</td>
       <td>${dueLbl}</td>
       <td><span class="priority-badge priority-${t.priority}">${window.t("tasks.priority_" + t.priority) || t.priority}</span></td>
-      <td>
+      <td style="white-space:nowrap;">
         <button class="btn btn-ghost btn-sm task-edit-btn" data-id="${t.id}" title="Edit">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
+        ${API.getUser()?.role !== "viewer" ? `<button type="button" class="btn btn-ghost btn-sm btn-danger-outline task-delete-btn" data-id="${t.id}" title="${escHtml(window.t("tasks.delete_task"))}" aria-label="${escHtml(window.t("tasks.delete_task"))}: ${escHtml(t.title)}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg>
+          ${escHtml(window.t("common.delete"))}
+        </button>` : ""}
       </td>
     </tr>`;
   }).join("");
+
+  els.tasksBody.querySelectorAll(".task-delete-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const task = tasksCache.find(item => String(item.id) === btn.dataset.id);
+      if (task) handleTaskDelete(task, btn);
+    });
+  });
 
   // Checkbox toggles
   els.tasksBody.querySelectorAll(".task-checkbox").forEach(cb => {
@@ -3727,6 +3739,8 @@ function openTaskModal(task) {
   els.taskPrioritySelect.value = task?.priority || "medium";
   els.taskStatusSelect.value  = task?.status || "todo";
   els.taskFormError.textContent = "";
+  els.deleteTaskBtn.classList.toggle("hidden", !task || API.getUser()?.role === "viewer");
+  els.deleteTaskBtn.disabled = deletingTaskIds.has(String(task?.id));
 
   // Assignees from team
   els.taskAssignedSelect.innerHTML = `<option value="">${t("common.unassigned")}</option>`;
@@ -3761,6 +3775,31 @@ function openTaskModal(task) {
 
 function closeTaskModal() {
   els.taskModalOverlay.classList.add("hidden");
+}
+
+async function handleTaskDelete(task, button) {
+  const id = String(task.id);
+  if (API.getUser()?.role === "viewer" || deletingTaskIds.has(id)) return;
+  if (!confirm(`${t("tasks.delete_confirm")}\n${task.title}`)) return;
+  deletingTaskIds.add(id);
+  button.disabled = true;
+  try {
+    await API.del(`/tasks/${id}`);
+  } catch (err) {
+    if (!els.taskModalOverlay.classList.contains("hidden") && els.taskId.value === id)
+      els.taskFormError.textContent = err.message;
+    else toast(err.message, "error");
+    return;
+  } finally {
+    deletingTaskIds.delete(id);
+    button.disabled = false;
+  }
+  tasksCache = tasksCache.filter(item => String(item.id) !== id);
+  if (els.taskId.value === id) closeTaskModal();
+  renderTasksTable();
+  toast(t("tasks.deleted"));
+  // Refresh both the filtered task list and deal next-step badges.
+  await Promise.allSettled([loadTasks(), loadDeals()]);
 }
 
 async function handleTaskSubmit(e) {
@@ -3799,6 +3838,10 @@ async function handleTaskSubmit(e) {
   els.cancelTaskBtn.addEventListener("click", closeTaskModal);
   els.taskModalOverlay.addEventListener("click", e => { if (e.target === els.taskModalOverlay) closeTaskModal(); });
   els.taskForm.addEventListener("submit", handleTaskSubmit);
+  els.deleteTaskBtn.addEventListener("click", () => {
+    const task = tasksCache.find(item => String(item.id) === els.taskId.value);
+    if (task) handleTaskDelete(task, els.deleteTaskBtn);
+  });
 
   els.taskAssigneeFilter.addEventListener("change", loadTasks);
   els.taskStatusFilter.addEventListener("change", loadTasks);
