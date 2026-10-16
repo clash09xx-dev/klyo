@@ -63,6 +63,7 @@ async function save(user, id, input) {
   const values = {
     name: text(b.name, 300, "product name", true),
     sku: text(b.sku||"",100,"SKU"),
+    serial_required: b.serial_required === true,
     description: text(b.description || "", 10000, "description"),
     unit_price: price,
     unit_label: text(b.unit_label || "unit", 100, "unit"),

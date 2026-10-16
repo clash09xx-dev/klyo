@@ -51,6 +51,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/offers", offerRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/analytics",require("./routes/analytics"));
+for(const name of ["commercial","operations","communications"])app.use("/api/"+name,require("./routes/"+name));
 app.use("/api/sales", require("./routes/sales"));
 app.use("/api/billing", billingRoutes);
 app.use("/api/integrations", integrationsRoutes);
@@ -84,6 +86,7 @@ app.use(express.static(publicDir));
 app.get("/",        (req, res) => res.sendFile(path.join(publicDir, "index.html")));
 app.get("/terms",   (req, res) => res.sendFile(path.join(publicDir, "terms.html")));
 app.get("/privacy", (req, res) => res.sendFile(path.join(publicDir, "privacy.html")));
+app.get("/docs/communications-setup",(req,res)=>res.sendFile(path.join(publicDir,"docs/communications-setup.html")));
 app.get("/docs/sharepoint-setup",(req,res)=>res.sendFile(path.join(publicDir,"docs/sharepoint-setup.html")));
 app.get("/customization",(req,res)=>res.sendFile(path.join(publicDir,"customization.html")));
 app.get("/login",   (req, res) => res.sendFile(path.join(publicDir, "login.html")));
@@ -102,6 +105,7 @@ const PORT = process.env.PORT || 4000;
 
 db.init()
   .then(() => {
+    require("./services/communications").start();
     app.listen(PORT, () => {
       console.log(`\n  Klyo is running → http://localhost:${PORT}\n`);
     });

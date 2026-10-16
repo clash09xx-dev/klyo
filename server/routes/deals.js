@@ -178,7 +178,7 @@ router.delete(
     res.json({ ok: true });
   }),
 );
-const dealSelect = `SELECT d.*, c.full_name AS contact_name, co.name AS company_name, p.name AS product_name,
+const dealSelect = `SELECT d.*, CASE WHEN d.status='won' THEN 100 WHEN d.status='lost' THEN 0 ELSE d.probability END AS effective_probability, ROUND(COALESCE(d.value,0)*(CASE WHEN d.status='won' THEN 100 WHEN d.status='lost' THEN 0 ELSE d.probability END)/100,2) AS weighted_value, c.full_name AS contact_name, co.name AS company_name, p.name AS product_name,
   ps.name AS stage_name, ps.color AS stage_color, sp.name AS pipeline_name, u.name AS assigned_name,
   next_step.id AS next_task_id, next_step.title AS next_task_title, next_step.due_date::text AS next_task_due,
   (SELECT COUNT(*)::int FROM tasks t WHERE t.deal_id=d.id AND t.workspace_id=d.workspace_id AND t.status!='done' AND t.due_date<CURRENT_DATE) AS overdue_tasks
@@ -193,7 +193,7 @@ const dealSelect = `SELECT d.*, c.full_name AS contact_name, co.name AS company_
 router.get(
   "/",
   action(async (req, res) => {
-    let sql = dealSelect + " WHERE d.workspace_id=$1";
+    let sql = dealSelect + " WHERE d.workspace_id=$1 AND d.deleted_at IS "+(req.query.status==="deleted"?"NOT NULL":"NULL");
     const params = [req.user.workspace_id];
     for (const field of [
       "pipeline_id",
@@ -207,9 +207,9 @@ router.get(
       }
     }
     if (req.query.status) {
-      if (!["open", "won", "lost", "all"].includes(req.query.status))
+      if (!["open", "won", "lost", "all", "deleted"].includes(req.query.status))
         throw invalid("Invalid status.");
-      if (req.query.status !== "all") {
+      if (!["all","deleted"].includes(req.query.status)) {
         params.push(req.query.status);
         sql += ` AND d.status=$${params.length}`;
       }
@@ -237,7 +237,7 @@ router.get(
   "/:id/history",
   action(async (req, res) => {
     const deal = await db.query(
-      "SELECT id FROM deals WHERE id=$1 AND workspace_id=$2",
+      "SELECT id FROM deals WHERE id=$1 AND workspace_id=$2 AND deleted_at IS NULL",
       [optionalId(req.params.id), req.user.workspace_id],
     );
     if (!deal.rows.length) throw invalid("Deal not found.", 404);
@@ -257,7 +257,7 @@ router.post(
   requireEditor,
   action(async (req, res) => {
     const deal = (
-      await db.query("SELECT * FROM deals WHERE id=$1 AND workspace_id=$2", [
+      await db.query("SELECT * FROM deals WHERE id=$1 AND workspace_id=$2 AND deleted_at IS NULL", [
         optionalId(req.params.id),
         req.user.workspace_id,
       ])
@@ -288,7 +288,7 @@ router.get(
   "/:id",
   action(async (req, res) => {
     const deal = (
-      await db.query(dealSelect + " WHERE d.id=$1 AND d.workspace_id=$2", [
+      await db.query(dealSelect + " WHERE d.id=$1 AND d.workspace_id=$2 AND d.deleted_at IS NULL", [
         optionalId(req.params.id),
         req.user.workspace_id,
       ])
@@ -322,11 +322,12 @@ router.delete(
   requireEditor,
   action(async (req, res) => {
     const result = await db.query(
-      "DELETE FROM deals WHERE id=$1 AND workspace_id=$2 RETURNING id",
+      "UPDATE deals SET deleted_at=now(),updated_at=now() WHERE id=$1 AND workspace_id=$2 AND deleted_at IS NULL RETURNING id",
       [optionalId(req.params.id), req.user.workspace_id],
     );
     if (!result.rows.length) throw invalid("Deal not found.", 404);
     res.json({ ok: true });
   }),
 );
+router.post('/:id/restore',requireEditor,action(async(req,res)=>{const result=await db.query('UPDATE deals SET deleted_at=NULL,updated_at=now() WHERE id=$1 AND workspace_id=$2 AND deleted_at IS NOT NULL RETURNING *',[optionalId(req.params.id),req.user.workspace_id]);if(!result.rows.length)throw invalid('Deleted deal not found.',404);res.json({deal:result.rows[0]});}));
 module.exports = router;

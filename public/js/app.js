@@ -324,12 +324,19 @@ function showLimitOrError(err, fallbackEl) {
 
   KlyoFiles.init();
   KlyoPriceLists.init();
+  KlyoAnalytics.init();
+  KlyoDealViews.init();
+  KlyoCommercial.init();
+  KlyoOperations.init();
+  KlyoCommunications.init();
+  KlyoCloudFiles.init();
   wireEvents();
   KlyoSales.init();
   KlyoPipelines.init();
   KlyoCustomize.init();
   KlyoQuoteStudio.init();
   await KlyoWorkspace.init();
+  KlyoNotifications.init();
 
   // A failed auxiliary request must never prevent the pipeline from loading.
   const bootResults = await Promise.allSettled([
@@ -873,6 +880,7 @@ async function openProductModal(product) {
   els.productSubmitBtn.textContent  = product ? "Save changes" : "Add product";
   els.productName.value       = product?.name || "";
   document.getElementById("productSku").value=product?.sku||"";
+  document.getElementById("productSerialRequired").checked=!!product?.serial_required;
   els.productDesc.value       = product?.description || "";
   els.productPrice.value      = product?.unit_price ?? 0;
   els.productCurrency.value   = product?.currency || workspaceDefaultCurrency || "USD";
@@ -900,6 +908,7 @@ async function handleProductSubmit(e) {
     custom_fields:KlyoWorkspace.collectFields("product"),
     name:                    els.productName.value.trim(),
     sku: document.getElementById("productSku").value.trim(),
+    serial_required:document.getElementById("productSerialRequired").checked,
     description:             els.productDesc.value.trim() || null,
     unit_price:              parseFloat(els.productPrice.value) || 0,
     currency:                els.productCurrency.value || "USD",
@@ -1629,6 +1638,12 @@ function populateOwnerOptions(selectEl, { placeholder, selected }) {
 /* ---------- view switching ---------- */
 function getViewCopy(view) {
   const map = {
+    commercial:{title:KlyoI18n.getLang()==="pl"?"Rejestr handlowy":"Commercial register",sub:""},
+    projects:{title:KlyoI18n.getLang()==="pl"?"Projekty":"Projects",sub:""},
+    orders:{title:KlyoI18n.getLang()==="pl"?"Zamówienia":"Orders",sub:""},
+    equipment:{title:KlyoI18n.getLang()==="pl"?"Wyposażenie":"Equipment",sub:""},
+    inbox:{title:KlyoI18n.getLang()==="pl"?"Skrzynka":"Inbox",sub:""},
+    rfq:{title:KlyoI18n.getLang()==="pl"?"Zapytania ofertowe":"RFQ register",sub:""},
     files: { title: t("nav.files"), sub: "" },
     overview: { title: KlyoI18n.getLang() === "pl" ? "Wyniki" : "Overview", sub: "" },
     pipeline:  { title: t("nav.pipeline"),  sub: t("view_sub.pipeline") },
@@ -1670,6 +1685,12 @@ function switchView(view) {
 
   currentView = view;
   KlyoSales.onView(view);
+  KlyoAnalytics.onView(view);
+  if(view==='commercial')KlyoCommercial.onView();
+  KlyoOperations.onView(view).catch(e=>toast(e.message,"error"));
+  KlyoCommunications.onView(view).catch(e=>toast(e.message,"error"));
+  KlyoCloudFiles.onView(view).catch(e=>toast(e.message,"error"));
+  for(const key of ["commercial","projects","orders","equipment","inbox","rfq"])document.getElementById(key+"View")?.classList.toggle("hidden",view!==key);
   KlyoFiles.onView(view);
   KlyoWorkspace.onView(view);
   document.body.dataset.view = view;
@@ -1681,7 +1702,7 @@ function switchView(view) {
   if (view === "quotes") loadQuotes();
   if (view === "reminders") loadReminders();
   if (view === "team") loadPerformance();
-  if (view === "tasks") loadTasks();
+  // The operations module renders list, matrix and Kanban task views.
   if (view === "deals") loadDeals();
   if (view === "history") loadHistory(true);
   if (view === "platform") loadPlatformDashboard();
@@ -1785,7 +1806,7 @@ async function openContactModal(contact) {
   }
   els.contactSubmitBtn.disabled=true;
   els.contactModalOverlay.classList.remove("hidden");
-  try{await KlyoWorkspace.editFields("contact",contact);els.contactSubmitBtn.disabled=API.getUser()?.role==='viewer';}catch(e){els.contactFormError.textContent=e.message;}
+  try{await KlyoWorkspace.editFields("contact",contact);await KlyoCommercial.openRecordUnit("contact",contact||{});els.contactSubmitBtn.disabled=API.getUser()?.role==='viewer';}catch(e){els.contactFormError.textContent=e.message;}
 }
 function closeContactModal() { els.contactModalOverlay.classList.add("hidden"); }
 
@@ -1800,6 +1821,7 @@ async function handleContactSubmit(e) {
   const gv = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
   const payload = {
     custom_fields:KlyoWorkspace.collectFields("contact"),
+    company_unit_id:KlyoCommercial.collectUnit("contact"),
     first_name: firstName,
     last_name: lastName || null,
     full_name: [firstName, lastName].filter(Boolean).join(" "),
@@ -1851,6 +1873,7 @@ async function openPanel(id) {
   const { contact, activity, offers, quotes } = await API.get(`/contacts/${id}`);
   currentPanelContactId = contact.id;
   KlyoFiles.recordButton("contact",contact.id,"panelOverlay",contact.full_name);
+  attachMailHistory("contact",contact.id,"panelOverlay",contact.full_name);
   currentPanelContact = contact;
   KlyoWorkspace.showContactFields(contact);
 
@@ -2149,7 +2172,7 @@ async function openCompanyModal(company, parentId) {
   }
   document.getElementById('coParent').innerHTML='';els.companySubmitBtn.disabled=true;
   els.companyModalOverlay.classList.remove("hidden");
-  try{await KlyoPipelines.companyOptions(company,parentId);els.companySubmitBtn.disabled=API.getUser()?.role==='viewer';}
+  try{await KlyoPipelines.companyOptions(company,parentId);await KlyoWorkspace.editFields("company",company);els.companySubmitBtn.disabled=API.getUser()?.role==='viewer';}
   catch(e){els.companyFormError.textContent=e.message;}
 }
 function closeCompanyModal() { els.companyModalOverlay.classList.add("hidden"); }
@@ -2157,7 +2180,7 @@ function closeCompanyModal() { els.companyModalOverlay.classList.add("hidden"); 
 async function handleCompanySubmit(e) {
   e.preventDefault();
   els.companyFormError.textContent = "";
-  const payload = { parent_company_id: document.getElementById("coParent").value || null, name: els.coName.value.trim(), industry: els.coIndustry.value.trim(), notes: els.coNotes.value.trim() };
+  const payload = { custom_fields:KlyoWorkspace.collectFields("company"),parent_company_id: document.getElementById("coParent").value || null, name: els.coName.value.trim(), industry: els.coIndustry.value.trim(), notes: els.coNotes.value.trim() };
   if (!payload.name) { els.companyFormError.textContent = "Company name is required."; return; }
 
   const id = els.companyId.value;
@@ -2179,8 +2202,10 @@ async function handleCompanySubmit(e) {
 async function openCompanyPanel(id) {
   const { company, contacts: people, parent, children } = await API.get(`/companies/${id}`);
   KlyoPipelines.companyGroup(company,parent,children);
+  KlyoCommercial.attachCompanyButton(company.id);
   currentCompanyPanelId = company.id;
   KlyoFiles.recordButton("company",company.id,"companyPanelOverlay",company.name);
+  attachMailHistory("company",company.id,"companyPanelOverlay",company.name);
   els.companyPanelName.textContent = company.name;
   els.companyPanelIndustry.textContent = company.industry || "No industry set";
   if (company.notes) {
@@ -2421,6 +2446,7 @@ function buildLineItemRow(item, index) {
     currentQuoteLineItems[index].product_id = productSelect.value || null;
     if (product) {
       currentQuoteLineItems[index].description = product.name;
+      currentQuoteLineItems[index].sku=product.sku||"";
       currentQuoteLineItems[index].unit_price = Number(product.unit_price);
       descInput.value = product.name;
       priceInput.value = product.unit_price;
@@ -2681,6 +2707,7 @@ async function handleEditQuoteFromPanel() {
     if (box) box.checked = true;
   });
   currentQuoteLineItems = lineItems.map((i) => ({
+    bundle_id:i.bundle_id||"",bundle_name:i.bundle_name||"",sku:i.sku||"",
     product_id: i.product_id, description: i.description, quantity: i.quantity, unit_price: i.unit_price, discount_percent: i.discount_percent,
   }));
   await KlyoQuoteStudio.open(quote,allContactsCache.find(c=>c.id===quote.contact_id)||{});
@@ -3207,6 +3234,7 @@ function refreshDealStageFilter() {
 
 function renderDealsBoard() {
   const visibleDeals = KlyoSales.filterDeals(dealsCache);
+  KlyoDealViews.render(visibleDeals);
   els.dealsBoard.innerHTML = "";
 
   const stageVal  = els.dealStageFilter.value;
@@ -3342,12 +3370,14 @@ function escHtml(str) {
 // ---- deal modal ----
 
 async function openDealModal(deal) {
+  els.dealForm.reset();
   els.dealId.value = deal?.id || "";
   els.dealModalTitle.textContent = deal ? t("modal.edit_deal") : t("modal.add_deal");
   els.dealSubmitBtn.textContent  = deal ? t("modal.save_changes") : t("modal.add_deal");
   els.dealTitle.value      = deal?.title || "";
   els.dealQty.value        = deal?.quantity ?? 1;
   els.dealValue.value      = deal?.value || "";
+  KlyoAnalytics.openDeal(deal);
   els.dealCloseDate.value  = deal?.expected_close_date ? deal.expected_close_date.slice(0,10) : "";
   els.dealNotes.value      = deal?.notes || "";
   els.dealFormError.textContent = "";
@@ -3393,7 +3423,7 @@ async function openDealModal(deal) {
 
   els.dealModalOverlay.classList.remove("hidden");
   els.dealTitle.focus();
-  try{await stageLoad;}catch(e){els.dealFormError.textContent=e.message;}
+  try{await stageLoad;await KlyoCommercial.openRecordUnit("deal",deal||{});}catch(e){els.dealFormError.textContent=e.message;}
 }
 
 function closeDealModal() {
@@ -3405,6 +3435,8 @@ async function handleDealSubmit(e) {
   els.dealFormError.textContent = "";
   const id = els.dealId.value;
   const body = {
+    ...KlyoAnalytics.collect(),
+    company_unit_id:KlyoCommercial.collectUnit("deal"),
     pipeline_id:         document.getElementById("dealPipelineSelect").value,
     title:               els.dealTitle.value.trim(),
     contact_id:          els.dealContactSelect.value || null,
@@ -3413,7 +3445,7 @@ async function handleDealSubmit(e) {
     stage_id:            els.dealStageSelect.value || null,
     assigned_to:         els.dealAssignedSelect.value || null,
     value:               els.dealValue.value || null,
-    currency:            workspaceDefaultCurrency || "USD",
+    currency:            document.getElementById("dealCurrency").value || workspaceDefaultCurrency || "USD",
     quantity:            els.dealQty.value || 1,
     expected_close_date: els.dealCloseDate.value || null,
     notes:               els.dealNotes.value.trim() || null,
@@ -3442,6 +3474,7 @@ async function openDealPanel(dealId) {
     const d = res.deal;
     currentDealPanelId = d.id;
     KlyoFiles.recordButton("deal",d.id,"dealPanelOverlay",d.title);
+    attachMailHistory("deal",d.id,"dealPanelOverlay",d.title);
 
     els.dealPanelTitle.textContent = d.title;
     const sub = [d.contact_name, d.company_name].filter(Boolean).join(" · ") || "—";
@@ -3458,6 +3491,8 @@ async function openDealPanel(dealId) {
     const rows = [
       d.pipeline_name ? ["Pipeline", escHtml(d.pipeline_name)] : null,
       d.value        ? ["Value",    fmtMoney(d.value, d.currency)] : null,
+      ["Probability",Number(d.effective_probability??d.probability??0)+"%"],
+      ["Weighted value",fmtMoney(d.weighted_value??Number(d.value||0)*Number(d.probability||0)/100,d.currency)],
       d.assigned_name ? ["Owner",   escHtml(d.assigned_name)] : null,
       d.expected_close_date ? ["Close",  new Date(d.expected_close_date).toLocaleDateString()] : null,
       d.product_name  ? ["Product", escHtml(d.product_name)] : null,
@@ -3468,6 +3503,8 @@ async function openDealPanel(dealId) {
     els.dealPanelDetails.innerHTML = rows.map(([k,v]) =>
       `<div class="detail-row"><span class="detail-label">${k}</span><span class="detail-value">${v}</span></div>`
     ).join("");
+    KlyoOperations.dealActions(d,els.dealPanelDetails);
+
 
     if (d.notes) {
       els.dealPanelNotesWrap.classList.remove("hidden");
@@ -3971,3 +4008,5 @@ function initDataReset() {
     }
   });
 }
+
+function attachMailHistory(kind,id,overlay,name){const host=document.getElementById(overlay)?.querySelector('.panel-head');if(!host)return;host.querySelector('[data-mail-history]')?.remove();const button=document.createElement('button');button.type='button';button.className='btn btn-ghost btn-sm';button.dataset.mailHistory='';button.textContent=KlyoI18n.getLang()==='pl'?'Korespondencja':'Correspondence';button.onclick=()=>KlyoCommunications.history(kind,id,name).catch(e=>toast(e.message,'error'));host.append(button);}

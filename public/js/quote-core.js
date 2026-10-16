@@ -45,6 +45,7 @@
     };
     const result = {
       version: 1,
+      pricing_mode: value.pricing_mode || "itemized",
       canvas: value.canvas ? (typeof module === "object" && module.exports ? require("./quote-canvas-core") : globalThis.KlyoCanvasCore).normalize(value.canvas) : null,
       sections: value.sections || ["scope","items","payment","delivery","terms"],
       headings: Object.fromEntries(Object.entries(value.headings||{}).filter(([k])=>["scope","items","payment","delivery","terms"].includes(k)).map(([k,v])=>[k,text(v,80)])),
@@ -64,6 +65,7 @@
       footer: text(value.footer, 300),
       logo_data_url: text(value.logo_data_url, 400000),
     };
+    if (!["itemized","total_only"].includes(result.pricing_mode)) fail("Choose itemized prices or total-only pricing.");
     if(!Array.isArray(result.sections)||!result.sections.includes("items")||new Set(result.sections).size!==result.sections.length||result.sections.some(k=>!["scope","items","payment","delivery","terms"].includes(k)))fail("Keep pricing in the document and choose valid sections.");
     if(!Number.isFinite(result.body_size)||result.body_size<8||result.body_size>12)fail("Choose a body font size from 8 to 12 points.");
     if (!["studio", "executive", "canvas"].includes(result.layout))
@@ -147,6 +149,9 @@
         fail("Invalid product.");
       return {
         product_id,
+        bundle_id: text(item.bundle_id, 80),
+        bundle_name: text(item.bundle_name, 200),
+        sku: text(item.sku, 100),
         description: text(item.description, 2000) || "Item",
         quantity,
         unit_price,
@@ -180,6 +185,20 @@
       tax_total: taxCents / 100,
       total: totalCents / 100,
     };
+  }
+  // Presentation is deliberately separate from monetary calculation: grouping never
+  // changes totals or loses the underlying component/product references.
+  function presentItems(items = [], document = {}) {
+    const out = [], bundles = new Map();
+    for (const i of items) {
+      if (!i.bundle_id) { out.push({...i, description:(i.sku ? i.sku + " · " : "") + i.description}); continue; }
+      let group = bundles.get(i.bundle_id);
+      if (!group) { group = {...i, quantity:1,unit_price:0,line_total:0,discount_percent:0,description:i.bundle_name || "Bundle",components:[]}; bundles.set(i.bundle_id,group); out.push(group); }
+      group.components.push(`${Number(i.quantity)} × ${i.sku ? i.sku+" · " : ""}${i.description}`);
+      group.line_total = Math.round((group.line_total+Number(i.line_total))*100)/100;
+      group.unit_price = group.line_total;
+    }
+    return out.map(i=>({...i,description:i.description+(i.components ? "\n"+i.components.join("\n") : ""),hide_prices:document.pricing_mode === "total_only"}));
   }
   const dictionaries = {
     en: {
@@ -268,6 +287,7 @@
     normalizeDocument,
     defaultsDocument,
     computeTotals,
+    presentItems,
     labels,
     money,
     reference,

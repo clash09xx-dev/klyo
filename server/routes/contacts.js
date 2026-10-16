@@ -155,6 +155,7 @@ router.post("/", requireEditor, async (req, res) => {
   const normalizedTags = Array.isArray(tags) ? tags.map(t => String(t).trim()).filter(Boolean) : [];
 
   await validateContactLinks(req.user,company_id,owner_id||req.user.id);
+  const companyUnit=await require('../services/commercial').validateUnit(db,req.user.workspace_id,req.body.company_unit_id,company_id);
   const custom=await F.validate(db,req.user.workspace_id,'contact',req.body.custom_fields);
   const result = await db.query(
     `INSERT INTO contacts (
@@ -162,13 +163,13 @@ router.post("/", requireEditor, async (req, res) => {
        owner_id, company_id, title, is_decision_maker,
        tags, secondary_email, secondary_phone, website, linkedin, instagram, facebook, twitter,
        city, country, state, postal_code, address, customer_type, priority, lead_source,
-       department, preferred_language, telegram, internal_notes, custom_fields
+       department, preferred_language, telegram, internal_notes, custom_fields, company_unit_id
      ) VALUES (
        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
        $11,$12,$13,$14,
        $15,$16,$17,$18,$19,$20,$21,$22,
        $23,$24,$25,$26,$27,$28,$29,$30,
-       $31,$32,$33,$34,$35
+       $31,$32,$33,$34,$35,$36
      ) RETURNING *`,
     [
       req.user.workspace_id, derivedFullName, firstName||null, lastName||null,
@@ -183,7 +184,7 @@ router.post("/", requireEditor, async (req, res) => {
       postal_code?.trim()||null, address?.trim()||null,
       customer_type?.trim()||null, priority?.trim()||"medium", lead_source?.trim()||null,
       department?.trim()||null, preferred_language?.trim()||null,
-      telegram?.trim()||null, internal_notes?.trim()||null,JSON.stringify(custom),
+      telegram?.trim()||null, internal_notes?.trim()||null,JSON.stringify(custom),companyUnit,
     ]
   );
 
@@ -247,6 +248,7 @@ router.put("/:id", requireEditor, async (req, res) => {
   const normalizedTags = Array.isArray(tags) ? tags.map(t => String(t).trim()).filter(Boolean) : (existing.tags || []);
 
   await validateContactLinks(req.user,company_id,owner_id||existing.owner_id);
+  const companyUnit=await require('../services/commercial').validateUnit(db,req.user.workspace_id,Object.hasOwn(req.body,'company_unit_id')?req.body.company_unit_id:(Number(company_id)===existing.company_id?existing.company_unit_id:null),company_id);
   const custom=await F.validate(db,req.user.workspace_id,'contact',req.body.custom_fields,existing.custom_fields);
   const updated = await db.query(
     `UPDATE contacts SET
@@ -258,7 +260,7 @@ router.put("/:id", requireEditor, async (req, res) => {
        city=$22, country=$23, state=$24, postal_code=$25, address=$26,
        customer_type=$27, priority=$28, lead_source=$29,
        department=$30, preferred_language=$31, telegram=$32, internal_notes=$33,
-       custom_fields=$35, updated_at=now()
+       custom_fields=$35, company_unit_id=$36, updated_at=now()
      WHERE id=$34 RETURNING *`,
     [
       derivedFullName, firstName||null, lastName||null,
@@ -276,7 +278,7 @@ router.put("/:id", requireEditor, async (req, res) => {
       lead_source?.trim()||null,
       department?.trim()||null, preferred_language?.trim()||null,
       telegram?.trim()||null, internal_notes?.trim()||null,
-      req.params.id,JSON.stringify(custom),
+      req.params.id,JSON.stringify(custom),companyUnit,
     ]
   );
 

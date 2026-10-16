@@ -27,14 +27,16 @@ function normalizeDeal(input, previous = {}) {
   if (value !== null && (!Number.isFinite(value) || value < 0 || value > 999999999999)) throw invalid('Enter a valid deal value.');
   const quantity = Number(d.quantity ?? 1);
   if (!Number.isFinite(quantity) || quantity <= 0) throw invalid('Quantity must be greater than zero.');
+  const probability=Number(d.probability??0);
+  if(!Number.isFinite(probability)||probability<0||probability>100||Math.abs(probability*100-Math.round(probability*100))>.0001)throw invalid('Probability must be between 0 and 100, with up to two decimal places.');
   const currency = normalizeCurrency(d.currency || 'USD');
   if (!currency) throw invalid('Choose a supported currency.');
   const reason = status === 'lost' ? text(d.lost_reason || '', 1000, 'loss reason', previous.status !== 'lost' || Object.hasOwn(input,'lost_reason')) : null;
   return {
     title: text(d.title, 300, 'deal title', true),
-    contact_id: optionalId(d.contact_id), company_id: optionalId(d.company_id),
+    contact_id: optionalId(d.contact_id), company_id: optionalId(d.company_id), company_unit_id:optionalId(d.company_unit_id),
     pipeline_id: optionalId(d.pipeline_id), product_id: optionalId(d.product_id), stage_id: optionalId(d.stage_id), assigned_to: optionalId(d.assigned_to),
-    value, currency, quantity, expected_close_date: validDate(d.expected_close_date),
+    probability, value, currency, quantity, expected_close_date: validDate(d.expected_close_date),
     notes: text(d.notes || '', 20000, 'notes'), status, lost_reason: reason,
   };
 }
@@ -54,7 +56,7 @@ async function saveDeal(pool, user, id, input) {
     let previous = {};
     if (id) {
       previous = (await client.query('SELECT * FROM deals WHERE id=$1 AND workspace_id=$2 FOR UPDATE', [optionalId(id), user.workspace_id])).rows[0];
-      if (!previous) throw invalid('Deal not found.', 404);
+      if (!previous || previous.deleted_at) throw invalid('Deal not found.', 404);
     } else {
       previous.currency = (await client.query('SELECT default_currency FROM workspaces WHERE id=$1', [user.workspace_id])).rows[0]?.default_currency;
     }
@@ -65,6 +67,7 @@ async function saveDeal(pool, user, id, input) {
     await P.selected(client,user.workspace_id,deal.pipeline_id);
     if (id && deal.pipeline_id !== previous.pipeline_id && !Object.hasOwn(input,'stage_id')) deal.stage_id = null;
     await checkLinks(client, user.workspace_id, deal);
+    await require("./commercial").validateUnit(client,user.workspace_id,deal.company_unit_id,deal.company_id);
     if (deal.stage_id && !(await client.query('SELECT id FROM pipeline_stages WHERE id=$1 AND pipeline_id=$2 AND workspace_id=$3',[deal.stage_id,deal.pipeline_id,user.workspace_id])).rows.length) throw invalid('Choose a stage from this pipeline.');
     const fields = Object.keys(deal);
     const values = Object.values(deal);
@@ -93,6 +96,7 @@ async function saveDeal(pool, user, id, input) {
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
       [user.workspace_id, saved.id, user.id, id ? 'changed' : 'created', stageName(previous.stage_id), stageName(deal.stage_id), previous.status || null, deal.status, deal.lost_reason, pipelineName(previous.pipeline_id), pipelineName(deal.pipeline_id)]);
     }
+    await require('./commercial').syncDeal(client,user,saved);
     await client.query('COMMIT');
     return saved;
   } catch (error) {

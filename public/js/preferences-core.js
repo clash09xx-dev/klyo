@@ -3,7 +3,7 @@
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.KlyoPreferences = factory();
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  const NAV = ['overview','pipeline','companies','deals','quotes','products','clients','tasks','calendar','reminders','files','history','team'];
+  const NAV = ['overview','pipeline','companies','deals','quotes','products','clients','tasks','calendar','reminders','files','commercial','projects','orders','equipment','inbox','rfq','history','team'];
   const COLUMNS = ['name','contact','company','theme','stage','owner','tags'];
   const WIDGETS = ['metrics','stages','losses'];
   const PRESETS = {

@@ -26,7 +26,7 @@ router.get("/", async (req, res) => {
       LEFT JOIN companies co ON co.id = c.company_id
       LEFT JOIN users     u  ON u.id  = c.owner_id
       LEFT JOIN quotes    q  ON q.contact_id = c.id AND q.workspace_id = c.workspace_id
-      LEFT JOIN deals     d  ON d.contact_id = c.id AND d.workspace_id = c.workspace_id
+      LEFT JOIN deals     d  ON d.contact_id = c.id AND d.workspace_id = c.workspace_id AND d.deleted_at IS NULL
       WHERE c.workspace_id = $1
         AND (c.status = 'customer' OR EXISTS (
           SELECT 1 FROM quotes q2 WHERE q2.contact_id = c.id AND q2.status = 'accepted'
@@ -68,11 +68,11 @@ router.get("/:id", async (req, res) => {
 
     const [quotesRes, dealsRes, tasksRes] = await Promise.all([
       db.query(
-        "SELECT * FROM quotes WHERE contact_id = $1 AND workspace_id = $2 ORDER BY created_at DESC",
+        "SELECT * FROM quotes WHERE contact_id = $1 AND workspace_id = $2 AND deleted_at IS NULL ORDER BY created_at DESC",
         [req.params.id, req.user.workspace_id]
       ),
       db.query(
-        "SELECT * FROM deals WHERE contact_id = $1 AND workspace_id = $2 ORDER BY created_at DESC",
+        "SELECT * FROM deals WHERE contact_id = $1 AND workspace_id = $2 AND deleted_at IS NULL ORDER BY created_at DESC",
         [req.params.id, req.user.workspace_id]
       ),
       db.query(

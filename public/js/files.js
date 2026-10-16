@@ -322,7 +322,7 @@ const KlyoFiles = (() => {
     }
     const d = dialog(
       "Link files to a record",
-      '<p>Keep these files in the workspace, or attach them to a particular customer, product or offer.</p><div class="files-record"><select id="fileRecordType"><option value="">Workspace files</option><option value="contact">Contact</option><option value="company">Company</option><option value="deal">Deal</option><option value="product">Product</option><option value="quote">Quote</option></select><select id="fileRecordId" disabled><option value="">Choose a record</option></select></div><button id="fileRecordContinue" class="btn btn-primary">Continue</button>',
+      '<p>Keep these files in the workspace, or attach them to a particular customer, product or offer.</p><div class="files-record"><select id="fileRecordType"><option value="">Workspace files</option><option value="contact">Contact</option><option value="company">Company</option><option value="deal">Deal</option><option value="product">Product</option><option value="quote">Quote</option><option value="project">Project</option><option value="order">Order</option><option value="equipment">Equipment</option></select><select id="fileRecordId" disabled><option value="">Choose a record</option></select></div><button id="fileRecordContinue" class="btn btn-primary">Continue</button>',
     );
     d.find("#fileRecordType").onchange = async () => {
       try {
@@ -339,6 +339,7 @@ const KlyoFiles = (() => {
                 deal: "deals",
                 product: "products",
                 quote: "quotes",
+            project: "operations/projects", order:"operations/orders", equipment:"operations/equipment",
               }[kind],
           ),
           rows =
@@ -349,6 +350,7 @@ const KlyoFiles = (() => {
                 deal: "deals",
                 product: "products",
                 quote: "quotes",
+              project:"projects",order:"orders",equipment:"equipment",
               }[kind]
             ] || [];
         if (d.find("#fileRecordType").value !== kind) return;
@@ -453,6 +455,7 @@ const KlyoFiles = (() => {
     };
     host.append(b);
   }
+  function showRecord(entity,id,name){filter={entity,entity_id:id,name:name||entity};switchView("files");}
   async function redirect() {
     const p = new URLSearchParams(location.search);
     if (!p.has("sharepoint")) return;
@@ -482,6 +485,7 @@ const KlyoFiles = (() => {
     configure,
     pick,
     recordButton,
+    showRecord,
     redirect,
     onView: (view) => {
       if (view === "files") refresh().catch((e) => toast(e.message, "error"));

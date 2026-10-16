@@ -267,12 +267,12 @@ router.get("/files", async (req, res) => {
       req.query.entity_id,
     );
     params.push(record.entity, record.entity_id);
-    filter = " AND entity=$2 AND entity_id=$3";
+    filter = " AND "+require("../services/recordLinks").inheritingCondition(record.entity,"f");
   }
   res.json({
     files: (
       await db.query(
-        "SELECT id,name,size,mime_type,entity,entity_id,created_at FROM workspace_files WHERE workspace_id=$1" +
+        "SELECT id,name,size,mime_type,entity,entity_id,created_at FROM workspace_files f WHERE workspace_id=$1" +
           filter +
           " ORDER BY created_at DESC,id DESC LIMIT 1000",
         params,

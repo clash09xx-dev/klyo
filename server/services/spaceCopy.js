@@ -6,6 +6,13 @@ const crypto = require("crypto"),
 const modes = ["everything", "products", "contacts", "companies"];
 const tables = {
   company: "companies",
+  unit: "company_units",
+  register_status: "commercial_statuses",
+  commercial_case: "commercial_cases",
+  project: "projects",
+  equipment: "equipment",
+  order: "sales_orders",
+  project_note: "project_notes",
   product: "products",
   price_list: "price_lists",
   contact: "contacts",
@@ -57,6 +64,10 @@ async function preview(client, user, body) {
     quotes: "quotes",
     tasks: "tasks",
     warranty: "warranty_items",
+    projects: "projects",
+    equipment: "equipment",
+    orders: "sales_orders",
+    commercial_cases: "commercial_cases",
   })) {
     const include = mode === "everything" || kind === mode;
     if (!include) continue;
@@ -66,6 +77,7 @@ async function preview(client, user, body) {
       params.push(ids);
       clause = " AND id=ANY($2::int[])";
     }
+    if (kind === "deals") clause += " AND deleted_at IS NULL";
     counts[kind] = (
       await client.query(
         `SELECT COUNT(*)::int AS n FROM ${table} WHERE workspace_id=$1${clause}`,
@@ -73,11 +85,25 @@ async function preview(client, user, body) {
       )
     ).rows[0].n;
   }
+  const sourceOwner =
+    (
+      await client.query("SELECT owner_user_id FROM workspaces WHERE id=$1", [
+        sid,
+      ])
+    ).rows[0]?.owner_user_id === user.id;
   return {
     counts,
     independent: true,
     drafts_only: true,
     credentials_copied: false,
+    excluded: [
+      "External accounts and credentials",
+      "Mailboxes, messages and cloud-file connections",
+      "Active equipment reservations and custody",
+      "Invoice/payment/provider history",
+      ...(!sourceOwner ? ["Private purchase costs and margins"] : []),
+      "Employee resource plans and time logs",
+    ],
   };
 }
 async function copy(pool, user, body) {
@@ -89,12 +115,19 @@ async function copy(pool, user, body) {
       { mode, ids } = selection(body);
     await c.query("SELECT id FROM workspaces WHERE id=$1 FOR UPDATE", [tid]);
     await P.ensure(c, tid);
+    const sourceOwner =
+      (await c.query("SELECT owner_user_id FROM workspaces WHERE id=$1", [sid]))
+        .rows[0]?.owner_user_id === user.id;
     const rows = {};
     for (const [kind, table] of Object.entries(tables)) {
       rows[kind] = (
         await c.query(
           `SELECT * FROM ${table} WHERE workspace_id=$1` +
-            (kind === "quote_template" ? " AND user_id=$2" : ""),
+            (kind === "quote_template"
+              ? " AND user_id=$2"
+              : kind === "deal"
+                ? " AND deleted_at IS NULL"
+                : ""),
           kind === "quote_template" ? [sid, user.id] : [sid],
         )
       ).rows;
@@ -143,6 +176,21 @@ async function copy(pool, user, body) {
           changed = true;
         }
     }
+    // Inspect actual foreign keys once, so a future schema addition cannot silently
+    // retain a Team record ID in a Personal clone.
+    const foreignKeys = (
+      await c.query(
+        `SELECT t.relname AS table_name,a.attname AS column_name,ft.relname AS foreign_table,a.attnotnull AS required FROM pg_constraint k JOIN pg_class t ON t.oid=k.conrelid JOIN pg_namespace n ON n.oid=t.relnamespace JOIN pg_class ft ON ft.oid=k.confrelid JOIN LATERAL unnest(k.conkey,k.confkey) AS key(aid,fid) ON true JOIN pg_attribute a ON a.attrelid=t.oid AND a.attnum=key.aid WHERE k.contype='f' AND n.nspname=current_schema() AND t.relname=ANY($1::text[])`,
+        [Object.values(tables)],
+      )
+    ).rows;
+    const scopedTables = new Set(
+      (
+        await c.query(
+          `SELECT table_name FROM information_schema.columns WHERE table_schema=current_schema() AND column_name='workspace_id'`,
+        )
+      ).rows.map((r) => r.table_name),
+    );
     const fresh = Object.fromEntries(
       Object.keys(tables).map((k) => [k, new Set()]),
     );
@@ -173,6 +221,29 @@ async function copy(pool, user, body) {
       }
       const data = { ...row, ...overrides, workspace_id: tid };
       delete data.id;
+      for (const fk of foreignKeys.filter((f) => f.table_name === table)) {
+        const value = data[fk.column_name];
+        if (
+          value == null ||
+          fk.foreign_table === "users" ||
+          !scopedTables.has(fk.foreign_table)
+        )
+          continue;
+        if (
+          !(
+            await c.query(
+              `SELECT id FROM ${fk.foreign_table} WHERE id=$1 AND workspace_id=$2`,
+              [value, tid],
+            )
+          ).rows.length
+        ) {
+          if (fk.required)
+            throw invalid(
+              "A copied record has an unavailable dependency. Refresh and try again.",
+            );
+          data[fk.column_name] = null;
+        }
+      }
       // PG driver date-only values must keep their calendar date when inserted back.
       for (const [key, value] of Object.entries(data))
         if (
@@ -184,6 +255,13 @@ async function copy(pool, user, body) {
             "performed_on",
             "due_date",
             "expected_close_date",
+            "starts_on",
+            "valid_until",
+            "last_calibration",
+            "next_calibration",
+            "confirmed_delivery_date",
+            "invoice_issued_at",
+            "invoice_due_date",
           ].includes(key)
         )
           data[key] = require("./warranty").dateValue(value);
@@ -198,7 +276,15 @@ async function copy(pool, user, body) {
             : value;
         });
       // JSON arrays are not PostgreSQL arrays for these columns.
-      for (const key of ["options", "content", "document", "custom_fields"])
+      for (const key of [
+        "options",
+        "content",
+        "document",
+        "custom_fields",
+        "items",
+        "customer_confirmation",
+        "logistics",
+      ])
         if (key in data) values[keys.indexOf(key)] = JSON.stringify(data[key]);
       const id = (
         await c.query(
@@ -216,11 +302,17 @@ async function copy(pool, user, body) {
       counts.by_entity[table] = (counts.by_entity[table] || 0) + 1;
       return id;
     }
-    const keyMaps = { contact: {}, product: {} };
+    const keyMaps = { contact: {}, product: {}, company: {} };
     for (const f of rows.field.filter(
       (f) =>
         mode === "everything" ||
-        mode === (f.entity === "contact" ? "contacts" : "products"),
+        mode ===
+          (f.entity === "contact"
+            ? "contacts"
+            : f.entity === "company"
+              ? "companies"
+              : "products") ||
+        (f.entity === "company" && selectedCompanies.size > 0),
     )) {
       const existing = (
         await c.query(
@@ -262,9 +354,29 @@ async function copy(pool, user, body) {
         throw invalid("Fix the cyclic company group in Team before copying.");
       seen.add(id);
       const parent = await company(row.parent_company_id, seen);
-      return clone("company", row, { parent_company_id: parent });
+      return clone("company", row, {
+        parent_company_id: parent,
+        custom_fields: fields("company", row.custom_fields),
+      });
     }
     for (const id of selectedCompanies) await company(id);
+    async function unit(id, seen = new Set()) {
+      if (!id) return null;
+      if (maps.unit.has(id)) return maps.unit.get(id);
+      const row = rows.unit.find((r) => r.id === id);
+      if (!row || !maps.company.has(row.company_id)) return null;
+      if (seen.has(id))
+        throw invalid(
+          "Fix the cyclic branch hierarchy in Team before copying.",
+        );
+      seen.add(id);
+      return clone("unit", row, {
+        company_id: maps.company.get(row.company_id),
+        parent_id: await unit(row.parent_id, seen),
+      });
+    }
+    for (const r of rows.unit)
+      if (maps.company.has(r.company_id)) await unit(r.id);
     if (mode === "everything" || mode === "products")
       for (const r of pick("product"))
         await clone("product", r, {
@@ -347,6 +459,7 @@ async function copy(pool, user, body) {
     for (const r of rows.contact.filter((r) => selectedContacts.has(r.id)))
       await clone("contact", r, {
         company_id: maps.company.get(r.company_id) || null,
+        company_unit_id: maps.unit.get(r.company_unit_id) || null,
         owner_id: user.id,
         custom_fields: fields("contact", r.custom_fields),
       });
@@ -375,21 +488,76 @@ async function copy(pool, user, body) {
           contact_id: maps.contact.get(r.contact_id) || null,
           company_id: maps.company.get(r.company_id) || null,
           product_id: maps.product.get(r.product_id) || null,
+          company_unit_id: maps.unit.get(r.company_unit_id) || null,
           pipeline_id: maps.pipeline.get(r.pipeline_id) || null,
           stage_id: maps.stage.get(r.stage_id) || null,
           assigned_to: user.id,
+        });
+      async function unique(table, column, value, extra = "") {
+        let name = value;
+        for (
+          let i = 1;
+          (
+            await c.query(
+              `SELECT id FROM ${table} WHERE workspace_id=$1 AND lower(${column})=lower($2) ${extra}`,
+              [tid, name],
+            )
+          ).rows.length;
+          i++
+        )
+          name = String(value).slice(0, 60) + " · Team " + i;
+        return name;
+      }
+      for (const r of rows.register_status)
+        await clone("register_status", r, {
+          name: await unique("commercial_statuses", "name", r.name),
+        });
+      for (const r of rows.commercial_case)
+        await clone("commercial_case", r, {
+          number: await unique("commercial_cases", "number", r.number),
+          deal_id: maps.deal.get(r.deal_id) || null,
+          quote_id: null,
+          company_id: maps.company.get(r.company_id) || null,
+          contact_id: maps.contact.get(r.contact_id) || null,
+          company_unit_id: maps.unit.get(r.company_unit_id) || null,
+          status_id: maps.register_status.get(r.status_id) || null,
+          created_by: user.id,
         });
       for (const r of rows.quote) {
         const qid = await clone("quote", r, {
           contact_id: maps.contact.get(r.contact_id),
           company_id: maps.company.get(r.company_id) || null,
           created_by: user.id,
+          company_unit_id: maps.unit.get(r.company_unit_id) || null,
+          deal_id: maps.deal.get(r.deal_id) || null,
+          commercial_case_id:
+            maps.commercial_case.get(r.commercial_case_id) || null,
           price_list_id: maps.price_list.get(r.price_list_id) || null,
           status: "draft",
           public_token: crypto.randomBytes(18).toString("hex"),
           sent_at: null,
           accepted_at: null,
         });
+        if (
+          fresh.quote.has(r.id) &&
+          maps.commercial_case.has(r.commercial_case_id)
+        ) {
+          const linked = (
+            await c.query(
+              "SELECT id,number FROM commercial_cases WHERE id=$1 AND workspace_id=$2",
+              [maps.commercial_case.get(r.commercial_case_id), tid],
+            )
+          ).rows[0];
+          await c.query(
+            "UPDATE quotes SET document=jsonb_set(document,'{reference}',to_jsonb($1::text)) WHERE id=$2 AND workspace_id=$3",
+            [linked.number, qid, tid],
+          );
+          if (fresh.commercial_case.has(r.commercial_case_id))
+            await c.query(
+              "UPDATE commercial_cases SET quote_id=$1 WHERE id=$2 AND workspace_id=$3",
+              [qid, linked.id, tid],
+            );
+        }
         // Repeated copies preserve all personal edits, including a previously edited line table.
         if (fresh.quote.has(r.id)) {
           for (const item of (
@@ -431,14 +599,86 @@ async function copy(pool, user, body) {
           sent_at: null,
           ai_generated: false,
         });
+      for (const r of rows.project)
+        await clone("project", r, {
+          deal_id: maps.deal.get(r.deal_id) || null,
+          company_id: maps.company.get(r.company_id) || null,
+          contact_id: maps.contact.get(r.contact_id) || null,
+          assigned_to: user.id,
+          created_by: user.id,
+        });
+      for (const r of rows.equipment)
+        await clone("equipment", r, {
+          assigned_to: null,
+          created_by: user.id,
+          serial_number:
+            r.serial_number &&
+            (
+              await c.query(
+                "SELECT id FROM equipment WHERE workspace_id=$1 AND lower(serial_number)=lower($2)",
+                [tid, r.serial_number],
+              )
+            ).rows.length
+              ? ""
+              : r.serial_number,
+        });
+      for (const r of rows.project_note)
+        await clone("project_note", r, {
+          project_id: maps.project.get(r.project_id),
+          created_by: user.id,
+        });
+      for (const r of rows.order) {
+        const items = (r.items || []).map((item) => ({
+          ...item,
+          product_id: maps.product.get(item.product_id) || null,
+          serial_numbers: [],
+        }));
+        await clone("order", r, {
+          project_id: maps.project.get(r.project_id) || null,
+          case_id: maps.commercial_case.get(r.case_id) || null,
+          deal_id: maps.deal.get(r.deal_id) || null,
+          quote_id: maps.quote.get(r.quote_id) || null,
+          company_id: maps.company.get(r.company_id) || null,
+          contact_id: maps.contact.get(r.contact_id) || null,
+          number: await unique("sales_orders", "number", r.number),
+          items,
+          status: "draft",
+          logistics: {},
+          delivery_acknowledged_at: null,
+          delivery_acknowledged_by: "",
+          delivery_document_url: "",
+          invoice_number: "",
+          invoice_issued_at: null,
+          invoice_due_date: null,
+          paid_at: null,
+          paid_amount: 0,
+          created_by: user.id,
+        });
+      }
       for (const r of rows.task)
         await clone("task", r, {
           assigned_to: user.id,
           created_by: user.id,
+          project_id: maps.project.get(r.project_id) || null,
+          parent_id: null,
+          source_key:
+            r.source_key?.startsWith("equipment-calibration:") &&
+            maps.equipment.has(Number(r.source_key.split(":")[1]))
+              ? "equipment-calibration:" +
+                maps.equipment.get(Number(r.source_key.split(":")[1])) +
+                ":" +
+                r.source_key.split(":").slice(2).join(":")
+              : null,
           contact_id: maps.contact.get(r.contact_id) || null,
           company_id: maps.company.get(r.company_id) || null,
           deal_id: maps.deal.get(r.deal_id) || null,
         });
+      for (const r of rows.task)
+        if (fresh.task.has(r.id) && r.parent_id && maps.task.has(r.parent_id))
+          await c.query(
+            "UPDATE tasks SET parent_id=$1 WHERE id=$2 AND workspace_id=$3",
+            [maps.task.get(r.parent_id), maps.task.get(r.id), tid],
+          );
       for (const r of rows.calendar)
         await clone("calendar", r, {
           created_by: user.id,
@@ -488,13 +728,59 @@ async function copy(pool, user, body) {
           name = r.name.slice(0, 80) + " · Team " + i++;
         await clone("quote_template", r, { user_id: user.id, name, content });
       }
-      for (const r of rows.event)
+      for (const r of rows.event.filter((r) => maps.deal.has(r.deal_id)))
         await clone("event", r, { deal_id: maps.deal.get(r.deal_id) });
       for (const r of rows.activity)
         await clone("activity", r, {
           contact_id: maps.contact.get(r.contact_id),
         });
     }
+    counts.excluded = [
+      "External connections and mailbox data",
+      "Equipment reservations and custody",
+      "Invoice and payment history",
+      "Employee resource plans and time logs",
+    ];
+    if (sourceOwner && (mode === "everything" || mode === "products")) {
+      const prices = (
+        await c.query(
+          "SELECT * FROM product_purchase_prices WHERE workspace_id=$1",
+          [sid],
+        )
+      ).rows;
+      for (const p of prices)
+        if (maps.product.has(p.product_id))
+          await c.query(
+            "INSERT INTO product_purchase_prices(workspace_id,product_id,currency,unit_cost,supplier)VALUES($1,$2,$3,$4,$5)ON CONFLICT DO NOTHING",
+            [
+              tid,
+              maps.product.get(p.product_id),
+              p.currency,
+              p.unit_cost,
+              p.supplier,
+            ],
+          );
+      if (mode === "everything")
+        for (const oldQuote of fresh.quote) {
+          const oldItems = (
+            await c.query(
+              "SELECT i.id,i.sort_order,c.unit_cost,c.currency FROM quote_line_items i JOIN quote_item_costs c ON c.item_id=i.id AND c.workspace_id=$2 WHERE i.quote_id=$1",
+              [oldQuote, sid],
+            )
+          ).rows;
+          for (const item of oldItems)
+            await c.query(
+              "INSERT INTO quote_item_costs(item_id,workspace_id,unit_cost,currency)SELECT id,$1,$2,$3 FROM quote_line_items WHERE quote_id=$4 AND sort_order=$5 ON CONFLICT DO NOTHING",
+              [
+                tid,
+                item.unit_cost,
+                item.currency,
+                maps.quote.get(oldQuote),
+                item.sort_order,
+              ],
+            );
+        }
+    } else counts.excluded.push("Private purchase costs and margins");
     await c.query("COMMIT");
     return counts;
   } catch (e) {

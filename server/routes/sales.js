@@ -12,14 +12,14 @@ const action = handler => async(req,res) => { try { await handler(req,res); } ca
 router.get('/summary', action(async(req,res)=>{
   const wid=req.user.workspace_id;
   const [totals,stages,losses,tasks]=await Promise.all([
-    db.query(`SELECT currency,status,COUNT(*)::int AS count,COALESCE(SUM(value),0) AS value FROM deals WHERE workspace_id=$1 GROUP BY currency,status ORDER BY currency,status`,[wid]),
+    db.query(`SELECT currency,status,COUNT(*)::int AS count,COALESCE(SUM(value),0) AS value FROM deals WHERE workspace_id=$1 AND deleted_at IS NULL GROUP BY currency,status ORDER BY currency,status`,[wid]),
     db.query(`SELECT s.id,s.name,s.color,p.name AS pipeline_name,COUNT(d.id)::int AS count,d.currency,COALESCE(SUM(d.value),0) AS value
-      FROM pipeline_stages s LEFT JOIN sales_pipelines p ON p.id=s.pipeline_id AND p.workspace_id=s.workspace_id LEFT JOIN deals d ON d.stage_id=s.id AND d.workspace_id=s.workspace_id AND d.status='open'
+      FROM pipeline_stages s LEFT JOIN sales_pipelines p ON p.id=s.pipeline_id AND p.workspace_id=s.workspace_id LEFT JOIN deals d ON d.stage_id=s.id AND d.workspace_id=s.workspace_id AND d.deleted_at IS NULL AND d.status='open'
       WHERE s.workspace_id=$1 GROUP BY s.id,p.name,d.currency ORDER BY p.name,s.sort_order,s.id`,[wid]),
-    db.query(`SELECT COALESCE(NULLIF(lost_reason,''),'Not recorded') AS reason,COUNT(*)::int AS count FROM deals WHERE workspace_id=$1 AND status='lost' GROUP BY 1 ORDER BY count DESC LIMIT 10`,[wid]),
+    db.query(`SELECT COALESCE(NULLIF(lost_reason,''),'Not recorded') AS reason,COUNT(*)::int AS count FROM deals WHERE workspace_id=$1 AND deleted_at IS NULL AND status='lost' GROUP BY 1 ORDER BY count DESC LIMIT 10`,[wid]),
     db.query(`SELECT
       (SELECT COUNT(*)::int FROM tasks WHERE workspace_id=$1 AND status!='done' AND due_date<CURRENT_DATE) AS overdue,
-      (SELECT COUNT(*)::int FROM deals d WHERE workspace_id=$1 AND status='open' AND NOT EXISTS (SELECT 1 FROM tasks t WHERE t.deal_id=d.id AND t.workspace_id=$1 AND t.status!='done')) AS without_next_step`,[wid]),
+      (SELECT COUNT(*)::int FROM deals d WHERE workspace_id=$1 AND deleted_at IS NULL AND status='open' AND NOT EXISTS (SELECT 1 FROM tasks t WHERE t.deal_id=d.id AND t.workspace_id=$1 AND t.status!='done')) AS without_next_step`,[wid]),
   ]);
   res.json({totals:totals.rows,stages:stages.rows,losses:losses.rows,...tasks.rows[0]});
 }));
@@ -32,7 +32,7 @@ router.post('/views', action(async(req,res)=>{
   for (const key of ['pipeline_id','stage_id','assigned_to','status','attention','search']) {
     if(req.body.filters?.[key] != null) filters[key]=String(req.body.filters[key]).slice(0,200);
   }
-  if(!['','open','won','lost','all'].includes(filters.status||'')) throw invalid('Invalid status.');
+  if(!['','open','won','lost','all','deleted'].includes(filters.status||'')) throw invalid('Invalid status.');
   if(!['','today','overdue','no_next','stale'].includes(filters.attention||'')) throw invalid('Invalid activity filter.');
   const result=await db.query(`INSERT INTO saved_deal_views (workspace_id,user_id,name,filters) VALUES ($1,$2,$3,$4)
     ON CONFLICT (workspace_id,user_id,name) DO UPDATE SET filters=EXCLUDED.filters RETURNING *`,[req.user.workspace_id,req.user.id,name,JSON.stringify(filters)]);

@@ -301,7 +301,9 @@ test(
           ).data;
           assert.notEqual(copy.quote.id, id);
           assert.equal(copy.quote.status, "draft");
-          assert.equal(copy.quote.document.reference, "");
+          assert.ok(copy.quote.document.reference);
+          assert.notEqual(copy.quote.document.reference, design.reference);
+          assert.ok(copy.quote.commercial_case_id);
           assert.equal(copy.quote.document.valid_until, "");
           const preview = (await request(`/api/quotes/${id}/preview`)).data;
           assert.match(preview.body, /Dzień dobry/);

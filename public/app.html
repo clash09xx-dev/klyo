@@ -15,6 +15,11 @@
 <link rel="stylesheet" href="/css/personalize.css" />
 <link rel="stylesheet" href="/css/quote-designer.css">
 <link rel="stylesheet" href="/css/document-tools.css">
+<link rel="stylesheet" href="/css/analytics.css">
+<link rel="stylesheet" href="/css/commercial.css">
+<link rel="stylesheet" href="/css/operations.css">
+<link rel="stylesheet" href="/css/communications.css">
+<link rel="stylesheet" href="/css/deal-views.css">
 <link rel="stylesheet" href="/css/quote-studio.css" />
 <link rel="stylesheet" href="/css/workspace-tools.css" />
 <script defer src="/vendor/sheetjs/xlsx-0.20.3.min.js"></script>
@@ -49,6 +54,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6.5L22 9.3l-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2 2 9.3l7-0.8z"/></svg>
         <span data-i18n="nav.deals">Deals</span>
       </a>
+<a href="#" class="nav-item" data-view="commercial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h18v16H3z M3 9h18 M9 4v16"/></svg><span data-i18n="nav.commercial">Commercial register</span></a>
 <a href="#" class="nav-item" data-view="quotes">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h8l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
         <span data-i18n="nav.quotes">Quotes</span>
@@ -147,7 +153,7 @@
 
       <!-- PIPELINE VIEW -->
       <section id="salesOverviewView" class="hidden">
-        <div class="workspace-heading"><div><div class="eyebrow">Sales workspace</div><h2 data-sales-label="overview">Overview</h2></div><p class="muted" data-sales-label="overviewSub"></p></div>
+        <div class="workspace-heading"><div><div class="eyebrow">Sales workspace</div><h2 data-sales-label="allTime">All-time workspace summary</h2></div><p class="muted" data-sales-label="overviewSub"></p></div>
         <div class="sales-metrics">
           <div class="sales-metric"><span data-sales-label="open">Open deals</span><strong id="salesOpenCount">—</strong></div>
           <div class="sales-metric"><span data-sales-label="won">Won value</span><strong id="salesWonValue">—</strong></div>
@@ -401,6 +407,7 @@
           <select id="dealStatusFilter">
             <option value="" data-i18n="ui.all_open_won">Open + Won</option>
             <option value="open" data-i18n="ui.open_only">Open only</option>
+            <option value="all" data-i18n="ui.all_statuses">All statuses</option>
             <option value="won" data-i18n="deals.status_won">Won</option>
             <option value="lost" data-i18n="deals.status_lost">Lost</option>
           </select>
@@ -624,6 +631,7 @@
         <div class="field" style="grid-column:1/-1;">
           <label>Name *</label>
           <input type="text" id="productName" class="input" required>
+          <label><input type="checkbox" id="productSerialRequired"> Serial numbers required when selling</label>
           <label for="productSku">SKU / product code</label><input type="text" id="productSku" class="input" maxlength="100" placeholder="Optional unique product code">
         </div>
         <div class="field" style="grid-column:1/-1;">
@@ -1062,7 +1070,7 @@
         <label for="coNotes">Notes</label>
         <textarea id="coNotes"></textarea>
       </div>
-      <div class="form-error" id="companyFormError"></div>
+      <div id="companyCustomFields"></div><div class="form-error" id="companyFormError"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" id="cancelCompanyBtn">Cancel</button>
         <button type="submit" class="btn btn-primary" id="companySubmitBtn">Add company</button>
@@ -1414,7 +1422,7 @@
           <option value="SGD">SGD — Singapore Dollar</option>
         </select>
       </div>
-      <p class="muted" style="font-size:12.5px;">Applies to all existing deals, products and unsent draft quotes, and to new records. Amounts stay the same; no exchange-rate conversion is applied. Previously sent quotes keep their currency.</p>
+      <p class="muted" style="font-size:12.5px;">Changes the default and relabels uncommitted deals, catalog prices, draft quotes, register cases and draft orders without changing amounts. Sent quotes, confirmed orders, invoices and their linked records keep their original currency. Imported price lists and purchase costs are not converted. No exchange-rate conversion is performed.</p>
       <div class="form-error" id="currencyError"></div>
       <button class="btn btn-sm" id="saveCurrencyBtn" data-i18n="settings.save_currency">Save currency</button>
     </div>
@@ -1436,6 +1444,7 @@
     <div class="form-error" id="joinWorkspaceError"></div>
 
     <div class="section-title" data-i18n="settings.help">Help</div>
+    <p><a href="/docs/sales-and-operations.html" target="_blank" rel="noopener">Sales &amp; operations guide (PL)</a> · <a href="/docs/communications-setup" target="_blank" rel="noopener">Integrations setup</a></p>
     <button class="btn btn-ghost" id="replayTourBtn" style="width:100%;" data-i18n="ui.replay_tour">Replay the welcome tour</button>
 
     <!-- ───── Danger Zone ───── -->
@@ -1796,11 +1805,18 @@
 <script src="/js/quote-canvas-core.js"></script>
 <script src="/js/quote-core.js"></script>
 <script src="/js/quote-templates.js"></script>
+<script src="/js/commercial.js"></script>
 <script src="/js/quote-studio.js"></script>
 <script src="/js/quote-designer.js"></script>
 <script src="/js/document-tools.js"></script>
+<script src="/js/analytics.js"></script>
+<script src="/js/deal-views.js"></script>
 <script src="/js/files.js"></script>
 <script src="/js/price-lists.js"></script>
+<script src="/js/operations.js"></script>
+<script src="/js/notifications.js"></script>
+<script src="/js/communications.js"></script>
+<script src="/js/cloud-files.js"></script>
 <script src="/js/preferences-core.js"></script>
 <script src="/js/customize.js"></script>
 <script src="/js/sales.js"></script>

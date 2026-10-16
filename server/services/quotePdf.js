@@ -25,10 +25,11 @@ function documentFor(quote) {
 }
 async function generateQuotePdf(quote, lineItems) {
   const config = documentFor(quote),
-    L = {...Q.labels(config.language),...Object.fromEntries(Object.entries(config.headings).filter(([,v])=>v))},
+    L = {...Q.labels(config.language),...(quote.document_kind==='order_confirmation'?{quote:config.language==='pl'?'Potwierdzenie zamówienia':'Order confirmation',items:config.language==='pl'?'Potwierdzone pozycje':'Confirmed items',total:config.language==='pl'?'Razem netto':'Total (net)',price:config.language==='pl'?'Cena netto':'Net unit price'}:{}),...Object.fromEntries(Object.entries(config.headings).filter(([,v])=>v))},
     ref = Q.reference({ ...quote, document: config }),
     accent = config.accent;
-  if(config.layout === "canvas")return require("./quoteCanvasPdf")(quote,lineItems||quote.line_items||[],config);
+  lineItems = Q.presentItems(lineItems || quote.line_items || [], config);
+  if(config.layout === "canvas")return require("./quoteCanvasPdf")(quote,lineItems,config);
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: "A4",
@@ -290,12 +291,13 @@ async function generateQuotePdf(quote, lineItems) {
       for(const section of config.sections){if(section==='items')investment();else paragraph(config[section],L[section]);}
       function investment(){
       const columns = [
-        { label: L.description, width: 218, align: "left" },
+        { label: L.description, width: config.pricing_mode === "total_only" ? content-60 : 218, align: "left" },
         { label: L.qty, width: 40, align: "right" },
         { label: L.price, width: 91, align: "right" },
         { label: L.discount, width: 54, align: "right" },
         { label: L.amount, width: content - 403, align: "right" },
       ];
+      if(config.pricing_mode === "total_only") columns.splice(1,4,{label:L.qty,width:60,align:"right"});
       function tableHeader() {
         ensure(65);
         write(L.items.toUpperCase(), margin, y, content, 8, accent, true);
@@ -321,6 +323,7 @@ async function generateQuotePdf(quote, lineItems) {
             : "-",
           Q.money(item.line_total, quote.currency, config.language),
         ];
+        if(config.pricing_mode === "total_only")values.splice(2);
         const rowHeight = Math.max(
           36,
           ...values.map(
