@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>Klyo calendar setup</title
+  ><style>
+    body {
+      font: 16px/1.7 system-ui;
+      color: #172238;
+      max-width: 900px;
+      margin: 50px auto;
+      padding: 0 24px;
+    }
+    h1 {
+      font-size: 34px;
+      line-height: 1.2;
+    }
+    h2 {
+      margin-top: 40px;
+    }
+    p,
+    li {
+      overflow-wrap: anywhere;
+    }
+    li {
+      margin: 12px 0;
+    }
+    a {
+      color: #2455b6;
+    }
+    code {
+      font-size: 13px;
+      background: #f0f3f7;
+      padding: 2px 4px;
+    }
+    nav {
+      margin-bottom: 30px;
+    }
+  </style>
+  <nav>
+    <a href="/app">← Klyo CRM</a> ·
+    <a href="communications-setup">Other integrations</a>
+  </nav>
+  <main>
+    <h1>Calendar integrations</h1>
+    <p>
+      In <strong>Calendar → Connect calendars</strong>, each user connects
+      Google Calendar or Outlook / Microsoft 365, chooses a calendar, and sees
+      its events beside CRM events. Connections are private to that user in the
+      active Team or Personal space. Personal and Team have separate
+      connections. A connected account is never automatically shared with
+      colleagues.
+    </p>
+    <h2>Google Calendar</h2>
+    <p>
+      Use the existing Google OAuth web application (the same
+      <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> used
+      by Klyo). Enable <strong>Google Calendar API</strong> in Google Cloud.
+      Keep all existing login/Gmail/Drive callback URLs and add this authorized
+      <strong>Web redirect URI</strong>:
+    </p>
+    <p>
+      <code
+        >https://klyolabs.com/api/calendar-integrations/oauth/google/callback</code
+      >
+    </p>
+    <p>
+      The integration requests <code>openid</code> and <code>email</code>, plus
+      <code>calendar.calendarlist.readonly</code> and
+      <code>calendar.events</code> under
+      <code>https://www.googleapis.com/auth/</code>. These permissions allow
+      choosing accessible calendars and reading/writing their events. Google may
+      require OAuth app verification for production use. In testing mode add the
+      intended Google accounts as test users; Google&#x27;s test-mode
+      refresh-token limits still apply. Reconnect if consent expires.
+    </p>
+    <p>
+      Set <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> in
+      Railway. Set <code>APP_URL=https://klyolabs.com</code>. Do not expose
+      client secrets in browser code or paste them into chat. Then open
+      <strong>Calendar → Connect calendars → Google Calendar → Connect</strong>,
+      sign in, review consent and choose a calendar. Read-only calendars can be
+      displayed; publishing requires a writable calendar.
+    </p>
+    <h2>Outlook / Microsoft 365</h2>
+    <p>
+      Use the existing Microsoft Entra application, preserving its SharePoint
+      and inbox redirect URIs. Add this <strong>Web redirect URI</strong>:
+    </p>
+    <p>
+      <code
+        >https://klyolabs.com/api/calendar-integrations/oauth/microsoft/callback</code
+      >
+    </p>
+    <p>
+      Add the Microsoft Graph <strong>delegated</strong> permission
+      <code>Calendars.ReadWrite</code>. Offline access enables token renewal.
+      Organization policy may require administrator consent. No application-wide
+      calendar permissions or mail-sending permissions are required by this
+      integration.
+    </p>
+    <p>
+      Set <code>MICROSOFT_CLIENT_ID</code> and
+      <code>MICROSOFT_CLIENT_SECRET</code> in Railway. The calendar authority
+      uses <code>CALENDAR_MICROSOFT_TENANT_ID</code> when set, otherwise
+      <code>MICROSOFT_TENANT_ID</code>, otherwise <code>common</code>. Use
+      <code>organizations</code> or your tenant UUID for work accounts. For
+      personal Outlook.com accounts the Entra application&#x27;s supported
+      account types must include personal Microsoft accounts, and calendar
+      authority must use <code>common</code> or <code>consumers</code>. This
+      calendar-specific setting does not change the existing SharePoint
+      authority.
+    </p>
+    <p>
+      Connect from
+      <strong>Calendar → Connect calendars → Outlook / Microsoft 365</strong>,
+      then choose an accessible calendar. The integration uses the signed-in
+      account&#x27;s calendars, not arbitrary delegated mailboxes. Calendar
+      policies and permissions still apply.
+    </p>
+    <h2>How events move</h2>
+    <ul>
+      <li>
+        <strong>Refresh</strong> reads the selected provider calendars for the
+        displayed month. Repeated reads do not create CRM records. Recurring
+        events are displayed as instances returned by the provider. All-day end
+        dates are exclusive; times are displayed in the user&#x27;s local
+        timezone.
+      </li>
+      <li>
+        External events have a provider marker and are private. Open one and
+        choose <strong>Copy to Team CRM</strong> or
+        <strong>Copy to Personal CRM</strong> to copy its title, dates, location
+        and description. Team copying explicitly makes those details visible to
+        colleagues. Repeated copying reuses the existing CRM event.
+      </li>
+      <li>
+        Create or edit a CRM event and <strong>Save</strong> first. Open it
+        again → <strong>Google / Outlook</strong> → <strong>Send to</strong>.
+        Klyo publishes an appointment without attendees. Existing CRM events are
+        not bulk-published, and imported meetings are not silently changed.
+      </li>
+      <li>
+        A link exposes <strong>Publish CRM version</strong> and
+        <strong>Pull calendar version</strong>. These are explicit actions, not
+        automatic two-way writes. Publishing refuses to overwrite a provider
+        event changed since the last synchronization. Pulling replaces the CRM
+        title, dates, description and location, while retaining CRM contact/deal
+        links. A stale CRM revision requires reloading before either action.
+      </li>
+      <li>
+        Provider meetings with attendees or recurring event series must be
+        managed in Google or Outlook. Klyo does not send attendee invitations.
+        Copied external meetings are read-only toward their original provider;
+        use <strong>Pull</strong> to refresh their CRM copy.
+      </li>
+      <li>
+        <strong>Unlink</strong>, deleting a CRM event, switching calendars or
+        disconnecting the account does not delete events from the provider.
+        Disconnecting removes Klyo&#x27;s saved credentials and links;
+        independent CRM copies remain. Reconnecting is a new link context, so
+        review existing external appointments before publishing again.
+      </li>
+      <li>
+        Failed initial publication keeps the operation ID and original payload.
+        Retrying the same link uses a stable Google event ID or Microsoft
+        transaction ID to avoid duplicate creation. If CRM data changed during a
+        failed attempt, the link indicates unpublished CRM changes after
+        recovery. Do not unlink a pending operation just to retry it.
+      </li>
+    </ul>
+    <p>
+      Google/Microsoft remain the authority for their own recurring meetings,
+      reminders, attendees and conferencing. This release does not create Google
+      Meet/Teams conferences, manage attendee responses or run background
+      outbound workflows.
+    </p>
+    <h2>Apple Calendar and other calendar apps</h2>
+    <p>
+      Use <strong>Export CRM .ics</strong> to download CRM events from the
+      currently displayed month. Import the file in Apple Calendar, Outlook or
+      another iCalendar-compatible app. The file contains CRM events only,
+      including intentionally shared CRM copies; it does not include your other
+      private provider events. Importing the same file repeatedly may duplicate
+      entries depending on the calendar application. This is an offline file
+      export, not a live iCloud/CalDAV connection or public subscription URL.
+    </p>
+    <h2>Secrets and testing</h2>
+    <p>
+      Use the stable server-only <code>INTEGRATION_ENCRYPTION_KEY</code> already
+      configured for Klyo integrations. Calendar credentials are encrypted in
+      PostgreSQL; status endpoints never return tokens. Rotating the encryption
+      secret requires reconnecting accounts. Do not connect a private calendar
+      if you are not authorized to copy its data into the team&#x27;s CRM.
+    </p>
+    <p>
+      Provider adapters and user workflows are tested against simulated provider
+      responses and an isolated database. Actual OAuth acceptance, tenant
+      consent and account-specific calendar access require the owner&#x27;s
+      configured Google/Microsoft application and real account authorization. A
+      missing configuration appears as unavailable in the connection dialog, not
+      as a successful connection.
+    </p>
+    <p>Official documentation:</p>
+    <ul>
+      <li>
+        <a href="https://developers.google.com/workspace/calendar/api/auth"
+          >Google calendar authorization</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://developers.google.com/workspace/calendar/api/v3/reference/calendarList/list"
+          >Google calendar list</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://developers.google.com/workspace/calendar/api/v3/reference/events/list"
+          >Google event listing and recurrence expansion</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://developers.google.com/workspace/calendar/api/v3/reference/events/insert"
+          >Google event creation</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://learn.microsoft.com/en-us/graph/api/user-list-calendars?view=graph-rest-1.0"
+          >Outlook calendars</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://learn.microsoft.com/en-us/graph/api/calendar-list-calendarview?view=graph-rest-1.0"
+          >Outlook calendar view</a
+        >
+      </li>
+      <li>
+        <a
+          href="https://learn.microsoft.com/en-us/graph/api/user-post-events?view=graph-rest-1.0"
+          >Microsoft event creation and transaction IDs</a
+        >
+      </li>
+    </ul>
+  </main>
+</html>

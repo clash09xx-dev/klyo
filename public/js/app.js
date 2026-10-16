@@ -329,6 +329,7 @@ function showLimitOrError(err, fallbackEl) {
   KlyoCommercial.init();
   KlyoOperations.init();
   KlyoCommunications.init();
+  KlyoCalendar.init();
   KlyoCloudFiles.init();
   wireEvents();
   KlyoSales.init();
@@ -937,15 +938,18 @@ async function handleProductSubmit(e) {
 /* ---------- calendar view ---------- */
 let calendarDate = new Date();
 let calendarEvents = [];
+let calendarLoadVersion=0;
 
 async function loadCalendar() {
   const year  = calendarDate.getFullYear();
   const month = calendarDate.getMonth(); // 0-based
   const start = new Date(year, month, 1).toISOString();
-  const end   = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+  const end   = new Date(year, month + 1, 1).toISOString();
+  const ticket=++calendarLoadVersion;
   try {
-    const { events } = await API.get(`/calendar?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
-    calendarEvents = events;
+    const [{events},external] = await Promise.all([API.get(`/calendar?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`),KlyoCalendar.load({start,end})]);
+    if(ticket!==calendarLoadVersion)return;
+    calendarEvents = [...events,...external];
     renderCalendar();
   } catch (err) { console.error("loadCalendar", err); }
 }
@@ -976,23 +980,22 @@ function renderCalendar() {
   for (let day = 1; day <= daysInMonth; day++) {
     const isToday = isThisMonth && today.getDate() === day;
     const dayEvents = calendarEvents.filter(ev => {
-      const d = new Date(ev.start_at);
-      return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
+      return KlyoCalendar.onDay(ev,year,month,day);
     });
 
     const cell = document.createElement("div");
     cell.style.cssText = `background:var(--bg-card); min-height:100px; padding:6px; cursor:pointer; position:relative; ${isToday ? "outline:2px solid var(--accent);" : ""}`;
     cell.innerHTML = `<div style="font-size:12px; font-weight:${isToday ? "700" : "500"}; color:${isToday ? "var(--accent)" : "var(--text-faint)"}; margin-bottom:4px;">${day}</div>` +
       dayEvents.map(ev => `
-        <div data-event-id="${ev.id}" style="background:${ev.color || "#6366f1"}22; border-left:3px solid ${ev.color || "#6366f1"}; padding:2px 5px; border-radius:3px; margin-bottom:2px; font-size:11px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-          ${new Date(ev.start_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})} ${escapeHtml(ev.title)}
+        <div data-event-id="${escapeHtml(String(ev.id))}" title="${escapeHtml((ev.external?ev.provider+" · ":"")+ev.title)}" style="background:${/^#[a-f0-9]{6}$/i.test(ev.color)?ev.color:"#6366f1"}22; border-left:3px solid ${/^#[a-f0-9]{6}$/i.test(ev.color)?ev.color:"#6366f1"}; padding:2px 5px; border-radius:3px; margin-bottom:2px; font-size:11px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+          ${ev.external?"↗ ":KlyoCalendar.hasChanges(ev.id)?"↻ ":""}${ev.all_day?(KlyoI18n.getLang()==="pl"?"Cały dzień":"All day"):new Date(ev.start_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})} ${escapeHtml(ev.title)}
         </div>`).join("");
 
     cell.addEventListener("click", (e) => {
       const evEl = e.target.closest("[data-event-id]");
       if (evEl) {
         const ev = calendarEvents.find(x => String(x.id) === evEl.dataset.eventId);
-        if (ev) openEventModal(ev);
+        if (ev) {if(ev.external)KlyoCalendar.external(ev).catch(e=>toast(e.message,"error"));else openEventModal(ev);}
       } else {
         // Click on blank day — pre-fill date
         const d = new Date(year, month, day, 9, 0);
@@ -1005,6 +1008,8 @@ function renderCalendar() {
 
 function openEventModal(event, defaultDate) {
   if (!els.eventModalOverlay) return;
+  els.eventForm.reset();
+  els.eventStart.type=els.eventEnd.type="datetime-local";
   els.eventFormError.textContent = "";
   els.eventId.value = event?.id || "";
   els.eventModalTitle.textContent = event ? t("calendar.edit_event") : t("calendar.add_event");
@@ -1035,6 +1040,7 @@ function openEventModal(event, defaultDate) {
   els.eventDealSelect.innerHTML = '<option value="">None</option>' +
     dealsCache.map(d => `<option value="${d.id}" ${event?.deal_id == d.id ? "selected" : ""}>${escapeHtml(d.title)}</option>`).join("");
 
+  KlyoCalendar.prepare(event);
   els.deleteEventBtn?.classList.toggle("hidden", !event?.id);
   els.eventModalOverlay.classList.remove("hidden");
 }
@@ -1059,6 +1065,7 @@ async function handleEventSubmit(e) {
   };
   if (!body.title)    { els.eventFormError.textContent = "Title is required."; return; }
   if (!body.start_at) { els.eventFormError.textContent = "Start date/time is required."; return; }
+  try{Object.assign(body,KlyoCalendar.collect());}catch(err){els.eventFormError.textContent=err.message;return;}
   try {
     if (id) {
       await API.put(`/calendar/${id}`, body);

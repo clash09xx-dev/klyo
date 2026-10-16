@@ -408,6 +408,10 @@ This deployment does not include Microsoft credentials. Follow [the SharePoint s
 
 The vendored spreadsheet reader is SheetJS CE 0.20.3 (Apache-2.0); source URL, checksum and licence are in `public/vendor/sheetjs`. Node.js 20 or newer is required by the Microsoft authentication library.
 
+## Calendar integrations
+
+Calendar connects per-user Google Calendar and Outlook/Microsoft 365 accounts, displays private external events alongside shared CRM events, and supports explicit copy, publish/update, conflict-safe pull and CRM iCalendar export for Apple Calendar. See [setup and behavior](docs/calendar-setup.md). Provider events are never bulk-published or automatically shared with the team.
+
 ## Verification
 
 Run `npm test` with `TEST_DATABASE_URL` pointing to a disposable local PostgreSQL database to include all API and migration checks. Each suite creates and removes its own schema. Without that variable, database suites are explicitly skipped. Never use a production database for tests.
