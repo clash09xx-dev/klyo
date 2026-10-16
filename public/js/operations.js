@@ -12,38 +12,38 @@ const KlyoOperations = (() => {
     projectMode = "board";
   const pl = () =>
       typeof KlyoI18n !== "undefined" && KlyoI18n.getLang() === "pl",
-    L = (en, pol) => (pl() ? pol : en),
+    L = (en, pol) => KlyoModuleI18n.pick(en, pol),
     can = () => API.getUser()?.role !== "viewer";
   const labels = {
-    planned: ["Planned", "Planowane"],
-    active: ["Active", "Aktywne"],
-    on_hold: ["On hold", "Wstrzymane"],
-    completed: ["Completed", "Zakończone"],
-    cancelled: ["Cancelled", "Anulowane"],
-    todo: ["To do", "Do zrobienia"],
-    in_progress: ["In progress", "W realizacji"],
-    done: ["Done", "Gotowe"],
-    draft: ["Draft", "Szkic"],
-    confirmed: ["Confirmed", "Potwierdzone"],
-    ordered: ["Ordered", "Zamówione"],
-    shipped: ["Shipped", "Wysłane"],
-    delivered: ["Delivered", "Dostarczone"],
-    low: ["Low", "Niski"],
-    medium: ["Medium", "Średni"],
-    high: ["High", "Wysoki"],
-    customer: ["Customer", "Klient"],
-    supplier: ["Supplier", "Dostawca"],
-    internal: ["Internal", "Wewnętrzne"],
-    delivery: ["Delivery", "Dostawa"],
-    service: ["Service", "Serwis"],
-    presentation: ["Presentation", "Prezentacja"],
-    good: ["Good", "Dobry"],
-    needs_inspection: ["Needs inspection", "Do przeglądu"],
-    damaged: ["Damaged", "Uszkodzony"],
-    repair: ["In repair", "W naprawie"],
-    reserved: ["Reserved", "Zarezerwowane"],
-    checked_out: ["Checked out", "Pobrane"],
-    returned: ["Returned", "Zwrócone"],
+    planned: [KlyoModuleI18n.pick("Planned"), "Planowane"],
+    active: [KlyoModuleI18n.pick("Active"), "Aktywne"],
+    on_hold: [KlyoModuleI18n.pick("On hold"), "Wstrzymane"],
+    completed: [KlyoModuleI18n.pick("Completed"), "Zakończone"],
+    cancelled: [KlyoModuleI18n.pick("Cancelled"), "Anulowane"],
+    todo: [KlyoModuleI18n.pick("To do"), "Do zrobienia"],
+    in_progress: [KlyoModuleI18n.pick("In progress"), "W realizacji"],
+    done: [KlyoModuleI18n.pick("Done"), "Gotowe"],
+    draft: [KlyoModuleI18n.pick("Draft"), "Szkic"],
+    confirmed: [KlyoModuleI18n.pick("Confirmed"), "Potwierdzone"],
+    ordered: [KlyoModuleI18n.pick("Ordered"), "Zamówione"],
+    shipped: [KlyoModuleI18n.pick("Shipped"), "Wysłane"],
+    delivered: [KlyoModuleI18n.pick("Delivered"), "Dostarczone"],
+    low: [KlyoModuleI18n.pick("Low"), "Niski"],
+    medium: [KlyoModuleI18n.pick("Medium"), "Średni"],
+    high: [KlyoModuleI18n.pick("High"), "Wysoki"],
+    customer: [KlyoModuleI18n.pick("Customer"), "Klient"],
+    supplier: [KlyoModuleI18n.pick("Supplier"), "Dostawca"],
+    internal: [KlyoModuleI18n.pick("Internal"), "Wewnętrzne"],
+    delivery: [KlyoModuleI18n.pick("Delivery"), "Dostawa"],
+    service: [KlyoModuleI18n.pick("Service"), "Serwis"],
+    presentation: [KlyoModuleI18n.pick("Presentation"), "Prezentacja"],
+    good: [KlyoModuleI18n.pick("Good"), "Dobry"],
+    needs_inspection: [KlyoModuleI18n.pick("Needs inspection"), "Do przeglądu"],
+    damaged: [KlyoModuleI18n.pick("Damaged"), "Uszkodzony"],
+    repair: [KlyoModuleI18n.pick("In repair"), "W naprawie"],
+    reserved: [KlyoModuleI18n.pick("Reserved"), "Zarezerwowane"],
+    checked_out: [KlyoModuleI18n.pick("Checked out"), "Pobrane"],
+    returned: [KlyoModuleI18n.pick("Returned"), "Zwrócone"],
   };
   const label = (v) => (labels[v] ? L(...labels[v]) : v),
     day = (v) => (v ? String(v).slice(0, 10) : ""),
@@ -71,7 +71,7 @@ const KlyoOperations = (() => {
   const check = (name, title, value) =>
     `<label class="op-check"><input type="checkbox" name="${name}" ${value ? "checked" : ""}> ${h(title)}</label>`;
   const saveBtn = () =>
-    `<div class="op-wide op-actions"><button class="btn btn-primary" type="submit">${L("Save", "Zapisz")}</button></div>`;
+    `<div class="op-wide op-actions"><button class="btn btn-primary" type="submit">${KlyoModuleI18n.label("Save", "Zapisz")}</button></div>`;
   const read = (form) => Object.fromEntries([...new FormData(form)]);
   async function loadLookup() {
     lookup = await API.get("/operations/lookup");
@@ -103,24 +103,34 @@ const KlyoOperations = (() => {
       true,
     );
     for (const [v, en, pol, icon] of [
-      ["projects", "Projects", "Projekty", "M3 7h18v14H3z M3 7l3-4h5l3 4"],
+      [
+        "projects",
+        KlyoModuleI18n.pick("Projects"),
+        "Projekty",
+        "M3 7h18v14H3z M3 7l3-4h5l3 4",
+      ],
       [
         "orders",
-        "Orders",
+        KlyoModuleI18n.pick("Orders"),
         "Zamówienia",
         "M4 3h16v18H4z M8 8h8 M8 12h8 M8 16h5",
       ],
-      ["equipment", "Equipment", "Wyposażenie", "M4 8h16v13H4z M8 8V3h8v5"],
+      [
+        "equipment",
+        KlyoModuleI18n.pick("Equipment"),
+        "Wyposażenie",
+        "M4 8h16v13H4z M8 8V3h8v5",
+      ],
     ]) {
       document
         .querySelector('.nav [data-view="history"]')
         ?.insertAdjacentHTML(
           "beforebegin",
-          `<a href="#" class="nav-item" data-view="${v}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="${icon}"/></svg><span data-op-nav="${v}">${L(en, pol)}</span></a>`,
+          `<a href="#" class="nav-item" data-view="${v}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="${icon}"/></svg><span data-op-nav="${v}">${KlyoModuleI18n.label(en, pol)}</span></a>`,
         );
       g("productsView").insertAdjacentHTML(
         "afterend",
-        `<section id="${v}View" class="hidden op-view"><div class="op-toolbar"><h2>${L(en, pol)}</h2><input type="search" data-op-search="${v}" placeholder="${L("Search", "Szukaj")}"><button class="btn btn-primary" data-op-new="${v}">${L("Add", "Dodaj")}</button></div><div id="${v}Content"></div></section>`,
+        `<section id="${v}View" class="hidden op-view"><div class="op-toolbar"><h2>${KlyoModuleI18n.label(en, pol)}</h2><input type="search" data-op-search="${v}" placeholder="${L("Search", "Szukaj")}"><button class="btn btn-primary" data-op-new="${v}">${KlyoModuleI18n.label("Add", "Dodaj")}</button></div><div id="${v}Content"></div></section>`,
       );
       g(`${v}View`).querySelector("[data-op-new]").onclick = () =>
         ({
@@ -133,7 +143,7 @@ const KlyoOperations = (() => {
     const tv = g("tasksView");
     tv.insertAdjacentHTML(
       "afterbegin",
-      `<div id="opTaskToolbar" class="op-toolbar"><div class="op-segments"><button class="btn btn-ghost" data-task-mode="list">${L("List", "Lista")}</button><button class="btn btn-ghost" data-task-mode="matrix">${L("Eisenhower matrix", "Macierz Eisenhowera")}</button><button class="btn btn-ghost" data-task-mode="kanban">Kanban</button></div><input id="opTaskSearch" type="search" placeholder="${L("Search tasks", "Szukaj zadań")}"><select id="opTaskStatus"><option value="">${L("All statuses", "Wszystkie statusy")}</option>${opts(["todo", "in_progress", "done"], "", false)}</select><button class="btn btn-primary" id="opNewTask">${L("New task", "Nowe zadanie")}</button></div><div id="opTasksContent"></div>`,
+      `<div id="opTaskToolbar" class="op-toolbar"><div class="op-segments"><button class="btn btn-ghost" data-task-mode="list">${KlyoModuleI18n.label("List", "Lista")}</button><button class="btn btn-ghost" data-task-mode="matrix">${KlyoModuleI18n.label("Eisenhower matrix", "Macierz Eisenhowera")}</button><button class="btn btn-ghost" data-task-mode="kanban">${KlyoModuleI18n.label("Kanban")}</button></div><input id="opTaskSearch" type="search" placeholder="${L("Search tasks", "Szukaj zadań")}"><select id="opTaskStatus"><option value="">${KlyoModuleI18n.label("All statuses", "Wszystkie statusy")}</option>${opts(["todo", "in_progress", "done"], "", false)}</select><button class="btn btn-primary" id="opNewTask">${KlyoModuleI18n.label("New task", "Nowe zadanie")}</button></div><div id="opTasksContent"></div>`,
     );
     [...tv.children].forEach((n) => {
       if (!["opTaskToolbar", "opTasksContent"].includes(n.id)) {
@@ -154,7 +164,10 @@ const KlyoOperations = (() => {
   }
   async function onView(view) {
     for (const v of ["projects", "orders", "equipment"])
-      g(v + "View")?.classList.toggle("hidden", view !== v);
+      g(v + KlyoModuleI18n.pick("View"))?.classList.toggle(
+        "hidden",
+        view !== v,
+      );
     if (!["projects", "orders", "equipment", "tasks"].includes(view)) return;
     try {
       await loadLookup();
@@ -177,7 +190,7 @@ const KlyoOperations = (() => {
   }
   function filtered(v, list) {
     const s =
-      g(v + "View")
+      g(v + KlyoModuleI18n.pick("View"))
         ?.querySelector("[data-op-search]")
         .value.toLowerCase() || "";
     return list.filter((x) =>
@@ -330,7 +343,7 @@ const KlyoOperations = (() => {
       t.id
         ? L("Edit task", "Edytuj zadanie")
         : L("New task / milestone", "Nowe zadanie / kamień milowy"),
-      `<form class="op-form">${field("title", L("Title", "Tytuł"), t.title, "text", 'required maxlength="300"')}${select("status", L("Status", "Status"), ["todo", "in_progress", "done"], t.status || "todo", false)}${select("assigned_to", L("Assigned to", "Przypisane do"), lookup.users, t.assigned_to)}${select("priority", L("Priority", "Priorytet"), ["low", "medium", "high"], t.priority || "medium", false)}${field("due_date", L("Due date", "Termin"), day(t.due_date), "date")}${field("reminder_at", L("Reminder", "Przypomnienie"), t.reminder_at ? localStamp(t.reminder_at) : "", "datetime-local")}${select("project_id", L("Project", "Projekt"), lookup.projects, t.project_id)}${select(
+      `<form class="op-form">${field("title", L("Title", "Tytuł"), t.title, "text", 'required maxlength="300"')}${select("status", L("Status", "Status"), ["todo", "in_progress", "done"], t.status || "todo", false)}${select("assigned_to", L("Assigned to", "Przypisane do"), lookup.users, t.assigned_to)}${select("priority", L("Priority", "Priorytet"), ["low", "medium", "high"], t.priority || "medium", false)}${field("due_date", L("Due date", "Termin"), day(t.due_date), "date", "required")}${field("reminder_at", L("Reminder", "Przypomnienie"), t.reminder_at ? localStamp(t.reminder_at) : "", "datetime-local")}${select("project_id", L("Project", "Projekt"), lookup.projects, t.project_id)}${select(
         "parent_id",
         L("Parent task / milestone", "Zadanie nadrzędne / kamień milowy"),
         lookup.tasks.filter((x) => x.id !== t.id),
@@ -387,7 +400,7 @@ const KlyoOperations = (() => {
     const list = filtered("projects", projects),
       box = g("projectsContent");
     box.innerHTML =
-      `<div class="op-segments op-view-switch"><button class="btn btn-ghost" id="opProjectsBoard">Kanban</button><button class="btn btn-ghost" id="opProjectsList">${L("List", "Lista")}</button></div>` +
+      `<div class="op-segments op-view-switch"><button class="btn btn-ghost" id="opProjectsBoard">${KlyoModuleI18n.label("Kanban")}</button><button class="btn btn-ghost" id="opProjectsList">${KlyoModuleI18n.label("List", "Lista")}</button></div>` +
       (projectMode === "board"
         ? `<div class="op-board op-project-board">${[
             "planned",
@@ -472,9 +485,11 @@ const KlyoOperations = (() => {
       tasks = (await API.get("/operations/tasks")).tasks;
       const d = dialog(
         p.title,
-        `<div class="op-toolbar"><span class="op-badge">${h(label(p.status))}</span><span>${h(day(p.starts_on))} → ${h(day(p.due_date) || "—")}</span><button class="btn btn-ghost" id="opProjectEdit">${L("Edit", "Edytuj")}</button><button class="btn btn-ghost" id="opProjectFiles">${L("Files", "Pliki")}</button><button class="btn btn-ghost" id="opProtocolDownload">${L("Download protocol PDF", "Pobierz protokół PDF")}</button></div><p>${h(p.description)}</p><div class="op-kpis"><div><small>${L("Budget", "Budżet")}</small><strong>${h(money(p.budget, p.currency))}</strong></div><div><small>${L("Orders", "Zamówienia")}</small><strong>${r.orders.length}</strong></div><div><small>${L("Equipment assigned", "Przypisany sprzęt")}</small><strong>${r.equipment.filter((a) => ["reserved", "checked_out"].includes(a.status)).length}</strong></div></div>${progress(r.tasks.filter((t) => t.status === "done").length, r.tasks.length)}<div class="op-toolbar"><h3>${L("People & time", "Osoby i czas")}</h3><button class="btn btn-ghost" id="opProjectResource">${L("Plan resources", "Zaplanuj osoby")}</button><button class="btn btn-ghost" id="opProjectTime">${L("Log work", "Zapisz czas")}</button></div><p>${L("Logged / planned hours", "Godziny zapisane / planowane")}: <strong>${r.time_entries.reduce((s, t) => s + Number(t.hours), 0).toFixed(2)} / ${r.resources.reduce((s, t) => s + Number(t.planned_hours), 0).toFixed(2)} h</strong></p>${r.resources.map((t) => `<div class="op-detail-row"><strong>${h(t.user_name)}</strong><span>${h(t.role)} · ${h(t.planned_hours)} h</span>${can() ? `<button class="btn btn-ghost" data-remove-resource="${t.user_id}">${L("Remove plan", "Usuń plan")}</button>` : ""}</div>`).join("")}${r.time_entries.map((t) => `<div class="op-detail-row"><span>${h(day(t.spent_on))} · ${h(t.user_name)} · ${h(t.hours)} h</span><span>${h(t.task_title || "")} ${h(t.notes)}</span>${can() ? `<button class="btn btn-ghost" data-remove-time="${t.id}">${L("Delete entry", "Usuń wpis")}</button>` : ""}</div>`).join("")}<div class="op-toolbar"><h3>${L("Milestones & tasks", "Kamienie milowe i zadania")}</h3><button class="btn btn-primary" id="opProjectTask">${L("Add task", "Dodaj zadanie")}</button></div><div data-project-tasks="${p.id}">${taskBoard(r.tasks)}</div><div class="op-toolbar"><h3>${L("Orders & fulfillment", "Zamówienia i realizacja")}</h3><button class="btn btn-ghost" id="opProjectOrder">${L("Add order", "Dodaj zamówienie")}</button></div><div class="op-grid">${r.orders.map(orderCard).join("") || empty("—")}</div><h3>${L("Assigned equipment", "Przypisane wyposażenie")}</h3>${r.equipment.map((a) => `<div class="op-detail-row"><strong>${h(a.name)}</strong><span>${h(a.assigned_name)} · ${h(label(a.status))}</span><span>${h(dt(a.starts_at))} → ${h(dt(a.ends_at))}</span></div>`).join("") || empty("—")}<div class="op-toolbar"><h3>${L("Documentation, agreements & protocols", "Dokumentacja, uzgodnienia i protokoły")}</h3><button class="btn btn-ghost" id="opProjectNote">${L("Add record", "Dodaj wpis")}</button></div>${r.notes.map((n) => `<article class="op-note"><strong>${h(n.title)}</strong><small>${h(n.kind)} · ${h(n.author || "")} · ${h(dt(n.created_at))}</small><p>${h(n.body)}</p>${n.document_url ? `<a href="${h(n.document_url)}" target="_blank" rel="noopener">${L("Open document", "Otwórz dokument")}</a>` : ""}</article>`).join("")}`,
+        `<div class="op-toolbar"><span class="op-badge">${h(label(p.status))}</span><span>${h(day(p.starts_on))} → ${h(day(p.due_date) || "—")}</span><button class="btn btn-ghost" id="opProjectEdit">${KlyoModuleI18n.label("Edit", "Edytuj")}</button><button class="btn btn-ghost" id="opProjectFiles">${KlyoModuleI18n.label("Files", "Pliki")}</button><button class="btn btn-ghost" id="opProtocolDownload">${KlyoModuleI18n.label("Download protocol PDF", "Pobierz protokół PDF")}</button></div><p>${h(p.description)}</p><div class="op-kpis"><div><small>${KlyoModuleI18n.label("Budget", "Budżet")}</small><strong>${h(money(p.budget, p.currency))}</strong></div><div><small>${KlyoModuleI18n.label("Orders", "Zamówienia")}</small><strong>${r.orders.length}</strong></div><div><small>${KlyoModuleI18n.label("Equipment assigned", "Przypisany sprzęt")}</small><strong>${r.equipment.filter((a) => ["reserved", "checked_out"].includes(a.status)).length}</strong></div></div>${progress(r.tasks.filter((t) => t.status === "done").length, r.tasks.length)}<div class="op-toolbar"><h3>${KlyoModuleI18n.label("People & time", "Osoby i czas")}</h3><button class="btn btn-ghost" id="opProjectResource">${KlyoModuleI18n.label("Plan resources", "Zaplanuj osoby")}</button><button class="btn btn-ghost" id="opProjectTime">${KlyoModuleI18n.label("Log work", "Zapisz czas")}</button></div><p>${L("Logged / planned hours", "Godziny zapisane / planowane")}: <strong>${r.time_entries.reduce((s, t) => s + Number(t.hours), 0).toFixed(2)} / ${r.resources.reduce((s, t) => s + Number(t.planned_hours), 0).toFixed(2)} h</strong></p>${r.resources.map((t) => `<div class="op-detail-row"><strong>${h(t.user_name)}</strong><span>${h(t.role)} · ${h(t.planned_hours)} h</span>${can() ? `<button class="btn btn-ghost" data-remove-resource="${t.user_id}">${KlyoModuleI18n.label("Remove plan", "Usuń plan")}</button>` : ""}</div>`).join("")}${r.time_entries.map((t) => `<div class="op-detail-row"><span>${h(day(t.spent_on))} · ${h(t.user_name)} · ${h(t.hours)} h</span><span>${h(t.task_title || "")} ${h(t.notes)}</span>${can() ? `<button class="btn btn-ghost" data-remove-time="${t.id}">${KlyoModuleI18n.label("Delete entry", "Usuń wpis")}</button>` : ""}</div>`).join("")}<div class="op-toolbar"><h3>${KlyoModuleI18n.label("Milestones & tasks", "Kamienie milowe i zadania")}</h3><button class="btn btn-primary" id="opProjectTask">${KlyoModuleI18n.label("Add task", "Dodaj zadanie")}</button></div><div data-project-tasks="${p.id}">${taskBoard(r.tasks)}</div><div class="op-toolbar"><h3>${KlyoModuleI18n.label("Orders & fulfillment", "Zamówienia i realizacja")}</h3><button class="btn btn-ghost" id="opProjectOrder">${KlyoModuleI18n.label("Add order", "Dodaj zamówienie")}</button></div><div class="op-grid">${r.orders.map(orderCard).join("") || empty("—")}</div><h3>${KlyoModuleI18n.label("Assigned equipment", "Przypisane wyposażenie")}</h3>${r.equipment.map((a) => `<div class="op-detail-row"><strong>${h(a.name)}</strong><span>${h(a.assigned_name)} · ${h(label(a.status))}</span><span>${h(dt(a.starts_at))} → ${h(dt(a.ends_at))}</span></div>`).join("") || empty("—")}<div class="op-toolbar"><h3>${KlyoModuleI18n.label("Documentation, agreements & protocols", "Dokumentacja, uzgodnienia i protokoły")}</h3><button class="btn btn-ghost" id="opProjectNote">${KlyoModuleI18n.label("Add record", "Dodaj wpis")}</button></div>${r.notes.map((n) => `<article class="op-note"><strong>${h(n.title)}</strong><small>${h(n.kind)} · ${h(n.author || "")} · ${h(dt(n.created_at))}</small><p>${h(n.body)}</p>${n.document_url ? `<a href="${h(n.document_url)}" target="_blank" rel="noopener">${KlyoModuleI18n.label("Open document", "Otwórz dokument")}</a>` : ""}</article>`).join("")}`,
         true,
       );
+      if (typeof KlyoCompletion !== "undefined")
+        KlyoCompletion.project(d, p, r);
       wireTasks(d.body, async () => {
         d.close();
         await showProject(p.id);
@@ -562,7 +577,7 @@ const KlyoOperations = (() => {
     await loadLookup();
     const d = dialog(
       L("Plan project resources", "Zaplanuj osoby w projekcie"),
-      `<form class="op-form">${select("user_id", L("Person", "Osoba"), lookup.users, null)}${field("role", L("Role / responsibility", "Rola / odpowiedzialność"))}${field("planned_hours", L("Planned hours", "Planowane godziny"), 0, "number", 'min="0" step="0.25" required')}${saveBtn()}</form>`,
+      `<form class="op-form">${select("user_id", L("Person", "Osoba"), lookup.users, null)}${field("role", L("Role / responsibility", "Rola / odpowiedzialność"))}${field("planned_hours", L("Planned hours", "Planowane godziny"), 0, "number", 'min="0" step="0.25" required')}${API.scope() === "personal" || API.getUser()?.is_team_owner ? field("hourly_cost", L("Hourly labor cost", "Koszt godziny pracy") + " · " + p.currency, "", "number", 'min="0" step="0.01"') : ""}${saveBtn()}</form>`,
     );
     d.find("form").onsubmit = (e) => {
       e.preventDefault();
@@ -653,7 +668,7 @@ const KlyoOperations = (() => {
   function renderOrders() {
     const list = filtered("orders", orders),
       box = g("ordersContent");
-    box.innerHTML = `<div class="op-kpis"><div><small>${L("Active orders", "Aktywne zamówienia")}</small><strong>${list.filter((o) => !["completed", "cancelled"].includes(o.status)).length}</strong></div><div><small>${L("Awaiting payment", "Do zapłaty")}</small><strong>${list.filter((o) => o.invoice_number && !o.paid_at).length}</strong></div><div><small>${L("Delivery acknowledgments missing", "Brak potwierdzenia dostawy")}</small><strong>${list.filter((o) => ["delivered", "completed"].includes(o.status) && !o.delivery_acknowledged_at).length}</strong></div></div><div class="op-grid">${list.map(orderCard).join("") || empty(L("Create an order from a won opportunity or add an internal / supplier order.", "Utwórz zamówienie z wygranej szansy lub dodaj zamówienie wewnętrzne / do dostawcy."))}</div>`;
+    box.innerHTML = `<div class="op-kpis"><div><small>${KlyoModuleI18n.label("Active orders", "Aktywne zamówienia")}</small><strong>${list.filter((o) => !["completed", "cancelled"].includes(o.status)).length}</strong></div><div><small>${KlyoModuleI18n.label("Awaiting payment", "Do zapłaty")}</small><strong>${list.filter((o) => o.invoice_number && !o.paid_at).length}</strong></div><div><small>${KlyoModuleI18n.label("Delivery acknowledgments missing", "Brak potwierdzenia dostawy")}</small><strong>${list.filter((o) => ["delivered", "completed"].includes(o.status) && !o.delivery_acknowledged_at).length}</strong></div></div><div class="op-grid">${list.map(orderCard).join("") || empty(L("Create an order from a won opportunity or add an internal / supplier order.", "Utwórz zamówienie z wygranej szansy lub dodaj zamówienie wewnętrzne / do dostawcy."))}</div>`;
     box
       .querySelectorAll("[data-order]")
       .forEach((b) => (b.onclick = () => showOrder(Number(b.dataset.order))));
@@ -684,7 +699,7 @@ const KlyoOperations = (() => {
         L("Won opportunity", "Wygrana szansa"),
         lookup.deals.filter((x) => x.status === "won"),
         o.deal_id,
-      )}${select("quote_id", L("Source quote", "Oferta źródłowa"), lookup.quotes, o.quote_id)}${select("project_id", L("Project", "Projekt"), lookup.projects, o.project_id)}${select("company_id", L("Company", "Firma"), lookup.companies, o.company_id)}${select("contact_id", L("Contact", "Kontakt"), lookup.contacts, o.contact_id)}${field("supplier_name", L("Supplier", "Dostawca"), o.supplier_name)}${field("currency", L("Currency", "Waluta"), o.currency || (typeof workspaceDefaultCurrency !== "undefined" ? workspaceDefaultCurrency : "USD"), "text", 'maxlength="3" required')}${field("confirmed_delivery_date", L("Confirmed delivery date", "Potwierdzony termin dostawy"), day(o.confirmed_delivery_date), "date")}<div class="op-wide op-toolbar"><h3>${L("Final items & serial numbers", "Pozycje końcowe i numery seryjne")}</h3><button class="btn btn-ghost" type="button" id="opAddOrderItem">${L("Add item", "Dodaj pozycję")}</button></div><div class="op-wide" id="opOrderItems"></div><p class="muted op-wide">${L("Order prices and payments are net amounts, excluding VAT. If a source quote is selected and this list is empty, its items and net value are copied. Required serial numbers must be supplied before confirmation.", "Ceny i rozliczenia zamówienia to kwoty netto, bez VAT. Jeśli wybierzesz ofertę źródłową i lista będzie pusta, jej pozycje i wartość netto zostaną skopiowane. Wymagane numery seryjne trzeba podać przed potwierdzeniem.")}</p>${field("total", L("Final negotiated net amount", "Końcowa uzgodniona kwota netto"), o.total ?? "", "number", 'min="0" step="0.01"')}${field("carrier", L("Carrier", "Przewoźnik"), log.carrier)}${field("tracking_number", L("Tracking number", "Numer przesyłki"), log.tracking_number)}${field("shipping_date", L("Shipping date", "Data wysyłki"), day(log.shipping_date), "date")}${area("delivery_address", L("Delivery address", "Adres dostawy"), log.delivery_address)}${field("delivery_terms", L("Delivery terms", "Warunki dostawy"), log.delivery_terms)}${field("delivery_acknowledged_at", L("Customer acknowledged delivery", "Klient potwierdził dostawę"), o.delivery_acknowledged_at ? localStamp(o.delivery_acknowledged_at) : "", "datetime-local")}${field("delivery_acknowledged_by", L("Signed / acknowledged by", "Podpis / potwierdzenie przez"), o.delivery_acknowledged_by)}${field("delivery_document_url", L("Signed delivery document (HTTPS)", "Podpisany dokument dostawy (HTTPS)"), o.delivery_document_url, "url")}${field("invoice_number", L("Invoice number", "Numer faktury"), o.invoice_number)}${field("invoice_issued_at", L("Invoice issue date", "Data wystawienia faktury"), day(o.invoice_issued_at), "date")}${field("invoice_due_date", L("Payment due", "Termin płatności"), day(o.invoice_due_date), "date")}${field("paid_amount", L("Net payment allocated", "Rozliczona wpłata netto"), o.paid_amount || 0, "number", 'min="0" step="0.01"')}${field("paid_at", L("Fully paid at", "Zapłacono w całości"), o.paid_at ? localStamp(o.paid_at) : "", "datetime-local")}${area("notes", L("Notes", "Notatki"), o.notes)}${saveBtn()}</form>`,
+      )}${select("quote_id", L("Source quote", "Oferta źródłowa"), lookup.quotes, o.quote_id)}${select("project_id", L("Project", "Projekt"), lookup.projects, o.project_id)}${select("company_id", L("Company", "Firma"), lookup.companies, o.company_id)}${select("contact_id", L("Contact", "Kontakt"), lookup.contacts, o.contact_id)}${field("supplier_name", L("Supplier", "Dostawca"), o.supplier_name)}${field("currency", L("Currency", "Waluta"), o.currency || (typeof workspaceDefaultCurrency !== "undefined" ? workspaceDefaultCurrency : "USD"), "text", 'maxlength="3" required')}${field("confirmed_delivery_date", L("Confirmed delivery date", "Potwierdzony termin dostawy"), day(o.confirmed_delivery_date), "date")}<div class="op-wide op-toolbar"><h3>${KlyoModuleI18n.label("Final items & serial numbers", "Pozycje końcowe i numery seryjne")}</h3><button class="btn btn-ghost" type="button" id="opAddOrderItem">${KlyoModuleI18n.label("Add item", "Dodaj pozycję")}</button></div><div class="op-wide" id="opOrderItems"></div><p class="muted op-wide">${KlyoModuleI18n.label("Order prices and payments are net amounts, excluding VAT. If a source quote is selected and this list is empty, its items and net value are copied. Required serial numbers must be supplied before confirmation.", "Ceny i rozliczenia zamówienia to kwoty netto, bez VAT. Jeśli wybierzesz ofertę źródłową i lista będzie pusta, jej pozycje i wartość netto zostaną skopiowane. Wymagane numery seryjne trzeba podać przed potwierdzeniem.")}</p>${field("total", L("Final negotiated net amount", "Końcowa uzgodniona kwota netto"), o.total ?? "", "number", 'min="0" step="0.01"')}${field("carrier", L("Carrier", "Przewoźnik"), log.carrier)}${field("tracking_number", L("Tracking number", "Numer przesyłki"), log.tracking_number)}${field("shipping_date", L("Shipping date", "Data wysyłki"), day(log.shipping_date), "date")}${area("delivery_address", L("Delivery address", "Adres dostawy"), log.delivery_address)}${field("delivery_terms", L("Delivery terms", "Warunki dostawy"), log.delivery_terms)}${field("delivery_acknowledged_at", L("Customer acknowledged delivery", "Klient potwierdził dostawę"), o.delivery_acknowledged_at ? localStamp(o.delivery_acknowledged_at) : "", "datetime-local")}${field("delivery_acknowledged_by", L("Signed / acknowledged by", "Podpis / potwierdzenie przez"), o.delivery_acknowledged_by)}${field("delivery_document_url", L("Signed delivery document (HTTPS)", "Podpisany dokument dostawy (HTTPS)"), o.delivery_document_url, "url")}${field("invoice_number", L("Invoice number", "Numer faktury"), o.invoice_number)}${field("invoice_issued_at", L("Invoice issue date", "Data wystawienia faktury"), day(o.invoice_issued_at), "date")}${field("invoice_due_date", L("Payment due", "Termin płatności"), day(o.invoice_due_date), "date")}${field("paid_amount", L("Net payment allocated", "Rozliczona wpłata netto"), o.paid_amount || 0, "number", 'min="0" step="0.01"')}${field("paid_at", L("Fully paid at", "Zapłacono w całości"), o.paid_at ? localStamp(o.paid_at) : "", "datetime-local")}${area("notes", L("Notes", "Notatki"), o.notes)}${saveBtn()}</form>`,
       true,
     );
     let items = structuredClone(o.items || []);
@@ -692,7 +707,7 @@ const KlyoOperations = (() => {
       d.find("#opOrderItems").innerHTML = items
         .map(
           (x, i) =>
-            `<div class="op-order-item" data-order-item="${i}"><select data-item-field="product_id">${opts(lookup.products, x.product_id)}</select><input data-item-field="name" value="${h(x.name || x.description || "")}" placeholder="${L("Name / description", "Nazwa / opis")}"><input data-item-field="quantity" type="number" min="0.01" step="0.01" value="${h(x.quantity || 1)}" aria-label="Quantity"><input data-item-field="unit_price" type="number" min="0" step="0.01" value="${h(x.unit_price || 0)}" aria-label="Unit price"><input data-item-field="serial_numbers" value="${h((x.serial_numbers || []).join(", "))}" placeholder="${L("Serial numbers, comma separated", "Numery seryjne, oddzielone przecinkiem")}"><button type="button" class="btn btn-ghost" data-remove-item="${i}" aria-label="Remove">×</button></div>`,
+            `<div class="op-order-item" data-order-item="${i}"><select data-item-field="product_id">${opts(lookup.products, x.product_id)}</select><input data-item-field="name" value="${h(x.name || x.description || "")}" placeholder="${L("Name / description", "Nazwa / opis")}"><input data-item-field="quantity" type="number" min="0.01" step="0.01" value="${h(x.quantity || 1)}" aria-label="${KlyoModuleI18n.pick("Quantity")}"><input data-item-field="unit_price" type="number" min="0" step="0.01" value="${h(x.unit_price || 0)}" aria-label="${KlyoModuleI18n.pick("Unit price")}"><input data-item-field="serial_numbers" value="${h((x.serial_numbers || []).join(", "))}" placeholder="${L("Serial numbers, comma separated", "Numery seryjne, oddzielone przecinkiem")}"><button type="button" class="btn btn-ghost" data-remove-item="${i}" aria-label="${KlyoModuleI18n.pick("Remove")}">×</button></div>`,
         )
         .join("");
       d.body.querySelectorAll("[data-item-field]").forEach(
@@ -767,10 +782,11 @@ const KlyoOperations = (() => {
         ];
       const d = dialog(
         o.number + " · " + o.title,
-        `<div class="op-toolbar"><span class="op-badge">${h(label(o.kind))}</span><button class="btn btn-ghost" id="opOrderEdit">${L("Edit order", "Edytuj zamówienie")}</button><button class="btn btn-ghost" id="opOrderFiles">${L("Files", "Pliki")}</button>${o.kind === "customer" ? `<button class="btn btn-primary" id="opConfirmation">${L("Order confirmation PDF", "Potwierdzenie zamówienia PDF")}</button><button class="btn btn-ghost" id="opConfirmationSettings">${L("Customize confirmation", "Dostosuj potwierdzenie")}</button>` : ""}</div><div class="op-order-stages">${stages.map((s, i) => `<span class="${stages.indexOf(o.status) >= i ? "is-done" : ""}">${h(label(s))}</span>`).join("")}</div><div class="op-kpis"><div><small>${L("Net amount", "Kwota netto")}</small><strong>${h(money(o.total, o.currency))}</strong></div><div><small>${L("Paid", "Wpłacono")}</small><strong>${h(money(o.paid_amount, o.currency))}</strong></div><div><small>${L("Outstanding net amount", "Pozostała kwota netto")}</small><strong>${h(money(Number(o.total) - Number(o.paid_amount), o.currency))}</strong></div></div><h3>${L("Order items", "Pozycje zamówienia")}</h3><div class="doc-scroll"><table class="doc-table"><thead><tr><th>${L("Item", "Pozycja")}</th><th>${L("Quantity", "Ilość")}</th><th>${L("Net unit price", "Cena jednostkowa netto")}</th><th>${L("Serial numbers", "Numery seryjne")}</th></tr></thead><tbody>${o.items.map((i) => `<tr><td>${h(i.name || i.description)}</td><td>${h(i.quantity)}</td><td>${h(money(i.unit_price, o.currency))}</td><td>${h((i.serial_numbers || []).join(", "))}</td></tr>`).join("")}</tbody></table></div><div class="op-grid"><section class="op-card"><h3>${L("Logistics & delivery", "Logistyka i dostawa")}</h3><p>${L("Confirmed delivery", "Potwierdzona dostawa")}: ${h(day(o.confirmed_delivery_date) || "—")}</p><p>${h(log.delivery_address || "—")}</p><p>${h(log.delivery_terms || "")}</p><p>${h(log.carrier || "")} · ${h(log.tracking_number || "")}</p>${log.tracking_number ? `<button class="btn btn-ghost" id="opTracking">${L("Open carrier tracking", "Otwórz śledzenie przewoźnika")}</button>` : ""}<p class="${o.delivery_acknowledged_at ? "" : "op-overdue"}">${o.delivery_acknowledged_at ? h(dt(o.delivery_acknowledged_at) + " · " + o.delivery_acknowledged_by) : L("Customer delivery acknowledgment missing", "Brak potwierdzenia dostawy przez klienta")}</p>${o.delivery_document_url ? `<a target="_blank" rel="noopener" href="${h(o.delivery_document_url)}">${L("Signed delivery document", "Podpisany dokument dostawy")}</a>` : ""}</section><section class="op-card"><h3>${L("Invoice & payment register", "Rejestr faktur i płatności")}</h3>${o.kind === "customer" ? `<button class="btn btn-ghost" id="opInvoiceProvider">${L("Invoice integration", "Integracja fakturowania")}</button>` : ""}<p>${h(o.invoice_number || L("No invoice recorded", "Nie zapisano faktury"))}</p><p>${L("Issued", "Wystawiono")}: ${h(day(o.invoice_issued_at) || "—")}</p><p>${L("Payment due", "Termin płatności")}: ${h(day(o.invoice_due_date) || "—")}</p><p>${o.paid_at ? L("Paid", "Zapłacono") + " · " + h(dt(o.paid_at)) : L("Not fully paid", "Nieopłacone w całości")}</p><small>${L("Update invoice and payment details using Edit order.", "Zaktualizuj fakturę i płatność w Edytuj zamówienie.")}</small></section></div><p>${h(o.notes)}</p><h3>${L("Order history", "Historia zamówienia")}</h3>${r.events.map((e) => `<div class="op-detail-row"><span>${h(e.description)}</span><small>${h(e.user_name || "")} · ${h(dt(e.created_at))}</small></div>`).join("")}`,
+        `<div class="op-toolbar"><span class="op-badge">${h(label(o.kind))}</span><button class="btn btn-ghost" id="opOrderEdit">${KlyoModuleI18n.label("Edit order", "Edytuj zamówienie")}</button><button class="btn btn-ghost" id="opOrderFiles">${KlyoModuleI18n.label("Files", "Pliki")}</button>${o.kind === "customer" ? `<button class="btn btn-primary" id="opConfirmation">${KlyoModuleI18n.label("Order confirmation PDF", "Potwierdzenie zamówienia PDF")}</button><button class="btn btn-ghost" id="opConfirmationSettings">${KlyoModuleI18n.label("Customize confirmation", "Dostosuj potwierdzenie")}</button>` : ""}</div><div class="op-order-stages">${stages.map((s, i) => `<span class="${stages.indexOf(o.status) >= i ? "is-done" : ""}">${h(label(s))}</span>`).join("")}</div><div class="op-kpis"><div><small>${KlyoModuleI18n.label("Net amount", "Kwota netto")}</small><strong>${h(money(o.total, o.currency))}</strong></div><div><small>${KlyoModuleI18n.label("Paid", "Wpłacono")}</small><strong>${h(money(o.paid_amount, o.currency))}</strong></div><div><small>${KlyoModuleI18n.label("Outstanding net amount", "Pozostała kwota netto")}</small><strong>${h(money(Number(o.total) - Number(o.paid_amount), o.currency))}</strong></div></div><h3>${KlyoModuleI18n.label("Order items", "Pozycje zamówienia")}</h3><div class="doc-scroll"><table class="doc-table"><thead><tr><th>${KlyoModuleI18n.label("Item", "Pozycja")}</th><th>${KlyoModuleI18n.label("Quantity", "Ilość")}</th><th>${KlyoModuleI18n.label("Net unit price", "Cena jednostkowa netto")}</th><th>${KlyoModuleI18n.label("Serial numbers", "Numery seryjne")}</th></tr></thead><tbody>${o.items.map((i) => `<tr><td>${h(i.name || i.description)}</td><td>${h(i.quantity)}</td><td>${h(money(i.unit_price, o.currency))}</td><td>${h((i.serial_numbers || []).join(", "))}</td></tr>`).join("")}</tbody></table></div><div class="op-grid"><section class="op-card"><h3>${KlyoModuleI18n.label("Logistics & delivery", "Logistyka i dostawa")}</h3><p>${L("Confirmed delivery", "Potwierdzona dostawa")}: ${h(day(o.confirmed_delivery_date) || "—")}</p><p>${h(log.delivery_address || "—")}</p><p>${h(log.delivery_terms || "")}</p><p>${h(log.carrier || "")} · ${h(log.tracking_number || "")}</p>${log.tracking_number ? `<button class="btn btn-ghost" id="opTracking">${KlyoModuleI18n.label("Open carrier tracking", "Otwórz śledzenie przewoźnika")}</button>` : ""}<p class="${o.delivery_acknowledged_at ? "" : "op-overdue"}">${o.delivery_acknowledged_at ? h(dt(o.delivery_acknowledged_at) + " · " + o.delivery_acknowledged_by) : L("Customer delivery acknowledgment missing", "Brak potwierdzenia dostawy przez klienta")}</p>${o.delivery_document_url ? `<a target="_blank" rel="noopener" href="${h(o.delivery_document_url)}">${KlyoModuleI18n.label("Signed delivery document", "Podpisany dokument dostawy")}</a>` : ""}</section><section class="op-card"><h3>${KlyoModuleI18n.label("Invoice & payment register", "Rejestr faktur i płatności")}</h3>${o.kind === "customer" ? `<button class="btn btn-ghost" id="opInvoiceProvider">${KlyoModuleI18n.label("Invoice integration", "Integracja fakturowania")}</button>` : ""}<p>${h(o.invoice_number || L("No invoice recorded", "Nie zapisano faktury"))}</p><p>${L("Issued", "Wystawiono")}: ${h(day(o.invoice_issued_at) || "—")}</p><p>${L("Payment due", "Termin płatności")}: ${h(day(o.invoice_due_date) || "—")}</p><p>${o.paid_at ? L("Paid", "Zapłacono") + " · " + h(dt(o.paid_at)) : L("Not fully paid", "Nieopłacone w całości")}</p><small>${KlyoModuleI18n.label("Update invoice and payment details using Edit order.", "Zaktualizuj fakturę i płatność w Edytuj zamówienie.")}</small></section></div><p>${h(o.notes)}</p><h3>${KlyoModuleI18n.label("Order history", "Historia zamówienia")}</h3>${r.events.map((e) => `<div class="op-detail-row"><span>${h(e.description)}</span><small>${h(e.user_name || "")} · ${h(dt(e.created_at))}</small></div>`).join("")}`,
         true,
       );
       d.find("#opOrderEdit").disabled = !can();
+      if (typeof KlyoCompletion !== "undefined") KlyoCompletion.order(d, o);
       d.find("#opOrderEdit").onclick = () => {
         d.close();
         orderEditor(o);
@@ -839,7 +855,7 @@ const KlyoOperations = (() => {
       "";
     const d = dialog(
       L("Customize order confirmation", "Dostosuj potwierdzenie zamówienia"),
-      `<p>${L("Reuse a saved proposal template, including your own A4 design, or adjust the confirmation below. Order items, final net amount and confirmed delivery date always come from the order.", "Użyj zapisanego szablonu oferty, również własnego projektu A4, lub zmień dane poniżej. Pozycje, końcowa cena netto i potwierdzony termin dostawy pochodzą z zamówienia.")}</p><form class="op-form"><label>${L("Template", "Szablon")}<select name="template"><option value="">${L("Current / inherited from source offer", "Bieżący / odziedziczony z oferty")}</option>${(templates.templates || []).map((t) => `<option value="${t.id}">${h(t.name)}</option>`).join("")}</select></label>${select(
+      `<p>${KlyoModuleI18n.label("Reuse a saved proposal template, including your own A4 design, or adjust the confirmation below. Order items, final net amount and confirmed delivery date always come from the order.", "Użyj zapisanego szablonu oferty, również własnego projektu A4, lub zmień dane poniżej. Pozycje, końcowa cena netto i potwierdzony termin dostawy pochodzą z zamówienia.")}</p><form class="op-form"><label>${KlyoModuleI18n.label("Template", "Szablon")}<select name="template"><option value="">${KlyoModuleI18n.label("Current / inherited from source offer", "Bieżący / odziedziczony z oferty")}</option>${(templates.templates || []).map((t) => `<option value="${t.id}">${h(t.name)}</option>`).join("")}</select></label>${select(
         "language",
         L("PDF language", "Język PDF"),
         [
@@ -848,7 +864,7 @@ const KlyoOperations = (() => {
         ],
         settings.language,
         false,
-      )}${select("layout", L("Layout", "Układ"), [{ id: "studio", name: "Studio" }, { id: "executive", name: "Executive" }, ...(settings.canvas ? [{ id: "canvas", name: "Custom A4" }] : [])], settings.layout, false)}${field("accent", L("Accent", "Kolor"), settings.accent, "color")}${select(
+      )}${select("layout", L("Layout", "Układ"), [{ id: "studio", name: "Studio" }, { id: "executive", name: "Executive" }, ...(settings.canvas ? [{ id: "canvas", name: KlyoModuleI18n.pick("Custom A4") }] : [])], settings.layout, false)}${field("accent", L("Accent", "Kolor"), settings.accent, "color")}${select(
         "pricing_mode",
         L("Client prices", "Ceny dla klienta"),
         [
@@ -891,7 +907,7 @@ const KlyoOperations = (() => {
       ]
         .map(
           (k) =>
-            `<option value="${k}">${k === "canvas" ? "Custom A4" : k}</option>`,
+            `<option value="${k}">${k === "canvas" ? KlyoModuleI18n.pick("Custom A4") : k}</option>`,
         )
         .join("");
       form.elements.layout.value = settings.layout;
@@ -936,7 +952,7 @@ const KlyoOperations = (() => {
     const list = filtered("equipment", equipment),
       today = new Date().toISOString().slice(0, 10);
     g("equipmentContent").innerHTML =
-      `<div class="op-kpis"><div><small>${L("Active equipment", "Aktywne wyposażenie")}</small><strong>${list.filter((e) => !e.retired).length}</strong></div><div><small>${L("Checked out", "Pobrane")}</small><strong>${list.filter((e) => e.assignments.some((a) => a.status === "checked_out")).length}</strong></div><div><small>${L("Calibration due", "Wymagana kalibracja")}</small><strong>${list.filter((e) => !e.retired && e.next_calibration && day(e.next_calibration) <= today).length}</strong></div></div><div class="op-grid">${list.map((e) => `<article class="op-card" data-equipment="${e.id}">${e.inspection_photo ? `<img class="op-equipment-photo" src="${h(e.inspection_photo)}" alt="${h(e.name)}" loading="lazy">` : ""}<strong>${h(e.name)}</strong><span>${h(e.manufacturer)} · ${h(e.model)}</span><span>${L("Serial", "Numer seryjny")}: ${h(e.serial_number || "—")}</span><span>${h(label(e.technical_condition))}${e.retired ? " · " + L("Retired", "Wycofane") : ""}</span><div class="${e.next_calibration && day(e.next_calibration) <= today ? "op-calibration-due" : ""}">${L("Next calibration", "Następna kalibracja")}: ${h(day(e.next_calibration) || "—")}</div>${e.assignments.map((a) => `<small>${h(label(a.status))} · ${h(a.assigned_name)} · ${h(dt(a.ends_at))}</small>`).join("")}</article>`).join("") || empty(L("Add measuring instruments, tools or presentation equipment.", "Dodaj przyrządy pomiarowe, narzędzia i sprzęt demonstracyjny."))}</div>`;
+      `<div class="op-kpis"><div><small>${KlyoModuleI18n.label("Active equipment", "Aktywne wyposażenie")}</small><strong>${list.filter((e) => !e.retired).length}</strong></div><div><small>${KlyoModuleI18n.label("Checked out", "Pobrane")}</small><strong>${list.filter((e) => e.assignments.some((a) => a.status === "checked_out")).length}</strong></div><div><small>${KlyoModuleI18n.label("Calibration due", "Wymagana kalibracja")}</small><strong>${list.filter((e) => !e.retired && e.next_calibration && day(e.next_calibration) <= today).length}</strong></div></div><div class="op-grid">${list.map((e) => `<article class="op-card" data-equipment="${e.id}">${e.inspection_photo ? `<img class="op-equipment-photo" src="${h(e.inspection_photo)}" alt="${h(e.name)}" loading="lazy">` : ""}<strong>${h(e.name)}</strong><span>${h(e.manufacturer)} · ${h(e.model)}</span><span>${L("Serial", "Numer seryjny")}: ${h(e.serial_number || "—")}</span><span>${h(label(e.technical_condition))}${e.retired ? " · " + L("Retired", "Wycofane") : ""}</span><div class="${e.next_calibration && day(e.next_calibration) <= today ? "op-calibration-due" : ""}">${L("Next calibration", "Następna kalibracja")}: ${h(day(e.next_calibration) || "—")}</div>${e.assignments.map((a) => `<small>${h(label(a.status))} · ${h(a.assigned_name)} · ${h(dt(a.ends_at))}</small>`).join("")}</article>`).join("") || empty(L("Add measuring instruments, tools or presentation equipment.", "Dodaj przyrządy pomiarowe, narzędzia i sprzęt demonstracyjny."))}</div>`;
     g("equipmentContent")
       .querySelectorAll("[data-equipment]")
       .forEach(
@@ -949,7 +965,7 @@ const KlyoOperations = (() => {
       e.id
         ? L("Edit equipment", "Edytuj wyposażenie")
         : L("New equipment", "Nowe wyposażenie"),
-      `<form class="op-form">${field("name", L("Equipment name", "Nazwa wyposażenia"), e.name, "text", "required")}${field("manufacturer", L("Manufacturer", "Producent"), e.manufacturer)}${field("model", L("Model", "Model"), e.model)}${field("serial_number", L("Serial number", "Numer seryjny"), e.serial_number)}${field("last_calibration", L("Last calibration", "Ostatnia kalibracja"), day(e.last_calibration), "date")}${field("calibration_months", L("Calibration interval (months; 0 = none)", "Okres kalibracji (miesiące; 0 = brak)"), e.calibration_months ?? 12, "number", 'min="0" max="120" step="1" required')}${select("technical_condition", L("Technical condition", "Stan techniczny"), ["good", "needs_inspection", "damaged", "repair"], e.technical_condition || "good", false)}${select("assigned_to", L("Equipment custodian", "Opiekun sprzętu"), lookup.users, e.assigned_to)}${field("inspection_photo", L("Inspection photo HTTPS link", "Zdjęcie inspekcyjne — link HTTPS"), e.inspection_photo, "url")}${check("retired", L("Retired / unavailable", "Wycofane / niedostępne"), e.retired)}${area("notes", L("Inspection notes", "Notatki inspekcyjne"), e.notes)}<p class="muted op-wide">${L("Saving the calibration date creates one calibration task for the next due date. Updating the date closes the previous calibration task.", "Zapisanie daty kalibracji tworzy jedno zadanie z terminem następnej kalibracji. Zmiana daty zamyka poprzednie zadanie kalibracji.")}</p>${saveBtn()}</form>`,
+      `<form class="op-form">${field("name", L("Equipment name", "Nazwa wyposażenia"), e.name, "text", "required")}${field("manufacturer", L("Manufacturer", "Producent"), e.manufacturer)}${field("model", L("Model", "Model"), e.model)}${field("serial_number", L("Serial number", "Numer seryjny"), e.serial_number)}${field("last_calibration", L("Last calibration", "Ostatnia kalibracja"), day(e.last_calibration), "date")}${field("calibration_months", L("Calibration interval (months; 0 = none)", "Okres kalibracji (miesiące; 0 = brak)"), e.calibration_months ?? 12, "number", 'min="0" max="120" step="1" required')}${select("technical_condition", L("Technical condition", "Stan techniczny"), ["good", "needs_inspection", "damaged", "repair"], e.technical_condition || "good", false)}${select("assigned_to", L("Equipment custodian", "Opiekun sprzętu"), lookup.users, e.assigned_to)}${field("inspection_photo", L("Inspection photo HTTPS link", "Zdjęcie inspekcyjne — link HTTPS"), e.inspection_photo, "url")}${check("retired", L("Retired / unavailable", "Wycofane / niedostępne"), e.retired)}${area("notes", L("Inspection notes", "Notatki inspekcyjne"), e.notes)}<p class="muted op-wide">${KlyoModuleI18n.label("Saving the calibration date creates one calibration task for the next due date. Updating the date closes the previous calibration task.", "Zapisanie daty kalibracji tworzy jedno zadanie z terminem następnej kalibracji. Zmiana daty zamyka poprzednie zadanie kalibracji.")}</p>${saveBtn()}</form>`,
       true,
     );
     d.find("form").onsubmit = (x) => {
@@ -972,7 +988,7 @@ const KlyoOperations = (() => {
       const r = await API.get("/operations/equipment/" + id + "/history"),
         d = dialog(
           e.name,
-          `<div class="op-toolbar"><button class="btn btn-ghost" id="opEquipmentEdit">${L("Edit / calibrate", "Edytuj / kalibruj")}</button><button class="btn btn-ghost" id="opEquipmentFiles">${L("Files / inspection photos", "Pliki / zdjęcia inspekcyjne")}</button><button class="btn btn-primary" id="opReserveEquipment">${L("Reserve / assign", "Zarezerwuj / przypisz")}</button></div><p>${h(e.manufacturer)} ${h(e.model)} · ${h(e.serial_number)}</p><p>${L("Last / next calibration", "Ostatnia / następna kalibracja")}: ${h(day(e.last_calibration) || "—")} / ${h(day(e.next_calibration) || "—")}</p><p>${h(e.notes)}</p><h3>${L("Reservations, check-outs & returns", "Rezerwacje, pobrania i zwroty")}</h3>${r.assignments.map((a) => `<article class="op-note"><strong>${h(a.assigned_name)} · ${h(label(a.status))}</strong><span>${h(a.project_title || "")}</span><span>${h(dt(a.starts_at))} → ${h(dt(a.ends_at))}</span><p>${h(a.notes)}</p>${a.checkout_condition ? `<small>${L("Checkout condition", "Stan przy pobraniu")}: ${h(a.checkout_condition)}</small>` : ""}${a.return_condition ? `<small>${L("Return condition", "Stan przy zwrocie")}: ${h(a.return_condition)}</small>` : ""}${can() && a.status === "reserved" ? `<button class="btn btn-primary" data-assignment="${a.id}" data-action="checked_out">${L("Check out", "Pobierz")}</button><button class="btn btn-ghost" data-assignment="${a.id}" data-action="cancelled">${L("Cancel reservation", "Anuluj rezerwację")}</button>` : can() && a.status === "checked_out" ? `<button class="btn btn-primary" data-assignment="${a.id}" data-action="returned">${L("Return equipment", "Zdaj sprzęt")}</button>` : ""}</article>`).join("") || empty("—")}`,
+          `<div class="op-toolbar"><button class="btn btn-ghost" id="opEquipmentEdit">${KlyoModuleI18n.label("Edit / calibrate", "Edytuj / kalibruj")}</button><button class="btn btn-ghost" id="opEquipmentFiles">${KlyoModuleI18n.label("Files / inspection photos", "Pliki / zdjęcia inspekcyjne")}</button><button class="btn btn-primary" id="opReserveEquipment">${KlyoModuleI18n.label("Reserve / assign", "Zarezerwuj / przypisz")}</button></div><p>${h(e.manufacturer)} ${h(e.model)} · ${h(e.serial_number)}</p><p>${L("Last / next calibration", "Ostatnia / następna kalibracja")}: ${h(day(e.last_calibration) || "—")} / ${h(day(e.next_calibration) || "—")}</p><p>${h(e.notes)}</p><h3>${KlyoModuleI18n.label("Reservations, check-outs & returns", "Rezerwacje, pobrania i zwroty")}</h3>${r.assignments.map((a) => `<article class="op-note"><strong>${h(a.assigned_name)} · ${h(label(a.status))}</strong><span>${h(a.project_title || "")}</span><span>${h(dt(a.starts_at))} → ${h(dt(a.ends_at))}</span><p>${h(a.notes)}</p>${a.checkout_condition ? `<small>${L("Checkout condition", "Stan przy pobraniu")}: ${h(a.checkout_condition)}</small>` : ""}${a.return_condition ? `<small>${L("Return condition", "Stan przy zwrocie")}: ${h(a.return_condition)}</small>` : ""}${can() && a.status === "reserved" ? `<button class="btn btn-primary" data-assignment="${a.id}" data-action="checked_out">${KlyoModuleI18n.label("Check out", "Pobierz")}</button><button class="btn btn-ghost" data-assignment="${a.id}" data-action="cancelled">${KlyoModuleI18n.label("Cancel reservation", "Anuluj rezerwację")}</button>` : can() && a.status === "checked_out" ? `<button class="btn btn-primary" data-assignment="${a.id}" data-action="returned">${KlyoModuleI18n.label("Return equipment", "Zdaj sprzęt")}</button>` : ""}</article>`).join("") || empty("—")}`,
           true,
         );
       d.find("#opEquipmentEdit").onclick = () => {
@@ -1039,7 +1055,7 @@ const KlyoOperations = (() => {
     if (slot) slot.remove();
     slot = document.createElement("div");
     slot.className = "op-toolbar op-deal-actions";
-    slot.innerHTML = `<button class="btn btn-ghost" data-create-project>${L("Create project", "Utwórz projekt")}</button><button class="btn btn-ghost" data-create-order>${L("Create order", "Utwórz zamówienie")}</button>`;
+    slot.innerHTML = `<button class="btn btn-ghost" data-create-project>${KlyoModuleI18n.label("Create project", "Utwórz projekt")}</button><button class="btn btn-ghost" data-create-order>${KlyoModuleI18n.label("Create order", "Utwórz zamówienie")}</button>`;
     container.append(slot);
     slot.querySelector("[data-create-project]").onclick = () =>
       projectEditor(

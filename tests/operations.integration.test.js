@@ -131,6 +131,7 @@ test(
           parent = r.data.task;
           r = await req("/tasks", "POST", {
             title: "Measurement",
+            due_date:"2030-10-01",
             parent_id: parent.id,
             assigned_to: 3,
             reminder_at: "2020-01-01T12:00:00Z",

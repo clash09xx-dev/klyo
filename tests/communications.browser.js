@@ -135,6 +135,9 @@ const assert = require("node:assert/strict"),
         };
       });
       await page.addScriptTag({
+        path: path.resolve("public/js/module-i18n.js"),
+      });
+      await page.addScriptTag({
         path: path.resolve("public/js/document-tools.js"),
       });
       await page.addScriptTag({

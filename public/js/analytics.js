@@ -2,7 +2,7 @@ const KlyoAnalytics = (() => {
   const g = (id) => document.getElementById(id),
     h = KlyoDocumentTools.esc,
     pl = () => KlyoI18n.getLang() === "pl",
-    l = (en, pol) => (pl() ? pol : en);
+    l = (en, pol) => KlyoModuleI18n.pick(en, pol);
   let report = null,
     version = 0,
     mounted = false;
@@ -63,7 +63,17 @@ const KlyoAnalytics = (() => {
     mounted = true;
     g("salesOverviewView").insertAdjacentHTML(
       "afterbegin",
-      `<section id="analyticsDashboard"><div class="analytics-heading"><div><span class="eyebrow">${l("Sales reporting", "Raporty sprzedaży")}</span><h2>${l("Performance & forecast", "Wyniki i prognoza")}</h2></div><button class="btn btn-ghost btn-sm" id="analyticsExport"></button></div><form id="analyticsFilters" class="analytics-filters"><label><span data-an="month"></span><input type="month" id="analyticsMonth" min="2000-01" max="2100-12" required></label><label><span data-an="currency"></span><select id="analyticsCurrency">${["USD", "PLN", "EUR", "GBP", "CHF", "CAD", "AUD", "JPY", "SEK", "NOK", "DKK", "CZK", "HUF", "RON", "BGN", "HRK", "INR", "BRL", "MXN", "SGD"].map((c) => `<option>${c}</option>`).join("")}</select></label><label><span data-an="owner"></span><select id="analyticsOwner"><option value=""></option></select></label><button class="btn btn-primary btn-sm" data-an="apply"></button></form><p class="analytics-note" data-an="note"></p><div id="analyticsMetrics" class="analytics-metrics"></div><div id="analyticsGoal"></div><div class="analytics-charts"><article class="analytics-chart"><h3 data-an="trend"></h3><div id="analyticsTrend"></div></article><article class="analytics-chart"><h3 data-an="stage"></h3><div id="analyticsStages"></div></article></div><section id="analyticsActivity" class="analytics-chart"></section><p class="form-error" id="analyticsError" role="alert"></p></section>`,
+      `<section id="analyticsDashboard"><div class="analytics-heading"><div><span class="eyebrow">${KlyoModuleI18n.label("Sales reporting", "Raporty sprzedaży")}</span><h2>${KlyoModuleI18n.label("Performance & forecast", "Wyniki i prognoza")}</h2></div><button class="btn btn-ghost btn-sm" id="analyticsExport"></button></div><form id="analyticsFilters" class="analytics-filters"><label><span data-an="month"></span><input type="month" id="analyticsMonth" min="2000-01" max="2100-12" required></label><label><span data-an="currency"></span><select id="analyticsCurrency">${["USD", "PLN", "EUR", "GBP", "CHF", "CAD", "AUD", "JPY", "SEK", "NOK", "DKK", "CZK", "HUF", "RON", "BGN", "HRK", "INR", "BRL", "MXN", "SGD"].map((c) => `<option>${c}</option>`).join("")}</select></label><label><span data-an="owner"></span><select id="analyticsOwner"><option value=""></option></select></label><button class="btn btn-primary btn-sm" data-an="apply"></button></form><p class="analytics-note" data-an="note"></p><div id="analyticsMetrics" class="analytics-metrics"></div><div id="analyticsGoal"></div><div class="analytics-charts"><article class="analytics-chart"><h3 data-an="trend"></h3><div id="analyticsTrend"></div></article><article class="analytics-chart"><h3 data-an="stage"></h3><div id="analyticsStages"></div></article></div><section id="analyticsActivity" class="analytics-chart"></section><p class="form-error" id="analyticsError" role="alert"></p></section>`,
+    );
+    g("analyticsOwner")
+      .closest("label")
+      .insertAdjacentHTML(
+        "afterend",
+        `<label>${KlyoModuleI18n.label("Pipeline", "Lejek")}<select id="analyticsPipeline"><option value="">${KlyoModuleI18n.label("All pipelines", "Wszystkie lejki")}</option></select></label>`,
+      );
+    g("analyticsActivity").insertAdjacentHTML(
+      "afterend",
+      '<div id="analyticsExtended"></div>',
     );
     const now = new Date();
     g("analyticsMonth").value =
@@ -92,6 +102,7 @@ const KlyoAnalytics = (() => {
       month: g("analyticsMonth").value,
       currency: g("analyticsCurrency").value,
       user_id: g("analyticsOwner").value,
+      pipeline_id: g("analyticsPipeline").value,
     });
   }
   async function load() {
@@ -113,6 +124,7 @@ const KlyoAnalytics = (() => {
         g("analyticsStages").innerHTML = "";
         g("analyticsActivity").innerHTML = "";
         g("analyticsGoal").innerHTML = "";
+        g("analyticsExtended").innerHTML = "";
         g("analyticsError").textContent = e.message;
       }
     } finally {
@@ -130,6 +142,12 @@ const KlyoAnalytics = (() => {
   function render() {
     const d = labels(),
       m = report.metrics;
+    g("analyticsPipeline").innerHTML =
+      `<option value="">${KlyoModuleI18n.label("All pipelines", "Wszystkie lejki")}</option>` +
+      (report.pipelines || [])
+        .map((p) => `<option value="${p.id}">${h(p.name)}</option>`)
+        .join("");
+    g("analyticsPipeline").value = report.filters.pipeline_id || "";
     g("analyticsOwner").innerHTML =
       `<option value="">${d.team}</option>` +
       report.owners
@@ -184,6 +202,8 @@ const KlyoAnalytics = (() => {
         g("analyticsError").textContent = e.message;
       }
     };
+    if (typeof KlyoSalesInsights !== "undefined")
+      KlyoSalesInsights.render(report, g("analyticsExtended"), params, load);
     const max = Math.max(1, ...report.months.map((r) => Number(r.won_value))),
       w = 600,
       base = 200;
@@ -196,7 +216,7 @@ const KlyoAnalytics = (() => {
         })
         .join(
           "",
-        )}</svg><p class="analytics-note">${l("Under each month: won / lost deal count.", "Pod miesiącem: liczba wygranych / przegranych spraw.")}</p>`;
+        )}</svg><p class="analytics-note">${KlyoModuleI18n.label("Under each month: won / lost deal count.", "Pod miesiącem: liczba wygranych / przegranych spraw.")}</p>`;
     const stageMax = Math.max(1, ...report.stages.map((s) => Number(s.value)));
     g("analyticsStages").innerHTML =
       report.stages
@@ -205,10 +225,10 @@ const KlyoAnalytics = (() => {
             `<div class="analytics-stage"><div><strong>${h(s.pipeline_name + " / " + s.name)}</strong><span>${s.count} · ${h(money(s.value))}</span></div><div class="analytics-stage-bar"><i style="width:${(Number(s.value) / stageMax) * 100}%"></i><b style="width:${(Number(s.weighted_value) / stageMax) * 100}%"></b></div><small>${d.weighted}: ${h(money(s.weighted_value))}</small></div>`,
         )
         .join("") ||
-      `<p class="analytics-note">${l("No stages yet.", "Nie ma jeszcze etapów.")}</p>`;
+      `<p class="analytics-note">${KlyoModuleI18n.label("No stages yet.", "Nie ma jeszcze etapów.")}</p>`;
     g("analyticsActivity").hidden = !report.can_manage;
     g("analyticsActivity").innerHTML = report.can_manage
-      ? `<h3>${d.activity}</h3><div class="analytics-scroll"><table><thead><tr><th>${d.owner}</th><th>${d.meetings}</th><th>${d.calls}</th><th>${d.offers}</th></tr></thead><tbody>${report.activity.map((a) => `<tr><td>${h(a.name)}</td><td>${a.meetings}</td><td>${a.calls}</td><td>${a.offers_sent}</td></tr>`).join("")}</tbody></table></div><p class="analytics-note">${l("Counts use logged activities in the selected month. Scheduled calendar events are not counted as completed meetings.", "Liczby dotyczą aktywności zarejestrowanych w miesiącu. Zaplanowane wydarzenia w kalendarzu nie są liczone jako odbyte spotkania.")}</p>`
+      ? `<h3>${d.activity}</h3><div class="analytics-scroll"><table><thead><tr><th>${d.owner}</th><th>${d.meetings}</th><th>${d.calls}</th><th>${d.offers}</th></tr></thead><tbody>${report.activity.map((a) => `<tr><td>${h(a.name)}</td><td>${a.meetings}</td><td>${a.calls}</td><td>${a.offers_sent}</td></tr>`).join("")}</tbody></table></div><p class="analytics-note">${KlyoModuleI18n.label("Counts use logged activities in the selected month. Scheduled calendar events are not counted as completed meetings.", "Liczby dotyczą aktywności zarejestrowanych w miesiącu. Zaplanowane wydarzenia w kalendarzu nie są liczone jako odbyte spotkania.")}</p>`
       : "";
   }
   function exportReport() {
@@ -221,10 +241,16 @@ const KlyoAnalytics = (() => {
           report.filters.currency,
           report.filters.timezone,
         ],
-        ["Metric", "Value"],
+        [KlyoModuleI18n.pick("Metric"), KlyoModuleI18n.pick("Value")],
         ...Object.entries(report.metrics),
         [],
-        ["Stage", "Pipeline", "Deals", "Value", "Weighted"],
+        [
+          KlyoModuleI18n.pick("Stage"),
+          KlyoModuleI18n.pick("Pipeline"),
+          KlyoModuleI18n.pick("Deals"),
+          KlyoModuleI18n.pick("Value"),
+          KlyoModuleI18n.pick("Weighted"),
+        ],
         ...report.stages.map((r) => [
           r.name,
           r.pipeline_name,
@@ -233,7 +259,12 @@ const KlyoAnalytics = (() => {
           r.weighted_value,
         ]),
         [],
-        ["Month", "Won value", "Won count", "Lost count"],
+        [
+          KlyoModuleI18n.pick("Month"),
+          KlyoModuleI18n.pick("Won value"),
+          KlyoModuleI18n.pick("Won count"),
+          KlyoModuleI18n.pick("Lost count"),
+        ],
         ...report.months.map((r) => [
           r.month,
           r.won_value,
@@ -241,13 +272,32 @@ const KlyoAnalytics = (() => {
           r.lost_count,
         ]),
         [],
-        ["Owner", "Meetings logged", "Calls logged", "Offers sent"],
+        [
+          KlyoModuleI18n.pick("Owner"),
+          KlyoModuleI18n.pick("Meetings logged"),
+          KlyoModuleI18n.pick("Calls logged"),
+          KlyoModuleI18n.pick("Offers sent"),
+        ],
         ...report.activity.map((r) => [
           r.name,
           r.meetings,
           r.calls,
           r.offers_sent,
         ]),
+        ...Object.entries(report.extended || {}).flatMap(([section, data]) => {
+          const list = Array.isArray(data) ? data : [data];
+          const keys = [
+            ...new Set(list.flatMap((row) => Object.keys(row || {}))),
+          ];
+          return keys.length
+            ? [
+                [],
+                [section],
+                keys,
+                ...list.map((row) => keys.map((key) => row[key])),
+              ]
+            : [];
+        }),
       ],
       cell = (v) =>
         '"' +
@@ -281,6 +331,10 @@ const KlyoAnalytics = (() => {
       '<small class="muted" data-an="net"></small>',
     );
     g("dealCurrency").addEventListener("change", previewDeal);
+    g("dealForm").insertAdjacentHTML(
+      "beforeend",
+      `<div class="field"><label for="dealSource">${KlyoModuleI18n.label("Opportunity source", "Źródło szansy")}</label><input id="dealSource" maxlength="120" placeholder="${l("e.g. referral, website, event", "np. polecenie, strona, targi")}"></div>`,
+    );
     document
       .getElementById("dealForm")
       .insertAdjacentHTML(
@@ -310,6 +364,7 @@ const KlyoAnalytics = (() => {
       );
   }
   function openDeal(deal) {
+    g("dealSource").value = deal?.source || "";
     g("dealProbability").value = deal?.probability ?? 0;
     g("dealCurrency").value = deal?.currency || workspaceDefaultCurrency;
     previewDeal();
@@ -318,7 +373,10 @@ const KlyoAnalytics = (() => {
     init,
     load,
     openDeal,
-    collect: () => ({ probability: g("dealProbability").value }),
+    collect: () => ({
+      probability: g("dealProbability").value,
+      source: g("dealSource").value,
+    }),
     onView: (view) => {
       if (view === "overview") load();
     },

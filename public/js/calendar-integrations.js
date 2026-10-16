@@ -10,11 +10,12 @@ const KlyoCalendar = (() => {
   const { esc, dialog, binary } = KlyoDocumentTools,
     g = (id) => document.getElementById(id),
     pl = () => KlyoI18n.getLang() === "pl",
-    l = (en, pol) => (pl() ? pol : en),
+    l = (en, pol) => KlyoModuleI18n.pick(en, pol),
     editable = () => API.getUser()?.role !== "viewer";
   let state = null,
     range = null,
     version = 0,
+    pending = null,
     remoteChanges = new Set();
   const provider = (p) =>
     p === "google" ? "Google Calendar" : "Outlook / Microsoft 365";
@@ -38,7 +39,7 @@ const KlyoCalendar = (() => {
       API.setScope(params.get("scope"));
     g("calTodayBtn").insertAdjacentHTML(
       "afterend",
-      `<button class="btn btn-ghost btn-sm" type="button" id="calendarConnections">${l("Connect calendars", "Połącz kalendarze")}</button><button class="btn btn-ghost btn-sm" type="button" id="calendarRefresh">${l("Refresh", "Odśwież")}</button><button class="btn btn-ghost btn-sm" type="button" id="calendarExport">${l("Export CRM .ics", "Eksport CRM .ics")}</button>`,
+      `<button class="btn btn-ghost btn-sm" type="button" id="calendarConnections">${KlyoModuleI18n.label("Connect calendars", "Połącz kalendarze")}</button><button class="btn btn-ghost btn-sm" type="button" id="calendarRefresh">${KlyoModuleI18n.label("Refresh", "Odśwież")}</button><button class="btn btn-ghost btn-sm" type="button" id="calendarExport">${KlyoModuleI18n.label("Export CRM .ics", "Eksport CRM .ics")}</button>`,
     );
     g("calendarView")
       .querySelector(".filter-bar")
@@ -62,11 +63,11 @@ const KlyoCalendar = (() => {
       .closest(".field")
       .insertAdjacentHTML(
         "beforebegin",
-        `<div class="field" style="grid-column:1/-1"><label for="eventLocation">${l("Location / meeting link", "Miejsce / link spotkania")}</label><input id="eventLocation" maxlength="1000" class="input"></div>`,
+        `<div class="field" style="grid-column:1/-1"><label for="eventLocation">${KlyoModuleI18n.label("Location / meeting link", "Miejsce / link spotkania")}</label><input id="eventLocation" maxlength="1000" class="input"></div>`,
       );
     g("eventForm").insertAdjacentHTML(
       "beforeend",
-      `<div class="calendar-event-footer"><small>${l("Times use your local timezone. For all-day events, the end date is exclusive.", "Godziny używają Twojej strefy czasowej. Dla całodniowych termin końcowy oznacza pierwszy dzień po wydarzeniu.")}</small><button type="button" class="btn btn-ghost" id="eventProviderLinks">${l("Google / Outlook", "Google / Outlook")}</button></div>`,
+      `<div class="calendar-event-footer"><small>${KlyoModuleI18n.label("Times use your local timezone. For all-day events, the end date is exclusive.", "Godziny używają Twojej strefy czasowej. Dla całodniowych termin końcowy oznacza pierwszy dzień po wydarzeniu.")}</small><button type="button" class="btn btn-ghost" id="eventProviderLinks">${KlyoModuleI18n.label("Google / Outlook", "Google / Outlook")}</button></div>`,
     );
     g("eventProviderLinks").onclick = run(() => {
       if (g("eventForm").dataset.calendarSignature !== signature())
@@ -98,8 +99,10 @@ const KlyoCalendar = (() => {
           toast(
             l(
               params.get("calendar_connect") === "connected"
-                ? "Calendar account connected. Choose a calendar."
-                : "Calendar connection was not completed.",
+                ? KlyoModuleI18n.pick(
+                    "Calendar account connected. Choose a calendar.",
+                  )
+                : KlyoModuleI18n.pick("Calendar connection was not completed."),
               params.get("calendar_connect") === "connected"
                 ? "Konto połączone. Wybierz kalendarz."
                 : "Nie ukończono połączenia kalendarza.",
@@ -199,9 +202,29 @@ const KlyoCalendar = (() => {
       revision: g("eventForm").dataset.revision || undefined,
     };
   }
-  async function load(bounds) {
+  function load(bounds) {
+    const key = JSON.stringify([
+      API.scope(),
+      API.getUser()?.id,
+      bounds.start,
+      bounds.end,
+    ]);
+    if (pending?.key === key) return pending.promise;
     range = bounds;
     const ticket = ++version;
+    // Navigation and refresh can request the same calendar simultaneously.
+    // Share identical reads and serialize different ranges to respect provider locks.
+    const promise = Promise.resolve(pending?.promise)
+      .catch(() => {})
+      .then(() => (ticket === version ? read(bounds, ticket) : []));
+    pending = { key, promise };
+    const clear = () => {
+      if (pending?.promise === promise) pending = null;
+    };
+    promise.then(clear, clear);
+    return promise;
+  }
+  async function read(bounds, ticket) {
     try {
       const [status, data] = await Promise.all([
         API.get("/calendar-integrations/status"),
@@ -247,14 +270,14 @@ const KlyoCalendar = (() => {
     state = await API.get("/calendar-integrations/status");
     const d = dialog(
       l("Calendar integrations", "Integracje kalendarzy"),
-      `<p>${l("Your connected calendar is private to your account in the active Team or Personal space. Only events you explicitly copy to CRM become visible to that workspace. Nothing invites attendees.", "Połączony kalendarz jest prywatny dla Twojego konta w aktywnym Team lub Personal. Zespół widzi dopiero wydarzenia jawnie skopiowane do CRM. Integracja nie zaprasza uczestników.")}</p>${state.providers
+      `<p>${KlyoModuleI18n.label("Your connected calendar is private to your account in the active Team or Personal space. Only events you explicitly copy to CRM become visible to that workspace. Nothing invites attendees.", "Połączony kalendarz jest prywatny dla Twojego konta w aktywnym Team lub Personal. Zespół widzi dopiero wydarzenia jawnie skopiowane do CRM. Integracja nie zaprasza uczestników.")}</p>${state.providers
         .map((p) => {
           const c = state.connections.find((c) => c.provider === p.provider);
-          return `<section class="calendar-provider"><h3>${provider(p.provider)}</h3><p>${esc(c?.account_name || l("Not connected", "Niepołączone"))}</p>${c ? `<p>${esc(c.calendar_name || l("Choose a calendar", "Wybierz kalendarz"))}${c.calendar_id && !c.can_write ? " · " + l("read-only", "tylko odczyt") : ""}</p><button class="btn btn-primary" data-calendar-choose="${c.id}">${l("Choose calendar", "Wybierz kalendarz")}</button><button class="btn btn-ghost" data-calendar-disconnect="${c.id}">${l("Disconnect", "Odłącz")}</button>` : `<button class="btn btn-primary" data-calendar-connect="${p.provider}" ${p.configured ? "" : "disabled"}>${l("Connect", "Połącz")}</button>${p.configured ? "" : `<p>${l("Server configuration is required.", "Wymagana konfiguracja serwera.")}</p>`}`}</section>`;
+          return `<section class="calendar-provider"><h3>${provider(p.provider)}</h3><p>${esc(c?.account_name || l("Not connected", "Niepołączone"))}</p>${c ? `<p>${esc(c.calendar_name || l("Choose a calendar", "Wybierz kalendarz"))}${c.calendar_id && !c.can_write ? " · " + l("read-only", "tylko odczyt") : ""}</p><button class="btn btn-primary" data-calendar-choose="${c.id}">${KlyoModuleI18n.label("Choose calendar", "Wybierz kalendarz")}</button><button class="btn btn-ghost" data-calendar-disconnect="${c.id}">${KlyoModuleI18n.label("Disconnect", "Odłącz")}</button>` : `<button class="btn btn-primary" data-calendar-connect="${p.provider}" ${p.configured ? "" : "disabled"}>${KlyoModuleI18n.label("Connect", "Połącz")}</button>${p.configured ? "" : `<p>${KlyoModuleI18n.label("Server configuration is required.", "Wymagana konfiguracja serwera.")}</p>`}`}</section>`;
         })
         .join(
           "",
-        )}<p><a href="/docs/calendar-setup.html" target="_blank" rel="noopener">${l("Setup guide · Google, Outlook and Apple Calendar", "Instrukcja · Google, Outlook i Apple Calendar")}</a></p><p>${l("Apple Calendar and other clients can import Export CRM .ics. This is a file export, not a live iCloud connection.", "Apple Calendar i inne programy mogą zaimportować plik Eksport CRM .ics. To eksport pliku, a nie połączenie na żywo z iCloud.")}</p>`,
+        )}<p><a href="/docs/calendar-setup.html" target="_blank" rel="noopener">${KlyoModuleI18n.label("Setup guide · Google, Outlook and Apple Calendar", "Instrukcja · Google, Outlook i Apple Calendar")}</a></p><p>${KlyoModuleI18n.label("Apple Calendar and other clients can import Export CRM .ics. This is a file export, not a live iCloud connection.", "Apple Calendar i inne programy mogą zaimportować plik Eksport CRM .ics. To eksport pliku, a nie połączenie na żywo z iCloud.")}</p>`,
       true,
     );
     d.root.querySelectorAll("[data-calendar-connect]").forEach(
@@ -277,7 +300,7 @@ const KlyoCalendar = (() => {
           d.close();
           const picker = dialog(
             l("Choose calendar", "Wybierz kalendarz"),
-            `<form><label>${l("Calendar", "Kalendarz")}<select name="calendar_id" required>${data.calendars.map((c) => `<option value="${esc(c.id)}" ${current?.calendar_id === c.id ? "selected" : ""}>${esc(c.name)}${c.can_write ? "" : " · " + l("read-only", "tylko odczyt")}</option>`).join("")}</select></label><p>${l("Existing CRM events are not published automatically.", "Istniejące wydarzenia CRM nie są publikowane automatycznie.")}</p><button class="btn btn-primary">${l("Use this calendar", "Użyj tego kalendarza")}</button></form>`,
+            `<form><label>${KlyoModuleI18n.label("Calendar", "Kalendarz")}<select name="calendar_id" required>${data.calendars.map((c) => `<option value="${esc(c.id)}" ${current?.calendar_id === c.id ? "selected" : ""}>${esc(c.name)}${c.can_write ? "" : " · " + l("read-only", "tylko odczyt")}</option>`).join("")}</select></label><p>${KlyoModuleI18n.label("Existing CRM events are not published automatically.", "Istniejące wydarzenia CRM nie są publikowane automatycznie.")}</p><button class="btn btn-primary">${KlyoModuleI18n.label("Use this calendar", "Użyj tego kalendarza")}</button></form>`,
           );
           picker.find("form").onsubmit = async (e) => {
             e.preventDefault();
@@ -320,7 +343,7 @@ const KlyoCalendar = (() => {
   async function external(event) {
     const d = dialog(
       event.title,
-      `<p class="calendar-source">${esc(provider(event.provider) + " · " + event.calendar_name)} · ${l("Private external event", "Prywatne wydarzenie zewnętrzne")}</p><p>${esc(event.all_day ? event.start_date + " → " + event.end_date : new Date(event.start_at).toLocaleString())}</p><p>${esc(event.location)}</p><p class="calendar-event-description">${esc(event.description)}</p>${event.web_url ? `<a class="btn btn-ghost" href="${esc(event.web_url)}" target="_blank" rel="noopener">${l("Open calendar", "Otwórz kalendarz")}</a>` : ""}${editable() ? `<button class="btn btn-primary" id="copyExternalCalendarEvent">${l(API.scope() === "team" ? "Copy to Team CRM" : "Copy to Personal CRM", API.scope() === "team" ? "Kopiuj do Team CRM" : "Kopiuj do Personal CRM")}</button>` : ""}`,
+      `<p class="calendar-source">${esc(provider(event.provider) + " · " + event.calendar_name)} · ${l("Private external event", "Prywatne wydarzenie zewnętrzne")}</p><p>${esc(event.all_day ? event.start_date + " → " + event.end_date : new Date(event.start_at).toLocaleString())}</p><p>${esc(event.location)}</p><p class="calendar-event-description">${esc(event.description)}</p>${event.web_url ? `<a class="btn btn-ghost" href="${esc(event.web_url)}" target="_blank" rel="noopener">${KlyoModuleI18n.label("Open calendar", "Otwórz kalendarz")}</a>` : ""}${editable() ? `<button class="btn btn-primary" id="copyExternalCalendarEvent">${KlyoModuleI18n.label(API.scope() === "team" ? KlyoModuleI18n.pick("Copy to Team CRM") : KlyoModuleI18n.pick("Copy to Personal CRM"), API.scope() === "team" ? "Kopiuj do Team CRM" : "Kopiuj do Personal CRM")}</button>` : ""}`,
     );
     d.find("#copyExternalCalendarEvent")?.addEventListener(
       "click",
@@ -352,7 +375,7 @@ const KlyoCalendar = (() => {
     ]);
     const d = dialog(
       l("Event calendar links", "Połączenia wydarzenia"),
-      `<p>${l("Save CRM edits before publishing. Publishing creates a calendar appointment without attendees. Pull explicitly replaces title, dates, description and location in CRM. Unlink keeps both events.", "Zapisz zmiany CRM przed publikacją. Publikacja tworzy termin bez uczestników. Pobranie jawnie zastępuje tytuł, daty, opis i miejsce w CRM. Odłączenie zachowuje oba wydarzenia.")}</p>${data.links.map((k) => `<section class="calendar-provider"><h3>${esc(provider(k.provider) + " · " + k.calendar_name)}</h3><p>${remoteChanges.has(k.connection_id + ":" + id) ? l("External calendar changes available · pull to update CRM", "Są zmiany w kalendarzu · pobierz, aby zaktualizować CRM") : k.kind === "copied" ? l("Copied from your external calendar", "Skopiowano z kalendarza zewnętrznego") : k.status === "pending" ? l("Publication pending · retry using the same link", "Publikacja oczekuje · ponów na tym samym połączeniu") : k.local_changed ? l("CRM changes are not published yet", "Zmiany CRM nie są jeszcze opublikowane") : l("Last synchronized version", "Ostatnia zsynchronizowana wersja")}</p>${k.web_url ? `<a href="${esc(k.web_url)}" target="_blank" rel="noopener">${l("Open external calendar", "Otwórz kalendarz zewnętrzny")}</a>` : ""}${editable() ? `<div class="calendar-actions">${k.kind === "published" ? `<button class="btn btn-primary" data-publish-calendar="${k.connection_id}">${l("Publish CRM version", "Opublikuj wersję CRM")}</button>` : ""}${k.status === "synced" ? `<button class="btn btn-ghost" data-pull-calendar="${k.id}">${l("Pull calendar version", "Pobierz wersję kalendarza")}</button>` : ""}<button class="btn btn-ghost" data-unlink-calendar="${k.id}">${l("Unlink", "Odłącz")}</button></div>` : ""}</section>`).join("")}${
+      `<p>${KlyoModuleI18n.label("Save CRM edits before publishing. Publishing creates a calendar appointment without attendees. Pull explicitly replaces title, dates, description and location in CRM. Unlink keeps both events.", "Zapisz zmiany CRM przed publikacją. Publikacja tworzy termin bez uczestników. Pobranie jawnie zastępuje tytuł, daty, opis i miejsce w CRM. Odłączenie zachowuje oba wydarzenia.")}</p>${data.links.map((k) => `<section class="calendar-provider"><h3>${esc(provider(k.provider) + " · " + k.calendar_name)}</h3><p>${remoteChanges.has(k.connection_id + ":" + id) ? l("External calendar changes available · pull to update CRM", "Są zmiany w kalendarzu · pobierz, aby zaktualizować CRM") : k.kind === "copied" ? l("Copied from your external calendar", "Skopiowano z kalendarza zewnętrznego") : k.status === "pending" ? l("Publication pending · retry using the same link", "Publikacja oczekuje · ponów na tym samym połączeniu") : k.local_changed ? l("CRM changes are not published yet", "Zmiany CRM nie są jeszcze opublikowane") : l("Last synchronized version", "Ostatnia zsynchronizowana wersja")}</p>${k.web_url ? `<a href="${esc(k.web_url)}" target="_blank" rel="noopener">${KlyoModuleI18n.label("Open external calendar", "Otwórz kalendarz zewnętrzny")}</a>` : ""}${editable() ? `<div class="calendar-actions">${k.kind === "published" ? `<button class="btn btn-primary" data-publish-calendar="${k.connection_id}">${KlyoModuleI18n.label("Publish CRM version", "Opublikuj wersję CRM")}</button>` : ""}${k.status === "synced" ? `<button class="btn btn-ghost" data-pull-calendar="${k.id}">${KlyoModuleI18n.label("Pull calendar version", "Pobierz wersję kalendarza")}</button>` : ""}<button class="btn btn-ghost" data-unlink-calendar="${k.id}">${KlyoModuleI18n.label("Unlink", "Odłącz")}</button></div>` : ""}</section>`).join("")}${
         editable()
           ? `<div class="calendar-actions">${status.connections
               .filter(
@@ -367,7 +390,7 @@ const KlyoCalendar = (() => {
               )
               .join("")}</div>`
           : ""
-      }<button type="button" class="btn btn-ghost" id="eventCalendarSettings">${l("Connect / choose calendar", "Połącz / wybierz kalendarz")}</button>`,
+      }<button type="button" class="btn btn-ghost" id="eventCalendarSettings">${KlyoModuleI18n.label("Connect / choose calendar", "Połącz / wybierz kalendarz")}</button>`,
     );
     d.find("#eventCalendarSettings").onclick = run(async () => {
       d.close();

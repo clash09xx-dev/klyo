@@ -14,7 +14,7 @@ const KlyoCommercial = (() => {
           })[c],
       ),
     pl = () => KlyoI18n.getLang() === "pl",
-    t = (en, pol) => (pl() ? pol : en);
+    t = (en, pol) => KlyoModuleI18n.pick(en, pol);
   let rows = [],
     statuses = [],
     access = {},
@@ -32,7 +32,11 @@ const KlyoCommercial = (() => {
       const worker = new Worker("/js/price-list-worker.js");
       const timeout = setTimeout(() => {
         worker.terminate();
-        reject(new Error("The spreadsheet took too long to read."));
+        reject(
+          new Error(
+            KlyoModuleI18n.pick("The spreadsheet took too long to read."),
+          ),
+        );
       }, 10000);
       const finish = (data, error) => {
         clearTimeout(timeout);
@@ -41,7 +45,8 @@ const KlyoCommercial = (() => {
         else resolve(data);
       };
       worker.onmessage = (e) => finish(e.data, e.data.error);
-      worker.onerror = () => finish(null, "Could not read the spreadsheet.");
+      worker.onerror = () =>
+        finish(null, KlyoModuleI18n.pick("Could not read the spreadsheet."));
       worker.postMessage({ buffer }, [buffer]);
     });
   }
@@ -54,7 +59,7 @@ const KlyoCommercial = (() => {
     const el = document.createElement("div");
     el.id = "commercialDialog";
     el.className = "commercial-overlay";
-    el.innerHTML = `<section class="commercial-dialog ${wide ? "commercial-wide" : ""}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><header><h2>${esc(title)}</h2><button class="btn btn-ghost" data-close aria-label="Close">×</button></header><div class="commercial-dialog-body">${body}</div><p class="commercial-error" id="commercialError" role="alert"></p></section>`;
+    el.innerHTML = `<section class="commercial-dialog ${wide ? "commercial-wide" : ""}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><header><h2>${esc(title)}</h2><button class="btn btn-ghost" data-close aria-label="${KlyoModuleI18n.pick("Close")}">×</button></header><div class="commercial-dialog-body">${body}</div><p class="commercial-error" id="commercialError" role="alert"></p></section>`;
     document.body.append(el);
     el.querySelector("[data-close]").onclick = () => el.remove();
     el.addEventListener("click", (e) => {
@@ -89,13 +94,13 @@ const KlyoCommercial = (() => {
         ? rows
             .map(
               (r) =>
-                `<tr data-case-id="${r.id}" style="--case-color:${/^#[a-f\d]{6}$/i.test(r.status_color) ? r.status_color : r.deal_status === "won" ? "#16a34a" : r.deal_status === "lost" ? "#dc2626" : "#64748b"}"><td><input class="commercial-case-select" type="checkbox" aria-label="Select case" data-select-case="${r.id}"> <button class="commercial-link" data-edit-case="${r.id}">${esc(r.number)}</button></td><td><strong>${esc(r.title)}</strong><small>${esc(r.main_products)}</small></td><td>${esc(r.contact_name || "—")}<small>${esc(r.company_name || "")}${r.unit_name ? " · " + esc(r.unit_name) : ""}</small></td><td>${money(r.value, r.currency)}</td><td>${esc(String(r.valid_until || "").slice(0, 10) || "—")}</td><td><span class="commercial-status">${esc(r.register_status || r.deal_status || "Open")}</span><small>${esc(r.stage_name || "")}</small></td><td><div class="commercial-actions">${r.deal_id ? `<button class="btn btn-ghost btn-sm" data-case-deal="${r.deal_id}">${t("Deal", "Szansa")}</button>` : ""}${r.quote_id ? `<button class="btn btn-ghost btn-sm" data-case-quote="${r.quote_id}">${t("Offer", "Oferta")}</button>` : canEdit() ? `<button class="btn btn-sm" data-new-case-quote="${r.id}">${t("Create offer", "Utwórz ofertę")}</button>` : ""}</div></td></tr>`,
+                `<tr data-case-id="${r.id}" style="--case-color:${/^#[a-f\d]{6}$/i.test(r.status_color) ? r.status_color : r.deal_status === "won" ? "#16a34a" : r.deal_status === "lost" ? "#dc2626" : "#64748b"}"><td><input class="commercial-case-select" type="checkbox" aria-label="${KlyoModuleI18n.pick("Select case")}" data-select-case="${r.id}"> <button class="commercial-link" data-edit-case="${r.id}">${esc(r.number)}</button></td><td><strong>${esc(r.title)}</strong><small>${esc(r.main_products)}</small></td><td>${esc(r.contact_name || "—")}<small>${esc(r.company_name || "")}${r.unit_name ? " · " + esc(r.unit_name) : ""}</small></td><td>${esc(r.company_tax_id || "—")}</td><td>${esc([r.company_address, r.company_city, r.company_country].filter(Boolean).join(", ") || "—")}</td><td>${esc(r.contact_email || r.company_email || "—")}<small>${esc(r.contact_phone || r.company_phone || "")}</small></td><td>${money(r.value, r.currency)}</td><td>${esc(String(r.valid_until || "").slice(0, 10) || "—")}</td><td>${esc(r.payment_terms || "—")}</td><td>${esc(r.delivery_terms || "—")}</td><td><span class="commercial-status">${esc(r.register_status || r.deal_status || KlyoModuleI18n.pick("Open"))}</span><small>${esc(r.stage_name || "")}</small></td><td><div class="commercial-actions">${r.deal_id ? `<button class="btn btn-ghost btn-sm" data-case-deal="${r.deal_id}">${KlyoModuleI18n.label("Deal", "Szansa")}</button>` : ""}${r.quote_id ? `<button class="btn btn-ghost btn-sm" data-case-quote="${r.quote_id}">${KlyoModuleI18n.label("Offer", "Oferta")}</button>` : canEdit() ? `<button class="btn btn-sm" data-new-case-quote="${r.id}">${KlyoModuleI18n.label("Create offer", "Utwórz ofertę")}</button>` : ""}</div></td></tr>`,
             )
             .join("")
-        : `<tr><td colspan="7">${t("No commercial cases. Add a case or create an offer.", "Brak spraw. Dodaj sprawę lub utwórz ofertę.")}</td></tr>`;
+        : `<tr><td colspan="12">${KlyoModuleI18n.label("No commercial cases. Add a case or create an offer.", "Brak spraw. Dodaj sprawę lub utwórz ofertę.")}</td></tr>`;
     } catch (e) {
       g("commercialRows").innerHTML =
-        `<tr><td colspan="7">${esc(e.message)}</td></tr>`;
+        `<tr><td colspan="12">${esc(e.message)}</td></tr>`;
     }
   }
   async function editCase(id) {
@@ -113,10 +118,12 @@ const KlyoCommercial = (() => {
         pipelines = pp.pipelines || [];
       const el = dialog(
           t(
-            id ? "Edit commercial case" : "New commercial case",
+            id
+              ? KlyoModuleI18n.pick("Edit commercial case")
+              : KlyoModuleI18n.pick("New commercial case"),
             id ? "Edytuj sprawę" : "Nowa sprawa",
           ),
-          `<form id="commercialCaseForm"><p class="muted">${t("The case number is also the offer number. A linked sales opportunity is created automatically.", "Numer sprawy jest numerem oferty. Powiązana szansa sprzedaży powstaje automatycznie.")}</p><div class="commercial-grid">${f("number", t("Case number", "Numer sprawy"), row.number || t("Assigned on save", "Nadany po zapisie"))}${f("title", t("Subject", "Temat"), row.title)}<label>${t("Contact", "Osoba")}<select name="contact_id"><option value="">—</option>${options(contacts, row.contact_id, "full_name")}</select></label><label>${t("Company", "Firma")}<select name="company_id"><option value="">—</option>${options(companies, row.company_id)}</select></label><label>${t("Branch / department", "Oddział / dział")}<select name="company_unit_id"><option value="">—</option></select></label><label>${t("Register status", "Status rejestru")}<select name="status_id">${options(statuses, row.status_id)}</select></label>${f("value", t("Net value", "Wartość netto"), row.value || 0, "number")}${f("currency", t("Currency", "Waluta"), row.currency || (typeof workspaceDefaultCurrency !== "undefined" ? workspaceDefaultCurrency : "USD"))}${f("valid_until", t("Valid until", "Ważna do"), String(row.valid_until || "").slice(0, 10), "date")}${!id ? `<label>${t("Sales pipeline", "Lejek sprzedaży")}<select name="pipeline_id">${options(pipelines, null)}</select></label>` : ""}</div><label>${t("Main products / scope", "Główne produkty / zakres")}<textarea name="main_products">${esc(row.main_products || "")}</textarea></label><div class="commercial-grid">${f("payment_terms", t("Payment terms", "Warunki płatności"), row.payment_terms)}${f("delivery_terms", t("Delivery & logistics", "Logistyka i dostawa"), row.delivery_terms)}</div><label>${t("Notes", "Uwagi")}<textarea name="notes">${esc(row.notes || "")}</textarea></label><button class="btn" type="submit">${t("Save case", "Zapisz sprawę")}</button></form>`,
+          `<form id="commercialCaseForm"><p class="muted">${KlyoModuleI18n.label("The case number is also the offer number. A linked sales opportunity is created automatically.", "Numer sprawy jest numerem oferty. Powiązana szansa sprzedaży powstaje automatycznie.")}</p><div class="commercial-grid">${f("number", t("Case number", "Numer sprawy"), row.number || t("Assigned on save", "Nadany po zapisie"))}${f("title", t("Subject", "Temat"), row.title)}<label>${KlyoModuleI18n.label("Contact", "Osoba")}<select name="contact_id"><option value="">—</option>${options(contacts, row.contact_id, "full_name")}</select></label><label>${KlyoModuleI18n.label("Company", "Firma")}<select name="company_id"><option value="">—</option>${options(companies, row.company_id)}</select></label><label>${KlyoModuleI18n.label("Branch / department", "Oddział / dział")}<select name="company_unit_id"><option value="">—</option></select></label><label>${KlyoModuleI18n.label("Register status", "Status rejestru")}<select name="status_id">${options(statuses, row.status_id)}</select></label>${f("value", t("Net value", "Wartość netto"), row.value || 0, "number")}${f("currency", t("Currency", "Waluta"), row.currency || (typeof workspaceDefaultCurrency !== "undefined" ? workspaceDefaultCurrency : "USD"))}${f("valid_until", t("Valid until", "Ważna do"), String(row.valid_until || "").slice(0, 10), "date")}${!id ? `<label>${KlyoModuleI18n.label("Sales pipeline", "Lejek sprzedaży")}<select name="pipeline_id">${options(pipelines, null)}</select></label>` : ""}</div><label>${KlyoModuleI18n.label("Main products / scope", "Główne produkty / zakres")}<textarea name="main_products">${esc(row.main_products || "")}</textarea></label><div class="commercial-grid">${f("payment_terms", t("Payment terms", "Warunki płatności"), row.payment_terms)}${f("delivery_terms", t("Delivery & logistics", "Logistyka i dostawa"), row.delivery_terms)}</div><label>${KlyoModuleI18n.label("Notes", "Uwagi")}<textarea name="notes">${esc(row.notes || "")}</textarea></label><button class="btn" type="submit">${KlyoModuleI18n.label("Save case", "Zapisz sprawę")}</button></form>`,
           true,
         ),
         form = g("commercialCaseForm");
@@ -213,7 +220,7 @@ const KlyoCommercial = (() => {
     const ss = await API.get("/commercial/statuses");
     const el = dialog(
       t("Register stages", "Etapy rejestru"),
-      `<p>${t("Choose colors and the matching sales outcome. Paid stages are shown in blue by default.", "Ustal kolory i odpowiadający wynik sprzedaży. Opłacone sprawy domyślnie mają kolor niebieski.")}</p><div id="commercialStatusRows">${ss.statuses.map((s) => `<form data-status="${s.id}" class="commercial-status-form">${f("name", "", s.name)}${f("color", "", s.color, "color")}<select name="outcome"><option value="open" ${s.outcome === "open" ? "selected" : ""}>Open</option><option value="won" ${s.outcome === "won" ? "selected" : ""}>Won</option><option value="lost" ${s.outcome === "lost" ? "selected" : ""}>Lost</option></select><label><input type="checkbox" name="paid" ${s.paid ? "checked" : ""}>${t("Paid", "Opłacona")}</label><button class="btn btn-sm">${t("Save", "Zapisz")}</button></form>`).join("")}</div><form id="commercialNewStatus" class="commercial-status-form">${f("name", t("New status", "Nowy status"))}${f("color", "", "#8b5cf6", "color")}<select name="outcome"><option>open</option><option>won</option><option>lost</option></select><button class="btn btn-sm">${t("Add", "Dodaj")}</button></form>`,
+      `<p>${KlyoModuleI18n.label("Choose colors and the matching sales outcome. Paid stages are shown in blue by default.", "Ustal kolory i odpowiadający wynik sprzedaży. Opłacone sprawy domyślnie mają kolor niebieski.")}</p><div id="commercialStatusRows">${ss.statuses.map((s) => `<form data-status="${s.id}" class="commercial-status-form">${f("name", "", s.name)}${f("color", "", s.color, "color")}<select name="outcome"><option value="open" ${s.outcome === "open" ? "selected" : ""}>${KlyoModuleI18n.label("Open")}</option><option value="won" ${s.outcome === "won" ? "selected" : ""}>${KlyoModuleI18n.label("Won")}</option><option value="lost" ${s.outcome === "lost" ? "selected" : ""}>${KlyoModuleI18n.label("Lost")}</option></select><label><input type="checkbox" name="paid" ${s.paid ? "checked" : ""}>${KlyoModuleI18n.label("Paid", "Opłacona")}</label><button class="btn btn-sm">${KlyoModuleI18n.label("Save", "Zapisz")}</button></form>`).join("")}</div><form id="commercialNewStatus" class="commercial-status-form">${f("name", t("New status", "Nowy status"))}${f("color", "", "#8b5cf6", "color")}<select name="outcome"><option>${KlyoModuleI18n.label("open")}</option><option>${KlyoModuleI18n.label("won")}</option><option>${KlyoModuleI18n.label("lost")}</option></select><button class="btn btn-sm">${KlyoModuleI18n.label("Add", "Dodaj")}</button></form>`,
       true,
     );
     el.querySelectorAll("form").forEach(
@@ -245,7 +252,7 @@ const KlyoCommercial = (() => {
       ]);
       const el = dialog(
         t("Purchase price lists", "Cenniki zakupowe"),
-        `<p>${t("Private purchase costs are never included in client documents. Import CSV/Excel columns: sku, unit_cost, supplier. Prices are matched to existing SKUs.", "Prywatne koszty zakupu nie trafiają do dokumentów klienta. Wgraj CSV/Excel z kolumnami: sku, unit_cost, supplier. Ceny są dopasowywane do istniejących SKU.")}</p><form id="purchaseImport"><div class="commercial-grid">${f("currency", t("Currency", "Waluta"), "PLN")}<label>${t("CSV / Excel file", "Plik CSV / Excel")}<input type="file" name="file" accept=".csv,.xlsx,.xls" required></label></div><button class="btn" type="submit">${t("Preview purchase prices", "Podgląd cen zakupowych")}</button></form><div id="purchasePreview"></div><hr><form id="purchaseManual"><div class="commercial-grid"><label>${t("Product", "Produkt")}<select name="product_id">${options(products, null)}</select></label>${f("unit_cost", t("Unit purchase cost", "Koszt zakupu jednostki"), 0, "number")}${f("currency", t("Currency", "Waluta"), "PLN")}${f("supplier", t("Supplier", "Dostawca"))}</div><button class="btn btn-sm">${t("Save purchase price", "Zapisz cenę zakupu")}</button></form><table><thead><tr><th>SKU</th><th>${t("Product", "Produkt")}</th><th>${t("Purchase cost", "Koszt zakupu")}</th><th>${t("Supplier", "Dostawca")}</th></tr></thead><tbody>${prices.map((p) => `<tr><td>${esc(p.sku)}</td><td>${esc(p.name)}</td><td>${money(p.unit_cost, p.currency)}</td><td>${esc(p.supplier)}</td></tr>`).join("")}</tbody></table>`,
+        `<p>${KlyoModuleI18n.label("Private purchase costs are never included in client documents. Import CSV/Excel columns: sku, unit_cost, supplier. Prices are matched to existing SKUs.", "Prywatne koszty zakupu nie trafiają do dokumentów klienta. Wgraj CSV/Excel z kolumnami: sku, unit_cost, supplier. Ceny są dopasowywane do istniejących SKU.")}</p><form id="purchaseImport"><div class="commercial-grid">${f("currency", t("Currency", "Waluta"), "PLN")}<label>${KlyoModuleI18n.label("CSV / Excel file", "Plik CSV / Excel")}<input type="file" name="file" accept=".csv,.xlsx,.xls" required></label></div><button class="btn" type="submit">${KlyoModuleI18n.label("Preview purchase prices", "Podgląd cen zakupowych")}</button></form><div id="purchasePreview"></div><hr><form id="purchaseManual"><div class="commercial-grid"><label>${KlyoModuleI18n.label("Product", "Produkt")}<select name="product_id">${options(products, null)}</select></label>${f("unit_cost", t("Unit purchase cost", "Koszt zakupu jednostki"), 0, "number")}${f("currency", t("Currency", "Waluta"), "PLN")}${f("supplier", t("Supplier", "Dostawca"))}</div><button class="btn btn-sm">${KlyoModuleI18n.label("Save purchase price", "Zapisz cenę zakupu")}</button></form><table><thead><tr><th>${KlyoModuleI18n.label("SKU")}</th><th>${KlyoModuleI18n.label("Product", "Produkt")}</th><th>${KlyoModuleI18n.label("Purchase cost", "Koszt zakupu")}</th><th>${KlyoModuleI18n.label("Supplier", "Dostawca")}</th></tr></thead><tbody>${prices.map((p) => `<tr><td>${esc(p.sku)}</td><td>${esc(p.name)}</td><td>${money(p.unit_cost, p.currency)}</td><td>${esc(p.supplier)}</td></tr>`).join("")}</tbody></table>`,
         true,
       );
       g("purchaseManual").onsubmit = async (e) => {
@@ -267,7 +274,7 @@ const KlyoCommercial = (() => {
         try {
           const file = e.currentTarget.elements.file.files[0];
           if (file.size > 10 * 1024 * 1024)
-            throw new Error("Use a file below 10 MB.");
+            throw new Error(KlyoModuleI18n.pick("Use a file below 10 MB."));
           const parsed = await readSpreadsheet(await file.arrayBuffer()),
             rows = parsed.rows.map((row) =>
               Object.fromEntries(
@@ -278,7 +285,7 @@ const KlyoCommercial = (() => {
               ),
             );
           if (!rows.length || rows.length > 1000)
-            throw new Error("Import 1–1000 rows.");
+            throw new Error(KlyoModuleI18n.pick("Import 1–1000 rows."));
           const currency = g("purchaseImport").elements.currency.value,
             valid = rows.map((r) => {
               const p = products.find(
@@ -292,16 +299,16 @@ const KlyoCommercial = (() => {
                 ...r,
                 product_id: p?.id,
                 error: !p
-                  ? "Unknown SKU"
+                  ? KlyoModuleI18n.pick("Unknown SKU")
                   : !Number.isFinite(
                         Number(String(r.unit_cost).replace(",", ".")),
                       )
-                    ? "Invalid cost"
+                    ? KlyoModuleI18n.pick("Invalid cost")
                     : "",
               };
             });
           g("purchasePreview").innerHTML =
-            `<p>${rows.length} ${t("rows. Review before confirming.", "wierszy. Sprawdź przed zatwierdzeniem.")}</p><div class="commercial-scroll"><table><thead><tr><th>SKU</th><th>Cost</th><th>Supplier</th><th>Status</th></tr></thead><tbody>${valid.map((r) => `<tr><td>${esc(r.sku)}</td><td>${esc(r.unit_cost)}</td><td>${esc(r.supplier)}</td><td>${esc(r.error || "OK")}</td></tr>`).join("")}</tbody></table></div><button class="btn" id="confirmPurchaseImport" ${valid.some((r) => r.error) ? "disabled" : ""}>${t("Confirm import", "Potwierdź import")}</button>`;
+            `<p>${rows.length} ${t("rows. Review before confirming.", "wierszy. Sprawdź przed zatwierdzeniem.")}</p><div class="commercial-scroll"><table><thead><tr><th>${KlyoModuleI18n.label("SKU")}</th><th>${KlyoModuleI18n.label("Cost")}</th><th>${KlyoModuleI18n.label("Supplier")}</th><th>${KlyoModuleI18n.label("Status")}</th></tr></thead><tbody>${valid.map((r) => `<tr><td>${esc(r.sku)}</td><td>${esc(r.unit_cost)}</td><td>${esc(r.supplier)}</td><td>${esc(r.error || "OK")}</td></tr>`).join("")}</tbody></table></div><button class="btn" id="confirmPurchaseImport" ${valid.some((r) => r.error) ? "disabled" : ""}>${KlyoModuleI18n.label("Confirm import", "Potwierdź import")}</button>`;
           g("confirmPurchaseImport").onclick = async () => {
             try {
               await API.post("/commercial/purchase-prices/import", {
@@ -327,7 +334,7 @@ const KlyoCommercial = (() => {
       const { permissions } = await API.get("/commercial/permissions"),
         el = dialog(
           t("Margin access", "Dostęp do marż"),
-          `<p>${t("Only the workspace owner sees purchase costs. Grant margin access per teammate. The factor scales the profit shown to that employee; owner reports remain unchanged.", "Tylko właściciel widzi koszty zakupu. Nadaj dostęp do marż osobno każdej osobie. Współczynnik skaluje pokazywany pracownikowi zysk; raporty właściciela pozostają bez zmian.")}</p>${permissions.map((p) => `<form data-permission="${p.id}" class="commercial-permission-form"><strong>${esc(p.name)}<small>${esc(p.email)}</small></strong><label><input name="can_view_margin" type="checkbox" ${p.can_view_margin ? "checked" : ""}>${t("Can view margins", "Widzi marże")}</label>${f("margin_factor", t("Factor (0.5 = half)", "Współczynnik (0.5 = połowa)"), p.margin_factor, "number")}<button class="btn btn-sm">${t("Save", "Zapisz")}</button></form>`).join("")}`,
+          `<p>${KlyoModuleI18n.label("Only the workspace owner sees purchase costs. Grant margin access per teammate. The factor scales the profit shown to that employee; owner reports remain unchanged.", "Tylko właściciel widzi koszty zakupu. Nadaj dostęp do marż osobno każdej osobie. Współczynnik skaluje pokazywany pracownikowi zysk; raporty właściciela pozostają bez zmian.")}</p>${permissions.map((p) => `<form data-permission="${p.id}" class="commercial-permission-form"><strong>${esc(p.name)}<small>${esc(p.email)}</small></strong><label><input name="can_view_margin" type="checkbox" ${p.can_view_margin ? "checked" : ""}>${KlyoModuleI18n.label("Can view margins", "Widzi marże")}</label>${f("margin_factor", t("Factor (0.5 = half)", "Współczynnik (0.5 = połowa)"), p.margin_factor, "number")}<button class="btn btn-sm">${KlyoModuleI18n.label("Save", "Zapisz")}</button></form>`).join("")}`,
           true,
         );
       el.querySelectorAll("form").forEach(
@@ -367,24 +374,24 @@ const KlyoCommercial = (() => {
         company.name,
         `<form id="companyCommercialForm"><div class="commercial-grid">${Object.entries(
           {
-            tax_id: "Tax ID / NIP",
+            tax_id: KlyoModuleI18n.pick("Tax ID / NIP"),
             registration_number: t(
               "Registration number",
               "Numer rejestracyjny",
             ),
-            website: "Website",
+            website: KlyoModuleI18n.pick("Website"),
             address: t("Address", "Adres"),
             postal_code: t("Postcode", "Kod pocztowy"),
             city: t("City", "Miasto"),
             country: t("Country", "Kraj"),
             phone: t("Phone", "Telefon"),
-            email: "Email",
+            email: KlyoModuleI18n.pick("Email"),
           },
         )
           .map(([k, l]) => f(k, l, company[k]))
           .join(
             "",
-          )}${fields.map((d) => `<label>${esc(d.name)}${d.required ? " *" : ""}${control(d)}</label>`).join("")}</div><button class="btn btn-sm">${t("Save details", "Zapisz dane")}</button><button type="button" class="btn btn-ghost btn-sm" id="companyAddCustom">${t("Add custom field", "Dodaj własne pole")}</button></form><hr><h3>${t("Branches & departments", "Oddziały i działy")}</h3><div>${units.map((u) => `<div class="commercial-unit"><strong>${esc(u.name)}</strong><span>${esc(u.kind)}${u.parent_id ? " · " + esc(units.find((p) => p.id === u.parent_id)?.name || "") : ""}</span><button class="btn btn-ghost btn-sm" data-edit-unit="${u.id}">${t("Edit", "Edytuj")}</button><button class="btn btn-ghost btn-sm" data-delete-unit="${u.id}">${t("Remove", "Usuń")}</button></div>`).join("")}</div><button class="btn btn-sm" id="companyAddUnit">${t("Add branch / department", "Dodaj oddział / dział")}</button>`,
+          )}${fields.map((d) => `<label>${esc(d.name)}${d.required ? " *" : ""}${control(d)}</label>`).join("")}</div><button class="btn btn-sm">${KlyoModuleI18n.label("Save details", "Zapisz dane")}</button><button type="button" class="btn btn-ghost btn-sm" id="companyAddCustom">${KlyoModuleI18n.label("Add custom field", "Dodaj własne pole")}</button></form><hr><h3>${KlyoModuleI18n.label("Branches & departments", "Oddziały i działy")}</h3><div>${units.map((u) => `<div class="commercial-unit"><strong>${esc(u.name)}</strong><span>${esc(u.kind)}${u.parent_id ? " · " + esc(units.find((p) => p.id === u.parent_id)?.name || "") : ""}</span><button class="btn btn-ghost btn-sm" data-edit-unit="${u.id}">${KlyoModuleI18n.label("Edit", "Edytuj")}</button><button class="btn btn-ghost btn-sm" data-delete-unit="${u.id}">${KlyoModuleI18n.label("Remove", "Usuń")}</button></div>`).join("")}</div><button class="btn btn-sm" id="companyAddUnit">${KlyoModuleI18n.label("Add branch / department", "Dodaj oddział / dział")}</button>`,
         true,
       );
       if (!canEdit()) {
@@ -457,7 +464,7 @@ const KlyoCommercial = (() => {
   function fieldForm(companyId) {
     const el = dialog(
       t("New company field", "Nowe pole firmy"),
-      `<form id="commercialFieldForm">${f("name", t("Field name", "Nazwa pola"))}<label>${t("Type", "Typ")}<select name="type"><option value="text">Text</option><option value="textarea">Long text</option><option value="number">Number</option><option value="date">Date</option><option value="select">Select</option><option value="checkbox">Checkbox</option></select></label><label>${t("Select options, one per line", "Opcje wyboru, jedna w wierszu")}<textarea name="options"></textarea></label><label><input type="checkbox" name="required">${t("Required", "Wymagane")}</label><button class="btn">${t("Add field", "Dodaj pole")}</button></form>`,
+      `<form id="commercialFieldForm">${f("name", t("Field name", "Nazwa pola"))}<label>${KlyoModuleI18n.label("Type", "Typ")}<select name="type"><option value="text">${KlyoModuleI18n.label("Text")}</option><option value="textarea">${KlyoModuleI18n.label("Long text")}</option><option value="number">${KlyoModuleI18n.label("Number")}</option><option value="date">${KlyoModuleI18n.label("Date")}</option><option value="select">${KlyoModuleI18n.label("Select")}</option><option value="checkbox">${KlyoModuleI18n.label("Checkbox")}</option></select></label><label>${KlyoModuleI18n.label("Select options, one per line", "Opcje wyboru, jedna w wierszu")}<textarea name="options"></textarea></label><label><input type="checkbox" name="required">${KlyoModuleI18n.label("Required", "Wymagane")}</label><button class="btn">${KlyoModuleI18n.label("Add field", "Dodaj pole")}</button></form>`,
     );
     g("commercialFieldForm").onsubmit = async (e) => {
       e.preventDefault();
@@ -480,10 +487,10 @@ const KlyoCommercial = (() => {
   function unitForm(cid, units, unit = {}) {
     const el = dialog(
       t("Branch / department", "Oddział / dział"),
-      `<form id="commercialUnitForm">${f("name", t("Name", "Nazwa"), unit.name)}<label>${t("Type", "Typ")}<select name="kind"><option value="branch" ${unit.kind === "branch" ? "selected" : ""}>${t("Branch", "Oddział")}</option><option value="department" ${unit.kind !== "branch" ? "selected" : ""}>${t("Department", "Dział")}</option></select></label><label>${t("Parent unit", "Jednostka nadrzędna")}<select name="parent_id"><option value="">—</option>${options(
+      `<form id="commercialUnitForm">${f("name", t("Name", "Nazwa"), unit.name)}<label>${KlyoModuleI18n.label("Type", "Typ")}<select name="kind"><option value="branch" ${unit.kind === "branch" ? "selected" : ""}>${KlyoModuleI18n.label("Branch", "Oddział")}</option><option value="department" ${unit.kind !== "branch" ? "selected" : ""}>${KlyoModuleI18n.label("Department", "Dział")}</option></select></label><label>${KlyoModuleI18n.label("Parent unit", "Jednostka nadrzędna")}<select name="parent_id"><option value="">—</option>${options(
         units.filter((u) => u.id !== unit.id),
         unit.parent_id,
-      )}</select></label>${f("address", t("Address", "Adres"), unit.address)}<label>${t("Notes", "Uwagi")}<textarea name="notes">${esc(unit.notes || "")}</textarea></label><button class="btn">${t("Save", "Zapisz")}</button></form>`,
+      )}</select></label>${f("address", t("Address", "Adres"), unit.address)}<label>${KlyoModuleI18n.label("Notes", "Uwagi")}<textarea name="notes">${esc(unit.notes || "")}</textarea></label><button class="btn">${KlyoModuleI18n.label("Save", "Zapisz")}</button></form>`,
     );
     g("commercialUnitForm").onsubmit = async (e) => {
       e.preventDefault();
@@ -528,7 +535,7 @@ const KlyoCommercial = (() => {
       access = {};
     }
     g("commercialQuoteControls").innerHTML =
-      `<details class="commercial-quote-options"><summary>${t("Commercial settings & bundles", "Ustawienia handlowe i zestawy")}</summary><div class="commercial-grid"><label>${t("Linked sales opportunity", "Powiązana szansa sprzedaży")}<select id="commercialQuoteDeal"><option value="">${t("Create automatically", "Utwórz automatycznie")}</option>${options(deals, value?.deal_id || active?.deal_id, "title")}</select></label><label>${t("Client pricing", "Ceny dla klienta")}<select id="commercialPricingMode"><option value="itemized">${t("Itemized prices", "Ceny poszczególnych pozycji")}</option><option value="total_only">${t("Only the offer total", "Tylko cena całej oferty")}</option></select></label></div><input id="commercialCaseId" type="hidden" value="${esc(value?.commercial_case_id || active?.id || "")}"><p>${t("Select component rows below, then give the bundle a name. Descriptions and SKUs remain visible; only its combined price is shown to the client.", "Zaznacz pozycje poniżej i nazwij zestaw. Opisy i SKU pozostaną widoczne; klient zobaczy wspólną cenę zestawu.")}</p><div class="commercial-bundle-bar"><input id="commercialBundleName" placeholder="${t("e.g. Desktop computer", "np. Komputer stacjonarny")}"><button type="button" class="btn btn-sm" id="commercialBundleBtn">${t("Convert selected to bundle", "Zamień zaznaczone w zestaw")}</button><button type="button" class="btn btn-ghost btn-sm" id="commercialUnbundleBtn">${t("Ungroup selected", "Rozdziel zaznaczone")}</button></div></details>${access.can_view_margin ? `<details class="commercial-margins"><summary>${t("Internal margin analysis", "Wewnętrzna analiza marży")}</summary><p class="muted">${t("Internal only · never included in the customer PDF. Purchase costs are captured when the offer is saved.", "Tylko wewnętrznie · nigdy w PDF klienta. Koszty zakupu są zapisywane w momencie zapisania oferty.")}</p><p class="muted" id="commercialMarginSource"></p><div id="commercialMarginData"></div></details>` : ""}`;
+      `<details class="commercial-quote-options"><summary>${KlyoModuleI18n.label("Commercial settings & bundles", "Ustawienia handlowe i zestawy")}</summary><div class="commercial-grid"><label>${KlyoModuleI18n.label("Linked sales opportunity", "Powiązana szansa sprzedaży")}<select id="commercialQuoteDeal"><option value="">${KlyoModuleI18n.label("Create automatically", "Utwórz automatycznie")}</option>${options(deals, value?.deal_id || active?.deal_id, "title")}</select></label><label>${KlyoModuleI18n.label("Client pricing", "Ceny dla klienta")}<select id="commercialPricingMode"><option value="itemized">${KlyoModuleI18n.label("Itemized prices", "Ceny poszczególnych pozycji")}</option><option value="total_only">${KlyoModuleI18n.label("Only the offer total", "Tylko cena całej oferty")}</option></select></label></div><input id="commercialCaseId" type="hidden" value="${esc(value?.commercial_case_id || active?.id || "")}"><p>${KlyoModuleI18n.label("Select component rows below, then give the bundle a name. Descriptions and SKUs remain visible; only its combined price is shown to the client.", "Zaznacz pozycje poniżej i nazwij zestaw. Opisy i SKU pozostaną widoczne; klient zobaczy wspólną cenę zestawu.")}</p><div class="commercial-bundle-bar"><input id="commercialBundleName" placeholder="${t("e.g. Desktop computer", "np. Komputer stacjonarny")}"><button type="button" class="btn btn-sm" id="commercialBundleBtn">${KlyoModuleI18n.label("Convert selected to bundle", "Zamień zaznaczone w zestaw")}</button><button type="button" class="btn btn-ghost btn-sm" id="commercialUnbundleBtn">${KlyoModuleI18n.label("Ungroup selected", "Rozdziel zaznaczone")}</button></div></details>${access.can_view_margin ? `<details class="commercial-margins"><summary>${KlyoModuleI18n.label("Internal margin analysis", "Wewnętrzna analiza marży")}</summary><p class="muted">${KlyoModuleI18n.label("Internal only · never included in the customer PDF. Purchase costs are captured when the offer is saved.", "Tylko wewnętrznie · nigdy w PDF klienta. Koszty zakupu są zapisywane w momencie zapisania oferty.")}</p><p class="muted" id="commercialMarginSource"></p><div id="commercialMarginData"></div></details>` : ""}`;
     g("commercialPricingMode").value =
       value?.document?.pricing_mode || "itemized";
     await quoteUnit(value || active || {});
@@ -537,6 +544,18 @@ const KlyoCommercial = (() => {
     g("commercialQuoteControls")
       .querySelector(".commercial-margins")
       ?.addEventListener("toggle", scheduleMargin);
+    const side = g("quoteForm").querySelector(".commercial-margins");
+    if (side) {
+      side.setAttribute("role", "complementary");
+      side.setAttribute(
+        "aria-label",
+        t("Internal margin analysis", "Wewnętrzna analiza marży"),
+      );
+      side.querySelector("summary").title = t(
+        "Click to open or close the margin panel",
+        "Kliknij, aby otworzyć lub zamknąć panel marży",
+      );
+    }
     decorateRows();
     scheduleMargin();
   }
@@ -552,7 +571,7 @@ const KlyoCommercial = (() => {
       wrap.id = "commercialUnitWrap-" + kind;
       companySelect.closest(".field")?.after(wrap);
     }
-    wrap.innerHTML = `<label>${t("Branch / department", "Oddział / dział")}<select id="commercialUnit-${kind}"><option value="">—</option></select></label>`;
+    wrap.innerHTML = `<label>${KlyoModuleI18n.label("Branch / department", "Oddział / dział")}<select id="commercialUnit-${kind}"><option value="">—</option></select></label>`;
     let generation = 0;
     const load = async (selected) => {
       const version = ++generation,
@@ -702,7 +721,7 @@ const KlyoCommercial = (() => {
             currency: g("quoteCurrencySelect").value,
           });
       if (version !== request) return;
-      out.innerHTML = `<div class="commercial-margin-summary"><strong>${t("Profit", "Zysk")}: ${d.profit == null ? "—" : money(d.profit, d.currency)}</strong><span>${t("Margin", "Marża")}: ${pct(d.margin_percent)}</span><span>${t("Markup", "Narzut")}: ${pct(d.markup_percent)}</span></div>${d.missing_costs ? `<p>${t("Missing purchase cost for", "Brak kosztu zakupu dla")} ${d.missing_costs} ${t("items. Total margin cannot be calculated.", "pozycji. Nie można obliczyć marży całkowitej.")}</p>` : ""}<div class="commercial-scroll"><table><thead><tr><th>${t("Item", "Pozycja")}</th><th>${t("Net revenue after discounts", "Przychód netto po rabatach")}</th><th>${t("Profit", "Zysk")}</th><th>${t("Margin", "Marża")}</th><th>${t("Markup", "Narzut")}</th></tr></thead><tbody>${d.rows.map((r) => `<tr><td>${esc(r.description)}</td><td>${money(r.revenue, d.currency)}</td><td>${r.cost_missing ? "—" : money(r.profit, d.currency)}</td><td>${pct(r.margin_percent)}</td><td>${pct(r.markup_percent)}</td></tr>`).join("")}</tbody></table></div>`;
+      out.innerHTML = `<div class="commercial-margin-summary"><strong>${t("Profit", "Zysk")}: ${d.profit == null ? "—" : money(d.profit, d.currency)}</strong><span>${t("Margin", "Marża")}: ${pct(d.margin_percent)}</span><span>${t("Markup", "Narzut")}: ${pct(d.markup_percent)}</span></div>${d.missing_costs ? `<p>${t("Missing purchase cost for", "Brak kosztu zakupu dla")} ${d.missing_costs} ${t("items. Total margin cannot be calculated.", "pozycji. Nie można obliczyć marży całkowitej.")}</p>` : ""}<div class="commercial-scroll"><table><thead><tr><th>${KlyoModuleI18n.label("Item", "Pozycja")}</th><th>${KlyoModuleI18n.label("Net revenue after discounts", "Przychód netto po rabatach")}</th><th>${KlyoModuleI18n.label("Profit", "Zysk")}</th><th>${KlyoModuleI18n.label("Margin", "Marża")}</th><th>${KlyoModuleI18n.label("Markup", "Narzut")}</th></tr></thead><tbody>${d.rows.map((r) => `<tr><td>${esc(r.description)}</td><td>${money(r.revenue, d.currency)}</td><td>${r.cost_missing ? "—" : money(r.profit, d.currency)}</td><td>${pct(r.margin_percent)}</td><td>${pct(r.markup_percent)}</td></tr>`).join("")}</tbody></table></div>`;
     } catch (e) {
       if (version === request) out.textContent = e.message;
     }
@@ -712,7 +731,7 @@ const KlyoCommercial = (() => {
     const view = document.createElement("section");
     view.id = "commercialView";
     view.className = "hidden";
-    view.innerHTML = `<div class="commercial-toolbar"><div><h2>${t("Commercial register", "Rejestr handlowy")}</h2><p class="muted">${t("Cases, offers and sales opportunities in one register.", "Sprawy, oferty i szanse sprzedaży w jednym rejestrze.")}</p></div><button class="btn" id="commercialAdd">+ ${t("New case", "Nowa sprawa")}</button></div><div class="commercial-toolbar"><input id="commercialSearch" type="search" placeholder="${t("Search case, person or company", "Szukaj sprawy, osoby lub firmy")}"><button class="btn btn-ghost btn-sm" id="commercialStages">${t("Register stages", "Etapy rejestru")}</button><button class="btn btn-ghost btn-sm" id="commercialExport">${t("Export selected / all", "Eksportuj wybrane / wszystkie")}</button><span id="commercialOwnerTools" hidden><button class="btn btn-ghost btn-sm" id="commercialPurchase">${t("Purchase prices", "Ceny zakupu")}</button><button class="btn btn-ghost btn-sm" id="commercialPermissions">${t("Margin access", "Dostęp do marż")}</button></span></div><div class="commercial-scroll"><table class="commercial-table"><thead><tr><th>${t("Case / offer no.", "Nr sprawy / oferty")}</th><th>${t("Subject / products", "Temat / produkty")}</th><th>${t("Person / company", "Osoba / firma")}</th><th>${t("Net value", "Wartość netto")}</th><th>${t("Valid until", "Ważna do")}</th><th>${t("Status / pipeline stage", "Status / etap lejka")}</th><th></th></tr></thead><tbody id="commercialRows"></tbody></table></div>`;
+    view.innerHTML = `<div class="commercial-toolbar"><div><h2>${KlyoModuleI18n.label("Commercial register", "Rejestr handlowy")}</h2><p class="muted">${KlyoModuleI18n.label("Cases, offers and sales opportunities in one register.", "Sprawy, oferty i szanse sprzedaży w jednym rejestrze.")}</p></div><button class="btn" id="commercialAdd">+ ${t("New case", "Nowa sprawa")}</button></div><div class="commercial-toolbar"><input id="commercialSearch" type="search" placeholder="${t("Search case, person or company", "Szukaj sprawy, osoby lub firmy")}"><button class="btn btn-ghost btn-sm" id="commercialStages">${KlyoModuleI18n.label("Register stages", "Etapy rejestru")}</button><button class="btn btn-ghost btn-sm" id="commercialExport">${KlyoModuleI18n.label("Export selected / all", "Eksportuj wybrane / wszystkie")}</button><span id="commercialOwnerTools" hidden><button class="btn btn-ghost btn-sm" id="commercialPurchase">${KlyoModuleI18n.label("Purchase prices", "Ceny zakupu")}</button><button class="btn btn-ghost btn-sm" id="commercialPermissions">${KlyoModuleI18n.label("Margin access", "Dostęp do marż")}</button></span></div><div class="commercial-scroll"><table class="commercial-table"><thead><tr><th>${KlyoModuleI18n.label("Case / offer no.", "Nr sprawy / oferty")}</th><th>${KlyoModuleI18n.label("Subject / products", "Temat / produkty")}</th><th>${KlyoModuleI18n.label("Person / company", "Osoba / firma")}</th><th>${KlyoModuleI18n.label("Tax ID", "NIP")}</th><th>${KlyoModuleI18n.label("Company address", "Adres firmy")}</th><th>${KlyoModuleI18n.label("Contact details", "Dane kontaktowe")}</th><th>${KlyoModuleI18n.label("Net value", "Wartość netto")}</th><th>${KlyoModuleI18n.label("Valid until", "Ważna do")}</th><th>${KlyoModuleI18n.label("Payment terms", "Warunki płatności")}</th><th>${KlyoModuleI18n.label("Delivery terms", "Warunki dostawy")}</th><th>${KlyoModuleI18n.label("Status / pipeline stage", "Status / etap lejka")}</th><th></th></tr></thead><tbody id="commercialRows"></tbody></table></div>`;
     (
       g("companiesView")?.parentElement || g("salesOverviewView")?.parentElement
     ).append(view);
@@ -736,6 +755,12 @@ const KlyoCommercial = (() => {
           "title",
           "contact_name",
           "company_name",
+          "company_tax_id",
+          "company_address",
+          "company_city",
+          "company_country",
+          "contact_email",
+          "contact_phone",
           "main_products",
           "value",
           "currency",
@@ -754,7 +779,7 @@ const KlyoCommercial = (() => {
                   (v) =>
                     '"' +
                     String(v)
-                      .replace(/^[=+@-]/, "'$&")
+                      .replace(/^[=+@\t\r-]/, "'$&")
                       .replace(/"/g, '""') +
                     '"',
                 )
@@ -779,6 +804,19 @@ const KlyoCommercial = (() => {
       if (!btn && (e.ctrlKey || e.metaKey))
         e.target.closest("[data-case-id]")?.classList.toggle("selected");
     });
+    document.addEventListener(
+      "keydown",
+      (e) => {
+        const side = g("quoteForm")?.querySelector(".commercial-margins[open]");
+        if (e.key === "Escape" && side) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          side.open = false;
+          side.querySelector("summary").focus();
+        }
+      },
+      true,
+    );
     const container = g("quoteItemsContainer");
     if (container)
       new MutationObserver(decorateRows).observe(container, {

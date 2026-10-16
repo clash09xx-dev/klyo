@@ -8,7 +8,9 @@ Use the same Microsoft Entra application configured for SharePoint, but add a **
 
 `https://klyolabs.com/api/communications/oauth/microsoft_mail/callback`
 
-Keep the existing SharePoint redirect URI. Set `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, and optionally `MICROSOFT_TENANT_ID` in Railway. The default tenant is `organizations`. Add Microsoft Graph **delegated** permissions `Mail.Read`. Offline access allows refresh tokens. Your organization's policy may require administrator consent. The current mailbox integration uses the signed-in account's own mailbox; for an info@ mailbox connect that licensed mailbox account directly. It does not impersonate arbitrary shared mailboxes. No `Mail.Send` scope is requested and no follow-up messages are sent.
+Keep the existing SharePoint redirect URI. Set `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, and optionally `MICROSOFT_TENANT_ID` in Railway. The default tenant is `organizations`. Add Microsoft Graph **delegated** permissions `Mail.Read` and `Mail.Read.Shared`. Offline access allows refresh tokens. Your organization's policy may require administrator consent. No `Mail.Send` scope is requested and no follow-up messages are sent.
+
+For an info@ or other shared mailbox, first give the signed-in Microsoft user delegated read access to that mailbox in Microsoft 365. Connect or reconnect Microsoft 365 in Klyo to consent to `Mail.Read.Shared`, then choose **Shared mailbox** next to the connection and enter its email address. Klyo verifies access to that inbox before saving a separate connection. This does not grant Microsoft mailbox permissions or impersonate arbitrary mailboxes. Your own inbox remains connected separately. Each connection can have its own folders, synchronization and RFQ rules, with the same CRM privacy rules as below. Revoking Microsoft access stops synchronization; reconnect if consent or delegated access changes. Account-specific behavior must be tested with your own tenant.
 
 In **Inbox → Connect Microsoft 365**, review the privacy notice and sign in. Each user's inbox is private to that user, within the active Team or Personal space. Incoming messages whose sender email matches an existing CRM contact are linked to that contact and its company. Linking an email to a deal also links it to the deal's contact/company. Linked correspondence is visible to workspace colleagues with access to those records. Unmatched and unlinked messages remain private. Do not connect a mailbox containing correspondence you are not authorized to publish to CRM records.
 
@@ -42,7 +44,11 @@ An Apollo subscription/API key with the required endpoint permissions is require
 
 ## Parcel tracking
 
-Order tracking supports DHL, UPS, FedEx, DPD and InPost through fixed official carrier tracking pages. **Open tracking** opens the carrier's website with the tracking number. Klyo does not claim that this is a live shipment status API. A live carrier API requires a separately authorized carrier contract/account and is not configured by this release.
+**Order → Shipment status** can fetch real DHL status scans, estimated delivery and tracking events through DHL's Tracking Unified API. Obtain an approved subscription key for that API in the DHL Developer Portal. The workspace owner enters it in **Shipment status → DHL API key → Connect DHL**. The key is encrypted and is never returned to the browser. No API subscription or credits are purchased by Klyo. A demo key returns example data and must not be used for actual customer deliveries.
+
+Set the order carrier to **DHL** and enter the tracking number, then choose **Refresh DHL status**. Results are cached for five minutes; requests are spaced for the workspace and provider rate limits are respected. The API subscription must cover the shipment and applicable DHL division. A carrier delivery scan does not set the customer's signed acknowledgment, invoice or payment. **Disconnect** removes the key; the last downloaded order snapshot remains historical data. Changing the carrier or number clears that snapshot.
+
+UPS, FedEx, DPD and InPost remain available through fixed official tracking pages using **Open carrier tracking**. Live API adapters for those carriers are not included. Connecting DHL does not imply support for their APIs. You can continue opening the official tracking page for DHL as well.
 
 ## Fakturownia invoices and payment status
 
@@ -59,6 +65,8 @@ Provider failures/rate limits stop or defer synchronization and show an error. C
 Official references:
 - Microsoft delta mail: https://learn.microsoft.com/en-us/graph/delta-query-messages
 - Microsoft delegated permissions: https://learn.microsoft.com/en-us/graph/permissions-reference
+- Microsoft shared mailboxes: https://learn.microsoft.com/en-us/graph/outlook-share-messages-folders
+- DHL Tracking Unified API: https://developer.dhl.com/tracking
 - Google Drive uploads: https://developers.google.com/workspace/drive/api/guides/manage-uploads
 - Dropbox OAuth and files API: https://www.dropbox.com/developers/documentation/http/documentation
 - Apollo search: https://docs.apollo.io/reference/people-api-search

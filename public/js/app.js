@@ -328,6 +328,7 @@ function showLimitOrError(err, fallbackEl) {
   KlyoDealViews.init();
   KlyoCommercial.init();
   KlyoOperations.init();
+  KlyoCompletion.init();
   KlyoCommunications.init();
   KlyoCalendar.init();
   KlyoCloudFiles.init();

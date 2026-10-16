@@ -3,15 +3,16 @@ const express = require("express");
 const db = require("../db");
 const { requireAuth, requireEditor } = require("../middleware/auth");
 
-const router = express.Router();
-router.use(requireAuth,require("../middleware/billing").requirePaidAccess);
+const router = require("../middleware/safeRouter")();
+router.use(requireAuth, require("../middleware/billing").requirePaidAccess);
 
-const VALID_STATUS   = ["todo", "in_progress", "done"];
+const VALID_STATUS = ["todo", "in_progress", "done"];
 const VALID_PRIORITY = ["low", "medium", "high"];
 
 // GET /api/tasks  — filter: assigned_to, status, priority, contact_id, deal_id, overdue
 router.get("/", async (req, res) => {
-  const { assigned_to, status, priority, contact_id, deal_id, overdue } = req.query;
+  const { assigned_to, status, priority, contact_id, deal_id, overdue } =
+    req.query;
 
   let sql = `
     SELECT t.*,
@@ -30,82 +31,75 @@ router.get("/", async (req, res) => {
   `;
   const params = [req.user.workspace_id];
 
-  if (assigned_to) { params.push(assigned_to); sql += ` AND t.assigned_to = $${params.length}`; }
-  if (status)      { params.push(status);       sql += ` AND t.status = $${params.length}`; }
-  if (priority)    { params.push(priority);     sql += ` AND t.priority = $${params.length}`; }
-  if (contact_id)  { params.push(contact_id);   sql += ` AND t.contact_id = $${params.length}`; }
-  if (deal_id)     { params.push(deal_id);      sql += ` AND t.deal_id = $${params.length}`; }
-  if (overdue === "1") sql += ` AND t.status != 'done' AND t.due_date < CURRENT_DATE`;
+  if (assigned_to) {
+    params.push(assigned_to);
+    sql += ` AND t.assigned_to = $${params.length}`;
+  }
+  if (status) {
+    params.push(status);
+    sql += ` AND t.status = $${params.length}`;
+  }
+  if (priority) {
+    params.push(priority);
+    sql += ` AND t.priority = $${params.length}`;
+  }
+  if (contact_id) {
+    params.push(contact_id);
+    sql += ` AND t.contact_id = $${params.length}`;
+  }
+  if (deal_id) {
+    params.push(deal_id);
+    sql += ` AND t.deal_id = $${params.length}`;
+  }
+  if (overdue === "1")
+    sql += ` AND t.status != 'done' AND t.due_date < CURRENT_DATE`;
 
-  sql += " ORDER BY CASE t.priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END, t.due_date NULLS LAST, t.created_at DESC";
+  sql +=
+    " ORDER BY CASE t.priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END, t.due_date NULLS LAST, t.created_at DESC";
 
   const result = await db.query(sql, params);
   res.json({ tasks: result.rows });
 });
 
 // POST /api/tasks
-router.post("/", requireEditor, async (req, res) => {
-  const { title, description, assigned_to, contact_id, company_id, deal_id, due_date, priority, status } = req.body || {};
-  if (!title || !title.trim()) return res.status(400).json({ error: "Task title is required." });
-
-  const result = await db.query(
-    `INSERT INTO tasks (workspace_id, title, description, assigned_to, created_by, contact_id, company_id, deal_id, due_date, priority, status)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-    [
-      req.user.workspace_id,
-      title.trim(),
-      description?.trim() || null,
-      assigned_to || null,
-      req.user.id,
-      contact_id || null,
-      company_id || null,
-      deal_id || null,
-      due_date || null,
-      VALID_PRIORITY.includes(priority) ? priority : "medium",
-      VALID_STATUS.includes(status) ? status : "todo",
-    ]
-  );
-  res.status(201).json({ task: result.rows[0] });
-});
-
-// PUT /api/tasks/:id
-router.put("/:id", requireEditor, async (req, res) => {
-  const existing = await db.query("SELECT id FROM tasks WHERE id = $1 AND workspace_id = $2", [req.params.id, req.user.workspace_id]);
-  if (!existing.rows.length) return res.status(404).json({ error: "Task not found." });
-
-  const { title, description, assigned_to, contact_id, company_id, deal_id, due_date, priority, status } = req.body || {};
-  if (!title || !title.trim()) return res.status(400).json({ error: "Task title is required." });
-
-  const result = await db.query(
-    `UPDATE tasks SET title=$1, description=$2, assigned_to=$3, contact_id=$4, company_id=$5,
-       deal_id=$6, due_date=$7, priority=$8, status=$9,
-       updated_at=now()
-     WHERE id=$10 RETURNING *`,
-    [
-      title.trim(),
-      description?.trim() || null,
-      assigned_to || null,
-      contact_id || null,
-      company_id || null,
-      deal_id || null,
-      due_date || null,
-      VALID_PRIORITY.includes(priority) ? priority : "medium",
-      VALID_STATUS.includes(status) ? status : "todo",
+router.post("/", requireEditor, async (req, res) =>
+  res
+    .status(201)
+    .json({
+      task: await require("../services/operations").task(
+        req.user,
+        null,
+        req.body || {},
+      ),
+    }),
+);
+router.put("/:id", requireEditor, async (req, res) =>
+  res.json({
+    task: await require("../services/operations").task(
+      req.user,
       req.params.id,
-    ]
-  );
-  res.json({ task: result.rows[0] });
-});
+      req.body || {},
+    ),
+  }),
+);
 
 // PATCH /api/tasks/:id/status — quick status toggle
 router.patch("/:id/status", requireEditor, async (req, res) => {
   const { status } = req.body || {};
-  if (!VALID_STATUS.includes(status)) return res.status(400).json({ error: "Invalid status." });
+  if (!VALID_STATUS.includes(status))
+    return res.status(400).json({ error: "Invalid status." });
 
-  const existing = await db.query("SELECT id FROM tasks WHERE id = $1 AND workspace_id = $2", [req.params.id, req.user.workspace_id]);
-  if (!existing.rows.length) return res.status(404).json({ error: "Task not found." });
+  const existing = await db.query(
+    "SELECT id FROM tasks WHERE id = $1 AND workspace_id = $2",
+    [req.params.id, req.user.workspace_id],
+  );
+  if (!existing.rows.length)
+    return res.status(404).json({ error: "Task not found." });
 
-  await db.query("UPDATE tasks SET status=$1, updated_at=now() WHERE id=$2", [status, req.params.id]);
+  await db.query("UPDATE tasks SET status=$1, updated_at=now() WHERE id=$2", [
+    status,
+    req.params.id,
+  ]);
   res.json({ ok: true });
 });
 
@@ -116,10 +110,13 @@ router.delete("/:id", requireEditor, async (req, res) => {
       "DELETE FROM tasks WHERE id=$1 AND workspace_id=$2 RETURNING id",
       [req.params.id, req.user.workspace_id],
     );
-    if (!result.rows.length) return res.status(404).json({ error: "Task not found." });
+    if (!result.rows.length)
+      return res.status(404).json({ error: "Task not found." });
     res.json({ ok: true });
   } catch (error) {
-    res.status(500).json({ error: "Could not delete this task. Please try again." });
+    res
+      .status(500)
+      .json({ error: "Could not delete this task. Please try again." });
   }
 });
 

@@ -245,7 +245,8 @@
   gap: 20px;
   flex-wrap: wrap;
   padding: 12px;
-  background: var(--hover, #f2f5f9);
+  background: var(--surface-2, #f2f5f9);
+  color: var(--text);
   font-size: 13px;
 }
 .commercial-margins table {
@@ -288,5 +289,67 @@
   }
   .commercial-unit {
     flex-wrap: wrap;
+  }
+}
+
+.commercial-scroll {
+  max-height: 70dvh;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border);
+}
+.commercial-table {
+  min-width: 1900px;
+  font-size: 12px;
+}
+.commercial-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface);
+}
+.commercial-table th:first-child,
+.commercial-table td:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 1;
+  min-width: 150px;
+}
+.commercial-table td {
+  max-width: 270px;
+  min-width: 110px;
+  overflow-wrap: anywhere;
+}
+.commercial-margins[open] {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(500px, 100vw);
+  max-height: 100dvh;
+  overflow-y: auto;
+  z-index: 4800;
+  margin: 0;
+  border-radius: 0;
+  background: var(--surface);
+  box-shadow: -12px 0 40px #0003;
+  padding: 22px;
+}
+.commercial-margins[open] > summary {
+  position: sticky;
+  top: -22px;
+  background: var(--surface);
+  padding: 18px 0;
+  z-index: 1;
+  list-style: none;
+  border-bottom: 1px solid var(--border);
+}
+.commercial-margins[open] > summary::after {
+  content: "×";
+  float: right;
+  font-size: 23px;
+}
+@media (min-width: 1200px) {
+  #quoteModalOverlay:has(.commercial-margins[open]) > .modal {
+    margin-right: 510px;
+    max-width: calc(100vw - 560px);
   }
 }
