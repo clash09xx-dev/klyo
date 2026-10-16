@@ -110,6 +110,7 @@ async function copy(pool, user, body) {
   const c = await pool.connect();
   try {
     await c.query("BEGIN ISOLATION LEVEL REPEATABLE READ");
+    await c.query("SET LOCAL klyo.skip_auto_project = 'on'");
     const sid = await source(c, user),
       tid = user.workspace_id,
       { mode, ids } = selection(body);
@@ -644,6 +645,8 @@ async function copy(pool, user, body) {
           items,
           status: "draft",
           logistics: {},
+          tracking_snapshot: null,
+          tracking_checked_at: null,
           delivery_acknowledged_at: null,
           delivery_acknowledged_by: "",
           delivery_document_url: "",

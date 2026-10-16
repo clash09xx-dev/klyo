@@ -103,6 +103,9 @@ async function save(c, t, w, n, data, user) {
 }
 async function project(user, n, b) {
   return tx(async (c) => {
+    await c.query("SELECT id FROM workspaces WHERE id=$1 FOR UPDATE", [
+      user.workspace_id,
+    ]);
     const p = n ? await row(c, "projects", user.workspace_id, n, true) : {},
       d = { ...p, ...b };
     if (!d.currency)
@@ -130,6 +133,19 @@ async function project(user, n, b) {
       currency: normalizeCurrency(d.currency || "USD"),
       notes: txt(d.notes, 30000),
     };
+    if (
+      n &&
+      data.currency !== p.currency &&
+      (
+        await c.query(
+          "SELECT 1 FROM project_time_entries WHERE workspace_id=$1 AND project_id=$2 UNION ALL SELECT 1 FROM project_resources WHERE workspace_id=$1 AND project_id=$2 AND hourly_cost IS NOT NULL LIMIT 1",
+          [user.workspace_id, p.id],
+        )
+      ).rows.length
+    )
+      fail(
+        "Project currency cannot change after work or hourly costs have been recorded.",
+      );
     if (!data.title || !data.currency)
       fail("Enter a project title and currency.");
     if (data.starts_on && data.due_date && data.starts_on > data.due_date)
@@ -147,6 +163,15 @@ async function project(user, n, b) {
         d[f],
         f === "deal_id" && p.deal_id === id(d[f]),
       );
+    if (!n && data.deal_id) {
+      const existing = (
+        await c.query(
+          "SELECT * FROM projects WHERE workspace_id=$1 AND deal_id=$2 ORDER BY id LIMIT 1",
+          [user.workspace_id, data.deal_id],
+        )
+      ).rows[0];
+      if (existing) return existing;
+    }
     return save(c, "projects", user.workspace_id, n, data, user.id);
   });
 }
@@ -169,6 +194,8 @@ async function task(user, n, b) {
         reminder_at: stamp(d.reminder_at),
       };
     if (!data.title) fail("Task title is required.");
+    if ((!n || Object.hasOwn(b, "due_date")) && !data.due_date)
+      fail("A task due date is required.");
     for (const [f, t] of Object.entries({
       assigned_to: "users",
       contact_id: "contacts",
@@ -552,6 +579,27 @@ async function order(user, n, b) {
         d[f],
         f === "deal_id" && p.deal_id === id(d[f]),
       );
+    if (
+      !n &&
+      !data.project_id &&
+      data.deal_id &&
+      !Object.hasOwn(b, "project_id")
+    )
+      data.project_id =
+        (
+          await c.query(
+            "SELECT id FROM projects WHERE workspace_id=$1 AND deal_id=$2 ORDER BY id LIMIT 1",
+            [user.workspace_id, data.deal_id],
+          )
+        ).rows[0]?.id || null;
+    if (
+      n &&
+      (p.logistics?.carrier !== logistics.carrier ||
+        p.logistics?.tracking_number !== logistics.tracking_number)
+    ) {
+      data.tracking_snapshot = null;
+      data.tracking_checked_at = null;
+    }
     data.case_id = d.case_id
       ? await link(c, user.workspace_id, "commercial_cases", d.case_id)
       : null;

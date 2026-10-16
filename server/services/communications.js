@@ -17,7 +17,11 @@ function configured(p) {
 }
 const scopes = (p) =>
   p === "microsoft_mail"
-    ? ["https://graph.microsoft.com/Mail.Read", "offline_access"]
+    ? [
+        "https://graph.microsoft.com/Mail.Read",
+        "https://graph.microsoft.com/Mail.Read.Shared",
+        "offline_access",
+      ]
     : p === "google_drive"
       ? ["https://www.googleapis.com/auth/drive"]
       : ["files.metadata.read", "files.content.read", "files.content.write"];
@@ -222,25 +226,42 @@ async function token(conn) {
   );
   return (await r.json()).access_token;
 }
-function graphURL(path) {
+function graphURL(path, conn = {}) {
   const u = new URL(path, "https://graph.microsoft.com/v1.0/");
   if (
     u.origin !== "https://graph.microsoft.com" ||
-    !u.pathname.startsWith("/v1.0/me/")
+    !(conn.mailbox
+      ? decodeURIComponent(u.pathname)
+          .toLowerCase()
+          .startsWith("/v1.0/users/" + conn.mailbox.toLowerCase() + "/")
+      : u.pathname.startsWith("/v1.0/me/")) ||
+    u.username ||
+    u.password
   )
     throw invalid("Invalid Microsoft continuation.", 502);
   return u.href;
 }
 async function graph(conn, path, options = {}) {
   return (
-    await request(graphURL(path), {
-      ...options,
-      headers: {
-        Authorization: "Bearer " + (await module.exports.token(conn)),
-        Prefer: 'outlook.body-content-type="text", IdType="ImmutableId"',
-        ...options.headers,
+    await request(
+      graphURL(
+        conn.mailbox && path.startsWith("/v1.0/me/")
+          ? path.replace(
+              "/v1.0/me/",
+              "/v1.0/users/" + encodeURIComponent(conn.mailbox) + "/",
+            )
+          : path,
+        conn,
+      ),
+      {
+        ...options,
+        headers: {
+          Authorization: "Bearer " + (await module.exports.token(conn)),
+          Prefer: 'outlook.body-content-type="text", IdType="ImmutableId"',
+          ...options.headers,
+        },
       },
-    })
+    )
   ).json();
 }
 async function connection(user, id, mailOnly = false) {
@@ -554,7 +575,7 @@ async function sync(conn) {
           total++;
         }
         const cursor = data["@odata.nextLink"] || data["@odata.deltaLink"];
-        if (cursor) graphURL(cursor);
+        if (cursor) graphURL(cursor, conn);
         if (rule)
           await db.query("UPDATE rfq_rules SET delta_url=$1 WHERE id=$2", [
             cursor || next,

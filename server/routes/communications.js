@@ -11,12 +11,10 @@ const router = require("../middleware/safeRouter")();
 const manager = (req, res, next) =>
   req.user.is_personal || req.user.is_team_owner
     ? next()
-    : res
-        .status(403)
-        .json({
-          error:
-            "Only the workspace owner can configure shared integrations and RFQ rules.",
-        });
+    : res.status(403).json({
+        error:
+          "Only the workspace owner can configure shared integrations and RFQ rules.",
+      });
 const cookie = (p) => "klyo_connect_" + p,
   opts = (p) => ({
     httpOnly: true,
@@ -61,7 +59,7 @@ router.get("/oauth/:provider/callback", async (req, res) => {
     const r = await C.exchange(p, req.query.code, S.decrypt(pending.verifier));
     const old = (
       await db.query(
-        "SELECT id,account_id FROM communication_connections WHERE workspace_id=$1 AND user_id=$2 AND provider=$3",
+        "SELECT id,account_id FROM communication_connections WHERE workspace_id=$1 AND user_id=$2 AND provider=$3 AND mailbox=''",
         [pending.workspace_id, pending.user_id, p],
       )
     ).rows[0];
@@ -70,7 +68,7 @@ router.get("/oauth/:provider/callback", async (req, res) => {
         old.id,
       ]);
     await db.query(
-      "INSERT INTO communication_connections(workspace_id,user_id,provider,credentials,account_name,account_id) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(workspace_id,user_id,provider) DO UPDATE SET credentials=EXCLUDED.credentials,account_name=EXCLUDED.account_name,account_id=EXCLUDED.account_id,sync_error=NULL",
+      "INSERT INTO communication_connections(workspace_id,user_id,provider,credentials,account_name,account_id) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(workspace_id,user_id,provider,mailbox) DO UPDATE SET credentials=EXCLUDED.credentials,account_name=EXCLUDED.account_name,account_id=EXCLUDED.account_id,sync_error=NULL",
       [
         pending.workspace_id,
         pending.user_id,
@@ -101,7 +99,7 @@ router.get("/status", async (req, res) =>
     can_manage: !!(req.user.is_personal || req.user.is_team_owner),
     connections: (
       await db.query(
-        "SELECT id,provider,account_name,root_id,root_name,folder_id,synced_at,sync_error FROM communication_connections WHERE workspace_id=$1 AND (provider<>'microsoft_mail' OR user_id=$2) ORDER BY id",
+        "SELECT id,provider,account_name,mailbox,root_id,root_name,folder_id,synced_at,sync_error FROM communication_connections WHERE workspace_id=$1 AND (provider<>'microsoft_mail' OR user_id=$2) ORDER BY id",
         [req.user.workspace_id, req.user.id],
       )
     ).rows,
@@ -150,6 +148,29 @@ router.delete("/connections/:id", requireEditor, async (req, res) => {
     conn.id,
   ]);
   res.json({ ok: true });
+});
+router.post("/mail/:id/shared", requireEditor, async (req, res) => {
+  const conn = await C.connection(req.user, req.params.id, true),
+    mailbox = String(req.body.mailbox || "")
+      .trim()
+      .toLowerCase();
+  if (
+    !/^[a-z0-9.!#$%&'*+?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(mailbox) ||
+    mailbox.length > 254
+  )
+    throw invalid("Enter a shared mailbox email.");
+  await C.graph({ ...conn, mailbox }, "/v1.0/me/mailFolders/inbox?$select=id");
+  const r = await db.query(
+    "INSERT INTO communication_connections(workspace_id,user_id,provider,credentials,account_name,account_id,mailbox) VALUES($1,$2,'microsoft_mail',$3,$4,$5,$4) ON CONFLICT(workspace_id,user_id,provider,mailbox) DO UPDATE SET credentials=EXCLUDED.credentials,account_id=EXCLUDED.account_id,sync_error=NULL RETURNING id",
+    [
+      req.user.workspace_id,
+      req.user.id,
+      conn.credentials,
+      mailbox,
+      conn.account_id,
+    ],
+  );
+  res.status(201).json({ connection_id: r.rows[0].id });
 });
 router.get("/mail/folders/:id", async (req, res) => {
   const conn = await C.connection(req.user, req.params.id, true),
@@ -668,16 +689,14 @@ router.post("/apollo/search", requireEditor, async (req, res) => {
   );
   const result = await r.json();
   res.json({
-    people: (result.people || [])
-      .slice(0, 25)
-      .map((p) => ({
-        id: p.id,
-        first_name: p.first_name,
-        last_name: p.last_name || p.last_name_obfuscated,
-        title: p.title,
-        company: p.organization?.name,
-        has_email: !!p.has_email,
-      })),
+    people: (result.people || []).slice(0, 25).map((p) => ({
+      id: p.id,
+      first_name: p.first_name,
+      last_name: p.last_name || p.last_name_obfuscated,
+      title: p.title,
+      company: p.organization?.name,
+      has_email: !!p.has_email,
+    })),
     total: result.total_entries || 0,
   });
 });

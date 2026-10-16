@@ -84,12 +84,12 @@ test('manual sales workspace: persistence, history, permissions and isolation', 
       assert.equal((await request(`/tasks/${taskId}`,'DELETE')).status,404);
       assert.equal((await request(`/deals/${id}`)).data.deal.next_task_id,null);
       assert.equal((await db.query('SELECT task_id FROM calendar_events WHERE workspace_id=1')).rows[0].task_id,null);
-      const personal=await request('/tasks','POST',{title:'Only mine'}, {scope:'personal'});
+      const personal=await request('/tasks','POST',{title:'Only mine',due_date:'2030-01-01'}, {scope:'personal'});
       assert.equal(personal.status,201);const privateId=personal.data.task.id;
       assert.equal((await request(`/tasks/${privateId}`,'DELETE')).status,404);
       assert.equal((await request(`/tasks/${privateId}`,'DELETE',undefined,{id:2,role:'member',scope:'personal'})).status,404);
       assert.equal((await request(`/tasks/${privateId}`,'DELETE',undefined,{scope:'personal'})).status,200);
-      const shared=await request('/tasks','POST',{title:'Concurrent delete'});
+      const shared=await request('/tasks','POST',{title:'Concurrent delete',due_date:'2030-01-01'});
       const replies=await Promise.all([request(`/tasks/${shared.data.task.id}`,'DELETE'),request(`/tasks/${shared.data.task.id}`,'DELETE')]);
       assert.deepEqual(replies.map(r=>r.status).sort(),[200,404]);
     });

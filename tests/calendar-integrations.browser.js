@@ -63,7 +63,7 @@ const assert = require("node:assert/strict"),
         await page.locator(".nav [data-view=calendar]").click();
         await page.evaluate(() => {
           calendarDate = new Date(2026, 9, 1);
-          return loadCalendar();
+          return Promise.all([loadCalendar(), loadCalendar(), loadCalendar()]);
         });
         await page
           .locator("#calendarGrid [data-event-id]")
