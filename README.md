@@ -9,6 +9,10 @@ contacts, its own team, its own data. Nothing is ever shared between
 workspaces. Each workspace can pick up an AI offer composer (OpenAI), send
 real email (your own SMTP), and pay you monthly through Stripe.
 
+## Sales and operations release
+
+Sales targets and weighted forecasts, company branches/departments, a commercial register linked to offers and opportunities, private purchase-cost/margin tools, bundles and total-only PDFs, order fulfillment, projects/time/resources, equipment custody/calibration, advanced tasks and an inbound RFQ register are included. See the [usage guide](docs/sales-and-operations.md) and [integration setup](docs/communications-setup.md). Microsoft 365, Drive, Dropbox, Apollo and Fakturownia need your provider accounts; no automatic follow-up emails are sent.
+
 ## What's inside
 
 - **Personalization** — each person can pick their own full color theme
@@ -403,3 +407,9 @@ In **Products → Price lists / Import**, upload CSV or XLSX, map columns, inspe
 This deployment does not include Microsoft credentials. Follow [the SharePoint setup guide](docs/sharepoint-setup.md) to register an Entra Web application and configure Railway. The same guide is available at `/docs/sharepoint-setup`. The integration uses delegated access and requires a real Microsoft account/tenant to complete live validation; automated checks use simulated Graph responses.
 
 The vendored spreadsheet reader is SheetJS CE 0.20.3 (Apache-2.0); source URL, checksum and licence are in `public/vendor/sheetjs`. Node.js 20 or newer is required by the Microsoft authentication library.
+
+## Verification
+
+Run `npm test` with `TEST_DATABASE_URL` pointing to a disposable local PostgreSQL database to include all API and migration checks. Each suite creates and removes its own schema. Without that variable, database suites are explicitly skipped. Never use a production database for tests.
+
+`npm run test:browser:all` runs the dashboard regressions and new analytics, commercial, operations and communications flows in Chromium and WebKit. It requires Playwright and its browsers plus the disposable database above. `KLYO_CHROMIUM_PATH` / `KLYO_WEBKIT_PATH` optionally select installed browser executables. Provider APIs are mocked during verification; tests do not send customer messages, spend Apollo credits or issue real invoices. PDF and screenshot artifacts go to the system temporary directory.

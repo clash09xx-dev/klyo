@@ -1,0 +1,292 @@
+.commercial-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.commercial-toolbar > div:first-child {
+  margin-right: auto;
+}
+.commercial-toolbar h2 {
+  font-size: 20px;
+  margin: 0 0 4px;
+}
+.commercial-toolbar p {
+  margin: 0;
+}
+.commercial-toolbar > input {
+  min-width: 240px;
+}
+.commercial-scroll {
+  overflow: auto;
+  max-width: 100%;
+}
+.commercial-table {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: collapse;
+  background: var(--surface, #fff);
+}
+.commercial-table th,
+.commercial-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border, #dce1e8);
+  text-align: left;
+  vertical-align: top;
+}
+.commercial-table th {
+  font-size: 11px;
+  color: var(--muted, #64748b);
+  white-space: nowrap;
+}
+.commercial-table td:first-child {
+  border-left: 4px solid var(--case-color);
+}
+.commercial-table small,
+.commercial-permission-form small {
+  display: block;
+  color: var(--muted, #64748b);
+  font-size: 12px;
+  margin-top: 5px;
+  max-width: 300px;
+  overflow-wrap: anywhere;
+}
+.commercial-table tr.selected {
+  background: var(--hover, #eaf0fb);
+}
+.commercial-link {
+  border: 0;
+  background: none;
+  color: var(--accent, #2455d6);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+}
+.commercial-status {
+  color: var(--case-color);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.commercial-actions {
+  display: flex;
+  gap: 4px;
+}
+.commercial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4200;
+  background: #10182885;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.commercial-dialog {
+  background: var(--surface, #fff);
+  color: var(--text, #172238);
+  width: min(640px, 100%);
+  max-height: 90dvh;
+  overflow: auto;
+  border: 1px solid var(--border, #dce1e8);
+  border-radius: 8px;
+  box-shadow: 0 20px 70px #0003;
+  padding: 22px;
+}
+.commercial-wide {
+  width: min(1080px, 100%);
+}
+.commercial-dialog > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border, #dce1e8);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+}
+.commercial-dialog h2 {
+  font-size: 20px;
+  margin: 0;
+}
+.commercial-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.commercial-dialog label,
+.commercial-quote-options label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  margin-bottom: 14px;
+}
+.commercial-dialog input,
+.commercial-dialog select,
+.commercial-dialog textarea,
+.commercial-quote-options input,
+.commercial-quote-options select {
+  background: var(--input-bg, var(--surface, #fff));
+  color: inherit;
+  border: 1px solid var(--border, #cbd5e1);
+  padding: 9px;
+  border-radius: 4px;
+  font: inherit;
+  max-width: 100%;
+  width: 100%;
+}
+.commercial-dialog input[type="checkbox"],
+.commercial-bundle-check input {
+  width: auto;
+}
+.commercial-dialog input[type="color"] {
+  min-width: 50px;
+  height: 40px;
+  padding: 3px;
+}
+.commercial-dialog textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+.commercial-error {
+  color: #dc2626;
+  font-size: 13px;
+}
+.commercial-unit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border, #dce1e8);
+}
+.commercial-unit strong {
+  margin-right: auto;
+}
+.commercial-unit span {
+  font-size: 12px;
+  color: var(--muted, #64748b);
+}
+.commercial-status-form,
+.commercial-permission-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border, #dce1e8);
+  padding: 12px 0;
+}
+.commercial-status-form label,
+.commercial-permission-form label {
+  margin: 0;
+}
+.commercial-permission-form strong {
+  flex: 1;
+}
+.commercial-permission-form input[type="number"] {
+  max-width: 120px;
+}
+.commercial-dialog table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-block: 16px;
+  font-size: 13px;
+}
+.commercial-dialog td,
+.commercial-dialog th {
+  padding: 10px;
+  border-bottom: 1px solid var(--border, #dce1e8);
+  text-align: left;
+}
+.commercial-quote-options,
+.commercial-margins {
+  border: 1px solid var(--border, #dce1e8);
+  padding: 14px;
+  margin: 14px 0;
+  border-radius: 5px;
+}
+.commercial-quote-options summary,
+.commercial-margins summary {
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.commercial-quote-options[open] summary,
+.commercial-margins[open] summary {
+  margin-bottom: 14px;
+}
+.commercial-quote-options p {
+  font-size: 12px;
+  color: var(--muted, #64748b);
+}
+.commercial-bundle-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.commercial-bundle-bar > input {
+  flex: 1;
+  min-width: 180px;
+}
+.commercial-bundle-check {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  grid-column: 1/-1;
+  justify-self: start;
+}
+.commercial-bundle-check small {
+  color: var(--accent, #2455d6);
+}
+.commercial-margin-summary {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 12px;
+  background: var(--hover, #f2f5f9);
+  font-size: 13px;
+}
+.commercial-margins table {
+  font-size: 12px;
+  width: 100%;
+  border-collapse: collapse;
+}
+.commercial-margins td,
+.commercial-margins th {
+  padding: 10px;
+  text-align: right;
+  border-bottom: 1px solid var(--border, #dce1e8);
+}
+.commercial-margins td:first-child,
+.commercial-margins th:first-child {
+  text-align: left;
+}
+.commercial-margins .muted {
+  font-size: 12px;
+}
+.commercial-dialog hr {
+  border: 0;
+  border-top: 1px solid var(--border, #dce1e8);
+  margin-block: 22px;
+}
+@media (max-width: 700px) {
+  .commercial-overlay {
+    padding: 8px;
+  }
+  .commercial-dialog {
+    padding: 16px;
+    max-height: 95dvh;
+  }
+  .commercial-grid {
+    grid-template-columns: 1fr;
+  }
+  .commercial-status-form,
+  .commercial-permission-form {
+    flex-wrap: wrap;
+  }
+  .commercial-unit {
+    flex-wrap: wrap;
+  }
+}

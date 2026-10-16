@@ -420,6 +420,10 @@ async function init() {
   await require("./migrations/companyPipelines")(pool);
   await require("./migrations/personalCustomization")(pool);
   await require("./migrations/documentsAndFiles")(pool);
+  await require("./migrations/salesAnalytics")(pool);
+  await require("./migrations/operations")(pool);
+  await require("./migrations/commercial")(pool);
+  await require("./migrations/communications")(pool);
   await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS workspace_preferences JSONB NOT NULL DEFAULT '{}'::jsonb");
 }
 

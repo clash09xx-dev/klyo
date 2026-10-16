@@ -60,7 +60,7 @@ module.exports = async function canvasPdf(quote, items, d) {
       }
       function tableParts(e) {
         const body = e.h * MM - 24,
-          desc = e.w * MM * 0.44 - 12,
+          desc = e.w * MM * (d.pricing_mode === "total_only" ? 0.86 : 0.44) - 12,
           size = e.font_size;
         const pages = [[]];
         let used = 0;
@@ -105,7 +105,7 @@ module.exports = async function canvasPdf(quote, items, d) {
           { status: 400 },
         );
       const money = (v) => Q.money(v, quote.currency, d.language),
-        L = Q.labels(d.language),
+        L = {...Q.labels(d.language),...(quote.document_kind==='order_confirmation'?{total:d.language==='pl'?'Razem netto':'Total (net)',price:d.language==='pl'?'Cena netto':'Net unit price'}:{})},
         context = { ...d, reference: Q.reference(quote) };
       function text(value, e, bold = e.bold) {
         let size = e.font_size;
@@ -137,8 +137,8 @@ module.exports = async function canvasPdf(quote, items, d) {
           w = e.w * MM,
           size = e.font_size;
         let y = e.y * MM;
-        const fractions = [0.44, 0.08, 0.18, 0.12, 0.18],
-          labels = [L.description, L.qty, L.price, L.discount, L.amount];
+        const fractions = d.pricing_mode === "total_only" ? [0.86,0.14] : [0.44, 0.08, 0.18, 0.12, 0.18],
+          labels = d.pricing_mode === "total_only" ? [L.description,L.qty] : [L.description, L.qty, L.price, L.discount, L.amount];
         doc.rect(x, y, w, 24).fill(e.fill || "#edf1f6");
         let left = x;
         labels.forEach((label, i) => {
@@ -163,6 +163,7 @@ module.exports = async function canvasPdf(quote, items, d) {
             row.first ? (Number(row.item.discount_percent) || 0) + "%" : "",
             row.first ? money(row.item.line_total) : "",
           ];
+          if(d.pricing_mode === "total_only")v.splice(2);
           let left = x;
           v.forEach((value, i) => {
             let fontSize = size;

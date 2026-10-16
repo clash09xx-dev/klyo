@@ -8,7 +8,7 @@
 (function () {
   const TRANSLATIONS = {
     en: {
-      nav: { files: "Files",
+      nav: { commercial:"Commercial register",projects:"Projects",orders:"Orders",equipment:"Equipment",inbox:"Inbox",rfq:"RFQ register",files: "Files",
         contacts: "Contacts",
         companies: "Companies",
         pipeline: "Pipeline",
@@ -688,7 +688,7 @@
         create: "Utwórz",
         confirm_delete: "Usuń",
       },
-      nav: { files: "Pliki",
+      nav: { commercial:"Rejestr handlowy",projects:"Projekty",orders:"Zamówienia",equipment:"Wyposażenie",inbox:"Skrzynka",rfq:"Zapytania ofertowe",files: "Pliki",
         contacts: "Kontakty",
         companies: "Firmy",
         pipeline: "Pipeline",

@@ -2,8 +2,8 @@ const crypto = require("crypto");
 const { invalid, text, validDate } = require("./dealWorkspace");
 const types = ["text", "textarea", "number", "date", "select", "checkbox"];
 function entity(value) {
-  if (!["contact", "product"].includes(value))
-    throw invalid("Choose contacts or products.");
+  if (!["contact", "product", "company"].includes(value))
+    throw invalid("Choose contacts, companies or products.");
   return value;
 }
 async function definitions(client, wid, kind, archived = false) {
@@ -96,7 +96,7 @@ async function save(client, wid, id, input) {
     type === "select" &&
     old.options.some((v) => !options.includes(v))
   ) {
-    const table = kind === "contact" ? "contacts" : "products";
+    const table = kind === "contact" ? "contacts" : kind === "company" ? "companies" : "products";
     if (
       (
         await client.query(

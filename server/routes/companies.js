@@ -59,7 +59,8 @@ async function saveCompany(user, id, input) {
           "A company cannot be its own parent or belong to one of its subsidiaries.",
         );
     }
-    const company = id
+    const customFields = await require("../services/customFields").validate(client,user.workspace_id,"company",input.custom_fields,previous?.custom_fields);
+    let company = id
       ? (
           await client.query(
             "UPDATE companies SET name=$1,industry=$2,notes=$3,parent_company_id=$4,updated_at=now() WHERE id=$5 AND workspace_id=$6 RETURNING *",
@@ -79,6 +80,10 @@ async function saveCompany(user, id, input) {
             [user.workspace_id, name, industry || null, notes || null, parent],
           )
         ).rows[0];
+    const details={custom_fields:JSON.stringify(customFields)};
+    for(const [key,max] of Object.entries({tax_id:80,registration_number:100,website:1000,address:1000,postal_code:50,city:200,country:100,phone:100,email:254}))if(Object.hasOwn(input,key))details[key]=text(input[key]||'',max,key);
+    const keys=Object.keys(details),values=Object.values(details);values.push(company.id,user.workspace_id);
+    company=(await client.query(`UPDATE companies SET ${keys.map((k,i)=>`${k}=$${i+1}`).join(',')} WHERE id=$${values.length-1} AND workspace_id=$${values.length} RETURNING *`,values)).rows[0];
     await client.query("COMMIT");
     return company;
   } catch (e) {

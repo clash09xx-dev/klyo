@@ -96,6 +96,7 @@ router.get("/", async (req, res) => {
 
 async function saveDraft(req, id) {
   return S.transaction(async (client) => {
+    await client.query("SELECT id FROM workspaces WHERE id=$1 FOR UPDATE",[req.user.workspace_id]);
     const existing = id
       ? (
           await client.query(
@@ -186,6 +187,10 @@ async function saveDraft(req, id) {
     await client.query('UPDATE quotes SET discount_type=$1,discount_value=$2,quote_discount_total=$3 WHERE id=$4 AND workspace_id=$5',[totals.discount_type,totals.discount_value,totals.quote_discount_total,id,req.user.workspace_id]);
     if(Object.hasOwn(b,'price_list_id'))await client.query('UPDATE quotes SET price_list_id=$1 WHERE id=$2 AND workspace_id=$3',[b.price_list_id||null,id,req.user.workspace_id]);
     await S.replaceItems(client, id, totals.computed, recipients);
+    const commercial = require('../services/commercial');
+    await commercial.snapshotCosts(client, req.user, id, currency);
+    const savedQuote=(await client.query('SELECT * FROM quotes WHERE id=$1 AND workspace_id=$2',[id,req.user.workspace_id])).rows[0];
+    await commercial.syncQuote(client,req.user,savedQuote,totals.computed,b);
     await logActivity(
       client,
       req.user.workspace_id,
@@ -257,6 +262,7 @@ router.post(
       line_items: original.lineItems,
       recipient_ids: original.recipients.map((r) => r.id),
       document: d,
+      commercial_case_id: null, deal_id: null,
     };
     res.status(201).json(await saveDraft(req));
   }),
@@ -270,9 +276,9 @@ function buildSendableEmail(full) {
     d.language === "pl" ? "Dzień dobry," : "Hello,",
     "",
     quote.intro_message || "",
-    ...lineItems.map(
+    ...Q.presentItems(lineItems,d).map(
       (i) =>
-        `${i.description}: ${i.quantity} x ${money(i.unit_price)}${Number(i.discount_percent) ? ` (-${i.discount_percent}%)` : ""} = ${money(i.line_total)}`,
+        i.hide_prices ? `${i.description}: ${i.quantity}` : `${i.description}: ${i.quantity} x ${money(i.unit_price)}${Number(i.discount_percent) ? ` (-${i.discount_percent}%)` : ""} = ${money(i.line_total)}`,
     ),
     "",
   ];
@@ -389,6 +395,7 @@ router.post(
   "/:id/accept",
   run(async (req, res) => {
     await S.transaction(async (client) => {
+      await client.query("SELECT id FROM workspaces WHERE id=$1 FOR UPDATE",[req.user.workspace_id]);
       const q = (
         await client.query(
           "SELECT * FROM quotes WHERE id=$1 AND workspace_id=$2 FOR UPDATE",
@@ -402,6 +409,7 @@ router.post(
         "UPDATE quotes SET status='accepted',accepted_at=now(),updated_at=now() WHERE id=$1",
         [q.id],
       );
+      await require('../services/commercial').syncQuoteOutcome(client,req.user,q,'won');
       const items = await client.query(
         "SELECT i.*,p.service_interval_months,p.warranty_months,p.name AS product_name FROM quote_line_items i JOIN products p ON p.id=i.product_id WHERE i.quote_id=$1 AND p.workspace_id=$2",
         [q.id, req.user.workspace_id],
@@ -438,24 +446,18 @@ router.post(
 router.post(
   "/:id/decline",
   run(async (req, res) => {
-    const q = await db.query(
-      "UPDATE quotes SET status='declined',updated_at=now() WHERE id=$1 AND workspace_id=$2 AND status='sent' RETURNING contact_id,title",
-      [req.params.id, req.user.workspace_id],
-    );
-    if (!q.rows.length)
-      fail("Only a sent quote in this workspace can be declined.");
-    await logActivity(
-      db,
-      req.user.workspace_id,
-      q.rows[0].contact_id,
-      req.user.id,
-      "quote_declined",
-      `${req.user.name} marked the quote declined.`,
-    );
+    await S.transaction(async client=>{
+      await client.query('SELECT id FROM workspaces WHERE id=$1 FOR UPDATE',[req.user.workspace_id]);
+      const q=(await client.query("UPDATE quotes SET status='declined',updated_at=now() WHERE id=$1 AND workspace_id=$2 AND status='sent' RETURNING *",[req.params.id,req.user.workspace_id])).rows[0];
+      if(!q)fail('Only a sent quote in this workspace can be declined.');
+      await require('../services/commercial').syncQuoteOutcome(client,req.user,q,'lost');
+      await logActivity(client,req.user.workspace_id,q.contact_id,req.user.id,'quote_declined',`${req.user.name} marked the quote declined.`);
+    });
     res.json({ ok: true });
   }),
 );
 router.use((error, req, res, next) => {
+  if(error.code==="23505")return res.status(409).json({error:"This case / offer number is already in use. Choose another reference."});
   if (!error.status) console.error("Quote operation failed:", error.message);
   res
     .status(error.status || 500)

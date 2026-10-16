@@ -254,6 +254,7 @@ async function entity(client, wid, kind, entityId) {
       deal: "deals",
       product: "products",
       quote: "quotes",
+      project:"projects", order:"sales_orders",equipment:"equipment",
     }[kind],
     n = Number(entityId);
   if (
@@ -262,7 +263,7 @@ async function entity(client, wid, kind, entityId) {
     n < 1 ||
     !(
       await client.query(
-        `SELECT id FROM ${table} WHERE id=$1 AND workspace_id=$2`,
+        `SELECT id FROM ${table} WHERE id=$1 AND workspace_id=$2${kind==='deal'?' AND deleted_at IS NULL':''}`,
         [n, wid],
       )
     ).rows.length

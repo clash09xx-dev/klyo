@@ -1,0 +1,144 @@
+.comm-view {
+  max-width: 100%;
+  min-width: 0;
+}
+.comm-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+  flex-wrap: wrap;
+}
+.comm-toolbar h2 {
+  font-size: 20px;
+  margin: 0 0 5px;
+}
+.comm-toolbar p,
+.comm-notice,
+.comm-connections small {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.comm-notice {
+  padding: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  margin-bottom: 16px;
+}
+.comm-connections > div {
+  padding: 14px;
+  border: 1px solid var(--border);
+  margin: 0 0 14px;
+}
+.comm-message-meta {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+.comm-message-meta p {
+  flex-basis: 100%;
+  overflow-wrap: anywhere;
+}
+.comm-message-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font: 14px/1.65 inherit;
+  max-height: 55vh;
+  overflow: auto;
+  border: 1px solid var(--border);
+  padding: 18px;
+  background: var(--bg);
+}
+.comm-tag {
+  display: inline-block;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  margin: 4px;
+}
+.comm-history {
+  display: grid;
+  gap: 8px;
+}
+.comm-history button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.comm-history small,
+.comm-view td small {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.comm-sla {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.comm-overdue {
+  color: #b42318;
+  font-weight: 700;
+}
+.comm-soon {
+  color: #946200;
+  font-weight: 600;
+}
+.comm-done {
+  color: #16804a;
+}
+.cloud-providers {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.cloud-browse {
+  max-height: 45vh;
+  overflow: auto;
+  display: grid;
+  gap: 5px;
+}
+.cloud-browse button {
+  text-align: left;
+  justify-content: flex-start;
+}
+.cloud-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.cloud-status-grid > div {
+  border: 1px solid var(--border);
+  padding: 16px;
+}
+.cloud-status-grid h3 {
+  margin: 0 0 6px;
+}
+.cloud-status-grid p {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.cloud-file-list {
+  margin-top: 20px;
+}
+.apollo-search {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.apollo-search label {
+  flex: 1;
+  min-width: 140px;
+}
+.comm-view [data-message] {
+  cursor: pointer;
+}
+.comm-view [data-message]:hover {
+  background: var(--bg-hover);
+}
