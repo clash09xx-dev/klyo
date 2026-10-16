@@ -424,6 +424,7 @@ async function init() {
   await require("./migrations/operations")(pool);
   await require("./migrations/commercial")(pool);
   await require("./migrations/communications")(pool);
+  await require("./migrations/calendarIntegrations")(pool);
   await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS workspace_preferences JSONB NOT NULL DEFAULT '{}'::jsonb");
 }
 

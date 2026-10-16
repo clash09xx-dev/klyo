@@ -69,6 +69,7 @@ app.use("/api/pipelines", require("./routes/pipelines"));
 for(const name of ["spaces","custom-fields","quote-templates","warranty","price-lists","sharepoint"])app.use("/api/"+name,require("./routes/"+name));
 app.use("/api/tasks", tasksRoutes);
 app.use("/api/calendar", calendarRoutes);
+app.use("/api/calendar-integrations",require("./routes/calendar-integrations"));
 app.use("/api/clients", clientsRoutes);
 app.use("/api/settings", dataResetRoutes);
 app.use("/api", trackingRoutes);

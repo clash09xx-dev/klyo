@@ -146,6 +146,8 @@ async function run(engine, name) {
           else{const index=taskRecords.findIndex(t=>String(t.id)===endpoint.split('/')[2]);taskRecords.splice(index,1);data={ok:true};}
         }
         else if (endpoint === '/clients') data = { clients: [] };
+        else if (endpoint === '/calendar-integrations/status') data = { providers:[{provider:'google',configured:false},{provider:'microsoft',configured:false}],connections:[] };
+        else if (endpoint === '/calendar-integrations/events') data = { events:[],errors:[],updates:[] };
         else if (endpoint === '/calendar') data = { events: [] };
         else if (endpoint === '/reminders/due') data = { reminders: [] };
         else if (endpoint === '/history') data = { entries: [], total: 0 };

@@ -1,0 +1,71 @@
+#calendarView .filter-bar {
+  flex-wrap: wrap;
+  gap: 7px;
+}
+#calendarGrid > div {
+  min-width: 0;
+}
+.calendar-notice {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  margin: 10px 0 16px;
+}
+.calendar-warning {
+  color: var(--negotiating);
+}
+.calendar-provider {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.calendar-provider h3 {
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+.calendar-provider p {
+  font-size: 13px;
+}
+.calendar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.calendar-event-footer {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+}
+.calendar-event-footer small {
+  color: var(--text-dim);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.calendar-event-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.calendar-source {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+#calendarGrid [data-event-id] {
+  min-width: 0;
+}
+@media (max-width: 700px) {
+  #calendarGrid {
+    overflow: auto !important;
+  }
+  #calendarGrid > div {
+    padding: 4px !important;
+  }
+  #calendarGrid [data-event-id] {
+    padding: 3px !important;
+    font-size: 10px !important;
+  }
+  .calendar-provider button {
+    margin-bottom: 6px;
+  }
+}
