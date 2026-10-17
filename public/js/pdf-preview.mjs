@@ -18,7 +18,7 @@ export async function showPdf(buffer, container, language = "en") {
     enableXfa: false,
   });
   pdf = await loading.promise;
-  container.innerHTML = `<div class="pdf-page-toolbar"><button type="button" class="pdf-prev" aria-label="${pl ? "Poprzednia strona" : "Previous page"}">←</button><span class="pdf-page-label"></span><button type="button" class="pdf-next" aria-label="${pl ? "Następna strona" : "Next page"}">→</button><select class="pdf-zoom" aria-label="Zoom"><option value="1">${pl ? "Dopasuj" : "Fit width"}</option><option value="1.25">125%</option><option value="1.5">150%</option></select></div><div class="pdf-canvas-scroll"><canvas aria-label="${pl ? "Strona oferty PDF" : "Proposal PDF page"}"></canvas></div>`;
+  container.innerHTML = `<div class="pdf-page-toolbar"><button type="button" class="pdf-prev" aria-label="${pl ? "Poprzednia strona" : "Previous page"}">←</button><span class="pdf-page-label"></span><button type="button" class="pdf-next" aria-label="${pl ? "Następna strona" : "Next page"}">→</button><select class="pdf-zoom" aria-label="${pl ? "Powiększenie" : "Zoom"}"><option value="1">${pl ? "Dopasuj" : "Fit width"}</option><option value="1.25">125%</option><option value="1.5">150%</option></select></div><div class="pdf-canvas-scroll"><canvas aria-label="${pl ? "Strona oferty PDF" : "Proposal PDF page"}"></canvas></div>`;
   const canvas = container.querySelector("canvas"),
     scroll = container.querySelector(".pdf-canvas-scroll"),
     label = container.querySelector(".pdf-page-label"),

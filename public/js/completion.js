@@ -108,7 +108,7 @@ const KlyoCompletion = (() => {
     d.find("#projectWorkCosts").innerHTML = detail.time_entries
       .map(
         (t) =>
-          `<form class="op-toolbar" data-time-cost="${t.id}"><label>${h(t.user_name)} · ${h(t.hours)} h · ${h(p.currency)}/h <input type="number" name="hourly_cost" min="0" step="0.01" value="${t.hourly_cost ?? ""}"></label><button class="btn btn-ghost">${KlyoModuleI18n.label("Save cost", "Zapisz koszt")}</button></form>`,
+          `<form class="op-toolbar" data-time-cost="${t.id}"><label>${h(t.user_name)} · ${h(t.hours)} h · ${h(p.currency)}${KlyoCopy.label("/h")} <input type="number" name="hourly_cost" min="0" step="0.01" value="${t.hourly_cost ?? ""}"></label><button class="btn btn-ghost">${KlyoModuleI18n.label("Save cost", "Zapisz koszt")}</button></form>`,
       )
       .join("");
     d.root.querySelectorAll("[data-time-cost]").forEach(

@@ -270,7 +270,7 @@ const KlyoCustomize = (() => {
     const platform = g("platformNavItem");
     platform.classList.toggle("hidden", !owner);
     platform.closest(".nav-group")?.classList.toggle("hidden", !owner);
-    platform.title = "Platform";
+    platform.title = KlyoCopy.text("Platform");
   }
   function applyOverview(layout) {
     const view = g("salesOverviewView");

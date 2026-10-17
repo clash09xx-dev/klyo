@@ -23,7 +23,7 @@ const API = (() => {
     }
 
     if (!res.ok) {
-      const err = new Error(data.error || `Request failed (${res.status})`);
+      const err = new Error(window.KlyoCopy ? KlyoCopy.text(data.error || `Request failed (${res.status})`) : data.error || `Request failed (${res.status})`);
       if (data.code) err.code = data.code;
       throw err;
     }

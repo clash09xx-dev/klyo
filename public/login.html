@@ -47,12 +47,9 @@
   <div class="auth-card">
     <!-- Language picker -->
     <div class="lang-picker-bar">
-      <select class="lang-select" id="loginLangPicker" title="Language">
+      <select class="lang-select" id="loginLangPicker" title="Language" data-ui-title="Language">
         <option value="en">English</option>
         <option value="pl">Polski</option>
-        <option value="es">Español</option>
-        <option value="fr">Français</option>
-        <option value="de">Deutsch</option>
       </select>
     </div>
 
@@ -165,7 +162,7 @@
         <div class="field" style="margin-bottom:4px;">
           <label style="display:flex; gap:9px; align-items:flex-start; cursor:pointer; font-size:13px; color:var(--text-dim);">
             <input type="checkbox" id="termsCheckbox" required style="margin-top:2px; flex-shrink:0; accent-color:var(--accent-1);" />
-            <span>Akceptuję <a href="/terms" target="_blank" style="color:var(--accent-1);">Warunki Korzystania</a> i zapoznałem/am się z <a href="/privacy" target="_blank" style="color:var(--accent-1);">Polityką Prywatności</a></span>
+            <span><span data-ui-copy="Akceptuję">Akceptuję</span> <a href="/terms" target="_blank" style="color:var(--accent-1);"><span data-ui-copy="Warunki Korzystania">Warunki Korzystania</span></a> <span data-ui-copy="i zapoznałem/am się z">i zapoznałem/am się z</span> <a href="/privacy" target="_blank" style="color:var(--accent-1);"><span data-ui-copy="Polityką Prywatności">Polityką Prywatności</span></a></span>
           </label>
         </div>
         <div class="form-error" id="signupError"></div>
@@ -187,6 +184,10 @@
 
 <script src="/js/api.js"></script>
 <script src="/js/i18n.js"></script>
+<script src="/js/module-i18n.js"></script>
+<script src="/js/ui-copy.js"></script>
+<script defer src="/js/language-picker.js"></script>
+<link rel="stylesheet" href="/css/language-picker.css">
 <script src="/js/mfa.js"></script>
 <script>
   // Track visit (non-logged-in only)
@@ -197,20 +198,23 @@
   // ---- i18n init (login page, no server pref available yet) ----
   KlyoI18n.initLang(null);
   KlyoI18n.applyTranslations();
+  document.title = KlyoCopy.text("Klyo – CRM for Small Businesses");
 
   const loginLangPicker = document.getElementById("loginLangPicker");
   loginLangPicker.value = KlyoI18n.getLang();
   loginLangPicker.addEventListener("change", () => {
+    document.querySelectorAll(".form-error").forEach(node => node.textContent = "");
     KlyoI18n.setLang(loginLangPicker.value, true); // skipSave — not logged in yet
     KlyoI18n.applyTranslations();
+    document.title = KlyoCopy.text("Klyo – CRM for Small Businesses");
   });
 
   // ---- email validation ----
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
   function validateEmail(value) {
-    if (!value) return "Email is required.";
-    if (!EMAIL_RE.test(value)) return "Please enter a valid email address (e.g. you@example.com).";
+    if (!value) return KlyoCopy.text("Email is required.");
+    if (!EMAIL_RE.test(value)) return KlyoCopy.text("Please enter a valid email address (e.g. you@example.com).");
     return null;
   }
 
@@ -289,7 +293,7 @@
       if (result.user?.language) KlyoI18n.setLang(result.user.language, true);
       window.location.href = "/app";
     } catch (err) {
-      loginError.textContent = err.message || "Could not sign in. Please try again.";
+      loginError.textContent = err.message || KlyoCopy.text("Could not sign in. Please try again.");
     } finally {
       submitBtn.disabled = false;
     }
@@ -304,19 +308,19 @@
     const email = document.getElementById("signupEmail").value.trim();
     const password = document.getElementById("signupPassword").value;
 
-    if (!name) { signupError.textContent = "Please enter your name."; return; }
+    if (!name) { signupError.textContent = KlyoCopy.text("Please enter your name."); return; }
     const emailErr = validateEmail(email);
     if (emailErr) { document.getElementById("signupEmailError").textContent = emailErr; return; }
-    if (password.length < 6) { signupError.textContent = "Password must be at least 6 characters."; return; }
+    if (password.length < 6) { signupError.textContent = KlyoCopy.text("Password must be at least 6 characters."); return; }
 
     const payload = { name, email, password };
     if (signupMode === "create") {
       const wn = document.getElementById("signupWorkspace").value.trim();
-      if (!wn) { signupError.textContent = "Please enter your business name."; return; }
+      if (!wn) { signupError.textContent = KlyoCopy.text("Please enter your business name."); return; }
       payload.workspace_name = wn;
     } else {
       const code = document.getElementById("signupInvite").value.trim();
-      if (!code) { signupError.textContent = "Please enter your invite code."; return; }
+      if (!code) { signupError.textContent = KlyoCopy.text("Please enter your invite code."); return; }
       payload.invite_code = code;
     }
 
@@ -328,7 +332,7 @@
       API.setUser(result.user);
       window.location.href = "/app";
     } catch (err) {
-      signupError.textContent = err.message || "Could not create account. Please try again.";
+      signupError.textContent = err.message || KlyoCopy.text("Could not create account. Please try again.");
     } finally {
       submitBtn.disabled = false;
     }
@@ -359,11 +363,11 @@
     document.getElementById("signupError").textContent = "";
     if (signupMode === "join") {
       const code = document.getElementById("signupInvite").value.trim();
-      if (!code) { document.getElementById("signupError").textContent = "Enter your invite code first, then continue with Google."; return; }
+      if (!code) { document.getElementById("signupError").textContent = KlyoCopy.text("Enter your invite code first, then continue with Google."); return; }
       startGoogle("join", { invite_code: code });
     } else {
       const wn = document.getElementById("signupWorkspace").value.trim();
-      if (!wn) { document.getElementById("signupError").textContent = "Enter your business name first, then continue with Google."; return; }
+      if (!wn) { document.getElementById("signupError").textContent = KlyoCopy.text("Enter your business name first, then continue with Google."); return; }
       startGoogle("create", { workspace_name: wn });
     }
   });
@@ -384,18 +388,18 @@
         window.location.href = "/app";
       } catch {
         API.clearToken();
-        document.getElementById("welcomeError").textContent = "Could not complete Google sign-in. Please try again.";
+        document.getElementById("welcomeError").textContent = KlyoCopy.text("Could not complete Google sign-in. Please try again.");
       }
       return true;
     }
     if (error) {
       const messages = {
-        cancelled: "Google sign-in was cancelled.",
-        bad_invite: "That invite code doesn't match any workspace.",
-        seat_limit: "This plan has reached its maximum number of users. Ask the team owner to upgrade to a higher plan.",
-        no_email: "Your Google account didn't share an email address.",
+        cancelled: KlyoCopy.text("Google sign-in was cancelled."),
+        bad_invite: KlyoCopy.text("That invite code doesn't match any workspace."),
+        seat_limit: KlyoCopy.text("This plan has reached its maximum number of users. Ask the team owner to upgrade to a higher plan."),
+        no_email: KlyoCopy.text("Your Google account didn't share an email address."),
       };
-      document.getElementById("welcomeError").textContent = messages[error] || "Could not sign in with Google. Please try again.";
+      document.getElementById("welcomeError").textContent = messages[error] || KlyoCopy.text("Could not sign in with Google. Please try again.");
       window.history.replaceState({}, "", window.location.pathname);
     }
     return false;

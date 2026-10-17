@@ -3,28 +3,34 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Klyo integration setup</title>
+    <title>Communication and file integrations</title>
+    <link rel="stylesheet" href="/css/language-picker.css" />
     <style>
       body {
         font:
-          16px/1.7 system-ui,
+          16px/1.75 system-ui,
           sans-serif;
         color: #202830;
-        max-width: 900px;
-        margin: 48px auto;
+        max-width: 940px;
+        margin: 40px auto;
         padding: 0 24px;
       }
       h1 {
-        font-size: 34px;
-        line-height: 1.2;
+        font-size: 32px;
+        line-height: 1.25;
       }
       h2 {
-        margin-top: 40px;
+        margin-top: 36px;
         border-top: 1px solid #dfe3e6;
-        padding-top: 24px;
+        padding-top: 22px;
+      }
+      h3 {
+        margin-top: 24px;
       }
       p,
-      li {
+      li,
+      a,
+      code {
         overflow-wrap: anywhere;
       }
       li {
@@ -34,25 +40,51 @@
         color: #264f85;
       }
       code {
-        font-size: 0.9em;
+        font-size: 0.88em;
         background: #f1f3f5;
         padding: 2px 4px;
         border-radius: 3px;
       }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+      }
+      td,
+      th {
+        padding: 10px;
+        text-align: left;
+        border: 1px solid #dfe3e6;
+      }
+      .table-wrap {
+        overflow: auto;
+      }
       @media (max-width: 600px) {
         body {
-          margin: 24px auto;
+          margin: 20px auto;
           padding: 0 16px;
         }
         h1 {
-          font-size: 28px;
+          font-size: 27px;
         }
       }
     </style>
+    <script defer src="/js/i18n.js"></script>
+    <script defer src="/js/docs-language.js"></script>
+    <script defer src="/js/language-picker.js"></script>
   </head>
   <body>
-    <a href="/app">← Klyo</a>
-    <main>
+    <header class="doc-language-bar">
+      <a href="/app">← Klyo CRM</a
+      ><select id="docLangPicker" aria-label="Language">
+        <option value="en">English</option>
+        <option value="pl">Polski</option>
+      </select>
+    </header>
+    <main
+      data-doc-lang="en"
+      data-doc-title="Communication and file integrations"
+    >
       <h1>Communication and file integrations</h1>
       <p>
         Klyo includes real provider adapters. Connecting them requires an
@@ -328,6 +360,268 @@
         </li>
         <li>Fakturownia API: https://github.com/fakturownia/API</li>
       </ul>
+    </main>
+    <main data-doc-lang="pl" data-doc-title="Integracje poczty i plików" hidden>
+      <h1>Integracje poczty i plików</h1>
+      <p>
+        Klyo ma adaptery dostawców. Połączenie wymaga własnego konta i danych
+        dostawcy. Klyo nie zakłada subskrypcji ani nie kupuje kredytów API.
+        Pozostałe funkcje CRM nie wymagają tych danych. Nie przesyłaj sekretów
+        przez czat ani zgłoszenia do pomocy.
+      </p>
+      <h2>Skrzynka Microsoft 365</h2>
+      <p>
+        Użyj aplikacji Microsoft Entra przygotowanej dla SharePoint i dodaj
+        adres przekierowania typu Web:
+      </p>
+      <p>
+        <code
+          >https://klyolabs.com/api/communications/oauth/microsoft_mail/callback</code
+        >
+      </p>
+      <p>
+        Zachowaj istniejący adres SharePoint. W Railway ustaw
+        <code>MICROSOFT_CLIENT_ID</code>,
+        <code>MICROSOFT_CLIENT_SECRET</code> oraz opcjonalnie
+        <code>MICROSOFT_TENANT_ID</code>; domyślna dzierżawa to
+        <code>organizations</code>. Dodaj
+        <strong>delegowane</strong> uprawnienia Graph <code>Mail.Read</code> i
+        <code>Mail.Read.Shared</code>. Dostęp offline umożliwia odświeżanie
+        tokenów. Polityka organizacji może wymagać zgody administratora.
+        Integracja nie prosi o <code>Mail.Send</code> i nie wysyła
+        automatycznych wiadomości przypominających klientom.
+      </p>
+      <p>
+        Dla skrzynki współdzielonej, np. info@, najpierw nadaj zalogowanej
+        osobie delegowany dostęp do jej odczytu w Microsoft 365. Połącz lub
+        ponownie połącz konto w Klyo i zaakceptuj <code>Mail.Read.Shared</code>.
+        Następnie wybierz <strong>Skrzynka współdzielona</strong> przy
+        połączeniu i podaj adres. Klyo sprawdza dostęp przed zapisaniem osobnego
+        połączenia. Nie nadaje uprawnień Microsoft ani nie podszywa się pod
+        dowolną skrzynkę. Własna skrzynka pozostaje połączona osobno. Każde
+        połączenie ma własne foldery, synchronizację i reguły zapytań. Cofnięcie
+        uprawnień zatrzymuje synchronizację; po zmianie zgody lub delegacji
+        połącz ponownie. Zachowanie trzeba sprawdzić we własnej organizacji.
+      </p>
+      <p>
+        Otwórz <strong>Skrzynka odbiorcza → Połącz Microsoft 365</strong>,
+        przeczytaj informację o prywatności i zaloguj się. Skrzynka jest
+        prywatna dla użytkownika w aktywnej przestrzeni zespołowej lub
+        prywatnej. Wiadomości od adresów pasujących do istniejących kontaktów
+        CRM są przypisywane do kontaktu i firmy. Powiązanie wiadomości ze sprawą
+        łączy ją również z kontaktem i firmą sprawy. Powiązana korespondencja
+        jest widoczna dla współpracowników mających dostęp do rekordów.
+        Niedopasowane i niepowiązane wiadomości pozostają prywatne. Nie łącz
+        skrzynki z korespondencją, której nie możesz udostępniać w CRM.
+      </p>
+      <p>
+        Synchronizacja działa mniej więcej co minutę podczas pracy serwera.
+        <strong>Synchronizuj teraz</strong> uruchamia ją od razu. Pierwszy
+        odczyt importuje skrzynkę partiami, kolejne korzystają z kursorów zmian
+        Microsoft. Wiadomości usunięte w Outlooku są oznaczane jako usunięte w
+        CRM. Odłączenie usuwa zaimportowane wiadomości danego połączenia; sprawy
+        i zadania CRM pozostają. Tokeny są szyfrowane w bazie i niewidoczne dla
+        przeglądarki. Załączniki są pobierane na żądanie, do 20 MB, według tych
+        samych zasad dostępu. Treść wiadomości jest wyświetlana jako zwykły
+        tekst, a nie wykonywalny HTML.
+      </p>
+      <h2>Rejestr zapytań ofertowych</h2>
+      <p>
+        Reguły nowych zapytań ustawia tylko właściciel zespołu lub przestrzeni
+        prywatnej. Połącz skrzynkę i otwórz
+        <strong>Rejestr zapytań → Reguły przychodzące</strong>. Wybierz folder,
+        opcjonalny fragment tematu i domenę nadawcy, osobę odpowiedzialną,
+        lejek, etap oraz czas odpowiedzi w minutach. Zapis uruchamia regułę
+        wyłącznie dla przyszłych wiadomości. Każda pasująca wiadomość tworzy
+        najwyżej jedno zapytanie, szansę i zadanie odpowiedzi. Zapytanie
+        pokazuje dokładny termin i pozostały lub przekroczony czas. Ręcznie
+        oznacz odpowiedź, aby zatrzymać licznik; nie wysyła to wiadomości.
+        Usunięcie reguły zatrzymuje nowe zapytania. Osoby i lejki muszą należeć
+        do tej samej przestrzeni. Możesz kierować pocztę do folderów regułami
+        Outlooka; Klyo ich nie zmienia.
+      </p>
+      <h2>Google Drive</h2>
+      <p>
+        W Google Cloud Console włącz <strong>Google Drive API</strong>,
+        skonfiguruj ekran zgody OAuth i klienta typu aplikacja internetowa.
+        Dodaj:
+      </p>
+      <p>
+        <code
+          >https://klyolabs.com/api/communications/oauth/google_drive/callback</code
+        >
+      </p>
+      <p>
+        W Railway ustaw <code>GOOGLE_CLIENT_ID</code> i
+        <code>GOOGLE_CLIENT_SECRET</code> — te same, których używa logowanie
+        Google i wysyłka Gmail. Zachowaj wcześniejsze adresy przekierowania.
+        Skonfiguruj publikację, użytkowników testowych i wymaganą weryfikację
+        Google. Obecny zakres
+        <code>https://www.googleapis.com/auth/drive</code> obejmuje przeglądanie
+        istniejących folderów i zarządzanie plikami całego połączonego konta. Po
+        wybraniu folderu Klyo ogranicza operacje CRM do tego folderu i
+        podfolderów. W razie potrzeby użyj dedykowanego konta lub folderu.
+      </p>
+      <p>
+        Otwórz <strong>Pliki → Google Drive → Połącz</strong>, zaakceptuj
+        uprawnienia i wybierz <strong>Wybierz folder CRM</strong>. Użytkownicy
+        mogą przeglądać podfoldery, podłączać istniejące pliki do rekordów,
+        wgrywać i pobierać dokumenty. Połączenie jest współdzielone w
+        przestrzeni; konfiguruje je i odłącza wyłącznie właściciel. Przestrzeń
+        prywatna ma osobne połączenie. Limit wgrania i pobrania to 20 MB na
+        plik. Dokumenty i arkusze Google wyeksportuj w Drive do PDF/XLSX przed
+        pobraniem przez Klyo — integracja przesyła zwykłe pliki, a nie dokumenty
+        edytorów Google. Dyski współdzielone działają w granicach dostępu konta
+        i polityk Google. Usunięcie powiązania CRM nie usuwa pliku z chmury.
+      </p>
+      <h2>Dropbox</h2>
+      <p>
+        Utwórz aplikację OAuth w Dropbox App Console. Wybierz
+        <strong>Scoped access</strong> i <strong>Full Dropbox</strong>, jeśli
+        chcesz wybierać istniejące foldery. Włącz
+        <code>files.metadata.read</code>, <code>files.content.read</code> i
+        <code>files.content.write</code>. Typ App folder widzi wyłącznie własny
+        folder aplikacji. Dodaj:
+      </p>
+      <p>
+        <code
+          >https://klyolabs.com/api/communications/oauth/dropbox/callback</code
+        >
+      </p>
+      <p>
+        W Railway ustaw <code>DROPBOX_CLIENT_ID</code> jako klucz aplikacji i
+        <code>DROPBOX_CLIENT_SECRET</code> jako sekret. Dane pozostają po
+        stronie serwera. Udostępnienie produkcyjne może wymagać oceny Dropbox.
+        Połącz w <strong>Pliki → Dropbox</strong>, wybierz folder CRM i używaj
+        podłączania, wgrywania i pobierania jak w Drive. Obowiązuje limit 20 MB
+        i te same zasady właściciela oraz przestrzeni. Dropbox wybiera nową
+        nazwę przy konflikcie plików. Oryginały pozostają po odłączeniu
+        integracji lub usunięciu powiązania.
+      </p>
+      <h2>Apollo.io</h2>
+      <p>
+        Potrzebujesz subskrypcji i klucza Apollo z dostępem do odpowiednich
+        metod API. Właściciel wpisuje klucz w
+        <strong>Kontakty → Import Apollo.io</strong>; zapis jest szyfrowany.
+        Szukaj osób po stanowisku, domenie firmy lub słowach kluczowych. Wyniki
+        mogą mieć częściowo ukryte nazwiska. Zaznaczenie do dziesięciu osób i
+        potwierdzenie wykorzystania kredytów uruchamia zbiorcze uzupełnienie
+        danych. Importowane są tylko osoby z użytecznym adresem e-mail.
+        Istniejące adresy są używane ponownie, a powtórzony identyfikator Apollo
+        nie tworzy duplikatu. Firmy są dopasowywane w aktywnej przestrzeni. Nie
+        wysyłamy wiadomości; odkrywanie telefonów i prywatnych adresów jest
+        wyłączone. Obowiązują cennik i limity kredytów Apollo oraz limit
+        kontaktów planu Klyo. Po zapisaniu klucz nie jest zwracany do
+        przeglądarki.
+      </p>
+      <h2>Śledzenie przesyłek</h2>
+      <p>
+        <strong>Zamówienie → Status przesyłki</strong> może pobierać rzeczywiste
+        skany DHL, przewidywaną dostawę i zdarzenia przez DHL Tracking Unified
+        API. Uzyskaj zatwierdzony klucz tej usługi w portalu DHL. Właściciel
+        wpisuje go w
+        <strong>Status przesyłki → Klucz API DHL → Połącz DHL</strong>. Klucz
+        jest szyfrowany i nie jest zwracany do przeglądarki. Klyo nie kupuje
+        abonamentu ani kredytów. Klucz demonstracyjny zwraca przykładowe dane i
+        nie służy do dostaw klientów.
+      </p>
+      <p>
+        W zamówieniu wybierz DHL, podaj numer przesyłki i kliknij
+        <strong>Odśwież status DHL</strong>. Wynik jest buforowany przez pięć
+        minut, a odstępy zapytań i limity dostawcy są respektowane. Subskrypcja
+        API musi obejmować przesyłkę i właściwy oddział DHL. Skan doręczenia nie
+        oznacza podpisanego odbioru, wystawienia faktury ani płatności.
+        Odłączenie usuwa klucz, ale ostatni zapis statusu pozostaje historyczny.
+        Zmiana numeru lub przewoźnika czyści ten zapis.
+      </p>
+      <p>
+        UPS, FedEx, DPD i InPost mają przycisk
+        <strong>Otwórz śledzenie przewoźnika</strong>, kierujący na oficjalną
+        stronę. Adaptery ich API nie są częścią tej wersji. Połączenie DHL nie
+        włącza ich API. Dla DHL również można otworzyć oficjalną stronę.
+      </p>
+      <h2>Fakturownia — faktury i płatności</h2>
+      <p>
+        W zamówieniu właściciel otwiera <strong>Dostawca faktur</strong> i
+        ustawia subdomenę konta oraz token Fakturowni. Akceptowane są tylko
+        adresy <code>https://&lt;subdomena&gt;.fakturownia.pl</code>. Token jest
+        szyfrowany. Sprawdź podgląd faktury: nabywcę, NIP, datę wystawienia i
+        płatności, walutę, podatek, oryginalne ilości i kwoty netto pozycji.
+        Rabaty pozycji są uwzględniane, a uzgodniona końcowa kwota zamówienia
+        jest rozdzielana proporcjonalnie z dokładnością do grosza. Podatek jest
+        doliczany oddzielnie. Suma netto musi odpowiadać sprawdzonej kwocie
+        netto zamówienia. Zmiana zamówienia wymaga ponownego podglądu.
+      </p>
+      <p>
+        Wystawianie rezerwuje operację i blokuje dane finansowe, aby uniknąć
+        duplikatów i konfliktów. Jawnie zatwierdź wystawienie, aby utworzyć
+        fakturę w Fakturowni. Klyo nie wysyła jej automatycznie e-mailem ani nie
+        wysyła wezwania do zapłaty. Numery, podatki i zgodność określa
+        konfiguracja dostawcy — sprawdź ją przed wystawianiem dokumentów.
+        Faktura otrzymuje zewnętrzny identyfikator
+        <code>klyo-&lt;przestrzeń&gt;-&lt;zamówienie&gt;</code>. Zamówienie
+        można zafakturować jeden raz.
+      </p>
+      <p>
+        Jeśli awaria sieci pozostawi niepewny wynik, Klyo zachowa rezerwację i
+        zażąda uzgodnienia. Sprawdź identyfikator zewnętrzny w Fakturowni, wpisz
+        ID znalezionej faktury i powiąż ją. Nie wystawiaj drugiej faktury, aby
+        naprawić przerwane żądanie.
+        <strong>Odśwież fakturę i płatności</strong> pobiera status dostawcy;
+        Klyo nie łączy rachunku bankowego. Sprawdź rzeczywiste wpłaty oraz
+        zgodność kwot i walut. Odpowiedź dostawcy zachowuje faktyczną wpłatę
+        brutto. Rejestr zamówienia używa netto: częściowa wpłata jest
+        rozdzielana jako netto zamówienia × wpłacone brutto / brutto faktury, a
+        pełna zapłata rozlicza całe netto. Klyo nie realizuje KSeF ani
+        deklaracji podatkowych.
+      </p>
+      <h2>Wdrożenie i sekrety</h2>
+      <p>
+        Ustaw <code>APP_URL=https://klyolabs.com</code> i długi, losowy,
+        stabilny <code>INTEGRATION_ENCRYPTION_KEY</code> w Railway przed
+        łączeniem dostawców. Bez niego szyfrowanie korzysta z
+        <code>JWT_SECRET</code>. Zmiana klucza unieważnia zapisane tokeny i
+        wymaga ponownego połączenia, więc zaplanuj ją wcześniej. Adresy powrotne
+        muszą być dokładnymi adresami HTTPS. Sekrety nigdy nie trafiają do
+        frontendu. Po zmianie zmiennych zrestartuj lub wdróż usługę. Ekran
+        połączeń pokazuje brak konfiguracji i nie symuluje sukcesu.
+      </p>
+      <p>
+        Błędy i limity dostawcy zatrzymują lub opóźniają synchronizację i
+        pokazują komunikat. Sekrety, treści wiadomości i tokeny nie są
+        zapisywane w dzienniku zespołu. Przestrzeń i własność skrzynki są
+        sprawdzane na serwerze przy każdym żądaniu. Przed zaproszeniem zespołu
+        użyj dedykowanej skrzynki i konta testowego dostawcy. Testy automatyczne
+        opierają się na odizolowanych bazach i symulowanych odpowiedziach;
+        rzeczywiste logowanie i uprawnienia wymagają Twojego konta.
+      </p>
+      <p>
+        Dokumentacja:
+        <a href="https://learn.microsoft.com/en-us/graph/delta-query-messages"
+          >zmiany poczty Microsoft</a
+        >,
+        <a href="https://learn.microsoft.com/en-us/graph/permissions-reference"
+          >uprawnienia Graph</a
+        >,
+        <a
+          href="https://learn.microsoft.com/en-us/graph/outlook-share-messages-folders"
+          >skrzynki współdzielone</a
+        >, <a href="https://developer.dhl.com/tracking">DHL</a>,
+        <a
+          href="https://developers.google.com/workspace/drive/api/guides/manage-uploads"
+          >wgrywanie Drive</a
+        >,
+        <a
+          href="https://www.dropbox.com/developers/documentation/http/documentation"
+          >Dropbox</a
+        >,
+        <a href="https://docs.apollo.io/reference/people-api-search"
+          >wyszukiwanie Apollo</a
+        >,
+        <a href="https://docs.apollo.io/reference/bulk-people-enrichment"
+          >uzupełnianie Apollo</a
+        >, <a href="https://github.com/fakturownia/API">Fakturownia</a>.
+      </p>
     </main>
   </body>
 </html>

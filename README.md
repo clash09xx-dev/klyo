@@ -417,3 +417,12 @@ Calendar connects per-user Google Calendar and Outlook/Microsoft 365 accounts, d
 Run `npm test` with `TEST_DATABASE_URL` pointing to a disposable local PostgreSQL database to include all API and migration checks. Each suite creates and removes its own schema. Without that variable, database suites are explicitly skipped. Never use a production database for tests.
 
 `npm run test:browser:all` runs the dashboard regressions and new analytics, commercial, operations and communications flows in Chromium and WebKit. It requires Playwright and its browsers plus the disposable database above. `KLYO_CHROMIUM_PATH` / `KLYO_WEBKIT_PATH` optionally select installed browser executables. Provider APIs are mocked during verification; tests do not send customer messages, spend Apollo credits or issue real invoices. PDF and screenshot artifacts go to the system temporary directory.
+
+
+### Interface languages
+
+Settings → Account & organization → Language offers Polish and English using SVG flag buttons. A successful change saves the account preference before reloading all views; a failed save keeps the previous language. The sign-in screen and all six setup/workflow guides also offer both languages. The public marketing pages remain in English.
+
+Use `KlyoI18n` or the authored-copy helpers in `public/js/ui-copy.js` for new interface text. `KlyoCopy.html` accepts source-authored literal fragments only; interpolate escaped record values separately. Never translate customer names, notes, custom fields, template contents, messages, or provider data. Proposal/output language is independent of interface language.
+
+`tests/language.browser.js` checks account persistence and rollback, SVG controls, both guide versions, mobile overflow, sign-up navigation and unchanged customer data in Chromium and WebKit. It is included in `test:browser:all` and uses the same disposable database/browser paths as the other feature suites.

@@ -55,7 +55,7 @@ const KlyoOperations = (() => {
         currency: c || "USD",
       }).format(Number(v || 0));
   const opts = (list, selected, blank = true) =>
-    `${blank ? '<option value="">—</option>' : ""}` +
+    `${blank ? KlyoCopy.html("<option value=\"\">—</option>") : ""}` +
     (list || [])
       .map(
         (x) =>
@@ -348,7 +348,7 @@ const KlyoOperations = (() => {
         L("Parent task / milestone", "Zadanie nadrzędne / kamień milowy"),
         lookup.tasks.filter((x) => x.id !== t.id),
         t.parent_id,
-      )}${select("company_id", L("Company", "Firma"), lookup.companies, t.company_id)}${select("contact_id", L("Contact", "Kontakt"), lookup.contacts, t.contact_id)}${select("deal_id", L("Sales opportunity", "Szansa sprzedaży"), lookup.deals, t.deal_id)}<div class="op-checks">${check("urgent", L("Urgent", "Pilne"), t.urgent)}${check("important", L("Important", "Ważne"), t.important !== false)}${check("is_milestone", L("Milestone", "Kamień milowy"), t.is_milestone)}</div>${area("description", L("Description / steps", "Opis / kroki"), t.description)}${t.id ? '<button type="button" class="btn btn-ghost" id="opDeleteTask">' + L("Delete task and subtasks", "Usuń zadanie i podzadania") + "</button>" : ""}${saveBtn()}</form>`,
+      )}${select("company_id", L("Company", "Firma"), lookup.companies, t.company_id)}${select("contact_id", L("Contact", "Kontakt"), lookup.contacts, t.contact_id)}${select("deal_id", L("Sales opportunity", "Szansa sprzedaży"), lookup.deals, t.deal_id)}<div class="op-checks">${check("urgent", L("Urgent", "Pilne"), t.urgent)}${check("important", L("Important", "Ważne"), t.important !== false)}${check("is_milestone", L("Milestone", "Kamień milowy"), t.is_milestone)}</div>${area("description", L("Description / steps", "Opis / kroki"), t.description)}${t.id ? KlyoCopy.html("<button type=\"button\" class=\"btn btn-ghost\" id=\"opDeleteTask\">") + L("Delete task and subtasks", "Usuń zadanie i podzadania") + "</button>" : ""}${saveBtn()}</form>`,
       true,
     );
     if (!can())
@@ -864,7 +864,7 @@ const KlyoOperations = (() => {
         ],
         settings.language,
         false,
-      )}${select("layout", L("Layout", "Układ"), [{ id: "studio", name: "Studio" }, { id: "executive", name: "Executive" }, ...(settings.canvas ? [{ id: "canvas", name: KlyoModuleI18n.pick("Custom A4") }] : [])], settings.layout, false)}${field("accent", L("Accent", "Kolor"), settings.accent, "color")}${select(
+      )}${select("layout", L("Layout", "Układ"), [{ id: "studio", name: KlyoCopy.text("Studio") }, { id: "executive", name: KlyoCopy.text("Executive") }, ...(settings.canvas ? [{ id: "canvas", name: KlyoModuleI18n.pick("Custom A4") }] : [])], settings.layout, false)}${field("accent", L("Accent", "Kolor"), settings.accent, "color")}${select(
         "pricing_mode",
         L("Client prices", "Ceny dla klienta"),
         [

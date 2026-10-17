@@ -1,1 +1,266 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Klyo setup guide</title><style>body{font:16px/1.75 system-ui;max-width:880px;margin:48px auto;padding:0 20px;color:#202830}p{overflow-wrap:anywhere}h2{margin-top:40px}code{font-size:.9em;background:#f1f3f5;padding:2px 4px}a{color:#2455a0}</style></head><body><a href="/app">← Klyo</a><main><h1>SMS two-step sign-in with Twilio Verify</h1><p>SMS verification is optional and is enabled per account after the phone has been verified. The account setting applies to both Team and Personal and to password and Google sign-in. No existing account is enrolled automatically.</p><h2>Administrator setup</h2><p>1. Open the Twilio Console and create a <strong>Verify Service</strong> with SMS enabled. Use its service SID beginning with <code>VA</code>, not a Messaging Service SID. Configure the countries you support, Fraud Guard and the provider&#x27;s verification limits for your business.<br>2. Add these server-side variables in Railway: <code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_AUTH_TOKEN</code>, <code>TWILIO_VERIFY_SERVICE_SID</code>. Keep the Auth Token private; do not paste it into chat or put it in browser code. Klyo uses Twilio Verify directly and does not buy a subscription or credits. Twilio&#x27;s SMS and verification charges apply to your account.<br>3. Keep the existing <code>JWT_SECRET</code> and <code>INTEGRATION_ENCRYPTION_KEY</code> stable. Phone numbers are encrypted using the existing integration encryption key. Changing that key requires a recovery plan for enrolled accounts as well as reconnecting integrations.<br>4. Redeploy, then open <strong>Settings → Account &amp; organization → Sign-in security · SMS 2FA</strong>. The status should show that Twilio is configured. Use a controlled test account and phone to verify your actual service and destination permissions before rolling out to users. Automated Klyo tests use a simulated provider, not actual SMS delivery.</p><h2>User enrollment and sign-in</h2><p>Enter your international phone number, such as <code>+48123456789</code>, and your current password. A Google-only account must have signed in recently (within five minutes). Request the verification SMS, enter its code, and save the ten recovery codes shown once. Keep them outside Klyo in a private location. Each recovery code works once. Enrollment invalidates older sessions; the session that completed enrollment receives a new token.</p><p>At the next password or Google sign-in, no CRM session is issued until an SMS or recovery code is accepted. A login challenge expires after five minutes and allows at most five code attempts. Resending requires a 60-second wait, preserves the expiry and attempts, and is subject to account/provider limits. Verification sends are limited per account and checks are limited separately. Failure or absence of the provider never bypasses the second step: a saved recovery code is required.</p><p>To turn SMS verification off, open the same security screen and confirm with your password (or recent Google sign-in) plus an SMS or unused recovery code. Existing recovery codes are removed and old sessions become invalid. Disable then enroll again to change your number or generate a fresh recovery-code set. There is no support-side bypass button.</p><p>The CRM does not log SMS codes, recovery codes, plaintext phone numbers or provider credentials in team audit records. The security screen only displays the phone&#x27;s final four digits. Configuration is deployment-wide, while enrollment and recovery codes are account-specific.</p><p>Official references:<br>- <a href="https://www.twilio.com/docs/verify/api">Twilio Verify API</a><br>- <a href="https://www.twilio.com/docs/verify/api/verification">Start a verification</a><br>- <a href="https://www.twilio.com/docs/verify/api/verification-check">Check a verification</a><br>- <a href="https://www.twilio.com/docs/verify/api/rate-limits-and-timeouts">Provider rate limits</a></p></main></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SMS two-step sign-in with Twilio Verify</title>
+    <link rel="stylesheet" href="/css/language-picker.css" />
+    <style>
+      body {
+        font:
+          16px/1.75 system-ui,
+          sans-serif;
+        color: #202830;
+        max-width: 940px;
+        margin: 40px auto;
+        padding: 0 24px;
+      }
+      h1 {
+        font-size: 32px;
+        line-height: 1.25;
+      }
+      h2 {
+        margin-top: 36px;
+        border-top: 1px solid #dfe3e6;
+        padding-top: 22px;
+      }
+      h3 {
+        margin-top: 24px;
+      }
+      p,
+      li,
+      a,
+      code {
+        overflow-wrap: anywhere;
+      }
+      li {
+        margin: 12px 0;
+      }
+      a {
+        color: #264f85;
+      }
+      code {
+        font-size: 0.88em;
+        background: #f1f3f5;
+        padding: 2px 4px;
+        border-radius: 3px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+      }
+      td,
+      th {
+        padding: 10px;
+        text-align: left;
+        border: 1px solid #dfe3e6;
+      }
+      .table-wrap {
+        overflow: auto;
+      }
+      @media (max-width: 600px) {
+        body {
+          margin: 20px auto;
+          padding: 0 16px;
+        }
+        h1 {
+          font-size: 27px;
+        }
+      }
+    </style>
+    <script defer src="/js/i18n.js"></script>
+    <script defer src="/js/docs-language.js"></script>
+    <script defer src="/js/language-picker.js"></script>
+  </head>
+  <body>
+    <header class="doc-language-bar">
+      <a href="/app">← Klyo CRM</a
+      ><select id="docLangPicker" aria-label="Language">
+        <option value="en">English</option>
+        <option value="pl">Polski</option>
+      </select>
+    </header>
+    <main
+      data-doc-lang="en"
+      data-doc-title="SMS two-step sign-in with Twilio Verify"
+    >
+      <h1>SMS two-step sign-in with Twilio Verify</h1>
+      <p>
+        SMS verification is optional and is enabled per account after the phone
+        has been verified. The account setting applies to both Team and Personal
+        and to password and Google sign-in. No existing account is enrolled
+        automatically.
+      </p>
+      <h2>Administrator setup</h2>
+      <p>
+        1. Open the Twilio Console and create a
+        <strong>Verify Service</strong> with SMS enabled. Use its service SID
+        beginning with <code>VA</code>, not a Messaging Service SID. Configure
+        the countries you support, Fraud Guard and the provider&#x27;s
+        verification limits for your business.<br />2. Add these server-side
+        variables in Railway: <code>TWILIO_ACCOUNT_SID</code>,
+        <code>TWILIO_AUTH_TOKEN</code>, <code>TWILIO_VERIFY_SERVICE_SID</code>.
+        Keep the Auth Token private; do not paste it into chat or put it in
+        browser code. Klyo uses Twilio Verify directly and does not buy a
+        subscription or credits. Twilio&#x27;s SMS and verification charges
+        apply to your account.<br />3. Keep the existing
+        <code>JWT_SECRET</code> and
+        <code>INTEGRATION_ENCRYPTION_KEY</code> stable. Phone numbers are
+        encrypted using the existing integration encryption key. Changing that
+        key requires a recovery plan for enrolled accounts as well as
+        reconnecting integrations.<br />4. Redeploy, then open
+        <strong
+          >Settings → Account &amp; organization → Sign-in security · SMS
+          2FA</strong
+        >. The status should show that Twilio is configured. Use a controlled
+        test account and phone to verify your actual service and destination
+        permissions before rolling out to users. Automated Klyo tests use a
+        simulated provider, not actual SMS delivery.
+      </p>
+      <h2>User enrollment and sign-in</h2>
+      <p>
+        Enter your international phone number, such as
+        <code>+48123456789</code>, and your current password. A Google-only
+        account must have signed in recently (within five minutes). Request the
+        verification SMS, enter its code, and save the ten recovery codes shown
+        once. Keep them outside Klyo in a private location. Each recovery code
+        works once. Enrollment invalidates older sessions; the session that
+        completed enrollment receives a new token.
+      </p>
+      <p>
+        At the next password or Google sign-in, no CRM session is issued until
+        an SMS or recovery code is accepted. A login challenge expires after
+        five minutes and allows at most five code attempts. Resending requires a
+        60-second wait, preserves the expiry and attempts, and is subject to
+        account/provider limits. Verification sends are limited per account and
+        checks are limited separately. Failure or absence of the provider never
+        bypasses the second step: a saved recovery code is required.
+      </p>
+      <p>
+        To turn SMS verification off, open the same security screen and confirm
+        with your password (or recent Google sign-in) plus an SMS or unused
+        recovery code. Existing recovery codes are removed and old sessions
+        become invalid. Disable then enroll again to change your number or
+        generate a fresh recovery-code set. There is no support-side bypass
+        button.
+      </p>
+      <p>
+        The CRM does not log SMS codes, recovery codes, plaintext phone numbers
+        or provider credentials in team audit records. The security screen only
+        displays the phone&#x27;s final four digits. Configuration is
+        deployment-wide, while enrollment and recovery codes are
+        account-specific.
+      </p>
+      <p>
+        Official references:<br />-
+        <a href="https://www.twilio.com/docs/verify/api">Twilio Verify API</a
+        ><br />-
+        <a href="https://www.twilio.com/docs/verify/api/verification"
+          >Start a verification</a
+        ><br />-
+        <a href="https://www.twilio.com/docs/verify/api/verification-check"
+          >Check a verification</a
+        ><br />-
+        <a
+          href="https://www.twilio.com/docs/verify/api/rate-limits-and-timeouts"
+          >Provider rate limits</a
+        >
+      </p>
+    </main>
+    <main
+      data-doc-lang="pl"
+      data-doc-title="Dwuetapowe logowanie SMS przez Twilio Verify"
+      hidden
+    >
+      <h1>Dwuetapowe logowanie SMS przez Twilio Verify</h1>
+      <p>
+        Weryfikacja SMS jest opcjonalna. Użytkownik włącza ją na swoim koncie po
+        potwierdzeniu numeru telefonu. Ustawienie dotyczy przestrzeni zespołowej
+        i prywatnej oraz logowania hasłem i przez Google. Istniejące konta nie
+        są zapisywane automatycznie.
+      </p>
+      <h2>Konfiguracja administratora</h2>
+      <ol>
+        <li>
+          W panelu Twilio utwórz <strong>Verify Service</strong> z włączonym
+          SMS. Potrzebny jest identyfikator usługi zaczynający się od
+          <code>VA</code>, a nie identyfikator Messaging Service. Ustaw
+          obsługiwane kraje, Fraud Guard i limity weryfikacji odpowiednie dla
+          swojej firmy.
+        </li>
+        <li>
+          Dodaj po stronie serwera w Railway: <code>TWILIO_ACCOUNT_SID</code>,
+          <code>TWILIO_AUTH_TOKEN</code> i
+          <code>TWILIO_VERIFY_SERVICE_SID</code>. Nie przesyłaj Auth Token przez
+          czat i nie umieszczaj go w kodzie przeglądarki. Klyo korzysta
+          bezpośrednio z Twilio Verify i nie kupuje subskrypcji ani kredytów.
+          Opłaty za SMS-y i weryfikację obciążają Twoje konto Twilio.
+        </li>
+        <li>
+          Zachowaj istniejące <code>JWT_SECRET</code> i
+          <code>INTEGRATION_ENCRYPTION_KEY</code>. Numery telefonów są
+          szyfrowane kluczem integracji. Zmiana klucza wymaga planu odzyskania
+          dostępu dla kont z włączoną weryfikacją oraz ponownego połączenia
+          integracji.
+        </li>
+        <li>
+          Wdróż zmiany i otwórz
+          <strong
+            >Ustawienia → Konto i organizacja → Bezpieczeństwo logowania · SMS
+            2FA</strong
+          >. Status powinien potwierdzać konfigurację Twilio. Przetestuj usługę
+          na kontrolowanym koncie i numerze przed udostępnieniem jej
+          użytkownikom. Testy automatyczne Klyo używają symulowanego dostawcy i
+          nie potwierdzają dostarczenia prawdziwego SMS-a.
+        </li>
+      </ol>
+      <h2>Włączenie i logowanie</h2>
+      <p>
+        Wpisz numer w formacie międzynarodowym, np. <code>+48123456789</code>,
+        oraz aktualne hasło. Konto korzystające wyłącznie z Google musi być
+        świeżo zalogowane — w ciągu ostatnich pięciu minut. Poproś o SMS, wpisz
+        kod i zapisz dziesięć kodów odzyskiwania wyświetlanych tylko raz.
+        Przechowuj je prywatnie poza Klyo. Każdy działa jednokrotnie. Włączenie
+        ochrony unieważnia starsze sesje; bieżąca sesja otrzymuje nowy token.
+      </p>
+      <p>
+        Przy kolejnym logowaniu hasłem lub Google sesja CRM nie jest wydawana do
+        momentu zatwierdzenia SMS-a lub kodu odzyskiwania. Weryfikacja logowania
+        wygasa po pięciu minutach i pozwala na maksymalnie pięć prób. Ponowne
+        wysłanie wymaga odczekania 60 sekund i nie zeruje czasu ani liczby prób.
+        Wysyłanie i sprawdzanie kodów ma osobne limity konta i dostawcy. Awaria
+        dostawcy nie pomija drugiego etapu — potrzebny jest zapisany kod
+        odzyskiwania.
+      </p>
+      <p>
+        Aby wyłączyć ochronę, otwórz ten sam ekran i potwierdź operację hasłem
+        lub świeżym logowaniem Google oraz SMS-em albo nieużytym kodem
+        odzyskiwania. Pozostałe kody zostaną usunięte, a stare sesje
+        unieważnione. Aby zmienić numer lub uzyskać nowy zestaw kodów, wyłącz i
+        ponownie włącz ochronę. Obsługa techniczna nie ma przycisku
+        pozwalającego ominąć drugi etap.
+      </p>
+      <p>
+        CRM nie zapisuje kodów SMS, kodów odzyskiwania, jawnych numerów ani
+        danych dostawcy w dzienniku zespołu. Ekran bezpieczeństwa pokazuje tylko
+        cztery ostatnie cyfry telefonu. Konfiguracja Twilio dotyczy wdrożenia, a
+        włączenie ochrony i kody odzyskiwania — konkretnego konta.
+      </p>
+      <p>
+        Dokumentacja:
+        <a href="https://www.twilio.com/docs/verify/api">Twilio Verify API</a>,
+        <a href="https://www.twilio.com/docs/verify/api/verification"
+          >rozpoczęcie weryfikacji</a
+        >,
+        <a href="https://www.twilio.com/docs/verify/api/verification-check"
+          >sprawdzenie kodu</a
+        >,
+        <a
+          href="https://www.twilio.com/docs/verify/api/rate-limits-and-timeouts"
+          >limity dostawcy</a
+        >.
+      </p>
+    </main>
+  </body>
+</html>

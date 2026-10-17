@@ -4001,7 +4001,7 @@ window.KlyoModuleI18n = (() => {
     return lang === "en"
       ? en
       : lang === "pl"
-        ? pl || data[en]?.pl || en
+        ? pl || data[en]?.pl || window.KlyoCopy?.text(en) || en
         : data[en]?.[lang] || en;
   }
   const reverse = new Map();

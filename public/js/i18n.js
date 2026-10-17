@@ -594,7 +594,7 @@
         col_teammate: "Współpracownik",
         col_leads: "Leady",
         col_offers: "Oferty",
-        col_quotes: "Wyceny",
+        col_quotes: "Oferty",
         col_quotes_won: "Wyceny wygrane",
         col_calls: "Rozmowy",
         col_meetings: "Spotkania",
@@ -691,7 +691,7 @@
       nav: { commercial:"Rejestr handlowy",projects:"Projekty",orders:"Zamówienia",equipment:"Wyposażenie",inbox:"Skrzynka",rfq:"Zapytania ofertowe",files: "Pliki",
         contacts: "Kontakty",
         companies: "Firmy",
-        pipeline: "Pipeline",
+        pipeline: "Kontakty",
         tasks: "Zadania",
         deals: "Szanse",
         quotes: "Oferty",
@@ -941,7 +941,7 @@
         contacts_sub: "(+ powiązane oferty, wyceny, historia)",
         companies: "Firmy",
         products: "Produkty",
-        quotes: "Wyceny",
+        quotes: "Oferty",
         deals: "Szanse sprzedaży",
         tasks: "Zadania",
         calendar: "Kalendarz",
@@ -1176,7 +1176,7 @@
   };
 
   const LANG_NAMES = { en: "English", pl: "Polski", es: "Español", fr: "Français", de: "Deutsch" };
-  const SUPPORTED = Object.keys(TRANSLATIONS);
+  const SUPPORTED = ["en", "pl"];
 
   let _lang = "en";
 
@@ -1212,7 +1212,7 @@
   function setLang(lang, skipSave) {
     if (!SUPPORTED.includes(lang)) return;
     _lang = lang;
-    localStorage.setItem("klyo_lang", lang);
+    try { localStorage.setItem("klyo_lang", lang); } catch {}
     applyTranslations();
     window.dispatchEvent(new Event("klyo:language"));
     // Persist to server if logged in (fire-and-forget)
@@ -1223,15 +1223,17 @@
 
   function initLang(serverLang) {
     // Priority: server preference > localStorage > browser default > "en"
-    const stored = localStorage.getItem("klyo_lang");
+    let stored;
+    try { stored = localStorage.getItem("klyo_lang"); } catch {}
     const browser = (navigator.language || "en").slice(0, 2).toLowerCase();
     const chosen = serverLang || stored || (SUPPORTED.includes(browser) ? browser : "en");
     _lang = SUPPORTED.includes(chosen) ? chosen : "en";
-    localStorage.setItem("klyo_lang", _lang);
+    try { localStorage.setItem("klyo_lang", _lang); } catch {}
     document.documentElement.lang = _lang;
   }
 
   window.KlyoI18n = { t, setLang, getLang, initLang, applyTranslations, LANG_NAMES, SUPPORTED };
+  initLang();
   // Short alias available globally
   window.t = t;
 })();

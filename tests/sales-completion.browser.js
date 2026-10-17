@@ -305,9 +305,6 @@ const { chromium, webkit } = require("playwright");
         await page.setViewportSize({ width: 1680, height: 1100 });
         // Switching locale must translate authored labels without changing a record called "Good".
         for (const [lang, title] of [
-          ["es", "Registro comercial"],
-          ["fr", "Registre commercial"],
-          ["de", "Vertriebsregister"],
           ["pl", "Rejestr handlowy"],
           ["en", "Commercial register"],
         ]) {
@@ -332,7 +329,7 @@ const { chromium, webkit } = require("playwright");
         await context.close();
         console.log(
           name +
-            ": PASS completion dashboards, benchmarks, finance, register, responsive margin drawer and five languages",
+            ": PASS completion dashboards, benchmarks, finance, register, responsive margin drawer and Polish/English",
         );
       } finally {
         await browser.close();

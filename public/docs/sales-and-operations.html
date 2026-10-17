@@ -1,30 +1,36 @@
 <!doctype html>
-<html lang="pl">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Klyo — sprzedaż i realizacja</title>
+    <title>Klyo: sales and operations</title>
+    <link rel="stylesheet" href="/css/language-picker.css" />
     <style>
       body {
         font:
-          16px/1.7 system-ui,
+          16px/1.75 system-ui,
           sans-serif;
         color: #202830;
-        max-width: 900px;
-        margin: 48px auto;
+        max-width: 940px;
+        margin: 40px auto;
         padding: 0 24px;
       }
       h1 {
-        font-size: 34px;
-        line-height: 1.2;
+        font-size: 32px;
+        line-height: 1.25;
       }
       h2 {
-        margin-top: 40px;
+        margin-top: 36px;
         border-top: 1px solid #dfe3e6;
-        padding-top: 24px;
+        padding-top: 22px;
+      }
+      h3 {
+        margin-top: 24px;
       }
       p,
-      li {
+      li,
+      a,
+      code {
         overflow-wrap: anywhere;
       }
       li {
@@ -34,86 +40,316 @@
         color: #264f85;
       }
       code {
-        font-size: 0.9em;
+        font-size: 0.88em;
         background: #f1f3f5;
         padding: 2px 4px;
         border-radius: 3px;
       }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+      }
+      td,
+      th {
+        padding: 10px;
+        text-align: left;
+        border: 1px solid #dfe3e6;
+      }
+      .table-wrap {
+        overflow: auto;
+      }
       @media (max-width: 600px) {
         body {
-          margin: 24px auto;
+          margin: 20px auto;
           padding: 0 16px;
         }
         h1 {
-          font-size: 28px;
+          font-size: 27px;
         }
       }
     </style>
+    <script defer src="/js/i18n.js"></script>
+    <script defer src="/js/docs-language.js"></script>
+    <script defer src="/js/language-picker.js"></script>
   </head>
   <body>
-    <a href="/app">← Klyo</a>
-    <main>
+    <header class="doc-language-bar">
+      <a href="/app">← Klyo CRM</a
+      ><select id="docLangPicker" aria-label="Language">
+        <option value="en">English</option>
+        <option value="pl">Polski</option>
+      </select>
+    </header>
+    <main data-doc-lang="en" data-doc-title="Klyo: sales and operations">
+      <h1>Klyo: sales and operations</h1>
+      <h2>From opportunity to settlement</h2>
+      <ol>
+        <li>
+          <strong>Companies → Company details &amp; departments</strong>: enter
+          the tax ID, address, registration data and custom fields. Add branches
+          and departments. Contacts, cases and quotes can refer to a specific
+          unit.
+        </li>
+        <li>
+          <strong>Commercial register → New case</strong>: add the subject,
+          contact, company, products, expiry date and terms. This creates a
+          linked opportunity in the selected pipeline.
+          <strong>Create offer</strong> prepares a quote with the same reference
+          number. Saving a regular new quote also adds a register entry. A
+          standalone deal does not need one.
+        </li>
+        <li>
+          <strong>Quotes → Commercial settings &amp; bundles</strong>: select
+          components and name the bundle. Descriptions and SKUs remain listed
+          while the customer sees the bundle price. Set
+          <strong>Client pricing → Only the offer total</strong> to show only
+          the final total. Item and whole-quote discounts and your custom A4
+          design still apply.
+        </li>
+        <li>
+          <strong>Commercial register → Purchase prices</strong>: the owner
+          imports purchase prices from CSV/XLSX by matching existing SKUs. Cost
+          currency must match quote currency. A missing cost produces an
+          unavailable calculation, never a zero cost.
+          <strong>Margin access</strong> controls staff access and presentation
+          coefficients. Internal analysis includes profit, margin and markup and
+          never enters the customer PDF. Presentation coefficients do not alter
+          the owner's actual figures.
+        </li>
+        <li>
+          Winning a deal creates one delivery project. An existing linked
+          project is reused; reopening and winning again does not create a
+          duplicate. The owner can disable this under
+          <strong>Projects → Project settings</strong>. The setting applies to
+          future wins and does not backfill older wins.
+          <strong>Create order / project</strong> remains available. Customer,
+          internal and supplier orders have separate fulfillment stages. Order
+          amounts are net. Products marked
+          <strong>Serial required at sale</strong> require one serial number per
+          unit before confirming a customer order. The same product serial
+          cannot be allocated to two active sales.
+        </li>
+        <li>
+          Complete agreed prices, delivery dates, logistics, receipt
+          acknowledgment and invoice details in the order. Under
+          <strong>Customize confirmation</strong>, choose a saved proposal
+          template, including a custom A4 layout, style, language, color, party
+          details and text. Download the
+          <strong>Customer confirmation PDF</strong>. Final prices and payment
+          updates appear in the register. Fakturownia requires your own account
+          and explicit authorization to issue; reserving an invoice locks order
+          financial details.
+        </li>
+      </ol>
+      <h2>Reports and tasks</h2>
+      <p>
+        <strong>Overview</strong> includes a monthly report filtered by currency
+        and person: target, won sales, attainment, gap and weighted forecast. In
+        <strong>Deals → Edit</strong>, enter probability from 0–100% and an
+        expected close date. Forecast is the sum of open values multiplied by
+        probability in the selected month. Won deals use their actual close
+        dates. Currencies are never added together. Owners can compare recorded
+        meetings, calls and sent offers by employee. The all-time summary is
+        labeled separately.
+      </p>
+      <p>
+        Reports also filter by pipeline.
+        <strong>Sales scorecard → Set benchmarks</strong> sets monthly targets
+        for new pipeline value, meetings and win rate, plus a stalled-stage
+        threshold from 1–365 days. These are user-defined targets, not claimed
+        market averages. Targets apply to a person or workspace, month and
+        currency across pipelines. Pipeline filters narrow opportunities;
+        meeting activity still follows person and month. Colors show attainment
+        only for defined targets. Missing targets or data produce no comparison,
+        never invented results.
+      </p>
+      <p>
+        <strong>Forecast vs target</strong> compares won sales and weighted open
+        opportunities with targets over six months. It is an estimate based on
+        entered probabilities, without fabricated confidence bands.
+        <strong>Created vs closed opportunities</strong> plots daily counts, and
+        <strong>Opportunity value by source</strong> groups opportunities
+        created in the month by <strong>Source</strong>.
+        <strong>Closing in the next 30 days</strong> and
+        <strong>Pipeline health</strong> link to specific deals with missing
+        dates/value, zero probability, overdue close dates or tasks, or stalled
+        stages. Attention is evaluated at month-end for a historical month and
+        today for the current month. Reports analyze current saved records, not
+        historical snapshots. Owners also see individual sales results.
+      </p>
+      <p>
+        <strong>Deals → Table</strong> lets you select and export deals.
+        Dragging a board card exposes
+        <strong>Won / Lost / Move to trash</strong>. A loss requires a reason.
+        The <strong>Deleted</strong> filter provides <strong>Restore</strong>.
+        Trashed records are excluded from results and forecasts.
+      </p>
+      <p>
+        <strong>Tasks</strong> offers a list, urgency/importance matrix and
+        Kanban. Add subtasks, milestones, assignees, due dates and reminders.
+        Dragging to a quadrant or column saves the corresponding properties. The
+        reminder icon beside the view title shows your assigned deadlines; it
+        does not message customers.
+      </p>
+      <p>
+        New tasks require a valid due date in both the form and API. An existing
+        due date cannot be cleared. Older tasks without dates can still be
+        marked done; full editing requires adding a date.
+      </p>
+      <h2>Projects and equipment</h2>
+      <p>
+        <strong>Projects</strong> supports delivery, service, demonstrations and
+        internal work. Link a won deal and add tasks, budget and dates.
+        <strong>Plan resources</strong> records people and planned hours;
+        <strong>Log work</strong> records actual time. Projects include linked
+        orders, equipment, agreements, documentation and a PDF report with space
+        for the recipient's signature. Exporting a report does not sign it.
+      </p>
+      <p>
+        <strong>Project → Settlement</strong> is available to the workspace
+        owner. It shows net sales from confirmed customer orders, supplier
+        purchases, labor, other costs, receipts, outstanding amounts, profit and
+        margin. Drafts and cancelled orders are excluded; internal orders do not
+        duplicate purchases. Currencies remain separate without conversion.
+        Budget is separate information, not revenue. The owner enters hourly
+        costs in the resource plan; time entries snapshot the rate in project
+        currency. Plan changes do not recalculate old work. After time or rates
+        are recorded, project currency is locked to preserve their meaning.
+        Owners can correct individual cost snapshots in settlement. Missing
+        hourly costs mark total cost and profit incomplete instead of treating
+        labor as free. <strong>Add expense</strong> records a description, date,
+        currency and amount. This is an operational net settlement, not
+        accounting or a bank balance.
+      </p>
+      <p>
+        <strong>Commercial register</strong> shows tax ID, address, contact
+        details, payment and delivery terms without opening the editor. Its wide
+        table scrolls internally and keeps the case reference pinned left. In
+        the quote editor, <strong>Internal margin analysis</strong> opens a
+        full-height right drawer. Clicking its header or pressing Escape closes
+        the drawer while retaining the edited quote. Margins never enter the
+        customer PDF.
+      </p>
+      <p>
+        <strong>Equipment</strong> records manufacturer, model, serial number,
+        inspection photo, condition and calibration interval. Reservations
+        specify a person, project or task and dates.
+        <strong>Check out / Return</strong> records custody and condition.
+        Conflicting reservations and a second checkout of the same instrument
+        are blocked. A calibration date creates a linked task; recording another
+        calibration advances the due date by its interval.
+      </p>
+      <h2>Correspondence, documents and integrations</h2>
+      <p>
+        <strong>Inbox</strong> and <strong>RFQ register</strong> support
+        Microsoft 365 mail, manually linking correspondence and explicitly
+        configured inbound-request rules with response deadlines. These are not
+        automatic follow-ups. Unlinked inbox messages remain private;
+        correspondence linked to a record becomes available to authorized users
+        in the active workspace.
+      </p>
+      <p>
+        Documents linked to a case also appear for its company and assigned
+        contact. Companies collect documents from their contacts, quotes,
+        projects and orders. Another contact at the same company does not
+        automatically receive a different case's documents.
+      </p>
+      <p>
+        Configure Microsoft 365, Google Drive, Dropbox, Apollo and Fakturownia
+        using the <a href="/docs/communications-setup">integration guide</a>.
+        SharePoint has a
+        <a href="/docs/sharepoint-setup">separate setup guide</a>. Missing
+        credentials show a disconnected state. Microsoft 365 supports authorized
+        shared mailboxes through <strong>Shared mailbox</strong> after
+        <code>Mail.Read.Shared</code> consent. Fetch DHL status under
+        <strong>Order → Shipment status</strong> after the owner connects a DHL
+        API key. Other carriers use their official tracking portals. This
+        version does not implement KSeF.
+      </p>
+      <p>
+        The interface and guides are available in Polish and English. Choose a
+        language using the SVG flag buttons in Settings. Changing language does
+        not translate user-entered records, email contents or third-party
+        provider responses.
+      </p>
+      <h2>Team and Personal</h2>
+      <p>
+        Every module operates within the active space.
+        <strong>Copy from Team</strong> creates independent copies and shows
+        exclusions before copying. Repeating a copy preserves personal edits.
+        Equipment reservations and custody, serial allocations, invoice/payment
+        history, files, connections, resource plans and time logs are not
+        recreated as new events. Orders and quotes become drafts. Only the
+        actual owner of the source team can copy purchase costs.
+      </p>
+    </main>
+    <main
+      data-doc-lang="pl"
+      data-doc-title="Klyo: sprzedaż i realizacja"
+      hidden
+    >
       <h1>Klyo: sprzedaż i realizacja</h1>
       <h2>Od szansy do rozliczenia</h2>
       <ol>
         <li>
-          <strong>Companies → Company details &amp; departments</strong>:
-          uzupełnij NIP, adres, dane rejestrowe i własne pola. Dodaj oddział, a
-          w nim działy. Kontakt, sprawa i oferta mogą wskazywać konkretną
-          jednostkę.
+          <strong>Firmy → Dane firmy i działy</strong>: uzupełnij NIP, adres,
+          dane rejestrowe i własne pola. Dodaj oddział, a w nim działy. Kontakt,
+          sprawa i oferta mogą wskazywać konkretną jednostkę.
         </li>
         <li>
-          <strong>Commercial register → New case</strong>: dodaj temat, osobę,
+          <strong>Rejestr handlowy → Nowa sprawa</strong>: dodaj temat, osobę,
           firmę, produkty, termin ważności i warunki. Powstaje powiązana szansa
-          w wybranym lejku. <strong>Create offer</strong> przygotowuje ofertę z
+          w wybranym lejku. <strong>Utwórz ofertę</strong> przygotowuje ofertę z
           tym samym numerem. Zapisanie zwykłej nowej oferty również tworzy wpis
           w rejestrze. Zwykły deal nie musi mieć wpisu.
         </li>
         <li>
-          <strong>Quotes → Commercial settings &amp; bundles</strong>: zaznacz
+          <strong>Wyceny → Ustawienia handlowe i zestawy</strong>: zaznacz
           pozycje i nazwij zestaw. Opisy i SKU zostają, a klient widzi cenę
-          zestawu. Przełącz <strong>Client pricing</strong> na
-          <strong>Only the offer total</strong>, aby pokazać wyłącznie sumę.
-          Nadal działają rabaty na pozycje i całą ofertę oraz własny projekt A4.
+          zestawu. Przełącz <strong>Ceny dla klienta</strong> na
+          <strong>Tylko suma oferty</strong>, aby pokazać wyłącznie sumę. Nadal
+          działają rabaty na pozycje i całą ofertę oraz własny projekt A4.
         </li>
         <li>
-          <strong>Commercial register → Purchase prices</strong>: właściciel
-          importuje ceny zakupu z CSV/XLSX, dopasowując istniejące SKU. Waluta
-          kosztu musi odpowiadać walucie oferty; brakujący koszt daje brak
-          wyliczenia, a nie zerowy koszt. <strong>Margin access</strong> ustala
-          dostęp pracowników i współczynnik prezentacji. Wewnętrzna analiza
-          zawiera zysk, marżę i narzut; nie trafia do PDF klienta. Współczynnik
-          nie zmienia rzeczywistych danych właściciela.
+          <strong>Rejestr handlowy → Ceny zakupu</strong>: właściciel importuje
+          ceny zakupu z CSV/XLSX, dopasowując istniejące SKU. Waluta kosztu musi
+          odpowiadać walucie oferty; brakujący koszt daje brak wyliczenia, a nie
+          zerowy koszt. <strong>Dostęp do marży</strong> ustala dostęp
+          pracowników i współczynnik prezentacji. Wewnętrzna analiza zawiera
+          zysk, marżę i narzut; nie trafia do PDF klienta. Współczynnik nie
+          zmienia rzeczywistych danych właściciela.
         </li>
         <li>
           Wygranie sprawy automatycznie tworzy jeden projekt realizacji.
           Istniejący projekt jest używany ponownie; ponowne otwarcie i wygranie
           nie tworzy duplikatu. Właściciel może wyłączyć tę opcję w
-          <strong>Projects → Project settings</strong>. Dotyczy to przyszłych
-          wygranych; stare wygrane nie są uzupełniane wstecz. Przycisk
-          <strong>Create order / project</strong> pozostaje dostępny. Zamówienia
-          klienta, wewnętrzne i dostawcy mają osobne etapy realizacji. Kwoty
-          zamówienia są netto. Dla produktu z zaznaczonym
-          <strong>Serial required at sale</strong> wprowadź jeden numer na każdą
-          sztukę przed potwierdzeniem zamówienia klienta. Ten sam numer produktu
-          nie może być przydzielony jednocześnie do dwóch aktywnych sprzedaży.
+          <strong>Projekty → Ustawienia projektów</strong>. Dotyczy to
+          przyszłych wygranych; stare wygrane nie są uzupełniane wstecz.
+          Przycisk <strong>Utwórz zamówienie / projekt</strong> pozostaje
+          dostępny. Zamówienia klienta, wewnętrzne i dostawcy mają osobne etapy
+          realizacji. Kwoty zamówienia są netto. Dla produktu z zaznaczonym
+          <strong>Numer seryjny wymagany przy sprzedaży</strong> wprowadź jeden
+          numer na każdą sztukę przed potwierdzeniem zamówienia klienta. Ten sam
+          numer produktu nie może być przydzielony jednocześnie do dwóch
+          aktywnych sprzedaży.
         </li>
         <li>
           W zamówieniu uzupełnij uzgodnione ceny, datę dostawy, dane
           logistyczne, potwierdzenie odbioru i fakturę. W
-          <strong>Customize confirmation</strong> wybierz zapisany szablon
+          <strong>Dostosuj potwierdzenie</strong> wybierz zapisany szablon
           oferty (również własny projekt A4), styl, język, kolor, dane stron i
-          treść. Pobierz <strong>Customer confirmation PDF</strong>. Zmienione
-          ceny końcowe i płatność aktualizują rejestr. Fakturownia wymaga
-          własnego konta i osobnego potwierdzenia wystawienia; po rezerwacji
-          faktury dane finansowe zamówienia są blokowane.
+          treść. Pobierz <strong>Potwierdzenie dla klienta PDF</strong>.
+          Zmienione ceny końcowe i płatność aktualizują rejestr. Fakturownia
+          wymaga własnego konta i osobnego potwierdzenia wystawienia; po
+          rezerwacji faktury dane finansowe zamówienia są blokowane.
         </li>
       </ol>
       <h2>Raporty i zadania</h2>
       <p>
-        <strong>Overview</strong> zawiera raport miesięczny filtrowany po
+        <strong>Przegląd</strong> zawiera raport miesięczny filtrowany po
         walucie i osobie: plan, wygrana sprzedaż, procent realizacji, brakująca
-        wartość oraz prognoza ważona. W <strong>Deals → Edit</strong> wpisz
+        wartość oraz prognoza ważona. W <strong>Sprawy → Edytuj</strong> wpisz
         prawdopodobieństwo 0–100% i planowaną datę zamknięcia. Prognoza to suma
         wartości otwartych spraw razy ich prawdopodobieństwo w wybranym
         miesiącu. Wygrane są liczone według rzeczywistej daty zamknięcia. Waluty
@@ -123,23 +359,23 @@
       </p>
       <p>
         Raport można dodatkowo filtrować po lejku.
-        <strong>Sales scorecard → Set benchmarks</strong> ustawia miesięczny cel
-        wartości nowych szans, liczby spotkań, skuteczności oraz próg zastoju w
-        etapie (1–365 dni). Są to własne cele użytkownika, a nie deklarowane
-        średnie rynkowe. Cele dotyczą osoby lub całej przestrzeni, miesiąca i
-        waluty, łącznie dla lejków. Filtr lejka zawęża szanse; aktywność spotkań
-        nadal dotyczy osoby i miesiąca. Kolory pokazują realizację wyłącznie
-        zdefiniowanych celów. Brak celu lub danych daje brak porównania, a nie
-        wymyślony wynik.
+        <strong>Wyniki sprzedaży → Ustaw cele porównawcze</strong> ustawia
+        miesięczny cel wartości nowych szans, liczby spotkań, skuteczności oraz
+        próg zastoju w etapie (1–365 dni). Są to własne cele użytkownika, a nie
+        deklarowane średnie rynkowe. Cele dotyczą osoby lub całej przestrzeni,
+        miesiąca i waluty, łącznie dla lejków. Filtr lejka zawęża szanse;
+        aktywność spotkań nadal dotyczy osoby i miesiąca. Kolory pokazują
+        realizację wyłącznie zdefiniowanych celów. Brak celu lub danych daje
+        brak porównania, a nie wymyślony wynik.
       </p>
       <p>
-        Wykres <strong>Forecast vs target</strong> zestawia wygrane i ważone
-        otwarte szanse z planem na sześć miesięcy. To szacunek oparty na
+        Wykres <strong>Prognoza względem planu</strong> zestawia wygrane i
+        ważone otwarte szanse z planem na sześć miesięcy. To szacunek oparty na
         wpisanym prawdopodobieństwie, bez fikcyjnego przedziału pewności.
-        <strong>Created vs closed opportunities</strong> pokazuje dzienne liczby
-        spraw, a <strong>Opportunity value by source</strong> wartości spraw
+        <strong>Nowe i zamknięte szanse</strong> pokazuje dzienne liczby spraw,
+        a <strong>Wartość szans według źródła</strong> wartości spraw
         utworzonych w miesiącu według pola <strong>Source</strong>.
-        <strong>Closing in the next 30 days</strong> i
+        <strong>Zamknięcie w ciągu 30 dni</strong> i
         <strong>Pipeline health</strong> prowadzą do konkretnych spraw: brak
         daty/wartości, zerowe prawdopodobieństwo, przeterminowane zamknięcie lub
         zadanie oraz zastój w etapie. Dla historycznego miesiąca stan uwagi jest
@@ -148,14 +384,14 @@
         wyniki sprzedaży osób.
       </p>
       <p>
-        <strong>Deals → Table</strong> pozwala zaznaczyć i eksportować wybrane
+        <strong>Sprawy → Table</strong> pozwala zaznaczyć i eksportować wybrane
         sprawy. Podczas przeciągania karty tablicy pojawiają się pola
         <strong>Won / Lost / Move to trash</strong>. Przegrana wymaga powodu.
         Filtr <strong>Deleted</strong> udostępnia <strong>Restore</strong>. Kosz
         nie wchodzi do wyników ani prognozy.
       </p>
       <p>
-        <strong>Tasks</strong> ma listę, macierz pilności/ważności i Kanban.
+        <strong>Zadania</strong> ma listę, macierz pilności/ważności i Kanban.
         Dodawaj podzadania, kamienie milowe, przypisanie, termin i
         przypomnienie. Zmiana kwadrantu lub kolumny przeciągnięciem zapisuje
         właściwości zadania. Ikona przypomnień przy tytule widoku pokazuje
@@ -169,16 +405,16 @@
       </p>
       <h2>Projekty i wyposażenie</h2>
       <p>
-        <strong>Projects</strong> obsługuje realizację, serwis, prezentacje i
+        <strong>Projekty</strong> obsługuje realizację, serwis, prezentacje i
         projekty wewnętrzne. Połącz projekt z wygraną sprawą, dodaj zadania,
-        budżet i terminy. <strong>Plan resources</strong> zapisuje osoby i
-        godziny planowane; <strong>Log work</strong> zapisuje czas rzeczywisty.
-        W projekcie są powiązane zamówienia, sprzęt, uzgodnienia i dokumentacja
-        oraz protokół PDF z miejscem na podpis odbiorcy. Eksport protokołu nie
-        oznacza podpisania dokumentu.
+        budżet i terminy. <strong>Zaplanuj zasoby</strong> zapisuje osoby i
+        godziny planowane; <strong>Zapisz czas pracy</strong> zapisuje czas
+        rzeczywisty. W projekcie są powiązane zamówienia, sprzęt, uzgodnienia i
+        dokumentacja oraz protokół PDF z miejscem na podpis odbiorcy. Eksport
+        protokołu nie oznacza podpisania dokumentu.
       </p>
       <p>
-        <strong>Project → Settlement</strong> jest dostępne właścicielowi
+        <strong>Projekt → Rozliczenie</strong> jest dostępne właścicielowi
         przestrzeni. Pokazuje sprzedaż netto z potwierdzonych zamówień klienta,
         zakupy z zamówień dostawcy, koszt pracy, inne koszty, otrzymane wpłaty,
         należności, zysk i marżę. Szkice i anulowane zamówienia są pomijane;
@@ -190,37 +426,38 @@
         zmieniać znaczenia kosztów. Właściciel może poprawić poszczególne
         zapisane stawki w rozliczeniu. Gdy brakuje kosztu choć części godzin,
         zysk i łączny koszt są oznaczone jako niepełne, zamiast traktować pracę
-        jako darmową. <strong>Add expense</strong> dodaje opis, datę, walutę i
+        jako darmową. <strong>Dodaj koszt</strong> dodaje opis, datę, walutę i
         kwotę pozostałego kosztu. To operacyjne rozliczenie netto, nie
         księgowość ani saldo bankowe.
       </p>
       <p>
-        <strong>Commercial register</strong> pokazuje NIP, adres, dane
-        kontaktowe oraz warunki płatności i dostawy bez otwierania edytora.
-        Szeroka tabela przewija się wewnątrz widoku i zachowuje numer sprawy
-        przy lewej krawędzi. W edytorze oferty
-        <strong>Internal margin analysis</strong> otwiera panel po prawej
+        <strong>Rejestr handlowy</strong> pokazuje NIP, adres, dane kontaktowe
+        oraz warunki płatności i dostawy bez otwierania edytora. Szeroka tabela
+        przewija się wewnątrz widoku i zachowuje numer sprawy przy lewej
+        krawędzi. W edytorze oferty
+        <strong>Wewnętrzna analiza marży</strong> otwiera panel po prawej
         stronie na całą wysokość ekranu. Kliknięcie jego nagłówka lub Escape
         zamyka panel, zachowując edytowaną ofertę. Marża nie jest dodawana do
         PDF klienta.
       </p>
       <p>
-        <strong>Equipment</strong> zapisuje producenta, model, numer seryjny,
+        <strong>Wyposażenie</strong> zapisuje producenta, model, numer seryjny,
         zdjęcie inspekcyjne, stan techniczny i cykl kalibracji. Rezerwacja
         wskazuje osobę, projekt lub zadanie i okres.
-        <strong>Check out / Return</strong> rejestruje wydanie, zwrot i stan.
-        System blokuje kolidujące rezerwacje i drugie wydanie tego samego
-        przyrządu. Data kalibracji tworzy powiązane zadanie; po kolejnej
-        kalibracji termin jest przesuwany zgodnie z cyklem.
+        <strong>Wydaj / Zwróć</strong> rejestruje wydanie, zwrot i stan. System
+        blokuje kolidujące rezerwacje i drugie wydanie tego samego przyrządu.
+        Data kalibracji tworzy powiązane zadanie; po kolejnej kalibracji termin
+        jest przesuwany zgodnie z cyklem.
       </p>
       <h2>Korespondencja, dokumenty i integracje</h2>
       <p>
-        <strong>Inbox</strong> i <strong>RFQ register</strong> obsługują
-        skrzynkę Microsoft 365, ręczne przypisywanie korespondencji oraz jawnie
-        skonfigurowane reguły nowych zapytań z terminem reakcji. Nie są to
-        automatyczne follow-upy. Skrzynka nieprzypisanych wiadomości pozostaje
-        prywatna, a korespondencja przypisana do rekordu jest dostępna
-        uprawnionym osobom w aktywnej przestrzeni.
+        <strong>Skrzynka</strong> i
+        <strong>Rejestr zapytań ofertowych</strong> obsługują skrzynkę Microsoft
+        365, ręczne przypisywanie korespondencji oraz jawnie skonfigurowane
+        reguły nowych zapytań z terminem reakcji. Nie są to automatyczne
+        follow-upy. Skrzynka nieprzypisanych wiadomości pozostaje prywatna, a
+        korespondencja przypisana do rekordu jest dostępna uprawnionym osobom w
+        aktywnej przestrzeni.
       </p>
       <p>
         Plik przypisany do sprawy widać również przy jej firmie i przypisanym
@@ -235,21 +472,22 @@
         SharePoint: <a href="/docs/sharepoint-setup">instrukcja SharePoint</a>.
         Bez danych dostawcy integracja pokazuje brak połączenia. Microsoft 365
         obsługuje również uprawnione skrzynki współdzielone przez
-        <strong>Shared mailbox</strong> po zgodzie
+        <strong>Skrzynka współdzielona</strong> po zgodzie
         <code>Mail.Read.Shared</code>. Statusy DHL można pobrać w
-        <strong>Order → Shipment status</strong> po dodaniu własnego klucza API
-        DHL przez właściciela. Pozostali przewoźnicy nadal mają oficjalne
-        portale śledzenia. Ta wersja nie implementuje KSeF.
+        <strong>Zamówienie → Status przesyłki</strong> po dodaniu własnego
+        klucza API DHL przez właściciela. Pozostali przewoźnicy nadal mają
+        oficjalne portale śledzenia. Ta wersja nie implementuje KSeF.
       </p>
       <p>
-        Etykiety nowych modułów sprzedaży, projektów, zadań i integracji są
-        dostępne w PL/EN/ES/FR/DE. Zmiana języka nie tłumaczy danych wpisanych
-        przez użytkowników ani treści wiadomości i odpowiedzi dostawców.
+        Interfejs i instrukcje są dostępne po polsku i angielsku. Język
+        wybierzesz przyciskami z flagami SVG w Ustawieniach. Zmiana języka nie
+        tłumaczy danych wpisanych przez użytkowników ani treści wiadomości i
+        odpowiedzi dostawców.
       </p>
       <h2>Team i Personal</h2>
       <p>
         Każdy moduł pracuje w aktywnej przestrzeni.
-        <strong>Copy from Team</strong> tworzy niezależne kopie i pokazuje
+        <strong>Kopiuj z zespołu</strong> tworzy niezależne kopie i pokazuje
         pomijane elementy przed kopiowaniem. Ponowne kopiowanie zachowuje
         prywatne edycje. Rezerwacje i wydania sprzętu, przypisania numerów
         seryjnych, historia faktur/płatności, pliki, połączenia, plany zasobów i

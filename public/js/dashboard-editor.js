@@ -707,7 +707,7 @@ const KlyoDashboard = (() => {
     settings.id = "customizeDashboardBtn";
     settings.className = "btn miy-launch";
     settings.type = "button";
-    settings.innerHTML = '<span class="miy-wordmark">Make It Yours</span>';
+    settings.innerHTML = KlyoCopy.html("<span class=\"miy-wordmark\">Make It Yours</span>");
     settings.setAttribute("aria-label", "Make It Yours");
     settings.onclick = begin;
     g("personalSettings").prepend(settings);
