@@ -141,7 +141,7 @@ const { chromium, webkit } = require("playwright");
         await page.locator("#analyticsCurrency").selectOption("PLN");
         await page.locator("#analyticsFilters button").click();
         await page
-          .locator("#analyticsExtended")
+          .locator("#dashboardGrid")
           .filter({ hasText: "Website" })
           .waitFor();
         assert.equal(await page.locator("#salesDaily svg").count(), 1);

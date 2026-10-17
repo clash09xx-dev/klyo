@@ -72,7 +72,7 @@ const KlyoQuoteDesigner = (() => {
       totals = KlyoQuoteCore.computeTotals(
         currentQuoteLineItems,
         Number(g("quoteTaxRate").value),
-        KlyoQuoteTemplates.discount(),
+        {...KlyoQuoteTemplates.discount(),pricing_groups:typeof KlyoBundles!=="undefined"?KlyoBundles.groups():[]},
       );
     } catch {}
     const sample = !totals?.computed?.some((i) => Number(i.unit_price) > 0);

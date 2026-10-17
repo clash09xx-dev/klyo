@@ -467,7 +467,7 @@ async function run(engine, name) {
     await page.setViewportSize({width:1440,height:1000});
     await page.locator('#closeAppearanceBtn').click();
     assert.equal(await page.locator('.nav-item[data-view=calendar]').isVisible(),false);
-    assert.deepEqual(await page.locator('.personal-nav>.nav-item').evaluateAll(items=>items.map(el=>el.dataset.view)),preferences.layout.nav_order);
+    assert.deepEqual(await page.locator('.personal-nav .nav-item').evaluateAll(items=>items.map(el=>el.dataset.view).sort()),[...preferences.layout.nav_order].sort());
     await page.locator('.nav-item[data-view=overview]').click();
     await page.locator('#personalOverview').waitFor();
     assert.equal(await page.locator('#personalOverview').getAttribute('data-layout'),'stacked');

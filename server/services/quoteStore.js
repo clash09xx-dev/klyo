@@ -96,7 +96,7 @@ async function replaceItems(client, id, items, recipients) {
   await client.query("DELETE FROM quote_recipients WHERE quote_id=$1", [id]);
   for (const i of items)
     await client.query(
-      "INSERT INTO quote_line_items(quote_id,product_id,description,quantity,unit_price,discount_percent,line_total,sort_order,bundle_id,bundle_name,sku) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
+      "INSERT INTO quote_line_items(quote_id,product_id,description,quantity,unit_price,discount_percent,line_total,sort_order,bundle_id,bundle_name,sku,show_component_price) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
       [
         id,
         i.product_id,
@@ -106,7 +106,7 @@ async function replaceItems(client, id, items, recipients) {
         i.discount_percent,
         i.line_total,
         i.sort_order,
-        i.bundle_id || "",i.bundle_name || "",i.sku || "",
+        i.bundle_id || "",i.bundle_name || "",i.sku || "",i.show_component_price===true,
       ],
     );
   for (const contact of recipients)

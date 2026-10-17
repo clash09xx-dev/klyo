@@ -18,6 +18,8 @@ async function requireAuth(req, res, next) {
   try {
     const user = await S.account(payload.id);
     if (!user) return res.status(401).json({ error: "Account not found." });
+    if (payload.purpose || (payload.mfa_version || 0) !== (user.mfa_version || 0)) return res.status(401).json({error:"Security settings changed. Sign in again.",code:"MFA_SESSION_CHANGED"});
+    req.authToken = payload;
     // The database is authoritative. Old tokens cannot retain a removed role or team.
     if (payload.workspace_id !== user.workspace_id)
       return res

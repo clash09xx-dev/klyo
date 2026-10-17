@@ -46,8 +46,10 @@ function cents(value) {
     throw invalid("Invalid invoice amount.");
   return BigInt(Math.round(n * 100));
 }
-function allocate(items, total, tax) {
-  const computed = Q.computeTotals(items, 0).computed,
+function allocate(items, total, tax, pricingGroups = []) {
+  const computed = Q.computeTotals(items, 0, {
+      pricing_groups: pricingGroups,
+    }).computed,
     target = cents(total),
     weights = computed.map((x) => cents(x.line_total)),
     sum = weights.reduce((a, b) => a + b, 0n);
@@ -145,7 +147,12 @@ async function preview(user, id, input, client = db, lock = false) {
         sum: "keep_net",
         invoice_form_price_kind: "net",
       },
-      positions: allocate(order.items, order.total, tax),
+      positions: allocate(
+        order.items,
+        order.total,
+        tax,
+        order.pricing_groups || [],
+      ),
     };
   if (invoice.payment_to < invoice.issue_date)
     throw invalid("Payment deadline must follow issue date.");

@@ -5,7 +5,8 @@ const KlyoAnalytics = (() => {
     l = (en, pol) => KlyoModuleI18n.pick(en, pol);
   let report = null,
     version = 0,
-    mounted = false;
+    mounted = false,
+    currencyInitialized = false;
   const labels = () => ({
     month: l("Reporting month", "Miesiąc raportu"),
     currency: l("Currency", "Waluta"),
@@ -107,6 +108,10 @@ const KlyoAnalytics = (() => {
   }
   async function load() {
     mount();
+    if (!currencyInitialized) {
+      g("analyticsCurrency").value = workspaceDefaultCurrency;
+      currencyInitialized = true;
+    }
     localize();
     const ticket = ++version;
     g("analyticsError").textContent = "";
@@ -119,6 +124,7 @@ const KlyoAnalytics = (() => {
     } catch (e) {
       if (ticket === version) {
         report = null;
+        if(typeof KlyoDashboard!=="undefined")KlyoDashboard.beforeRender();
         g("analyticsMetrics").innerHTML = "";
         g("analyticsTrend").innerHTML = "";
         g("analyticsStages").innerHTML = "";
@@ -140,6 +146,7 @@ const KlyoAnalytics = (() => {
             maximumFractionDigits: 1,
           });
   function render() {
+    if(typeof KlyoDashboard!=="undefined")KlyoDashboard.beforeRender();
     const d = labels(),
       m = report.metrics;
     g("analyticsPipeline").innerHTML =
@@ -230,6 +237,7 @@ const KlyoAnalytics = (() => {
     g("analyticsActivity").innerHTML = report.can_manage
       ? `<h3>${d.activity}</h3><div class="analytics-scroll"><table><thead><tr><th>${d.owner}</th><th>${d.meetings}</th><th>${d.calls}</th><th>${d.offers}</th></tr></thead><tbody>${report.activity.map((a) => `<tr><td>${h(a.name)}</td><td>${a.meetings}</td><td>${a.calls}</td><td>${a.offers_sent}</td></tr>`).join("")}</tbody></table></div><p class="analytics-note">${KlyoModuleI18n.label("Counts use logged activities in the selected month. Scheduled calendar events are not counted as completed meetings.", "Liczby dotyczą aktywności zarejestrowanych w miesiącu. Zaplanowane wydarzenia w kalendarzu nie są liczone jako odbyte spotkania.")}</p>`
       : "";
+    if(typeof KlyoDashboard!=="undefined")KlyoDashboard.reconcile(report,params());
   }
   function exportReport() {
     if (!report) return;

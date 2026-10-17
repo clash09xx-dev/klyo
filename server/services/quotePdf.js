@@ -28,7 +28,7 @@ async function generateQuotePdf(quote, lineItems) {
     L = {...Q.labels(config.language),...(quote.document_kind==='order_confirmation'?{quote:config.language==='pl'?'Potwierdzenie zamówienia':'Order confirmation',items:config.language==='pl'?'Potwierdzone pozycje':'Confirmed items',total:config.language==='pl'?'Razem netto':'Total (net)',price:config.language==='pl'?'Cena netto':'Net unit price'}:{}),...Object.fromEntries(Object.entries(config.headings).filter(([,v])=>v))},
     ref = Q.reference({ ...quote, document: config }),
     accent = config.accent;
-  lineItems = Q.presentItems(lineItems || quote.line_items || [], config);
+  lineItems = Q.presentItems(lineItems || quote.line_items || [], config, quote.currency);
   if(config.layout === "canvas")return require("./quoteCanvasPdf")(quote,lineItems,config);
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
@@ -317,11 +317,11 @@ async function generateQuotePdf(quote, lineItems) {
         const values = [
           item.description || "",
           String(Number(item.quantity)),
-          Q.money(item.unit_price, quote.currency, config.language),
-          Number(item.discount_percent)
+          item.hide_prices ? "" : Q.money(item.unit_price, quote.currency, config.language),
+          !item.hide_prices && Number(item.discount_percent)
             ? `${Number(item.discount_percent)}%`
             : "-",
-          Q.money(item.line_total, quote.currency, config.language),
+          item.hide_prices ? "" : Q.money(item.line_total, quote.currency, config.language),
         ];
         if(config.pricing_mode === "total_only")values.splice(2);
         const rowHeight = Math.max(

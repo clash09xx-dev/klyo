@@ -73,7 +73,7 @@ async function ensureTeamOwner(wid, client = db) {
 async function account(id) {
   return (
     await db.query(
-      "SELECT id,workspace_id,name,email,role FROM users WHERE id=$1",
+      "SELECT id,workspace_id,name,email,role,mfa_enabled,mfa_version FROM users WHERE id=$1",
       [id],
     )
   ).rows[0];

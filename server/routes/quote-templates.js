@@ -18,7 +18,7 @@ router.get("/", async (req, res) =>
   }),
 );
 router.post('/preview',requireEditor,async(req,res)=>{
- const b=req.body,d=Q.normalizeDocument(b.document),totals=Q.computeTotals(b.line_items,b.tax_rate||0,{type:b.discount_type,value:b.discount_value});
+ const b=req.body,d=Q.normalizeDocument(b.document),totals=Q.computeTotals(b.line_items,b.tax_rate||0,{type:b.discount_type,value:b.discount_value,pricing_groups:d.pricing_groups});
  const currency=normalizeCurrency(b.currency||'USD');if(!currency)throw invalid('Choose a supported currency.');
  const ids=[...new Set(totals.computed.map(i=>i.product_id).filter(Boolean))];if(ids.length&&(await db.query('SELECT id FROM products WHERE id=ANY($1::int[]) AND workspace_id=$2',[ids,req.user.workspace_id])).rows.length!==ids.length)throw invalid('A product is not available in this workspace.');
  const quote={id:0,title:Q.text(b.title,240),currency,document:d,...totals,discount_total:totals.discountTotal};const pdf=await require('../services/quotePdf').generateQuotePdf(quote,totals.computed);res.set({'Content-Type':'application/pdf','Content-Disposition':'inline; filename="Klyo-template-preview.pdf"','Cache-Control':'no-store'}).send(pdf);
@@ -36,6 +36,7 @@ async function save(req, id) {
   const totals = Q.computeTotals(b.line_items, b.tax_rate || 0, {
     type: b.discount_type,
     value: b.discount_value,
+    pricing_groups:d.pricing_groups,
   });
   const ids = totals.computed.map((i) => i.product_id).filter(Boolean);
   if (
