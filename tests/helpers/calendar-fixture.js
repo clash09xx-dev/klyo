@@ -199,6 +199,8 @@ module.exports = async function setup() {
         require("../../server/routes/" + file),
       );
     for(const name of ["features","pricing","why-klyo","login"])app.get("/"+name,(_,res)=>res.sendFile(path.join(__dirname,"../../public/"+name+".html")));
+    app.get("/make-it-yours",(_,res)=>res.sendFile(path.join(__dirname,"../../public/customization.html")));
+    app.get("/customization",(_,res)=>res.redirect(301,"/make-it-yours"));
     app.use(express.static(path.join(__dirname, "../../public")));
     app.get("/app", (req, res) =>
       res.sendFile(path.join(__dirname, "../../public/app.html")),

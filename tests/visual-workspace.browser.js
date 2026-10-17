@@ -208,7 +208,20 @@ const assert = require("node:assert/strict"),
         await page.locator(".nav [data-view=overview]").click();
         await page.locator("#dashboardGrid [data-widget-id=metrics]").waitFor();
         await page.locator("#analyticsDashboard[aria-busy=false]").waitFor();
-        await page.locator("#customizeDashboardQuick").click();
+        assert.equal(await page.locator("#customizeDashboardNav").count(), 0);
+        assert.equal(
+          await page.locator("#customizeDashboardQuick").textContent(),
+          "Make It Yours",
+        );
+        await page.locator("#appearanceBtn").click();
+        assert.match(
+          await page.locator("[data-settings-tab=personal]").innerText(),
+          /Make It Yours/i,
+        );
+        await page.screenshot({
+          path: path.join(out, name + "-make-it-yours-settings.png"),
+        });
+        await page.locator("#customizeDashboardBtn").click();
         await page.locator("#dashboardOrganizer").waitFor();
         assert.equal(
           await page
@@ -220,9 +233,11 @@ const assert = require("node:assert/strict"),
         await page
           .locator('[data-widget-id=shortcut_deal] [data-size-widget="-1"]')
           .click();
+        await page.locator("[data-widget-id=daily]").hover();
         await page
           .locator("[data-widget-id=daily] [data-remove-widget]")
           .click();
+        await page.locator(".miy-nav-options>summary").click();
         await page.locator("#organizerNavMode").selectOption("tiles");
         await page.locator("#organizerNavWidth").fill("300");
         assert.equal(
@@ -244,21 +259,46 @@ const assert = require("node:assert/strict"),
           false,
         );
         await page.locator(".organizer-navigation summary").click();
+        await page.locator(".miy-nav-options>summary").click();
+        await page.locator("#organizerSnap").selectOption("free");
         const dragCard = page.locator("[data-widget-id=shortcut_deal]");
-        const beforeDrag = await dragCard.getAttribute("style");
-        await dragCard
-          .locator("header")
-          .dragTo(page.locator("[data-widget-id=metrics] header"));
-        assert.notEqual(
-          await page
-            .locator("[data-widget-id=shortcut_deal]")
-            .getAttribute("style"),
-          beforeDrag,
+        await dragCard.locator("header strong").scrollIntoViewIfNeeded();
+        const beforeDrag = await dragCard.boundingBox(),
+          grip = await dragCard.locator("header strong").boundingBox();
+        await page.mouse.move(grip.x + 10, grip.y + 8);
+        await page.mouse.down();
+        await page.mouse.move(grip.x + 83, grip.y + 41, { steps: 12 });
+        await page.waitForTimeout(100);
+        const live = await dragCard.boundingBox();
+        assert.ok(
+          live.x > beforeDrag.x + 20,
+          "Pointer movement must update the existing widget live",
         );
-        await page
-          .locator("[data-widget-id=shortcut_deal] .widget-resize")
-          .focus();
+        assert.equal(
+          await dragCard.evaluate((el) =>
+            el.classList.contains("widget-moving"),
+          ),
+          true,
+        );
+        await page.mouse.up();
+        await dragCard.locator(".widget-resize").focus();
         await page.keyboard.press("ArrowDown");
+        const beforeResize = await dragCard.boundingBox();
+        await dragCard.locator(".widget-resize").scrollIntoViewIfNeeded();
+        const resizeGrip = await dragCard
+          .locator(".widget-resize")
+          .boundingBox();
+        await page.mouse.move(resizeGrip.x + 10, resizeGrip.y + 10);
+        await page.mouse.down();
+        await page.mouse.move(resizeGrip.x + 41, resizeGrip.y + 31, {
+          steps: 10,
+        });
+        await page.mouse.up();
+        const resized = await dragCard.boundingBox();
+        assert.ok(resized.width > beforeResize.width + 15);
+        assert.ok(resized.height > beforeResize.height + 10);
+        await page.locator('[data-placement="tilt"]').fill("3.5");
+        assert.equal(await dragCard.getAttribute("data-tilt"), "3.5");
         const beforeCount = (await api("/deals")).deals.length;
         await page
           .locator("[data-widget-id=shortcut_deal] .dashboard-shortcut")
@@ -272,6 +312,9 @@ const assert = require("node:assert/strict"),
           path: path.join(out, name + "-dashboard-organizer.png"),
           fullPage: true,
         });
+        await page.screenshot({
+          path: path.join(out, name + "-make-it-yours-editor.png"),
+        });
         await page.locator("#dashboardSave").click();
         await page
           .locator("#dashboardOrganizer")
@@ -279,6 +322,18 @@ const assert = require("node:assert/strict"),
         await page.reload({ waitUntil: "networkidle" });
         await page.locator(".nav [data-view=overview]").click();
         await page.locator("[data-widget-id=shortcut_deal]").waitFor();
+        const savedLayout = await page.evaluate(
+            () => KlyoCustomize.getSaved().layout,
+          ),
+          savedWidget = savedLayout.dashboard.find(
+            (w) => w.id === "shortcut_deal",
+          );
+        assert.equal(savedWidget.tilt, 3.5);
+        assert.equal(savedLayout.dashboard_snap, "free");
+        assert.ok(
+          savedWidget.x % 1 !== 0,
+          "Fine positions must persist after reload",
+        );
         assert.equal(
           await page.locator("[data-widget-id=daily]").isVisible(),
           false,
@@ -288,10 +343,24 @@ const assert = require("node:assert/strict"),
           "tiles",
         );
         await page.locator("#customizeDashboardQuick").click();
+        await page.locator('[data-placement="tilt"]').fill("-4");
+        assert.ok(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth + 1,
+          ),
+          "A tilted full-width widget must remain within the workspace",
+        );
+        await page.locator("[data-widget-id=shortcut_deal]").hover();
         await page
           .locator("[data-widget-id=shortcut_deal] [data-remove-widget]")
           .click();
         await page.locator("#dashboardCancel").click();
+        assert.equal(
+          await page
+            .locator("[data-widget-id=metrics]")
+            .getAttribute("data-tilt"),
+          "0",
+        );
         assert.equal(
           await page.locator("[data-widget-id=shortcut_deal]").isVisible(),
           true,
@@ -450,7 +519,12 @@ const assert = require("node:assert/strict"),
         await page.locator("#mfaLogin form button").click();
         await page.waitForURL(/\/app$/);
         await page.locator("#contactsBody tr").first().waitFor();
-        for (const route of ["features", "pricing", "why-klyo"]) {
+        for (const route of [
+          "features",
+          "pricing",
+          "why-klyo",
+          "make-it-yours",
+        ]) {
           await page.goto(f.base + "/" + route, { waitUntil: "networkidle" });
           assert.equal(
             await page
@@ -462,6 +536,14 @@ const assert = require("node:assert/strict"),
             assert.ok(
               (await page.locator(".feature-card-grid article").count()) >= 30,
             );
+          if (route === "features")
+            await page.locator("#quotes").screenshot({
+              path: path.join(out, name + "-colourful-quotes.png"),
+            });
+          if (route === "why-klyo")
+            await page.locator(".why-stories").screenshot({
+              path: path.join(out, name + "-colourful-why.png"),
+            });
           if (route === "pricing")
             await page.locator("#pricingGrid [data-plan]").first().waitFor();
           await page.screenshot({

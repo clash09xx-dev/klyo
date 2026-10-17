@@ -64,10 +64,10 @@
   function packDashboard(input, moved) {
     const placed = [],
       occupied = (a, b) =>
-        a.x < b.x + b.w &&
-        a.x + a.w > b.x &&
-        a.y < b.y + b.h &&
-        a.y + a.h > b.y;
+        a.x < b.x + b.w - 0.0001 &&
+        a.x + a.w > b.x + 0.0001 &&
+        a.y < b.y + b.h - 0.0001 &&
+        a.y + a.h > b.y + 0.0001;
     const order = moved
       ? [
           ...input.filter((w) => w.id === moved),
@@ -78,8 +78,20 @@
       const w = { ...raw };
       if (placed.some((p) => occupied(w, p))) {
         let found = false;
-        for (let y = 0; y <= 220 && !found; y++)
-          for (let x = 0; x <= 12 - w.w; x++)
+        for (
+          let y = w.y;
+          y <= 220 && !found;
+          y = Math.round((y + 0.5) * 100) / 100
+        )
+          for (const x of [
+            ...new Set([
+              w.x,
+              ...Array.from(
+                { length: Math.floor((12 - w.w) * 2) + 1 },
+                (_, i) => i / 2,
+              ),
+            ]),
+          ])
             if (!placed.some((p) => occupied({ ...w, x, y }, p))) {
               w.x = x;
               w.y = y;
@@ -113,6 +125,7 @@
         "alltime",
       ].map((id) => ({
         id,
+        tilt: 0,
         x: 0,
         y: 0,
         w: [
@@ -211,6 +224,7 @@
       },
       layout: {
         dashboard: defaultDashboard(),
+        dashboard_snap: "magnetic",
         sidebar_width: 264,
         nav_mode: "grouped",
         density: "compact",
@@ -407,6 +421,20 @@
       "grouped",
       "navigation layout",
     );
+    out.layout.dashboard_snap = choice(
+      layout.dashboard_snap,
+      ["magnetic", "free", "grid"],
+      "magnetic",
+      "dashboard snapping",
+    );
+    const coordinate = (v, min, max, fallback, name) => {
+      if (v === undefined) return fallback;
+      const n = Number(v);
+      if (Number.isFinite(n) && n >= min && n <= max)
+        return Math.round(n * 100) / 100;
+      fail("Invalid " + name + ".");
+      return fallback;
+    };
     if (layout.dashboard !== undefined) {
       if (
         !Array.isArray(layout.dashboard) ||
@@ -418,13 +446,14 @@
         fail("Choose valid dashboard widgets.");
       } else {
         const widgets = layout.dashboard.map((w) => {
-          const width = bounded(w.w, 3, 12, 6, "widget width");
+          const width = coordinate(w.w, 2, 12, 6, "widget width");
           return {
             id: w.id,
-            x: Math.min(bounded(w.x, 0, 11, 0, "widget column"), 12 - width),
-            y: bounded(w.y, 0, 220, 0, "widget row"),
+            x: Math.min(coordinate(w.x, 0, 12, 0, "widget column"), 12 - width),
+            y: coordinate(w.y, 0, 220, 0, "widget row"),
             w: width,
-            h: bounded(w.h, 2, 20, 6, "widget height"),
+            h: coordinate(w.h, 2, 20, 6, "widget height"),
+            tilt: coordinate(w.tilt, -6, 6, 0, "widget tilt"),
           };
         });
         out.layout.dashboard = packDashboard(widgets);
