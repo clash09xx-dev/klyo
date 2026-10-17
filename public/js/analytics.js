@@ -74,7 +74,7 @@ const KlyoAnalytics = (() => {
       );
     g("analyticsActivity").insertAdjacentHTML(
       "afterend",
-      '<div id="analyticsExtended"></div>',
+      KlyoCopy.html("<div id=\"analyticsExtended\"></div>"),
     );
     const now = new Date();
     g("analyticsMonth").value =
@@ -330,13 +330,13 @@ const KlyoAnalytics = (() => {
     currencyField.className = "field";
     currencyField.id = "dealCurrencyField";
     currencyField.innerHTML =
-      '<label for="dealCurrency" data-an="currency"></label><select id="dealCurrency">' +
+      KlyoCopy.html("<label for=\"dealCurrency\" data-an=\"currency\"></label><select id=\"dealCurrency\">") +
       g("analyticsCurrency").innerHTML +
       "</select>";
     g("dealValue").closest(".field").after(currencyField);
     g("dealValue").insertAdjacentHTML(
       "afterend",
-      '<small class="muted" data-an="net"></small>',
+      KlyoCopy.html("<small class=\"muted\" data-an=\"net\"></small>"),
     );
     g("dealCurrency").addEventListener("change", previewDeal);
     g("dealForm").insertAdjacentHTML(
@@ -347,7 +347,7 @@ const KlyoAnalytics = (() => {
       .getElementById("dealForm")
       .insertAdjacentHTML(
         "beforeend",
-        '<div class="field" id="dealProbabilityField"><label for="dealProbability" data-an="probability"></label><input id="dealProbability" type="number" min="0" max="100" step="0.01" value="0" required><small class="muted" id="dealWeightedPreview"></small></div>',
+        KlyoCopy.html("<div class=\"field\" id=\"dealProbabilityField\"><label for=\"dealProbability\" data-an=\"probability\"></label><input id=\"dealProbability\" type=\"number\" min=\"0\" max=\"100\" step=\"0.01\" value=\"0\" required><small class=\"muted\" id=\"dealWeightedPreview\"></small></div>"),
       );
     const field = g("dealProbabilityField");
     g("dealForm").insertBefore(field, g("dealFormError"));

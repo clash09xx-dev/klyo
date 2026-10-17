@@ -13,11 +13,11 @@ const KlyoDealViews = (() => {
     } catch {}
     g("dealStatusFilter").insertAdjacentHTML(
       "beforeend",
-      '<option value="deleted">' + l("Deleted", "Usunięte") + "</option>",
+      KlyoCopy.html("<option value=\"deleted\">") + l("Deleted", "Usunięte") + "</option>",
     );
     g("dealsBoardWrap").insertAdjacentHTML(
       "beforebegin",
-      `<div class="deal-view-toolbar"><div role="group" aria-label="Deal view"><button type="button" id="dealsBoardMode" class="btn btn-ghost btn-sm">${l("Board", "Tablica")}</button><button type="button" id="dealsTableMode" class="btn btn-ghost btn-sm">${l("Table", "Tabela")}</button></div><button class="btn btn-ghost btn-sm" id="exportSelectedDeals">${l("Export selected", "Eksport zaznaczonych")}</button></div><div id="dealsTableView" class="table-card" hidden></div>`,
+      `<div class="deal-view-toolbar"><div role="group" aria-label="${KlyoCopy.escape(KlyoCopy.text("Deal view"))}"><button type="button" id="dealsBoardMode" class="btn btn-ghost btn-sm">${l("Board", "Tablica")}</button><button type="button" id="dealsTableMode" class="btn btn-ghost btn-sm">${l("Table", "Tabela")}</button></div><button class="btn btn-ghost btn-sm" id="exportSelectedDeals">${l("Export selected", "Eksport zaznaczonych")}</button></div><div id="dealsTableView" class="table-card" hidden></div>`,
     );
     document.body.insertAdjacentHTML(
       "beforeend",

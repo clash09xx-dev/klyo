@@ -59,13 +59,13 @@ const KlyoWorkspace = (() => {
         ? spaceInfo.team
           ? l(
               "Only you · click Team to switch",
-              "Tylko Ty · kliknij Team, aby przełączyć",
+              "Tylko Ty · kliknij Zespół, aby przełączyć",
             )
           : l(
               "Private · create a team to share",
               "Prywatne · utwórz zespół, aby współpracować",
             )
-        : spaceInfo.team?.name || "Team";
+        : spaceInfo.team?.name || KlyoCopy.text("Team");
   }
   function switchSpace(scope) {
     if (scope === API.scope()) return;
@@ -351,7 +351,7 @@ const KlyoWorkspace = (() => {
         document.body.appendChild(notice);
       }
       notice.style.setProperty("--review-color", fresh.color);
-      notice.innerHTML = `<button type="button" class="warranty-notice-close" aria-label="Close">×</button><strong>${l("Warranty review due", "Czas na przegląd gwarancyjny")}</strong><p>${h(fresh.product_name)} · ${h(fresh.contact_name)}</p><button type="button" class="btn btn-ghost btn-sm warranty-notice-open">${l("Open item", "Otwórz produkt")} ↗</button>`;
+      notice.innerHTML = `<button type="button" class="warranty-notice-close" aria-label="${KlyoCopy.escape(KlyoCopy.text("Close"))}">×</button><strong>${l("Warranty review due", "Czas na przegląd gwarancyjny")}</strong><p>${h(fresh.product_name)} · ${h(fresh.contact_name)}</p><button type="button" class="btn btn-ghost btn-sm warranty-notice-open">${l("Open item", "Otwórz produkt")} ↗</button>`;
       notice.querySelector(".warranty-notice-close").onclick = () =>
         notice.remove();
       notice.querySelector(".warranty-notice-open").onclick = async () => {
@@ -412,12 +412,12 @@ const KlyoWorkspace = (() => {
         API.get("/products"),
       ]);
       g("warrantyContact").innerHTML =
-        '<option value="">—</option>' +
+        KlyoCopy.html("<option value=\"\">—</option>") +
         cts.contacts
           .map((c) => `<option value="${c.id}">${h(c.full_name)}</option>`)
           .join("");
       g("warrantyProduct").innerHTML =
-        '<option value="">—</option>' +
+        KlyoCopy.html("<option value=\"\">—</option>") +
         ps.products
           .map(
             (p) =>
@@ -571,24 +571,24 @@ const KlyoWorkspace = (() => {
   }
   const label = (en, pol) => l(en, pol);
   function modal(id, title, content) {
-    return `<div class="overlay hidden workspace-tools-overlay" id="${id}"><div class="modal"><div class="modal-head"><h2>${title}</h2><button type="button" class="modal-close" data-close-tool="${id}" aria-label="Close">×</button></div>${content}</div></div>`;
+    return `<div class="overlay hidden workspace-tools-overlay" id="${id}"><div class="modal"><div class="modal-head"><h2>${title}</h2><button type="button" class="modal-close" data-close-tool="${id}" aria-label="${KlyoCopy.escape(KlyoCopy.text("Close"))}">×</button></div>${content}</div></div>`;
   }
   function mount() {
     document
       .querySelector(".brand")
       .insertAdjacentHTML(
         "afterend",
-        `<div class="workspace-switch-wrap"><div class="workspace-switch" role="group" aria-label="CRM scope"><button type="button" data-switch-space="team" aria-pressed="${API.scope() === "team"}">Team</button><button type="button" data-switch-space="personal" aria-pressed="${API.scope() === "personal"}">Personal</button></div><span id="workspaceScopeLabel"></span><button type="button" class="btn btn-ghost btn-sm" id="copyTeamBtn" hidden>↙ ${l("Copy from Team", "Kopiuj z Team")}</button><button type="button" class="btn btn-ghost btn-sm" id="createTeamBtn" hidden>+ ${l("Create team", "Utwórz zespół")}</button></div>`,
+        `<div class="workspace-switch-wrap"><div class="workspace-switch" role="group" aria-label="${KlyoCopy.escape(KlyoCopy.text("CRM scope"))}"><button type="button" data-switch-space="team" aria-pressed="${API.scope() === "team"}">${KlyoCopy.label("Team")}</button><button type="button" data-switch-space="personal" aria-pressed="${API.scope() === "personal"}">${KlyoCopy.label("Personal")}</button></div><span id="workspaceScopeLabel"></span><button type="button" class="btn btn-ghost btn-sm" id="copyTeamBtn" hidden>↙ ${l("Copy from Team", "Kopiuj z zespołu")}</button><button type="button" class="btn btn-ghost btn-sm" id="createTeamBtn" hidden>+ ${l("Create team", "Utwórz zespół")}</button></div>`,
       );
     document
       .querySelector(".page-heading")
       .insertAdjacentHTML(
         "beforeend",
-        `<button type="button" class="warranty-bell" id="warrantyBell" aria-label="Warranty reviews"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M10 21h4"/></svg><span id="warrantyBellCount" hidden></span></button>`,
+        `<button type="button" class="warranty-bell" id="warrantyBell" aria-label="${KlyoCopy.escape(KlyoCopy.text("Warranty reviews"))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M10 21h4"/></svg><span id="warrantyBellCount" hidden></span></button>`,
       );
     g("remindersView").insertAdjacentHTML(
       "afterbegin",
-      `<section class="warranty-section"><div class="warranty-heading"><div><h2>${l("Warranty & maintenance", "Gwarancje i przeglądy")}</h2><p class="muted">${l("Your client, their product, the next review. You decide when to contact them.", "Klient, jego produkt i następny przegląd. Ty decydujesz, kiedy się z nim kontaktujesz.")}</p></div><button type="button" class="btn btn-primary btn-sm" id="addWarrantyBtn">+ ${l("Register item", "Dodaj produkt")}</button></div><div class="filter-bar"><input id="warrantySearch" type="search" placeholder="${l("Client, product or serial…", "Klient, produkt lub numer seryjny…")}" aria-label="Search warranty"><select id="warrantyFilter"><option value="all">${l("All items", "Wszystkie produkty")}</option><option value="due">${l("Review due", "Do przeglądu")}</option><option value="upcoming">${l("Upcoming", "Nadchodzące")}</option><option value="closed">${l("Closed", "Zamknięte")}</option></select></div><div id="warrantyList"></div></section><h3 class="legacy-reminders-heading">${l("Other service reminders", "Pozostałe przypomnienia serwisowe")}</h3>`,
+      `<section class="warranty-section"><div class="warranty-heading"><div><h2>${l("Warranty & maintenance", "Gwarancje i przeglądy")}</h2><p class="muted">${l("Your client, their product, the next review. You decide when to contact them.", "Klient, jego produkt i następny przegląd. Ty decydujesz, kiedy się z nim kontaktujesz.")}</p></div><button type="button" class="btn btn-primary btn-sm" id="addWarrantyBtn">+ ${l("Register item", "Dodaj produkt")}</button></div><div class="filter-bar"><input id="warrantySearch" type="search" placeholder="${l("Client, product or serial…", "Klient, produkt lub numer seryjny…")}" aria-label="${KlyoCopy.escape(KlyoCopy.text("Search warranty"))}"><select id="warrantyFilter"><option value="all">${l("All items", "Wszystkie produkty")}</option><option value="due">${l("Review due", "Do przeglądu")}</option><option value="upcoming">${l("Upcoming", "Nadchodzące")}</option><option value="closed">${l("Closed", "Zamknięte")}</option></select></div><div id="warrantyList"></div></section><h3 class="legacy-reminders-heading">${l("Other service reminders", "Pozostałe przypomnienia serwisowe")}</h3>`,
     );
     g("teamView").insertAdjacentHTML(
       "beforeend",
@@ -603,8 +603,8 @@ const KlyoWorkspace = (() => {
       ) +
         modal(
           "spaceCopyOverlay",
-          l("Copy from Team to Personal", "Kopiuj z Team do Personal"),
-          `<p class="muted">${l("Independent copies. Your team stays unchanged. Repeating a copy skips previously copied records and preserves your edits. Quotes and emails become drafts; nothing is sent.", "Niezależne kopie. Dane zespołu pozostają bez zmian. Ponowne kopiowanie pomija istniejące kopie i zachowuje Twoje zmiany. Oferty i maile stają się szkicami; nic nie jest wysyłane.")}</p><div class="field"><label for="copyMode">${l("What to copy", "Co skopiować")}</label><select id="copyMode"><option value="products">${l("Products", "Produkty")}</option><option value="contacts">${l("All clients / selected clients", "Wszyscy klienci / wybrani klienci")}</option><option value="companies">${l("Companies", "Firmy")}</option><option value="everything">${l("All CRM data", "Wszystkie dane CRM")}</option></select></div><div id="copySelectionWrap"><label class="tool-check"><input id="copyAllRecords" type="checkbox" checked>${l("Copy all records of this type", "Kopiuj wszystkie rekordy tego typu")}</label><input id="copySearch" type="search" placeholder="${l("Filter records…", "Filtruj rekordy…")}" aria-label="Filter records"><div id="copyRecordList"></div></div><p id="spaceCopySummary" class="copy-summary"></p><p class="muted">${l("Clients include their linked companies. All CRM data includes products, clients, company structures, commercial cases, pipelines, deals, draft proposals and orders, projects, tasks, calendar, equipment descriptions, warranties and business history. Reservations, custody, serial allocations, resource plans, time logs, invoice/payment status, files, team access, billing and provider connections are not copied. Purchase costs are available only to the actual team owner.", "Klienci są kopiowani z powiązanymi firmami. Wszystkie dane CRM obejmują produkty, klientów, strukturę firm, sprawy handlowe, lejki, deale, szkice ofert i zamówień, projekty, zadania, kalendarz, opis sprzętu, gwarancje i historię biznesową. Rezerwacje, wydania, przydziały numerów seryjnych, plany zasobów, czas pracy, stan faktur i płatności, pliki, dostęp do zespołu, rozliczenia i połączenia integracji są pomijane. Koszty zakupu może kopiować wyłącznie faktyczny właściciel zespołu.")}</p><div class="form-error" id="spaceCopyError"></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-tool="spaceCopyOverlay">${l("Cancel", "Anuluj")}</button><button type="button" class="btn btn-primary" id="copyRunBtn">${l("Copy to Personal", "Kopiuj do Personal")}</button></div>`,
+          l("Copy from Team to Personal", "Kopiuj z zespołu do prywatnych"),
+          `<p class="muted">${l("Independent copies. Your team stays unchanged. Repeating a copy skips previously copied records and preserves your edits. Quotes and emails become drafts; nothing is sent.", "Niezależne kopie. Dane zespołu pozostają bez zmian. Ponowne kopiowanie pomija istniejące kopie i zachowuje Twoje zmiany. Oferty i maile stają się szkicami; nic nie jest wysyłane.")}</p><div class="field"><label for="copyMode">${l("What to copy", "Co skopiować")}</label><select id="copyMode"><option value="products">${l("Products", "Produkty")}</option><option value="contacts">${l("All clients / selected clients", "Wszyscy klienci / wybrani klienci")}</option><option value="companies">${l("Companies", "Firmy")}</option><option value="everything">${l("All CRM data", "Wszystkie dane CRM")}</option></select></div><div id="copySelectionWrap"><label class="tool-check"><input id="copyAllRecords" type="checkbox" checked>${l("Copy all records of this type", "Kopiuj wszystkie rekordy tego typu")}</label><input id="copySearch" type="search" placeholder="${l("Filter records…", "Filtruj rekordy…")}" aria-label="${KlyoCopy.escape(KlyoCopy.text("Filter records"))}"><div id="copyRecordList"></div></div><p id="spaceCopySummary" class="copy-summary"></p><p class="muted">${l("Clients include their linked companies. All CRM data includes products, clients, company structures, commercial cases, pipelines, deals, draft proposals and orders, projects, tasks, calendar, equipment descriptions, warranties and business history. Reservations, custody, serial allocations, resource plans, time logs, invoice/payment status, files, team access, billing and provider connections are not copied. Purchase costs are available only to the actual team owner.", "Klienci są kopiowani z powiązanymi firmami. Wszystkie dane CRM obejmują produkty, klientów, strukturę firm, sprawy handlowe, lejki, deale, szkice ofert i zamówień, projekty, zadania, kalendarz, opis sprzętu, gwarancje i historię biznesową. Rezerwacje, wydania, przydziały numerów seryjnych, plany zasobów, czas pracy, stan faktur i płatności, pliki, dostęp do zespołu, rozliczenia i połączenia integracji są pomijane. Koszty zakupu może kopiować wyłącznie faktyczny właściciel zespołu.")}</p><div class="form-error" id="spaceCopyError"></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-tool="spaceCopyOverlay">${l("Cancel", "Anuluj")}</button><button type="button" class="btn btn-primary" id="copyRunBtn">${l("Copy to Personal", "Kopiuj do prywatnych")}</button></div>`,
         ) +
         modal(
           "warrantyNotifications",
@@ -628,7 +628,7 @@ const KlyoWorkspace = (() => {
     if (!el) {
       g("panelAdvanced").insertAdjacentHTML(
         "afterend",
-        '<section id="contactCustomDetails" class="record-custom-fields"></section>',
+        KlyoCopy.html("<section id=\"contactCustomDetails\" class=\"record-custom-fields\"></section>"),
       );
       el = g("contactCustomDetails");
     }
@@ -831,7 +831,7 @@ const KlyoWorkspace = (() => {
         };
       }
       g("transferTeamUser").innerHTML =
-        '<option value="">—</option>' +
+        KlyoCopy.html("<option value=\"\">—</option>") +
         people
           .map((u) => `<option value="${u.id}">${h(u.name)}</option>`)
           .join("");

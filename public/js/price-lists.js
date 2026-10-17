@@ -45,7 +45,7 @@ const KlyoPriceLists = (() => {
       .getElementById("addProductViewBtn")
       .insertAdjacentHTML(
         "beforebegin",
-        '<button class="btn btn-ghost btn-sm" id="priceListsBtn">Price lists / Import</button>',
+        KlyoCopy.html("<button class=\"btn btn-ghost btn-sm\" id=\"priceListsBtn\">Price lists / Import</button>"),
       );
     document.getElementById("priceListsBtn").onclick = () =>
       manager().catch((e) => toast(e.message, "error"));
@@ -53,15 +53,15 @@ const KlyoPriceLists = (() => {
       .getElementById("quoteItemsContainer")
       .insertAdjacentHTML(
         "beforebegin",
-        '<div class="price-list-select"><label for="quotePriceList">Price list</label><select id="quotePriceList"><option value="">Product catalogue</option></select><small>Prices are copied into this quote. Existing sent quotes stay unchanged.</small></div>',
+        KlyoCopy.html("<div class=\"price-list-select\"><label for=\"quotePriceList\">Price list</label><select id=\"quotePriceList\"><option value=\"\">Product catalogue</option></select><small>Prices are copied into this quote. Existing sent quotes stay unchanged.</small></div>"),
       );
     document.getElementById("quotePriceList").onchange = changeList;
   }
   async function manager() {
     await refresh();
     const d = dialog(
-      "Price lists",
-      `<p>Import CSV or Excel, map your columns, then approve the rows. A product SKU identifies existing products; otherwise a unique product name is used.</p><div class="doc-actions"><button id="newPriceImport" class="btn btn-primary">Import price list</button><button id="priceCSVExample" class="btn btn-ghost">Download CSV example</button></div><div id="priceListRows"></div>`,
+      KlyoCopy.text("Price lists"),
+      `<p>${KlyoCopy.label("Import CSV or Excel, map your columns, then approve the rows. A product SKU identifies existing products; otherwise a unique product name is used.")}</p><div class="doc-actions"><button id="newPriceImport" class="btn btn-primary">${KlyoCopy.label("Import price list")}</button><button id="priceCSVExample" class="btn btn-ghost">${KlyoCopy.label("Download CSV example")}</button></div><div id="priceListRows"></div>`,
     );
     d.find("#priceCSVExample").onclick = () => {
       const a = document.createElement("a");
@@ -83,8 +83,8 @@ const KlyoPriceLists = (() => {
         manager().catch((e) => toast(e.message, "error"));
       });
     d.find("#priceListRows").innerHTML = lists.length
-      ? `<table class="doc-table"><thead><tr><th>Name</th><th>Currency</th><th>Products</th><th></th></tr></thead><tbody>${lists.map((l) => `<tr><td>${esc(l.name)}</td><td>${esc(l.currency)}</td><td>${l.item_count}</td><td><button class="btn btn-ghost btn-sm" data-update="${l.id}">Update / view</button></td></tr>`).join("")}</tbody></table>`
-      : "<p>No price lists yet. Start by importing your supplier or customer price list.</p>";
+      ? `<table class="doc-table"><thead><tr><th>${KlyoCopy.label("Name")}</th><th>${KlyoCopy.label("Currency")}</th><th>${KlyoCopy.label("Products")}</th><th></th></tr></thead><tbody>${lists.map((l) => `<tr><td>${esc(l.name)}</td><td>${esc(l.currency)}</td><td>${l.item_count}</td><td><button class="btn btn-ghost btn-sm" data-update="${l.id}">${KlyoCopy.label("Update / view")}</button></td></tr>`).join("")}</tbody></table>`
+      : KlyoCopy.html("<p>No price lists yet. Start by importing your supplier or customer price list.</p>");
     d.root.querySelectorAll("[data-update]").forEach(
       (b) =>
         (b.onclick = async () => {
@@ -93,7 +93,7 @@ const KlyoPriceLists = (() => {
               data = await API.get("/price-lists/" + list.id),
               v = dialog(
                 list.name,
-                `<p>${esc(list.currency)} · ${data.products.length} products</p><div class="doc-scroll"><table class="doc-table">${data.products.map((p) => `<tr><td>${esc(p.sku)}</td><td>${esc(p.name)}</td><td>${esc(p.unit_price)}</td></tr>`).join("")}</table></div><div class="doc-actions"><button class="btn btn-primary" id="reimportPrices">Import updated prices</button><button class="btn btn-ghost" id="deletePriceList">Delete price list</button></div><p>Deleting a price list preserves products and the prices already saved in quotes.</p>`,
+                `<p>${esc(list.currency)} · ${data.products.length} ${KlyoCopy.label("products")}</p><div class="doc-scroll"><table class="doc-table">${data.products.map((p) => `<tr><td>${esc(p.sku)}</td><td>${esc(p.name)}</td><td>${esc(p.unit_price)}</td></tr>`).join("")}</table></div><div class="doc-actions"><button class="btn btn-primary" id="reimportPrices">${KlyoCopy.label("Import updated prices")}</button><button class="btn btn-ghost" id="deletePriceList">${KlyoCopy.label("Delete price list")}</button></div><p>${KlyoCopy.label("Deleting a price list preserves products and the prices already saved in quotes.")}</p>`,
               );
             v.find("#reimportPrices").onclick = () =>
               importer(list, () => {
@@ -104,7 +104,7 @@ const KlyoPriceLists = (() => {
             v.find("#deletePriceList").onclick = async () => {
               if (
                 !confirm(
-                  "Delete this price list? Products and existing quote prices will be kept.",
+                  KlyoCopy.text("Delete this price list? Products and existing quote prices will be kept."),
                 )
               )
                 return;
@@ -149,8 +149,8 @@ const KlyoPriceLists = (() => {
   }
   async function importer(list, onDone) {
     const d = dialog(
-      list ? "Update " + list.name : "Import a price list",
-      `<p>CSV or XLSX · up to 10 MB and 1,000 products. The first row contains column names.</p><div class="doc-actions"><input id="pricesFile" type="file" accept=".csv,.xlsx"><button class="btn btn-ghost" id="pricesSharePoint">Choose from SharePoint</button></div><div class="doc-fields"><label>Price-list name<input id="pricesName" maxlength="100" value="${esc(list?.name || "")}"></label><label>Currency<select id="pricesCurrency">${[
+      list ? KlyoCopy.text("Update") + " · " + list.name : KlyoCopy.text("Import a price list"),
+      `<p>${KlyoCopy.label("CSV or XLSX · up to 10 MB and 1,000 products. The first row contains column names.")}</p><div class="doc-actions"><input id="pricesFile" type="file" accept=".csv,.xlsx"><button class="btn btn-ghost" id="pricesSharePoint">${KlyoCopy.label("Choose from SharePoint")}</button></div><div class="doc-fields"><label>${KlyoCopy.label("Price-list name")}<input id="pricesName" maxlength="100" value="${esc(list?.name || "")}"></label><label>${KlyoCopy.label("Currency")}<select id="pricesCurrency">${[
         ...document.getElementById("workspaceCurrencySelect").options,
       ]
         .map((o) => o.value)
@@ -178,7 +178,7 @@ const KlyoPriceLists = (() => {
       mappingVersion++;
       d.error("");
       d.find("#pricesPreview").innerHTML = "";
-      d.find("#pricesMapping").textContent = "Reading spreadsheet…";
+      d.find("#pricesMapping").textContent = KlyoCopy.text("Reading spreadsheet…");
       try {
         if (!/\.(csv|xlsx)$/i.test(file.name) || file.size > 10 * 1024 * 1024)
           throw new Error("Choose a CSV or XLSX file up to 10 MB.");
@@ -201,7 +201,7 @@ const KlyoPriceLists = (() => {
       parsed = result;
       d.find("#pricesPreview").innerHTML = "";
       d.find("#pricesMapping").innerHTML =
-        `<label>Worksheet<select id="pricesSheet">${parsed.sheets.map((s) => `<option ${s === parsed.sheet ? "selected" : ""}>${esc(s)}</option>`).join("")}</select></label><p>${parsed.rows.length} rows in ${esc(source)}. Match each product field to a column.</p><div class="doc-mapping">${[...fields, ...defs.map((f) => ["custom:" + f.field_key, f.name + (f.required ? " *" : ""), [normalize(f.name)]])].map(([key, label, syn]) => `<label>${esc(label)}<select data-price-map="${esc(key)}"><option value="">Skip</option>${parsed.headers.map((h, i) => `<option value="${i}" ${syn.includes(normalize(h)) ? "selected" : ""}>${esc(h)}</option>`).join("")}</select></label>`).join("")}</div><div class="doc-actions"><button class="btn btn-primary" id="previewPrices">Preview import</button></div>`;
+        `<label>${KlyoCopy.label("Worksheet")}<select id="pricesSheet">${parsed.sheets.map((s) => `<option ${s === parsed.sheet ? "selected" : ""}>${esc(s)}</option>`).join("")}</select></label><p>${parsed.rows.length} ${KlyoCopy.label("rows in")} ${esc(source)}${KlyoCopy.label(". Match each product field to a column.")}</p><div class="doc-mapping">${[...fields, ...defs.map((f) => ["custom:" + f.field_key, f.name + (f.required ? " *" : ""), [normalize(f.name)]])].map(([key, label, syn]) => `<label>${esc(key.startsWith("custom:") ? label : KlyoCopy.text(label))}<select data-price-map="${esc(key)}"><option value="">${KlyoCopy.text("Skip")}</option>${parsed.headers.map((h, i) => `<option value="${i}" ${syn.includes(normalize(h)) ? "selected" : ""}>${esc(h)}</option>`).join("")}</select></label>`).join("")}</div><div class="doc-actions"><button class="btn btn-primary" id="previewPrices">${KlyoCopy.label("Preview import")}</button></div>`;
       d.find("#pricesSheet").onchange = () =>
         mapping(d.find("#pricesSheet").value).catch(d.error);
       d.root.querySelectorAll("[data-price-map]").forEach(
@@ -248,7 +248,7 @@ const KlyoPriceLists = (() => {
         const data = body(),
           result = await API.post("/price-lists/preview", data);
         d.find("#pricesPreview").innerHTML =
-          `<p>${result.valid} valid of ${result.rows.length}. Select the rows to import. Rows with errors are excluded.</p><div class="doc-actions"><button class="btn btn-ghost" id="allPriceRows">Select valid rows</button><button class="btn btn-ghost" id="noPriceRows">Deselect all</button></div><div class="doc-scroll"><table class="doc-table"><thead><tr><th>Import</th><th>Product / SKU</th><th>Price</th><th>Result</th></tr></thead><tbody>${result.rows.map((r) => `<tr><td><input type="checkbox" data-price-row="${r.index}" ${r.error ? "disabled" : "checked"} aria-label="Import row ${r.index + 1}"></td><td>${esc(r.name)}<br>${esc(r.sku)}</td><td>${esc(r.unit_price ?? "—")} ${esc(r.currency || "")}</td><td>${esc(r.error || (r.action === "create" ? "Create product" : "Update list price"))}</td></tr>`).join("")}</tbody></table></div><label><input id="pricesUpdateCatalog" type="checkbox"> Also update the base prices of existing products</label><p>By default, existing product base prices remain unchanged. New products include the mapped details. Existing product details stay unchanged. Importing does not remove products missing from the file.</p><button class="btn btn-primary" id="confirmPricesImport">Import selected rows</button>`;
+          `<p>${result.valid} ${KlyoCopy.label("valid of")} ${result.rows.length}${KlyoCopy.label(". Select the rows to import. Rows with errors are excluded.")}</p><div class="doc-actions"><button class="btn btn-ghost" id="allPriceRows">${KlyoCopy.label("Select valid rows")}</button><button class="btn btn-ghost" id="noPriceRows">${KlyoCopy.label("Deselect all")}</button></div><div class="doc-scroll"><table class="doc-table"><thead><tr><th>${KlyoCopy.label("Import")}</th><th>${KlyoCopy.label("Product / SKU")}</th><th>${KlyoCopy.label("Price")}</th><th>${KlyoCopy.label("Result")}</th></tr></thead><tbody>${result.rows.map((r) => `<tr><td><input type="checkbox" data-price-row="${r.index}" ${r.error ? "disabled" : "checked"} aria-label="Import row ${r.index + 1}"></td><td>${esc(r.name)}<br>${esc(r.sku)}</td><td>${esc(r.unit_price ?? "—")} ${esc(r.currency || "")}</td><td>${esc(r.error || (r.action === "create" ? "Create product" : "Update list price"))}</td></tr>`).join("")}</tbody></table></div><label><input id="pricesUpdateCatalog" type="checkbox"> ${KlyoCopy.label("Also update the base prices of existing products")}</label><p>${KlyoCopy.label("By default, existing product base prices remain unchanged. New products include the mapped details. Existing product details stay unchanged. Importing does not remove products missing from the file.")}</p><button class="btn btn-primary" id="confirmPricesImport">${KlyoCopy.label("Import selected rows")}</button>`;
         d.find("#allPriceRows").onclick = () =>
           d.root
             .querySelectorAll("[data-price-row]:not(:disabled)")
@@ -274,7 +274,7 @@ const KlyoPriceLists = (() => {
             });
             await loadProducts();
             if (currentView === "products") await loadProductsView();
-            toast(`${r.imported} prices imported · ${r.created} new products`);
+            toast(KlyoCopy.format("Prices imported: {0} · new products: {1}", r.imported, r.created));
             d.close();
             onDone?.();
           } catch (e) {
@@ -308,7 +308,7 @@ const KlyoPriceLists = (() => {
       await refresh();
       const el = document.getElementById("quotePriceList");
       el.innerHTML =
-        '<option value="">Product catalogue</option>' +
+        KlyoCopy.html("<option value=\"\">Product catalogue</option>") +
         lists
           .map(
             (l) =>
@@ -323,13 +323,13 @@ const KlyoPriceLists = (() => {
       const el = document.getElementById("quotePriceList");
       if (selected) {
         el.innerHTML =
-          '<option value="">Product catalogue</option><option value="' +
+          KlyoCopy.html("<option value=\"\">Product catalogue</option><option value=\"") +
           Number(selected) +
-          '">Saved price list (temporarily unavailable)</option>';
+          '">' + esc(KlyoCopy.text('Saved price list (temporarily unavailable)')) + '</option>';
         el.value = selected;
       }
       toast(
-        "Price lists could not be loaded. Saved quote prices are preserved. " +
+        KlyoCopy.text("Price lists could not be loaded. Saved quote prices are preserved.") + " " +
           e.message,
         "error",
       );
@@ -347,7 +347,7 @@ const KlyoPriceLists = (() => {
       if (
         hasRows &&
         !confirm(
-          "Apply these prices to matching products in this draft? Custom items are kept.",
+          KlyoCopy.text("Apply these prices to matching products in this draft? Custom items are kept."),
         )
       ) {
         el.value = selected || "";

@@ -1,1 +1,518 @@
-<!doctype html><html lang="pl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Klyo — konfiguracja SharePoint</title><style>body{font:16px/1.7 system-ui,sans-serif;margin:0;color:#172238;background:#f5f7fa}main{max-width:850px;margin:32px auto;padding:40px;background:white}h1{font-size:30px}h2{font-size:21px;margin-top:36px}a{color:#2459bb}code{background:#edf1f6;padding:2px 5px;overflow-wrap:anywhere}p{overflow-wrap:anywhere}@media(max-width:600px){main{margin:0;padding:22px}}table{border-collapse:collapse;font-size:14px}th,td{border:1px solid #d5dce6;text-align:left;padding:10px}.table-wrap{overflow:auto}</style><main><a href="/app">← Klyo</a><h1>Klyo — konfiguracja SharePoint</h1><p>Integracja jest przygotowana w aplikacji. Do pierwszego połączenia właściciel Klyo musi zarejestrować aplikację Microsoft Entra i dodać jej dane w Railway. Sama obecność zakładki Files nie oznacza aktywnego połączenia z Microsoft.</p><h2>1. Zarejestruj aplikację</h2><p>1. Zaloguj się do <a href="https://entra.microsoft.com/" target="_blank" rel="noopener">Microsoft Entra admin center</a> kontem służbowym z dostępem do swojej organizacji Microsoft 365.</p><p>2. Otwórz <strong>Identity → Applications → App registrations → New registration</strong>.</p><p>3. Nazwa: <strong>Klyo CRM</strong>.</p><p>4. Dla Klyo obsługującego różne firmy wybierz <strong>Accounts in any organizational directory</strong>. Jeśli wdrożenie ma obsługiwać wyłącznie Twoją firmę, możesz wybrać jeden tenant i podać jego identyfikator w konfiguracji.</p><p>5. Platforma przekierowania: <strong>Web</strong>. Dokładny adres produkcyjny:</p><p>   <code>https://klyolabs.com/api/sharepoint/callback</code></p><p>6. Zapisz <strong>Application (client) ID</strong>. Dla konfiguracji jednej organizacji zapisz też <strong>Directory (tenant) ID</strong>.</p><h2>2. Ustaw uprawnienia i sekret</h2><p>W <strong>API permissions → Add a permission → Microsoft Graph → Delegated permissions</strong> dodaj:</p><p>- <code>Files.ReadWrite</code> — odczyt oraz zapisywanie plików w zakresie uprawnień zalogowanego użytkownika.</p><p>- <code>Sites.Read.All</code> — wyszukiwanie witryn i wybór biblioteki SharePoint.</p><p>- <code>offline_access</code> — odświeżanie połączenia bez logowania przy każdym pliku.</p><p>Nie dodawaj uprawnień typu Application ani <code>Sites.ReadWrite.All</code>. Administrator Microsoft 365 może wymagać zatwierdzenia dostępu zgodnie z polityką swojej organizacji. Zakres odczytu witryn jest szeroki; Klyo dodatkowo ogranicza przeglądanie i zapisy z CRM do folderu wybranego przez właściciela.</p><p>W <strong>Certificates &amp; secrets → New client secret</strong> utwórz sekret, zapisz jego <strong>Value</strong> bezpośrednio do menedżera haseł lub Railway. Nie używaj identyfikatora sekretu zamiast jego wartości. Nie przesyłaj sekretu przez czat ani nie dodawaj do repozytorium. Zanotuj datę wygaśnięcia i wymień sekret przed tym terminem.</p><h2>3. Dodaj zmienne w Railway</h2><p>Otwórz usługę Klyo → <strong>Variables</strong>. Dodaj:</p><div class="table-wrap"><table><tr><th>Zmienna</th><th>Wartość</th></tr><tr><td><code>MICROSOFT_CLIENT_ID</code></td><td>Application (client) ID</td></tr><tr><td><code>MICROSOFT_CLIENT_SECRET</code></td><td>Wartość utworzonego sekretu</td></tr><tr><td><code>MICROSOFT_TENANT_ID</code></td><td><code>organizations</code> dla wielu firm albo Directory (tenant) ID dla jednej firmy</td></tr><tr><td><code>MICROSOFT_REDIRECT_URI</code></td><td><code>https://klyolabs.com/api/sharepoint/callback</code></td></tr><tr><td><code>INTEGRATION_ENCRYPTION_KEY</code></td><td>Nowa, losowa, długa wartość przechowywana jako sekret; minimum 32 losowe bajty</td></tr></table></div><p>Sprawdź istniejącą <code>APP_URL</code>: musi wskazywać <code>https://klyolabs.com</code>. Zastosuj zmiany i poczekaj na zakończenie wdrożenia. Sekret oraz klucz szyfrowania działają wyłącznie na serwerze. Nie dodawaj ich do plików frontendu.</p><p>Nie zmieniaj klucza szyfrowania bez ponownego połączenia wszystkich integracji. Gdy <code>INTEGRATION_ENCRYPTION_KEY</code> nie jest ustawiony, aplikacja korzysta z <code>JWT_SECRET</code>; jego zmiana również wymaga ponownego połączenia.</p><h2>4. Połącz konkretną przestrzeń</h2><p>1. Otwórz Klyo → <strong>Team → Files → Configure SharePoint</strong> jako właściciel zespołu. W <strong>Personal</strong> konfigurujesz oddzielne połączenie widoczne tylko dla siebie.</p><p>2. Kliknij <strong>Connect Microsoft</strong>, zaloguj się i zaakceptuj wymagane uprawnienia.</p><p>3. Wyszukaj witrynę, wybierz bibliotekę dokumentów i folder. Zalecany jest osobny folder, np. <strong>Klyo CRM</strong>.</p><p>4. Kliknij <strong>Use this folder for CRM files</strong>.</p><p>5. Wgraj próbny plik, otwórz go, a następnie podłącz dokument do kontaktu albo oferty.</p><p>Członkowie zespołu mogą dodawać i podłączać pliki; użytkownicy z rolą Viewer mogą je przeglądać. Wyłącznie właściciel zespołu może zmienić połączenie i folder. Link do dokumentu otwierany w Microsoft nadal podlega uprawnieniom Microsoft 365 — członkowie zespołu powinni mieć dostęp do wybranej biblioteki. SharePoint w CRM jest współdzielony z zespołem poprzez konto podłączone przez właściciela; wybierz folder przeznaczony do wspólnej pracy.</p><h2>Co obsługuje integracja</h2><p>- Ręczne wgrywanie plików do 250 MB, porcjami, ze wskazaniem postępu i ponowieniem nieudanego fragmentu.</p><p>- Podłączanie istniejących plików z wybranego folderu i jego podfolderów.</p><p>- Powiązanie pliku z kontaktem, firmą, transakcją, produktem lub ofertą.</p><p>- Import cenników CSV/XLSX do 10 MB bezpośrednio z SharePoint, z podglądem i zatwierdzeniem.</p><p>- Oddzielne połączenia i listy dokumentów dla Team i Personal.</p><p>- <strong>Unlink</strong> usuwa powiązanie w Klyo, zachowując plik w SharePoint. <strong>Disconnect</strong> zachowuje pliki i ich metadane, ale blokuje dostęp z CRM do ponownego połączenia właściwego folderu.</p><p>Po przekazaniu własności zespołu połączenie jest odłączane; nowy właściciel łączy swoje konto Microsoft i wybiera folder. Pliki pozostają w SharePoint. Nowe pliki otrzymują krótki losowy dopisek w nazwie, aby nie nadpisywać istniejących dokumentów.</p><p>Zmiana folderu przerywa rozpoczęte wgrywanie. Po zamknięciu okna wgrywania transfer zatrzymuje się po bieżącym fragmencie; nie jest wznawiany po przeładowaniu strony. Niedokończone sesje wygasają po stronie Microsoft. Rozmiary i dostępność nadal zależą od ograniczeń biblioteki oraz konta Microsoft 365. Integracja nie synchronizuje plików w tle i nie tworzy automatycznych wiadomości.</p><h2>Problemy</h2><p>- <strong>Microsoft sign-in has not been configured</strong> — sprawdź <code>MICROSOFT_CLIENT_ID</code> i <code>MICROSOFT_CLIENT_SECRET</code>, a następnie wdrożenie Railway.</p><p>- <strong>Redirect URI mismatch</strong> — adres Web w Entra musi być identyczny z <code>MICROSOFT_REDIRECT_URI</code>, łącznie z HTTPS i ścieżką.</p><p>- <strong>Need admin approval / brak witryn</strong> — administrator Microsoft musi zatwierdzić uprawnienia i zapewnić kontu dostęp do witryny.</p><p>- <strong>Reconnect your Microsoft account</strong> — połączenie wygasło albo uprawnienia zostały cofnięte. Wybierz Reconnect Microsoft i ponownie wskaż folder.</p><p>- <strong>This item is outside the connected CRM folder</strong> — wybierz dokument we wskazanym folderze lub jego podfolderze.</p><p>Dokumentacja Microsoft: <a href="https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app" target="_blank" rel="noopener">rejestracja aplikacji</a>, <a href="https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow" target="_blank" rel="noopener">logowanie z kodem autoryzacyjnym</a>, <a href="https://learn.microsoft.com/en-us/graph/api/driveitem-createuploadsession?view=graph-rest-1.0" target="_blank" rel="noopener">sesje wgrywania</a>, <a href="https://learn.microsoft.com/en-us/graph/api/site-search?view=graph-rest-1.0" target="_blank" rel="noopener">wyszukiwanie witryn</a>.</p></main></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Klyo — SharePoint setup</title>
+    <link rel="stylesheet" href="/css/language-picker.css" />
+    <style>
+      body {
+        font:
+          16px/1.75 system-ui,
+          sans-serif;
+        color: #202830;
+        max-width: 940px;
+        margin: 40px auto;
+        padding: 0 24px;
+      }
+      h1 {
+        font-size: 32px;
+        line-height: 1.25;
+      }
+      h2 {
+        margin-top: 36px;
+        border-top: 1px solid #dfe3e6;
+        padding-top: 22px;
+      }
+      h3 {
+        margin-top: 24px;
+      }
+      p,
+      li,
+      a,
+      code {
+        overflow-wrap: anywhere;
+      }
+      li {
+        margin: 12px 0;
+      }
+      a {
+        color: #264f85;
+      }
+      code {
+        font-size: 0.88em;
+        background: #f1f3f5;
+        padding: 2px 4px;
+        border-radius: 3px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+      }
+      td,
+      th {
+        padding: 10px;
+        text-align: left;
+        border: 1px solid #dfe3e6;
+      }
+      .table-wrap {
+        overflow: auto;
+      }
+      @media (max-width: 600px) {
+        body {
+          margin: 20px auto;
+          padding: 0 16px;
+        }
+        h1 {
+          font-size: 27px;
+        }
+      }
+    </style>
+    <script defer src="/js/i18n.js"></script>
+    <script defer src="/js/docs-language.js"></script>
+    <script defer src="/js/language-picker.js"></script>
+  </head>
+  <body>
+    <header class="doc-language-bar">
+      <a href="/app">← Klyo CRM</a
+      ><select id="docLangPicker" aria-label="Language">
+        <option value="en">English</option>
+        <option value="pl">Polski</option>
+      </select>
+    </header>
+    <main data-doc-lang="en" data-doc-title="Klyo — SharePoint setup">
+      <h1>Klyo — SharePoint setup</h1>
+      <p>
+        The integration is implemented in Klyo. To connect it, the Klyo owner
+        must register a Microsoft Entra application and add its credentials in
+        Railway. The Files tab alone does not mean Microsoft is connected.
+      </p>
+      <h2>1. Register an application</h2>
+      <ol>
+        <li>
+          Sign into
+          <a href="https://entra.microsoft.com/"
+            >Microsoft Entra admin center</a
+          >
+          with a work account that can administer your Microsoft 365
+          organization.
+        </li>
+        <li>
+          Open
+          <strong
+            >Identity → Applications → App registrations → New
+            registration</strong
+          >.
+        </li>
+        <li>Name: <strong>Klyo CRM</strong>.</li>
+        <li>
+          For multiple customer organizations choose
+          <strong>Accounts in any organizational directory</strong>. For your
+          own organization only, select a single tenant and provide its
+          identifier.
+        </li>
+        <li>
+          Redirect platform: <strong>Web</strong>. Exact production URL:
+          <code>https://klyolabs.com/api/sharepoint/callback</code>.
+        </li>
+        <li>
+          Save the <strong>Application (client) ID</strong> and, for a single
+          organization, the <strong>Directory (tenant) ID</strong>.
+        </li>
+      </ol>
+      <h2>2. Permissions and secret</h2>
+      <p>
+        Under
+        <strong
+          >API permissions → Add a permission → Microsoft Graph → Delegated
+          permissions</strong
+        >, add <code>Files.ReadWrite</code> for files within the signed-in
+        user's access, <code>Sites.Read.All</code> for finding sites and
+        choosing a library, and <code>offline_access</code> for token refresh.
+      </p>
+      <p>
+        Do not add Application permissions or <code>Sites.ReadWrite.All</code>.
+        Your Microsoft 365 policy may require administrator approval. Site-read
+        access is broad; Klyo additionally confines CRM file browsing and writes
+        to the folder selected by the owner.
+      </p>
+      <p>
+        Under <strong>Certificates &amp; secrets → New client secret</strong>,
+        create a secret. Save its <strong>Value</strong> directly in a password
+        manager or Railway. The secret ID is not its value. Never paste the
+        secret into chat or commit it. Record its expiry and replace it before
+        expiration.
+      </p>
+      <h2>3. Railway variables</h2>
+      <p>
+        In the Klyo service's <strong>Variables</strong>, set
+        <code>MICROSOFT_CLIENT_ID</code> to the application ID and
+        <code>MICROSOFT_CLIENT_SECRET</code> to the secret value. Use
+        <code>MICROSOFT_TENANT_ID=organizations</code> for multiple
+        organizations or the tenant ID for one organization. Set
+        <code
+          >MICROSOFT_REDIRECT_URI=https://klyolabs.com/api/sharepoint/callback</code
+        >.
+      </p>
+      <p>
+        Set a stable, random, server-only
+        <code>INTEGRATION_ENCRYPTION_KEY</code> containing at least 32 random
+        bytes. <code>APP_URL</code> must be <code>https://klyolabs.com</code>.
+        Apply changes and wait for deployment. Never put secrets in frontend
+        files. Do not change the encryption key without planning to reconnect
+        all integrations. If no integration key is set, encryption derives from
+        <code>JWT_SECRET</code>; changing it likewise requires reconnecting.
+      </p>
+      <h2>4. Connect a workspace</h2>
+      <ol>
+        <li>
+          As team owner, open
+          <strong>Team → Files → Configure SharePoint</strong>. Personal has its
+          own separate private connection.
+        </li>
+        <li>
+          Choose <strong>Connect Microsoft</strong>, sign in and review consent.
+        </li>
+        <li>
+          Find the site, select its library and choose a folder, preferably a
+          dedicated <strong>Klyo CRM</strong> folder.
+        </li>
+        <li>Choose <strong>Use this folder for CRM files</strong>.</li>
+        <li>
+          Upload and open a sample file, then link it to a contact or quote.
+        </li>
+      </ol>
+      <p>
+        Team editors can add and link files; viewers can read them. Only the
+        owner can change the connection and root folder. Opening the original
+        Microsoft link still requires the user's Microsoft permissions. The CRM
+        shares SharePoint access through the owner's connected account, so
+        choose a folder intended for the workspace.
+      </p>
+      <h2>Supported workflows</h2>
+      <ul>
+        <li>
+          Manual chunked uploads up to 250 MB, with progress and retry of failed
+          chunks.
+        </li>
+        <li>
+          Link existing documents within the selected folder and its descendants
+          to contacts, companies, deals, products or quotes.
+        </li>
+        <li>
+          Import CSV/XLSX price lists up to 10 MB from SharePoint, with preview
+          and explicit approval.
+        </li>
+        <li>Separate Team and Personal connections and document lists.</li>
+        <li>
+          <strong>Unlink</strong> removes the CRM link, not the cloud file.
+          <strong>Disconnect</strong> retains cloud files and CRM metadata,
+          blocking access until the correct folder is connected again.
+        </li>
+      </ul>
+      <p>
+        Transferring team ownership disconnects the integration. The new owner
+        connects their Microsoft account and selects a folder. Files remain in
+        SharePoint. Uploaded names receive a short random suffix to avoid
+        overwriting documents.
+      </p>
+      <p>
+        Changing folders interrupts pending uploads. Closing the upload window
+        stops after the current chunk; transfers do not resume after a page
+        reload. Incomplete upload sessions expire at Microsoft. Library and
+        Microsoft account limits still apply. There is no background file
+        synchronization or automatic messaging.
+      </p>
+      <h2>Troubleshooting</h2>
+      <ul>
+        <li>
+          <strong>Microsoft sign-in has not been configured</strong>: check
+          <code>MICROSOFT_CLIENT_ID</code>,
+          <code>MICROSOFT_CLIENT_SECRET</code> and the Railway deployment.
+        </li>
+        <li>
+          <strong>Redirect URI mismatch</strong>: the Entra Web URL must exactly
+          match <code>MICROSOFT_REDIRECT_URI</code>, including HTTPS and path.
+        </li>
+        <li>
+          <strong>Need admin approval / missing sites</strong>: the Microsoft
+          administrator must approve permissions and grant access to the site.
+        </li>
+        <li>
+          <strong>Reconnect your Microsoft account</strong>: authorization
+          expired or was revoked. Reconnect and select the folder again.
+        </li>
+        <li>
+          <strong>This item is outside the connected CRM folder</strong>: select
+          a document within that folder or a descendant.
+        </li>
+      </ul>
+      <p>
+        Microsoft documentation:
+        <a
+          href="https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app"
+          >application registration</a
+        >,
+        <a
+          href="https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow"
+          >authorization-code flow</a
+        >,
+        <a
+          href="https://learn.microsoft.com/en-us/graph/api/driveitem-createuploadsession?view=graph-rest-1.0"
+          >upload sessions</a
+        >
+        and
+        <a
+          href="https://learn.microsoft.com/en-us/graph/api/site-search?view=graph-rest-1.0"
+          >site search</a
+        >.
+      </p>
+    </main>
+    <main
+      data-doc-lang="pl"
+      data-doc-title="Klyo — konfiguracja SharePoint"
+      hidden
+    >
+      <h1>Klyo — konfiguracja SharePoint</h1>
+      <p>
+        Integracja jest przygotowana w aplikacji. Do pierwszego połączenia
+        właściciel Klyo musi zarejestrować aplikację Microsoft Entra i dodać jej
+        dane w Railway. Sama obecność zakładki Files nie oznacza aktywnego
+        połączenia z Microsoft.
+      </p>
+      <h2>1. Zarejestruj aplikację</h2>
+      <p>
+        1. Zaloguj się do
+        <a href="https://entra.microsoft.com/" target="_blank" rel="noopener"
+          >Microsoft Entra admin center</a
+        >
+        kontem służbowym z dostępem do swojej organizacji Microsoft 365.
+      </p>
+      <p>
+        2. Otwórz
+        <strong
+          >Identity → Applications → App registrations → New
+          registration</strong
+        >.
+      </p>
+      <p>3. Nazwa: <strong>Klyo CRM</strong>.</p>
+      <p>
+        4. Dla Klyo obsługującego różne firmy wybierz
+        <strong>Accounts in any organizational directory</strong>. Jeśli
+        wdrożenie ma obsługiwać wyłącznie Twoją firmę, możesz wybrać jeden
+        tenant i podać jego identyfikator w konfiguracji.
+      </p>
+      <p>
+        5. Platforma przekierowania: <strong>Web</strong>. Dokładny adres
+        produkcyjny:
+      </p>
+      <p><code>https://klyolabs.com/api/sharepoint/callback</code></p>
+      <p>
+        6. Zapisz <strong>Application (client) ID</strong>. Dla konfiguracji
+        jednej organizacji zapisz też <strong>Directory (tenant) ID</strong>.
+      </p>
+      <h2>2. Ustaw uprawnienia i sekret</h2>
+      <p>
+        W
+        <strong
+          >API permissions → Add a permission → Microsoft Graph → Delegated
+          permissions</strong
+        >
+        dodaj:
+      </p>
+      <p>
+        - <code>Files.ReadWrite</code> — odczyt oraz zapisywanie plików w
+        zakresie uprawnień zalogowanego użytkownika.
+      </p>
+      <p>
+        - <code>Sites.Read.All</code> — wyszukiwanie witryn i wybór biblioteki
+        SharePoint.
+      </p>
+      <p>
+        - <code>offline_access</code> — odświeżanie połączenia bez logowania
+        przy każdym pliku.
+      </p>
+      <p>
+        Nie dodawaj uprawnień typu Application ani
+        <code>Sites.ReadWrite.All</code>. Administrator Microsoft 365 może
+        wymagać zatwierdzenia dostępu zgodnie z polityką swojej organizacji.
+        Zakres odczytu witryn jest szeroki; Klyo dodatkowo ogranicza
+        przeglądanie i zapisy z CRM do folderu wybranego przez właściciela.
+      </p>
+      <p>
+        W <strong>Certificates &amp; secrets → New client secret</strong> utwórz
+        sekret, zapisz jego <strong>Wartość</strong> bezpośrednio do menedżera
+        haseł lub Railway. Nie używaj identyfikatora sekretu zamiast jego
+        wartości. Nie przesyłaj sekretu przez czat ani nie dodawaj do
+        repozytorium. Zanotuj datę wygaśnięcia i wymień sekret przed tym
+        terminem.
+      </p>
+      <h2>3. Dodaj zmienne w Railway</h2>
+      <p>Otwórz usługę Klyo → <strong>Variables</strong>. Dodaj:</p>
+      <div class="table-wrap">
+        <table>
+          <tr>
+            <th>Zmienna</th>
+            <th>Wartość</th>
+          </tr>
+          <tr>
+            <td><code>MICROSOFT_CLIENT_ID</code></td>
+            <td>Application (client) ID</td>
+          </tr>
+          <tr>
+            <td><code>MICROSOFT_CLIENT_SECRET</code></td>
+            <td>Wartość utworzonego sekretu</td>
+          </tr>
+          <tr>
+            <td><code>MICROSOFT_TENANT_ID</code></td>
+            <td>
+              <code>organizations</code> dla wielu firm albo Directory (tenant)
+              ID dla jednej firmy
+            </td>
+          </tr>
+          <tr>
+            <td><code>MICROSOFT_REDIRECT_URI</code></td>
+            <td><code>https://klyolabs.com/api/sharepoint/callback</code></td>
+          </tr>
+          <tr>
+            <td><code>INTEGRATION_ENCRYPTION_KEY</code></td>
+            <td>
+              Nowa, losowa, długa wartość przechowywana jako sekret; minimum 32
+              losowe bajty
+            </td>
+          </tr>
+        </table>
+      </div>
+      <p>
+        Sprawdź istniejącą <code>APP_URL</code>: musi wskazywać
+        <code>https://klyolabs.com</code>. Zastosuj zmiany i poczekaj na
+        zakończenie wdrożenia. Sekret oraz klucz szyfrowania działają wyłącznie
+        na serwerze. Nie dodawaj ich do plików frontendu.
+      </p>
+      <p>
+        Nie zmieniaj klucza szyfrowania bez ponownego połączenia wszystkich
+        integracji. Gdy <code>INTEGRATION_ENCRYPTION_KEY</code> nie jest
+        ustawiony, aplikacja korzysta z <code>JWT_SECRET</code>; jego zmiana
+        również wymaga ponownego połączenia.
+      </p>
+      <h2>4. Połącz konkretną przestrzeń</h2>
+      <p>
+        1. Otwórz Klyo →
+        <strong>Zespół → Pliki → Configure SharePoint</strong> jako właściciel
+        zespołu. W <strong>Prywatne</strong> konfigurujesz oddzielne połączenie
+        widoczne tylko dla siebie.
+      </p>
+      <p>
+        2. Kliknij <strong>Connect Microsoft</strong>, zaloguj się i zaakceptuj
+        wymagane uprawnienia.
+      </p>
+      <p>
+        3. Wyszukaj witrynę, wybierz bibliotekę dokumentów i folder. Zalecany
+        jest osobny folder, np. <strong>Klyo CRM</strong>.
+      </p>
+      <p>4. Kliknij <strong>Użyj tego folderu na pliki CRM</strong>.</p>
+      <p>
+        5. Wgraj próbny plik, otwórz go, a następnie podłącz dokument do
+        kontaktu albo oferty.
+      </p>
+      <p>
+        Członkowie zespołu mogą dodawać i podłączać pliki; użytkownicy z rolą
+        Viewer mogą je przeglądać. Wyłącznie właściciel zespołu może zmienić
+        połączenie i folder. Link do dokumentu otwierany w Microsoft nadal
+        podlega uprawnieniom Microsoft 365 — członkowie zespołu powinni mieć
+        dostęp do wybranej biblioteki. SharePoint w CRM jest współdzielony z
+        zespołem poprzez konto podłączone przez właściciela; wybierz folder
+        przeznaczony do wspólnej pracy.
+      </p>
+      <h2>Co obsługuje integracja</h2>
+      <p>
+        - Ręczne wgrywanie plików do 250 MB, porcjami, ze wskazaniem postępu i
+        ponowieniem nieudanego fragmentu.
+      </p>
+      <p>
+        - Podłączanie istniejących plików z wybranego folderu i jego
+        podfolderów.
+      </p>
+      <p>
+        - Powiązanie pliku z kontaktem, firmą, transakcją, produktem lub ofertą.
+      </p>
+      <p>
+        - Import cenników CSV/XLSX do 10 MB bezpośrednio z SharePoint, z
+        podglądem i zatwierdzeniem.
+      </p>
+      <p>- Oddzielne połączenia i listy dokumentów dla Team i Personal.</p>
+      <p>
+        - <strong>Odłącz</strong> usuwa powiązanie w Klyo, zachowując plik w
+        SharePoint. <strong>Odłącz</strong> zachowuje pliki i ich metadane, ale
+        blokuje dostęp z CRM do ponownego połączenia właściwego folderu.
+      </p>
+      <p>
+        Po przekazaniu własności zespołu połączenie jest odłączane; nowy
+        właściciel łączy swoje konto Microsoft i wybiera folder. Pliki pozostają
+        w SharePoint. Nowe pliki otrzymują krótki losowy dopisek w nazwie, aby
+        nie nadpisywać istniejących dokumentów.
+      </p>
+      <p>
+        Zmiana folderu przerywa rozpoczęte wgrywanie. Po zamknięciu okna
+        wgrywania transfer zatrzymuje się po bieżącym fragmencie; nie jest
+        wznawiany po przeładowaniu strony. Niedokończone sesje wygasają po
+        stronie Microsoft. Rozmiary i dostępność nadal zależą od ograniczeń
+        biblioteki oraz konta Microsoft 365. Integracja nie synchronizuje plików
+        w tle i nie tworzy automatycznych wiadomości.
+      </p>
+      <h2>Problemy</h2>
+      <p>
+        - <strong>Microsoft sign-in has not been configured</strong> — sprawdź
+        <code>MICROSOFT_CLIENT_ID</code> i <code>MICROSOFT_CLIENT_SECRET</code>,
+        a następnie wdrożenie Railway.
+      </p>
+      <p>
+        - <strong>Redirect URI mismatch</strong> — adres Web w Entra musi być
+        identyczny z <code>MICROSOFT_REDIRECT_URI</code>, łącznie z HTTPS i
+        ścieżką.
+      </p>
+      <p>
+        - <strong>Need admin approval / brak witryn</strong> — administrator
+        Microsoft musi zatwierdzić uprawnienia i zapewnić kontu dostęp do
+        witryny.
+      </p>
+      <p>
+        - <strong>Reconnect your Microsoft account</strong> — połączenie wygasło
+        albo uprawnienia zostały cofnięte. Wybierz Reconnect Microsoft i
+        ponownie wskaż folder.
+      </p>
+      <p>
+        - <strong>This item is outside the connected CRM folder</strong> —
+        wybierz dokument we wskazanym folderze lub jego podfolderze.
+      </p>
+      <p>
+        Dokumentacja Microsoft:
+        <a
+          href="https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app"
+          target="_blank"
+          rel="noopener"
+          >rejestracja aplikacji</a
+        >,
+        <a
+          href="https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow"
+          target="_blank"
+          rel="noopener"
+          >logowanie z kodem autoryzacyjnym</a
+        >,
+        <a
+          href="https://learn.microsoft.com/en-us/graph/api/driveitem-createuploadsession?view=graph-rest-1.0"
+          target="_blank"
+          rel="noopener"
+          >sesje wgrywania</a
+        >,
+        <a
+          href="https://learn.microsoft.com/en-us/graph/api/site-search?view=graph-rest-1.0"
+          target="_blank"
+          rel="noopener"
+          >wyszukiwanie witryn</a
+        >.
+      </p>
+    </main>
+  </body>
+</html>

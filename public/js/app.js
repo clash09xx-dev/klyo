@@ -251,8 +251,8 @@ function toJsDate(s) {
   if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(s)) return new Date(s.replace(" ", "T") + "Z");
   return new Date(s);
 }
-function formatDate(s) { return toJsDate(s).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }); }
-function formatDateTime(s) { return toJsDate(s).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
+function formatDate(s) { return toJsDate(s).toLocaleDateString(KlyoI18n.getLang() === "pl" ? "pl-PL" : "en-GB", { month: "short", day: "numeric", year: "numeric" }); }
+function formatDateTime(s) { return toJsDate(s).toLocaleString(KlyoI18n.getLang() === "pl" ? "pl-PL" : "en-GB", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
 function stageColorVar(status) {
   return { lead: "var(--lead)", contacted: "var(--contacted)", negotiating: "var(--negotiating)", customer: "var(--customer)", lost: "var(--lost)" }[status] || "var(--lead)";
 }
@@ -265,7 +265,7 @@ function toast(message, type = "success", action) {
   el.className = `toast ${type}`;
 
   const text = document.createElement("span");
-  text.textContent = message;
+  text.textContent = KlyoCopy.text(message);
   el.appendChild(text);
 
   if (action) {
@@ -309,13 +309,16 @@ function showLimitOrError(err, fallbackEl) {
     API.setUser(user);
     els.userAvatar.textContent = initials(user.name);
     els.userName.textContent = user.name;
-    els.userRole.textContent = user.role;
     KlyoCustomize.initUser(user);
     els.platformNavItem.classList.toggle("hidden", !user.is_platform_admin);
     // Apply saved language (server preference takes priority)
     KlyoI18n.initLang(user.language || null);
+    els.userRole.textContent = KlyoCopy.text(capitalize(user.role));
+    document.title = KlyoCopy.text("Klyo – Dashboard");
+    KlyoCopy.apply();
     KlyoI18n.applyTranslations();
     if (els.appLangPicker) els.appLangPicker.value = KlyoI18n.getLang();
+    window.dispatchEvent(new Event("klyo:language-ready"));
   } catch {
     API.clearToken();
     window.location.href = "/login";
@@ -349,7 +352,7 @@ function showLimitOrError(err, fallbackEl) {
     loadCompanies(), loadProducts(), loadWorkspaceCurrency(), loadStats(), loadContacts(),
   ]);
   if (bootResults.some(result => result.status === "rejected")) {
-    toast("Some dashboard data could not be loaded. Refresh to try again.", "error");
+    toast(KlyoCopy.text("Some dashboard data could not be loaded. Refresh to try again."), "error");
   }
 
   KlyoCustomize.startup();
@@ -385,9 +388,9 @@ function handleGmailRedirectParam() {
   const params = new URLSearchParams(window.location.search);
   const gmailResult = params.get("gmail");
   if (!gmailResult) return;
-  if (gmailResult === "connected") toast("Gmail connected.");
-  else if (gmailResult === "cancelled") toast("Gmail connection cancelled.", "error");
-  else if (gmailResult === "error") toast("Couldn't connect Gmail.", "error");
+  if (gmailResult === "connected") toast(KlyoCopy.text("Gmail connected."));
+  else if (gmailResult === "cancelled") toast(KlyoCopy.text("Gmail connection cancelled."), "error");
+  else if (gmailResult === "error") toast(KlyoCopy.text("Couldn't connect Gmail."), "error");
   params.delete("gmail");
   window.history.replaceState({}, "", window.location.pathname + (params.toString() ? `?${params}` : ""));
 }
@@ -439,13 +442,13 @@ async function handleSaveMail() {
   const from_email= els.smtpFromEmail.value.trim();
   const secure    = els.smtpSecure.checked;
   if (!host || !user || !pass) {
-    els.mailError.textContent = "Host, username and password are required.";
+    els.mailError.textContent = KlyoCopy.text("Host, username and password are required.");
     return;
   }
   els.saveMailBtn.disabled = true;
   try {
     await API.post("/integrations/mail/save", { host, port, user, pass, from_name, from_email, secure });
-    toast("Mail settings saved");
+    toast(KlyoCopy.text("Mail settings saved"));
     els.smtpPass.value = "";
     loadMailStatus();
   } catch (err) {
@@ -459,7 +462,7 @@ async function handleTestMail() {
   els.testMailBtn.disabled = true;
   try {
     const { sent_to } = await API.post("/integrations/mail/test", {});
-    toast(`Test email sent to ${sent_to}`);
+    toast(KlyoCopy.format("Test email sent to {0}", sent_to));
   } catch (err) {
     toast(err.message, "error");
   } finally {
@@ -468,10 +471,10 @@ async function handleTestMail() {
 }
 
 async function handleDisconnectMail() {
-  if (!confirm("Disconnect mail? Emails will fall back to the server default.")) return;
+  if (!confirm(KlyoCopy.text("Disconnect mail? Emails will fall back to the server default."))) return;
   try {
     await API.post("/integrations/mail/disconnect", {});
-    toast("Mail disconnected");
+    toast(KlyoCopy.text("Mail disconnected"));
     els.smtpHost.value = els.smtpUser.value = els.smtpPass.value = els.smtpFromName.value = els.smtpFromEmail.value = "";
     els.smtpPort.value = 587;
     els.smtpSecure.checked = false;
@@ -494,9 +497,9 @@ async function loadBillingStatus() {
     if (status.plan === "active") {
       if (status.cancel_at_period_end && status.current_period_end) {
         const daysLeft = daysUntil(status.current_period_end);
-        els.billingBannerTitle.textContent = "Your plan won't renew";
-        els.billingBannerSub.textContent = `Access continues for ${daysLeft} more day${daysLeft === 1 ? "" : "s"}, until ${formatDate(status.current_period_end)}.`;
-        els.upgradeBtn.textContent = "Resume plan";
+        els.billingBannerTitle.textContent = KlyoCopy.text("Your plan won't renew");
+        els.billingBannerSub.textContent = KlyoCopy.format("Access until {0}. Days remaining: {1}.", formatDate(status.current_period_end), daysLeft);
+        els.upgradeBtn.textContent = KlyoCopy.text("Resume plan");
         els.upgradeBtn.dataset.action = "resume";
         els.billingBanner.classList.remove("hidden");
       } else {
@@ -504,18 +507,18 @@ async function loadBillingStatus() {
       }
       return;
     }
-    els.upgradeBtn.textContent = "Upgrade now";
+    els.upgradeBtn.textContent = KlyoCopy.text("Upgrade now");
     els.upgradeBtn.dataset.action = "upgrade";
     if (status.plan === "trial" && status.trial_ends_at) {
       const daysLeft = daysUntil(status.trial_ends_at);
-      els.billingBannerTitle.textContent = daysLeft > 0 ? "Your free trial is active" : "Your free trial has ended";
+      els.billingBannerTitle.textContent = daysLeft > 0 ? KlyoCopy.text("Your free trial is active") : KlyoCopy.text("Your free trial has ended");
       els.billingBannerSub.textContent =
-        daysLeft > 0 ? `${daysLeft} day${daysLeft === 1 ? "" : "s"} left — upgrade any time to keep things running.` : "Upgrade now to keep using Klyo.";
+        daysLeft > 0 ? KlyoCopy.format("Days left: {0}. Upgrade any time to keep using Klyo.", daysLeft) : KlyoCopy.text("Upgrade now to keep using Klyo.");
       els.billingBanner.classList.remove("hidden");
       return;
     }
-    els.billingBannerTitle.textContent = "Your subscription needs attention";
-    els.billingBannerSub.textContent = "Upgrade to restore full access.";
+    els.billingBannerTitle.textContent = KlyoCopy.text("Your subscription needs attention");
+    els.billingBannerSub.textContent = KlyoCopy.text("Upgrade to restore full access.");
     els.billingBanner.classList.remove("hidden");
   } catch {
     // If billing status can't be fetched, fail quietly rather than blocking the dashboard.
@@ -533,18 +536,18 @@ function handleUpgradeClick() {
 async function handleCopyInvite() {
   try {
     await navigator.clipboard.writeText(els.inviteCodeValue.textContent.trim());
-    toast("Invite code copied");
+    toast(KlyoCopy.text("Invite code copied"));
   } catch {
-    toast("Could not copy automatically — select and copy it manually.", "error");
+    toast(KlyoCopy.text("Could not copy automatically — select and copy it manually."), "error");
   }
 }
 
 async function handleRegenInvite() {
-  if (!confirm("Regenerate the invite code? The old code will stop working.")) return;
+  if (!confirm(KlyoCopy.text("Regenerate the invite code? The old code will stop working."))) return;
   try {
     const { invite_code } = await API.post("/auth/workspace/regenerate-invite", {});
     els.inviteCodeValue.textContent = invite_code;
-    toast("New invite code generated");
+    toast(KlyoCopy.text("New invite code generated"));
   } catch (err) {
     toast(err.message, "error");
   }
@@ -563,7 +566,7 @@ function openAppearanceModal() {
   els.newPasswordInput.value = "";
   els.googleOnlyNotice.classList.toggle("hidden", Boolean(user.has_password));
   els.currentPasswordField.classList.toggle("hidden", !user.has_password);
-  els.newPasswordLabel.textContent = user.has_password ? "New password" : "Set a password";
+  els.newPasswordLabel.textContent = user.has_password ? KlyoCopy.text("New password") : KlyoCopy.text("Set a password");
   updateSettingsPlanDisplay();
   loadMailStatus();
   loadCurrencySettings();
@@ -588,40 +591,40 @@ async function updateSettingsPlanDisplay() {
     const tierLabel = tierInfo ? tierInfo.label : status.tier;
 
     if (status.is_comped) {
-      els.settingsCurrentPlan.textContent = `${tierLabel} — comped (free)`;
+      els.settingsCurrentPlan.textContent = KlyoCopy.format("{0} — complimentary access", tierLabel);
     } else if (status.plan === "active") {
       const daysLeft = daysUntil(status.current_period_end);
       if (status.billing_mode === "one_time") {
-        els.settingsCurrentPlan.textContent = `${tierLabel} — one-time purchase`;
+        els.settingsCurrentPlan.textContent = KlyoCopy.format("{0} — one-time purchase", tierLabel);
         els.settingsPlanDetail.textContent =
-          daysLeft != null ? `Access until ${formatDate(status.current_period_end)} (${daysLeft} day${daysLeft === 1 ? "" : "s"} left). Doesn't renew — buy again any time to extend.` : "";
+          daysLeft != null ? KlyoCopy.format("Access until {0} ({1} days remaining). No automatic renewal.", formatDate(status.current_period_end), daysLeft) : "";
       } else if (status.cancel_at_period_end) {
-        els.settingsCurrentPlan.textContent = `${tierLabel} — cancelling`;
+        els.settingsCurrentPlan.textContent = KlyoCopy.format("{0} — cancelling", tierLabel);
         els.settingsPlanDetail.textContent =
-          daysLeft != null ? `Access continues until ${formatDate(status.current_period_end)} (${daysLeft} day${daysLeft === 1 ? "" : "s"} left), then it won't renew.` : "";
+          daysLeft != null ? KlyoCopy.format("Access until {0} ({1} days remaining). Renewal cancelled.", formatDate(status.current_period_end), daysLeft) : "";
         els.settingsResumeBtn.classList.remove("hidden");
       } else {
-        els.settingsCurrentPlan.textContent = `${tierLabel} — active`;
+        els.settingsCurrentPlan.textContent = KlyoCopy.format("{0} — active", tierLabel);
         els.settingsPlanDetail.textContent =
-          daysLeft != null ? `Renews on ${formatDate(status.current_period_end)} (${daysLeft} day${daysLeft === 1 ? "" : "s"} left).` : "";
+          daysLeft != null ? KlyoCopy.format("Renews on {0} ({1} days remaining).", formatDate(status.current_period_end), daysLeft) : "";
         if (status.has_subscription) els.settingsCancelBtn.classList.remove("hidden");
       }
     } else if (status.plan === "trial") {
       const daysLeft = daysUntil(status.trial_ends_at);
-      els.settingsCurrentPlan.textContent = "Free trial";
-      els.settingsPlanDetail.textContent = daysLeft != null ? `${daysLeft} day${daysLeft === 1 ? "" : "s"} left.` : "";
+      els.settingsCurrentPlan.textContent = KlyoCopy.text("Free trial");
+      els.settingsPlanDetail.textContent = daysLeft != null ? KlyoCopy.format("Days remaining: {0}.", daysLeft) : "";
     } else {
-      els.settingsCurrentPlan.textContent = `${tierLabel} (${status.plan})`;
+      els.settingsCurrentPlan.textContent = `${tierLabel} (${KlyoCopy.text(capitalize(status.plan))})`;
     }
   } catch {
-    els.settingsCurrentPlan.textContent = "Unavailable";
+    els.settingsCurrentPlan.textContent = KlyoCopy.text("Unavailable");
   }
 }
 
 async function handleSaveProfileName() {
   els.profileNameError.textContent = "";
   const name = els.profileNameInput.value.trim();
-  if (!name) { els.profileNameError.textContent = "Name can't be empty."; return; }
+  if (!name) { els.profileNameError.textContent = KlyoCopy.text("Name can't be empty."); return; }
 
   els.saveProfileNameBtn.disabled = true;
   try {
@@ -631,7 +634,7 @@ async function handleSaveProfileName() {
     API.setUser(user);
     els.userName.textContent = name;
     els.userAvatar.textContent = initials(name);
-    toast("Name updated");
+    toast(KlyoCopy.text("Name updated"));
   } catch (err) {
     els.profileNameError.textContent = err.message;
   } finally {
@@ -685,7 +688,7 @@ async function handleSaveCurrency() {
     if (!els.quotePanelOverlay.classList.contains("hidden")) {
       await openQuotePanel(els.quotePanelOverlay.dataset.quoteId);
     }
-    toast(`Workspace currency set to ${saved.currency}. Amounts unchanged.`);
+    toast(KlyoCopy.format("Workspace currency set to {0}. Amounts unchanged.", saved.currency));
   } catch (err) {
     els.currencyError.textContent = err.message;
   } finally {
@@ -710,7 +713,7 @@ async function handleSaveAiContext() {
   els.saveAiContextBtn.disabled = true;
   try {
     await API.put("/auth/workspace/ai-context", { ai_context: els.aiContextInput.value.trim() });
-    toast("AI context saved");
+    toast(KlyoCopy.text("AI context saved"));
   } catch (err) {
     els.aiContextError.textContent = err.message;
   } finally {
@@ -721,16 +724,16 @@ async function handleSaveAiContext() {
 async function handleJoinWorkspace() {
   els.joinWorkspaceError.textContent = "";
   const code = els.joinInviteCodeInput.value.trim().toUpperCase();
-  if (!code) { els.joinWorkspaceError.textContent = "Enter an invite code."; return; }
+  if (!code) { els.joinWorkspaceError.textContent = KlyoCopy.text("Enter an invite code."); return; }
 
-  if (!confirm("Joining a new workspace will switch you out of your current one. Continue?")) return;
+  if (!confirm(KlyoCopy.text("Joining a new workspace will switch you out of your current one. Continue?"))) return;
 
   els.joinWorkspaceBtn.disabled = true;
   try {
     const { token, user, workspace_name } = await API.post("/auth/join", { invite_code: code });
     API.setToken(token);
     API.setUser(user);
-    toast(`Switched to workspace "${workspace_name}" — reloading…`);
+    toast(KlyoCopy.format("Switched to workspace {0} — reloading…", workspace_name));
     setTimeout(() => window.location.reload(), 1500);
   } catch (err) {
     els.joinWorkspaceError.textContent = err.message;
@@ -742,7 +745,7 @@ async function handleSavePassword() {
   els.passwordError.textContent = "";
   const user = API.getUser();
   const newPassword = els.newPasswordInput.value;
-  if (newPassword.length < 6) { els.passwordError.textContent = "New password must be at least 6 characters."; return; }
+  if (newPassword.length < 6) { els.passwordError.textContent = KlyoCopy.text("New password must be at least 6 characters."); return; }
 
   els.savePasswordBtn.disabled = true;
   try {
@@ -756,8 +759,8 @@ async function handleSavePassword() {
     els.newPasswordInput.value = "";
     els.googleOnlyNotice.classList.add("hidden");
     els.currentPasswordField.classList.remove("hidden");
-    els.newPasswordLabel.textContent = "New password";
-    toast("Password updated");
+    els.newPasswordLabel.textContent = KlyoCopy.text("New password");
+    toast(KlyoCopy.text("Password updated"));
   } catch (err) {
     els.passwordError.textContent = err.message;
   } finally {
@@ -789,15 +792,15 @@ function renderClientsTable() {
   if (!clientsCache.length) {
     tbody.innerHTML = "";
     els.clientsEmptyState?.classList.remove("hidden");
-    if (els.clientsCount) els.clientsCount.textContent = "0 clients";
+    if (els.clientsCount) els.clientsCount.textContent = KlyoCopy.text("0 clients");
     return;
   }
   els.clientsEmptyState?.classList.add("hidden");
-  if (els.clientsCount) els.clientsCount.textContent = `${clientsCache.length} client${clientsCache.length === 1 ? "" : "s"}`;
+  if (els.clientsCount) els.clientsCount.textContent = KlyoI18n.getLang() === "pl" ? KlyoCopy.format("Clients: {0}", clientsCache.length) : `${clientsCache.length} client${clientsCache.length === 1 ? "" : "s"}`;
   tbody.innerHTML = clientsCache.map(c => {
     const revenue = Number(c.total_revenue) || 0;
     const revenueStr = revenue > 0 ? fmtMoney(revenue, workspaceDefaultCurrency) : "—";
-    const lastPurchase = c.last_purchase_at ? new Date(c.last_purchase_at).toLocaleDateString() : "—";
+    const lastPurchase = c.last_purchase_at ? new Date(c.last_purchase_at).toLocaleDateString(KlyoI18n.getLang() === "pl" ? "pl-PL" : "en-GB") : "—";
     return `<tr style="cursor:pointer;" data-contact-id="${c.id}">
       <td><strong>${escapeHtml(c.full_name || (c.first_name + " " + c.last_name).trim())}</strong><br><span class="muted" style="font-size:11px;">${escapeHtml(c.email || "")}</span></td>
       <td>${escapeHtml(c.company_name || "—")}</td>
@@ -821,7 +824,7 @@ async function loadProductsView() {
     // Populate category filter
     const cats = [...new Set(list.map(p => p.category).filter(Boolean))].sort();
     if (els.productsCategoryFilter) {
-      els.productsCategoryFilter.innerHTML = '<option value="">All categories</option>' +
+      els.productsCategoryFilter.innerHTML = KlyoCopy.html("<option value=\"\">All categories</option>") +
         cats.map(c => `<option value="${c}">${escapeHtml(c)}</option>`).join("");
     }
   } catch (err) { console.error("loadProductsView", err); }
@@ -844,16 +847,16 @@ function renderProductsView() {
   els.productsEmptyState?.classList.add("hidden");
   tbody.innerHTML = visible.map(p => `
     <tr>
-      <td style="width:40px;">${p.image_url ? `<img src="${escapeHtml(p.image_url)}" style="width:32px;height:32px;object-fit:cover;border-radius:6px;">` : '<div style="width:32px;height:32px;border-radius:6px;background:var(--bg-subtle);"></div>'}</td>
+      <td style="width:40px;">${p.image_url ? `<img src="${escapeHtml(p.image_url)}" style="width:32px;height:32px;object-fit:cover;border-radius:6px;">` : KlyoCopy.html("<div style=\"width:32px;height:32px;border-radius:6px;background:var(--bg-subtle);\"></div>")}</td>
       <td><strong>${escapeHtml(p.name)}</strong>${p.description ? `<div class="muted" style="font-size:11px;">${escapeHtml(p.description)}</div>` : ""}</td>
-      <td>${p.category ? `<span class="product-cat-badge">${escapeHtml(p.category)}</span>` : '<span class="muted">—</span>'}</td>
+      <td>${p.category ? `<span class="product-cat-badge">${escapeHtml(p.category)}</span>` : KlyoCopy.html("<span class=\"muted\">—</span>")}</td>
       <td class="mono">${Number(p.unit_price).toFixed(2)}</td>
       <td>${escapeHtml(p.currency || "USD")}</td>
       <td>${escapeHtml(p.unit_label || "unit")}</td>
       <td style="white-space:nowrap;">
-        <button class="btn btn-ghost btn-sm" data-edit-product="${p.id}" title="Edit">Edit</button>
-        <button class="btn btn-ghost btn-sm" data-dup-product="${p.id}" title="Duplicate" style="opacity:.6;">⎘</button>
-        <button class="line-remove-btn" data-del-product="${p.id}" title="Delete">×</button>
+        <button class="btn btn-ghost btn-sm" data-edit-product="${p.id}" title="${KlyoCopy.escape(KlyoCopy.text("Edit"))}">${KlyoCopy.label("Edit")}</button>
+        <button class="btn btn-ghost btn-sm" data-dup-product="${p.id}" title="${KlyoCopy.escape(KlyoCopy.text("Duplicate"))}" style="opacity:.6;">⎘</button>
+        <button class="line-remove-btn" data-del-product="${p.id}" title="${KlyoCopy.escape(KlyoCopy.text("Delete"))}">×</button>
       </td>
     </tr>`).join("");
 
@@ -869,7 +872,7 @@ function renderProductsView() {
   });
   tbody.querySelectorAll("[data-del-product]").forEach(btn => {
     btn.addEventListener("click", async () => {
-      if (!confirm("Delete this product?")) return;
+      if (!confirm(KlyoCopy.text("Delete this product?"))) return;
       await handleDeleteProduct(btn.dataset.delProduct);
       loadProductsView();
     });
@@ -881,8 +884,8 @@ async function openProductModal(product) {
   els.productFormError.textContent = "";
   els.productId.value = product?.id || "";
   KlyoFiles.recordButton("product",product?.id,"productModalOverlay",product?.name);
-  els.productModalTitle.textContent = product ? "Edit product" : "Add product";
-  els.productSubmitBtn.textContent  = product ? "Save changes" : "Add product";
+  els.productModalTitle.textContent = product ? KlyoCopy.text("Edit product") : KlyoCopy.text("Add product");
+  els.productSubmitBtn.textContent  = product ? KlyoCopy.text("Save changes") : KlyoCopy.text("Add product");
   els.productName.value       = product?.name || "";
   document.getElementById("productSku").value=product?.sku||"";
   document.getElementById("productSerialRequired").checked=!!product?.serial_required;
@@ -923,7 +926,7 @@ async function handleProductSubmit(e) {
     service_interval_months: els.productInterval.value ? Number(els.productInterval.value) : null,
     notes:                   els.productNotes.value.trim() || null,
   };
-  if (!body.name) { els.productFormError.textContent = "Name is required."; return; }
+  if (!body.name) { els.productFormError.textContent = KlyoCopy.text("Name is required."); return; }
   try {
     if (id) {
       await API.put(`/products/${id}`, body);
@@ -962,7 +965,7 @@ function renderCalendar() {
   const year  = calendarDate.getFullYear();
   const month = calendarDate.getMonth();
   if (els.calMonthLabel) {
-    els.calMonthLabel.textContent = new Date(year, month, 1).toLocaleString(undefined, { month: "long", year: "numeric" });
+    els.calMonthLabel.textContent = new Date(year, month, 1).toLocaleString(KlyoI18n.getLang() === "pl" ? "pl-PL" : "en-GB", { month: "long", year: "numeric" });
   }
 
   const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
@@ -992,7 +995,7 @@ function renderCalendar() {
     cell.innerHTML = `<div style="font-size:12px; font-weight:${isToday ? "700" : "500"}; color:${isToday ? "var(--accent)" : "var(--text-faint)"}; margin-bottom:4px;">${day}</div>` +
       dayEvents.map(ev => `
         <div data-event-id="${escapeHtml(String(ev.id))}" title="${escapeHtml((ev.external?ev.provider+" · ":"")+ev.title)}" style="background:${/^#[a-f0-9]{6}$/i.test(ev.color)?ev.color:"#6366f1"}22; border-left:3px solid ${/^#[a-f0-9]{6}$/i.test(ev.color)?ev.color:"#6366f1"}; padding:2px 5px; border-radius:3px; margin-bottom:2px; font-size:11px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-          ${ev.external?"↗ ":KlyoCalendar.hasChanges(ev.id)?"↻ ":""}${ev.all_day?(KlyoI18n.getLang()==="pl"?"Cały dzień":"All day"):new Date(ev.start_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})} ${escapeHtml(ev.title)}
+          ${ev.external?"↗ ":KlyoCalendar.hasChanges(ev.id)?"↻ ":""}${ev.all_day?(KlyoI18n.getLang()==="pl"?"Cały dzień":KlyoCopy.text("All day")):new Date(ev.start_at).toLocaleTimeString(KlyoI18n.getLang() === "pl" ? "pl-PL" : "en-GB", {hour:"2-digit",minute:"2-digit"})} ${escapeHtml(ev.title)}
         </div>`).join("");
 
     cell.addEventListener("click", (e) => {
@@ -1037,11 +1040,11 @@ function openEventModal(event, defaultDate) {
   }
 
   // Populate contact select
-  els.eventContactSelect.innerHTML = '<option value="">None</option>' +
+  els.eventContactSelect.innerHTML = KlyoCopy.html("<option value=\"\">None</option>") +
     allContactsCache.map(c => `<option value="${c.id}" ${event?.contact_id == c.id ? "selected" : ""}>${escapeHtml(c.full_name)}</option>`).join("");
 
   // Populate deal select
-  els.eventDealSelect.innerHTML = '<option value="">None</option>' +
+  els.eventDealSelect.innerHTML = KlyoCopy.html("<option value=\"\">None</option>") +
     dealsCache.map(d => `<option value="${d.id}" ${event?.deal_id == d.id ? "selected" : ""}>${escapeHtml(d.title)}</option>`).join("");
 
   KlyoCalendar.prepare(event);
@@ -1067,8 +1070,8 @@ async function handleEventSubmit(e) {
     contact_id:  els.eventContactSelect.value || null,
     deal_id:     els.eventDealSelect.value || null,
   };
-  if (!body.title)    { els.eventFormError.textContent = "Title is required."; return; }
-  if (!body.start_at) { els.eventFormError.textContent = "Start date/time is required."; return; }
+  if (!body.title)    { els.eventFormError.textContent = KlyoCopy.text("Title is required."); return; }
+  if (!body.start_at) { els.eventFormError.textContent = KlyoCopy.text("Start date/time is required."); return; }
   try{Object.assign(body,KlyoCalendar.collect());}catch(err){els.eventFormError.textContent=err.message;return;}
   try {
     if (id) {
@@ -1086,12 +1089,12 @@ async function handleEventSubmit(e) {
 
 async function handleDeleteEvent() {
   const id = els.eventId.value;
-  if (!id || !confirm("Delete this event?")) return;
+  if (!id || !confirm(KlyoCopy.text("Delete this event?"))) return;
   try {
     await API.del(`/calendar/${id}`);
     closeEventModal();
     await loadCalendar();
-    toast("Event deleted");
+    toast(KlyoCopy.text("Event deleted"));
   } catch (err) { toast(err.message, "error"); }
 }
 
@@ -1123,7 +1126,7 @@ async function loadPlatformDashboard() {
         (w) => `
       <tr>
         <td class="name-cell" style="--stage-color:var(--accent-1)">${escapeHtml(w.name)}</td>
-        <td><span class="quote-status-badge ${w.plan === "active" ? "accepted" : w.plan === "trial" ? "sent" : "declined"}">${w.is_comped ? "comped" : w.plan}</span>${w.is_comped && w.comped_until ? `<div class="muted" style="font-size:10.5px; margin-top:3px;">until ${formatDate(w.comped_until)}</div>` : ""}</td>
+        <td><span class="quote-status-badge ${w.plan === "active" ? "accepted" : w.plan === "trial" ? "sent" : "declined"}">${w.is_comped ? "comped" : w.plan}</span>${w.is_comped && w.comped_until ? `<div class="muted" style="font-size:10.5px; margin-top:3px;">${KlyoCopy.label("until")} ${formatDate(w.comped_until)}</div>` : ""}</td>
         <td class="muted">${escapeHtml(w.tier)}</td>
         <td>${w.user_count}</td>
         <td>${w.contact_count}</td>
@@ -1131,8 +1134,8 @@ async function loadPlatformDashboard() {
         <td>
           ${
             w.is_comped
-              ? `<button class="btn btn-sm btn-ghost" data-revoke="${w.id}">Revoke</button>`
-              : `<button class="btn btn-sm" data-grant="${w.id}" data-name="${escapeHtml(w.name)}">Grant</button>`
+              ? `<button class="btn btn-sm btn-ghost" data-revoke="${w.id}">${KlyoCopy.label("Revoke")}</button>`
+              : `<button class="btn btn-sm" data-grant="${w.id}" data-name="${escapeHtml(w.name)}">${KlyoCopy.label("Grant")}</button>`
           }
         </td>
       </tr>`
@@ -1154,7 +1157,7 @@ async function loadPlatformDashboard() {
         <td class="mono">${escapeHtml(u.email)}</td>
         <td class="muted">${escapeHtml(u.workspace_name)}</td>
         <td class="muted">${escapeHtml(u.role)}</td>
-        <td class="muted">${u.via_google ? "Google" : "Password"}</td>
+        <td class="muted">${u.via_google ? "Google" : KlyoCopy.text("Password")}</td>
         <td class="mono muted">${formatDate(u.created_at)}</td>
       </tr>`
       )
@@ -1188,7 +1191,7 @@ async function handleConfirmGrant() {
       tier: els.grantTierSelect.value,
       duration: els.grantDurationSelect.value,
     });
-    toast("Access granted");
+    toast(KlyoCopy.text("Access granted"));
     closeGrantModal();
     loadPlatformDashboard();
   } catch (err) {
@@ -1199,11 +1202,11 @@ async function handleConfirmGrant() {
 }
 
 async function handleRevokeGrant(workspaceId, btn) {
-  if (!confirm("Revoke this workspace's free access? They'll go back to needing a real subscription.")) return;
+  if (!confirm(KlyoCopy.text("Revoke this workspace's free access? They'll go back to needing a real subscription."))) return;
   btn.disabled = true;
   try {
     await API.post(`/platform/workspaces/${workspaceId}/revoke`, {});
-    toast("Access revoked");
+    toast(KlyoCopy.text("Access revoked"));
     loadPlatformDashboard();
   } catch (err) {
     toast(err.message, "error");
@@ -1231,7 +1234,7 @@ let pricingCache = null;
 
 async function openPricingModal() {
   els.pricingModalOverlay.classList.remove("hidden");
-  els.pricingGrid.innerHTML = '<p class="muted">Loading plans…</p>';
+  els.pricingGrid.innerHTML = KlyoCopy.html("<p class=\"muted\">Loading plans…</p>");
   try {
     const [{ tiers }, status] = await Promise.all([API.get("/billing/tiers"), API.get("/billing/status")]);
     pricingCache = { tiers, status };
@@ -1255,15 +1258,15 @@ function renderPricingGrid() {
     .map((t) => {
       const isCurrent = status.plan === "active" && status.tier === t.key && (oneTime ? status.billing_mode === "one_time" : status.billing_mode !== "one_time");
       const features = [
-        t.maxSeats == null ? "Unlimited team members" : `Up to ${t.maxSeats} team member${t.maxSeats === 1 ? "" : "s"}`,
-        t.maxContacts == null ? "Unlimited contacts" : `Up to ${t.maxContacts.toLocaleString()} contacts`,
-        t.maxAiDraftsPerMonth == null ? "Unlimited AI drafts" : `${t.maxAiDraftsPerMonth.toLocaleString()} AI drafts / month`,
+        t.maxSeats == null ? KlyoCopy.text("Unlimited team members") : KlyoCopy.format("Up to {0} team members", t.maxSeats),
+        t.maxContacts == null ? KlyoCopy.text("Unlimited contacts") : KlyoCopy.format("Up to {0} contacts", t.maxContacts.toLocaleString()),
+        t.maxAiDraftsPerMonth == null ? KlyoCopy.text("Unlimited AI drafts") : KlyoCopy.format("{0} AI drafts / month", t.maxAiDraftsPerMonth.toLocaleString()),
       ];
       return `
         <div class="tier-card ${isCurrent ? "current" : ""}">
           <h3>${escapeHtml(t.label)}</h3>
-          <div class="tier-price">$${t.price}<span> ${oneTime ? "one-time" : "/ month"}</span></div>
-          <div class="tier-tagline">${escapeHtml(t.tagline)}${oneTime ? " — one month of access, doesn't renew." : ""}</div>
+          <div class="tier-price">$${t.price}<span> ${KlyoCopy.escape(KlyoCopy.text(oneTime ? "one-time" : "/ month"))}</span></div>
+          <div class="tier-tagline">${escapeHtml(KlyoCopy.text(t.tagline))}${oneTime ? KlyoCopy.escape(KlyoCopy.text(" — one month of access, doesn't renew.")) : ""}</div>
           <ul>
             ${features
               .map(
@@ -1273,7 +1276,7 @@ function renderPricingGrid() {
               .join("")}
           </ul>
           <button class="btn ${isCurrent ? "btn-ghost" : "btn-primary"} btn-sm" data-tier="${t.key}" ${isCurrent||API.getUser()?.can_manage_billing===false ? "disabled" : ""}>
-            ${isCurrent ? "Current plan" : oneTime ? `Buy 1 month of ${escapeHtml(t.label)}` : `Subscribe to ${escapeHtml(t.label)}`}
+            ${isCurrent ? KlyoCopy.text("Current plan") : oneTime ? escapeHtml(KlyoCopy.format("Buy 1 month of {0}", t.label)) : escapeHtml(KlyoCopy.format("Subscribe to {0}", t.label))}
           </button>
         </div>`;
     })
@@ -1291,10 +1294,10 @@ function closePricingModal() {
 async function handleChooseTier(tierKey, btn) {
   const original = btn.textContent;
   btn.disabled = true;
-  btn.textContent = "Redirecting…";
+  btn.textContent = KlyoCopy.text("Redirecting…");
   try {
     const { url,pending } = await API.post(pricingCache.status.has_subscription?"/billing/plan":"/billing/checkout", { tier: tierKey, billing_mode: pricingBillingMode });
-    if(url)window.location.href=url;else if(pending)toast("Complete the pending payment in Stripe before the change takes effect.");else{closePricingModal();await loadBillingStatus();await KlyoWorkspace.teamAdmin();}
+    if(url)window.location.href=url;else if(pending)toast(KlyoCopy.text("Complete the pending payment in Stripe before the change takes effect."));else{closePricingModal();await loadBillingStatus();await KlyoWorkspace.teamAdmin();}
   } catch (err) {
     toast(err.message, "error");
     btn.disabled = false;
@@ -1303,10 +1306,10 @@ async function handleChooseTier(tierKey, btn) {
 }
 
 async function handleCancelSubscription() {
-  if (!confirm("Cancel your subscription? You'll keep access until the end of your current billing period — it just won't renew after that.")) return;
+  if (!confirm(KlyoCopy.text("Cancel your subscription? You'll keep access until the end of your current billing period — it just won't renew after that."))) return;
   try {
     const { current_period_end } = await API.post("/billing/cancel", {});
-    toast(`Cancelled — access continues until ${formatDate(current_period_end)}.`);
+    toast(KlyoCopy.format("Cancelled — access continues until {0}.", formatDate(current_period_end)));
     updateSettingsPlanDisplay();
     loadBillingStatus();
   } catch (err) {
@@ -1316,10 +1319,10 @@ async function handleCancelSubscription() {
 
 async function handleResumeSubscription(btn) {
   const original = btn.textContent;
-  if (btn) { btn.disabled = true; btn.textContent = "Resuming…"; }
+  if (btn) { btn.disabled = true; btn.textContent = KlyoCopy.text("Resuming…"); }
   try {
     await API.post("/billing/resume", {});
-    toast("Subscription resumed — it'll renew as normal.");
+    toast(KlyoCopy.text("Subscription resumed — it'll renew as normal."));
     updateSettingsPlanDisplay();
     loadBillingStatus();
   } catch (err) {
@@ -1404,11 +1407,11 @@ function startTour() {
 
 function renderTourStep() {
   const step = TOUR_STEPS[tourStep];
-  els.tourTitle.textContent = step.title;
-  els.tourBody.textContent = step.body;
+  els.tourTitle.textContent = KlyoCopy.text(step.title);
+  els.tourBody.textContent = KlyoCopy.text(step.body);
   els.tourDots.innerHTML = TOUR_STEPS.map((_, i) => `<span class="tour-dot ${i === tourStep ? "active" : ""}"></span>`).join("");
   els.tourBackBtn.classList.toggle("hidden", tourStep === 0);
-  els.tourNextBtn.textContent = tourStep === TOUR_STEPS.length - 1 ? "Got it" : "Next";
+  els.tourNextBtn.textContent = tourStep === TOUR_STEPS.length - 1 ? KlyoCopy.text("Got it") : KlyoCopy.text("Next");
 
   clearSpotlight();
   const card = document.getElementById("tourModal");
@@ -1490,13 +1493,13 @@ async function loadTeam() {
   populateOwnerOptions(els.filterOwner, { placeholder: t("ui.all_owners") });
   // Populate history + deals user filters
   els.historyUserFilter.innerHTML =
-    '<option value="">All team members</option>' +
+    KlyoCopy.html("<option value=\"\">All team members</option>") +
     team.map((u) => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
   els.dealAssigneeFilter.innerHTML =
-    '<option value="">All owners</option>' +
+    KlyoCopy.html("<option value=\"\">All owners</option>") +
     team.map((u) => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
   els.taskAssigneeFilter.innerHTML =
-    '<option value="">All members</option>' +
+    KlyoCopy.html("<option value=\"\">All members</option>") +
     team.map((u) => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
   const me = API.getUser();
   const isAdmin = me?.is_team_owner === true;
@@ -1505,14 +1508,14 @@ async function loadTeam() {
     const isSelf = u.id === me?.id;
     const roleCell = isAdmin && !isSelf
       ? `<select class="team-role-select" data-user-id="${u.id}" style="font-size:12.5px; padding:4px 6px;">
-           <option value="viewer"  ${u.role === "viewer"  ? "selected" : ""}>Viewer</option>
-           <option value="editor"  ${u.role === "editor"  ? "selected" : ""}>Editor</option>
-           <option value="member"  ${u.role === "member"  ? "selected" : ""}>Member</option>
-           <option value="admin"   ${u.role === "admin"   ? "selected" : ""}>Admin</option>
+           <option value="viewer"  ${u.role === "viewer"  ? "selected" : ""}>${KlyoCopy.text("Viewer")}</option>
+           <option value="editor"  ${u.role === "editor"  ? "selected" : ""}>${KlyoCopy.text("Editor")}</option>
+           <option value="member"  ${u.role === "member"  ? "selected" : ""}>${KlyoCopy.text("Member")}</option>
+           <option value="admin"   ${u.role === "admin"   ? "selected" : ""}>${KlyoCopy.text("Admin")}</option>
          </select>`
-      : `<span>${capitalize(u.role)}${isSelf ? " (you)" : ""}</span>`;
+      : `<span>${KlyoCopy.escape(KlyoCopy.text(capitalize(u.role)))}${isSelf ? " (" + KlyoCopy.escape(KlyoCopy.text("you")) + ")" : ""}</span>`;
     const removeBtn = isAdmin && !isSelf
-      ? `<button class="line-remove-btn team-remove-btn" data-user-id="${u.id}" title="Remove from workspace">×</button>`
+      ? `<button class="line-remove-btn team-remove-btn" data-user-id="${u.id}" title="${KlyoCopy.escape(KlyoCopy.text("Remove from workspace"))}">×</button>`
       : "";
     return `<tr><td>${escapeHtml(u.name)}</td><td class="mono" style="font-size:12.5px;">${escapeHtml(u.email)}</td><td>${roleCell}</td><td>${removeBtn}</td></tr>`;
   }).join("");
@@ -1522,7 +1525,7 @@ async function loadTeam() {
     sel.addEventListener("change", async () => {
       try {
         await API.put(`/auth/team/${sel.dataset.userId}/role`, { role: sel.value });
-        toast("Role updated");
+        toast(KlyoCopy.text("Role updated"));
       } catch (err) { toast(err.message, "error"); sel.value = team.find(u => u.id == sel.dataset.userId)?.role || "member"; }
     });
   });
@@ -1534,7 +1537,7 @@ async function loadTeam() {
       if (!u || !confirm(`Remove ${u.name} from this workspace?`)) return;
       try {
         await API.del(`/auth/team/${btn.dataset.userId}`);
-        toast(`${u.name} removed`);
+        toast(KlyoCopy.format("Removed: {0}", u.name));
         await loadTeam();
       } catch (err) { toast(err.message, "error"); }
     });
@@ -1616,7 +1619,7 @@ async function loadAllContactsCache() {
 }
 
 function renderContacts(contacts) {
-  els.resultCount.textContent = `${contacts.length} contact${contacts.length === 1 ? "" : "s"}`;
+  els.resultCount.textContent = KlyoI18n.getLang() === "pl" ? KlyoCopy.format("Contacts: {0}", contacts.length) : `${contacts.length} contact${contacts.length === 1 ? "" : "s"}`;
   els.emptyState.classList.toggle("hidden", contacts.length !== 0);
   els.contactsTable.classList.toggle("hidden", contacts.length === 0);
 
@@ -1656,7 +1659,7 @@ function getViewCopy(view) {
     inbox:{title:KlyoI18n.getLang()==="pl"?"Skrzynka":"Inbox",sub:""},
     rfq:{title:KlyoI18n.getLang()==="pl"?"Zapytania ofertowe":"RFQ register",sub:""},
     files: { title: t("nav.files"), sub: "" },
-    overview: { title: KlyoI18n.getLang() === "pl" ? "Wyniki" : "Overview", sub: "" },
+    overview: { title: KlyoI18n.getLang() === "pl" ? "Przegląd" : "Overview", sub: "" },
     pipeline:  { title: t("nav.pipeline"),  sub: t("view_sub.pipeline") },
     companies: { title: t("nav.companies"), sub: t("view_sub.companies") },
     quotes:    { title: t("nav.quotes"),    sub: t("view_sub.quotes") },
@@ -1828,7 +1831,7 @@ async function handleContactSubmit(e) {
 
   const firstName = els.cFirstName.value.trim();
   const lastName = els.cLastName.value.trim();
-  if (!firstName) { els.contactFormError.textContent = "First name is required."; return; }
+  if (!firstName) { els.contactFormError.textContent = KlyoCopy.text("First name is required."); return; }
 
   const gv = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
   const payload = {
@@ -1890,7 +1893,7 @@ async function openPanel(id) {
   KlyoWorkspace.showContactFields(contact);
 
   els.panelName.textContent = contact.full_name;
-  els.panelSub.textContent = [contact.company_name, contact.owner_name ? `Owner: ${contact.owner_name}` : null].filter(Boolean).join(" · ") || "No company on file";
+  els.panelSub.textContent = [contact.company_name, contact.owner_name ? KlyoCopy.format("Owner: {0}", contact.owner_name) : null].filter(Boolean).join(" · ") || KlyoCopy.text("No company on file");
   els.panelBadge.innerHTML = badgeHtml(contact.status);
   els.panelEmail.textContent = contact.email || "—";
   els.panelPhone.textContent = contact.phone || "—";
@@ -1916,7 +1919,7 @@ async function openPanel(id) {
       [t("contact.secondary_email"), contact.secondary_email],
       [t("contact.secondary_phone"), contact.secondary_phone],
       [t("contact.website"), contact.website ? `<a href="${escapeHtml(contact.website)}" target="_blank" rel="noopener" style="color:var(--accent-1)">${escapeHtml(contact.website)}</a>` : null],
-      [t("contact.linkedin"), contact.linkedin ? `<a href="${escapeHtml(contact.linkedin)}" target="_blank" rel="noopener" style="color:var(--accent-1)">LinkedIn</a>` : null],
+      [t("contact.linkedin"), contact.linkedin ? `<a href="${escapeHtml(contact.linkedin)}" target="_blank" rel="noopener" style="color:var(--accent-1)">${KlyoCopy.label("LinkedIn")}</a>` : null],
       [t("contact.telegram"), contact.telegram],
       [t("contact.city"), contact.city],
       [t("contact.country"), contact.country],
@@ -1963,7 +1966,7 @@ async function openPanel(id) {
   }
   els.generateOfferBtn.disabled = false;
   els.generateOfferBtn.classList.remove("loading");
-  els.generateOfferBtn.textContent = "Generate with AI";
+  els.generateOfferBtn.textContent = KlyoCopy.text("Generate with AI");
 
   loadContactTimeline(id);
   els.panelOverlay.classList.remove("hidden");
@@ -1978,12 +1981,12 @@ function renderPanelQuotes(quotes) {
       <span>${escapeHtml(q.title)}</span>
       <span style="display:flex; align-items:center; gap:8px;">
         <span class="mono">${fmtMoney(q.total, q.currency, 2)}</span>
-        <span class="quote-status-badge ${q.status}">${q.status}</span>
+        <span class="quote-status-badge ${q.status}">${escapeHtml(t("ui.status_" + q.status))}</span>
       </span>
     </div>`
         )
         .join("")
-    : '<p class="muted" style="font-size:13px;">No quotes for this contact yet.</p>';
+    : KlyoCopy.html("<p class=\"muted\" style=\"font-size:13px;\">No quotes for this contact yet.</p>");
 
   els.panelQuotesList.querySelectorAll("[data-quote-id]").forEach((row) => {
     row.addEventListener("click", () => openQuotePanel(row.dataset.quoteId));
@@ -1998,7 +2001,7 @@ function closePanel() {
 }
 
 async function loadContactTimeline(contactId) {
-  els.panelTimeline.innerHTML = '<p class="muted" style="font-size:12.5px; padding:8px 0;">Loading…</p>';
+  els.panelTimeline.innerHTML = KlyoCopy.html("<p class=\"muted\" style=\"font-size:12.5px; padding:8px 0;\">Loading…</p>");
   try {
     const { events } = await API.get(`/contacts/${contactId}/timeline`);
     renderTimeline(events);
@@ -2019,15 +2022,15 @@ function timelineIcon(kind, type) {
 function timelineLabel(ev) {
   if (ev.kind === "offer") {
     const status = ev.status === "sent" ? "Offer sent" : ev.status === "draft" ? "Offer drafted" : `Offer (${ev.status})`;
-    return `${status}${ev.subject ? ` — <em>${escapeHtml(ev.subject)}</em>` : ""}`;
+    return `${KlyoCopy.escape(KlyoCopy.text(status))}${ev.subject ? ` — <em>${escapeHtml(ev.subject)}</em>` : ""}`;
   }
   if (ev.kind === "quote") {
     const status = ev.status === "sent" ? "Quote sent" : ev.status === "accepted" ? "Quote accepted ✓" : ev.status === "declined" ? "Quote declined" : `Quote (${ev.status})`;
     const val = ev.total ? ` · ${ev.currency || ""} ${Number(ev.total).toFixed(2)}` : "";
-    return `${status}${ev.title ? ` — <em>${escapeHtml(ev.title)}</em>` : ""}${val}`;
+    return `${KlyoCopy.escape(KlyoCopy.text(status))}${ev.title ? ` — <em>${escapeHtml(ev.title)}</em>` : ""}${val}`;
   }
   if (ev.kind === "deal") {
-    return `Deal created — <em>${escapeHtml(ev.title)}</em>${ev.value ? ` · ${ev.currency || ""} ${Number(ev.value).toFixed(0)}` : ""}`;
+    return `${KlyoCopy.label("Deal created —")} <em>${escapeHtml(ev.title)}</em>${ev.value ? ` · ${ev.currency || ""} ${Number(ev.value).toFixed(0)}` : ""}`;
   }
   return escapeHtml(ev.description || "");
 }
@@ -2041,7 +2044,7 @@ function renderTimeline(events) {
   }
   if (panelEmpty) panelEmpty.classList.add("hidden");
   els.panelTimeline.innerHTML = events.map(ev => {
-    const actor = ev.actor ? `<span class="muted" style="font-size:11px; margin-left:4px;">by ${escapeHtml(ev.actor)}</span>` : "";
+    const actor = ev.actor ? `<span class="muted" style="font-size:11px; margin-left:4px;">${KlyoCopy.label("by")} ${escapeHtml(ev.actor)}</span>` : "";
     return `<div class="timeline-item">
       <div class="timeline-dot" style="display:flex; align-items:center; justify-content:center; color:var(--accent-1);">${timelineIcon(ev.kind, ev.type)}</div>
       <div class="timeline-body">
@@ -2065,7 +2068,7 @@ async function handleGenerateOffer() {
   if (!currentPanelContactId) return;
   els.generateOfferBtn.disabled = true;
   els.generateOfferBtn.classList.add("loading");
-  els.generateOfferBtn.textContent = "Generating…";
+  els.generateOfferBtn.textContent = KlyoCopy.text("Generating…");
   try {
     const { offer } = await API.post(`/contacts/${currentPanelContactId}/offers/generate`, {
       instructions: els.offerInstructions.value.trim(),
@@ -2075,28 +2078,28 @@ async function handleGenerateOffer() {
     els.draftBox.classList.add("show");
     currentDraftOfferId = offer.id;
     prependTimelineEntry(`${API.getUser().name} drafted an offer with AI.`);
-    toast("Draft ready — review before sending.");
+    toast(KlyoCopy.text("Draft ready — review before sending."));
   } catch (err) {
     showLimitOrError(err);
   } finally {
     els.generateOfferBtn.disabled = false;
     els.generateOfferBtn.classList.remove("loading");
-    els.generateOfferBtn.textContent = "Generate with AI";
+    els.generateOfferBtn.textContent = KlyoCopy.text("Generate with AI");
   }
 }
 
 async function handleSendOffer() {
-  if (!currentDraftOfferId) { toast("Generate a draft first.", "error"); return; }
-  if (!currentPanelContact?.email) { toast("This contact has no email address on file.", "error"); return; }
+  if (!currentDraftOfferId) { toast(KlyoCopy.text("Generate a draft first."), "error"); return; }
+  if (!currentPanelContact?.email) { toast(KlyoCopy.text("This contact has no email address on file."), "error"); return; }
 
   els.sendOfferBtn.disabled = true;
-  els.sendOfferBtn.textContent = "Sending…";
+  els.sendOfferBtn.textContent = KlyoCopy.text("Sending…");
   try {
     const { offer } = await API.post(`/offers/${currentDraftOfferId}/send`, {
       subject: els.draftSubject.value,
       body: els.draftBody.value,
     });
-    toast(`Offer sent to ${currentPanelContact.email}`);
+    toast(KlyoCopy.format("Offer sent to {0}", currentPanelContact.email));
     els.draftBox.classList.remove("show");
     currentDraftOfferId = null;
     if (currentPanelContactId) loadContactTimeline(currentPanelContactId);
@@ -2122,7 +2125,7 @@ async function handleDeleteContact() {
   try {
     await API.del(`/contacts/${currentPanelContact.id}`);
     closePanel();
-    toast("Contact deleted");
+    toast(KlyoCopy.text("Contact deleted"));
     await Promise.all([loadContacts({ refreshPickers: true }), loadStats(), loadThemes()]);
   } catch (err) {
     toast(err.message, "error");
@@ -2160,7 +2163,7 @@ function populateCompanySelect() {
   els.cCompanySelect.innerHTML =
     `<option value="">${t("common.none")}</option>` +
     companies.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("") +
-    '<option value="__new__">+ New company…</option>';
+    KlyoCopy.html("<option value=\"__new__\">+ New company…</option>");
   if (current) els.cCompanySelect.value = current;
 }
 
@@ -2193,7 +2196,7 @@ async function handleCompanySubmit(e) {
   e.preventDefault();
   els.companyFormError.textContent = "";
   const payload = { custom_fields:KlyoWorkspace.collectFields("company"),parent_company_id: document.getElementById("coParent").value || null, name: els.coName.value.trim(), industry: els.coIndustry.value.trim(), notes: els.coNotes.value.trim() };
-  if (!payload.name) { els.companyFormError.textContent = "Company name is required."; return; }
+  if (!payload.name) { els.companyFormError.textContent = KlyoCopy.text("Company name is required."); return; }
 
   const id = els.companyId.value;
   els.companySubmitBtn.disabled = true;
@@ -2232,18 +2235,18 @@ async function openCompanyPanel(id) {
           (p) => `<tr><td>${escapeHtml(p.full_name)}</td><td>${escapeHtml(p.title || "—")}</td><td>${p.is_decision_maker ? "✓" : ""}</td></tr>`
         )
         .join("")
-    : '<tr><td colspan="3" class="muted">No contacts linked to this company yet.</td></tr>';
+    : KlyoCopy.html("<tr><td colspan=\"3\" class=\"muted\">No contacts linked to this company yet.</td></tr>");
   els.companyPanelOverlay.classList.remove("hidden");
 }
 function closeCompanyPanel() { els.companyPanelOverlay.classList.add("hidden"); currentCompanyPanelId = null; }
 
 async function handleDeleteCompany() {
   if (!currentCompanyPanelId) return;
-  if (!confirm("Delete this company? Contacts and sub-companies stay, but their direct link to this company is removed.")) return;
+  if (!confirm(KlyoCopy.text("Delete this company? Contacts and sub-companies stay, but their direct link to this company is removed."))) return;
   try {
     await API.del(`/companies/${currentCompanyPanelId}`);
     closeCompanyPanel();
-    toast("Company deleted");
+    toast(KlyoCopy.text("Company deleted"));
     loadCompanies();
   } catch (err) {
     toast(err.message, "error");
@@ -2263,7 +2266,7 @@ function renderProductsList() {
     ? products.filter(p => (p.category || "").toLowerCase().includes(filterText) || p.name.toLowerCase().includes(filterText))
     : products;
 
-  if (els.productsCount) els.productsCount.textContent = `${visible.length} item${visible.length === 1 ? "" : "s"}`;
+  if (els.productsCount) els.productsCount.textContent = KlyoI18n.getLang() === "pl" ? KlyoCopy.format("Items: {0}", visible.length) : `${visible.length} item${visible.length === 1 ? "" : "s"}`;
 
   els.productsList.innerHTML = visible.length
     ? visible.map(p => `
@@ -2273,10 +2276,10 @@ function renderProductsList() {
       <span class="muted" style="font-size:12px;">${escapeHtml(p.unit_label)}</span>
       <span class="muted" style="font-size:12px;">${p.service_interval_months ? `every ${p.service_interval_months}mo` : "—"}</span>
       <span>${p.category ? `<span class="product-cat-badge">${escapeHtml(p.category)}</span>` : ""}</span>
-      <button class="line-remove-btn" data-dup-id="${p.id}" title="Duplicate" style="font-size:15px; opacity:.6;">⎘</button>
-      <button class="line-remove-btn" data-product-id="${p.id}" title="Delete">×</button>
+      <button class="line-remove-btn" data-dup-id="${p.id}" title="${KlyoCopy.escape(KlyoCopy.text("Duplicate"))}" style="font-size:15px; opacity:.6;">⎘</button>
+      <button class="line-remove-btn" data-product-id="${p.id}" title="${KlyoCopy.escape(KlyoCopy.text("Delete"))}">×</button>
     </div>`).join("")
-    : '<p class="muted" style="font-size:13px;">No products yet — add your first one below.</p>';
+    : KlyoCopy.html("<p class=\"muted\" style=\"font-size:13px;\">No products yet — add your first one below.</p>");
 
   els.productsList.querySelectorAll("[data-product-id]").forEach((btn) => {
     btn.addEventListener("click", () => handleDeleteProduct(btn.dataset.productId));
@@ -2295,7 +2298,7 @@ function closeProductsModal() { els.productsModalOverlay.classList.add("hidden")
 async function handleAddProduct() {
   if (els.oldProductFormError) els.oldProductFormError.textContent = "";
   const name = els.newProductName.value.trim();
-  if (!name) { if (els.oldProductFormError) els.oldProductFormError.textContent = "Give the product a name."; return; }
+  if (!name) { if (els.oldProductFormError) els.oldProductFormError.textContent = KlyoCopy.text("Give the product a name."); return; }
 
   try {
     await API.post("/products", {
@@ -2313,7 +2316,7 @@ async function handleAddProduct() {
     await loadProducts();
     renderProductsList();
     populateLineItemProductOptions();
-    toast("Product added");
+    toast(KlyoCopy.text("Product added"));
   } catch (err) {
     if (els.oldProductFormError) els.oldProductFormError.textContent = err.message;
   }
@@ -2325,12 +2328,12 @@ async function handleDuplicateProduct(id) {
     await loadProducts();
     renderProductsList();
     populateLineItemProductOptions();
-    toast("Product duplicated");
+    toast(KlyoCopy.text("Product duplicated"));
   } catch (err) { toast(err.message, "error"); }
 }
 
 async function handleDeleteProduct(id) {
-  if (!confirm("Delete this product from the catalog?")) return;
+  if (!confirm(KlyoCopy.text("Delete this product from the catalog?"))) return;
   try {
     await API.del(`/products/${id}`);
     await loadProducts();
@@ -2375,7 +2378,7 @@ function closeQuoteModal() { els.quoteModalOverlay.classList.add("hidden"); }
 
 function populateQuoteContactSelect() {
   els.quoteContactSelect.innerHTML =
-    '<option value="">Choose a contact…</option>' +
+    KlyoCopy.html("<option value=\"\">Choose a contact…</option>") +
     allContactsCache.map((c) => `<option value="${c.id}">${escapeHtml(c.full_name)}${c.company_name ? ` (${escapeHtml(c.company_name)})` : ""}</option>`).join("");
 }
 
@@ -2404,7 +2407,7 @@ function handleQuoteContactChange() {
     <label class="recipient-option">
       <input type="checkbox" value="${c.id}" ${c.id === contactId || c.is_decision_maker ? "checked" : ""} style="width:auto;" />
       ${escapeHtml(c.full_name)}${c.title ? ` — ${escapeHtml(c.title)}` : ""}
-      ${c.is_decision_maker ? '<span class="badge customer" style="transform:scale(0.8);">Decision-maker</span>' : ""}
+      ${c.is_decision_maker ? KlyoCopy.html("<span class=\"badge customer\" style=\"transform:scale(0.8);\">Decision-maker</span>") : ""}
     </label>`
     )
     .join("");
@@ -2414,7 +2417,7 @@ function populateLineItemProductOptions() {
   els.quoteItemsContainer.querySelectorAll(".line-product-select").forEach((select) => {
     const current = select.value;
     select.innerHTML =
-      '<option value="">Custom item</option>' + KlyoPriceLists.productsForQuote(products).map((p) => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
+      KlyoCopy.html("<option value=\"\">Custom item</option>") + KlyoPriceLists.productsForQuote(products).map((p) => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
     if (current) select.value = current;
   });
 }
@@ -2436,15 +2439,15 @@ function buildLineItemRow(item, index) {
   row.innerHTML = `
     <span class="drag-handle">⠿</span>
     <select class="line-product-select">
-      <option value="">Custom item</option>
+      <option value="">${KlyoCopy.text("Custom item")}</option>
       ${KlyoPriceLists.productsForQuote(products).map((p) => `<option value="${p.id}" ${String(p.id) === String(item.product_id) ? "selected" : ""}>${escapeHtml(p.name)}</option>`).join("")}
     </select>
-    <input class="line-desc-input" maxlength="2000" type="text" placeholder="Description" value="${escapeHtml(item.description || "")}" />
-    <input class="line-qty-input" aria-label="Quantity" type="number" min="0.01" step="0.01" value="${item.quantity ?? 1}" />
-    <input class="line-price-input" aria-label="Unit price" type="number" min="0" step="0.01" value="${item.unit_price ?? 0}" />
-    <input class="line-discount-input" aria-label="Discount %" type="number" min="0" max="100" step="1" value="${item.discount_percent ?? 0}" />
+    <input class="line-desc-input" maxlength="2000" type="text" placeholder="${KlyoCopy.escape(KlyoCopy.text("Description"))}" value="${escapeHtml(item.description || "")}" />
+    <input class="line-qty-input" aria-label="${KlyoCopy.escape(KlyoCopy.text("Quantity"))}" type="number" min="0.01" step="0.01" value="${item.quantity ?? 1}" />
+    <input class="line-price-input" aria-label="${KlyoCopy.escape(KlyoCopy.text("Unit price"))}" type="number" min="0" step="0.01" value="${item.unit_price ?? 0}" />
+    <input class="line-discount-input" aria-label="${KlyoCopy.escape(KlyoCopy.text("Discount %"))}" type="number" min="0" max="100" step="1" value="${item.discount_percent ?? 0}" />
     <span class="line-total-display mono">$0.00</span>
-    <button type="button" class="line-remove-btn" title="Remove">×</button>
+    <button type="button" class="line-remove-btn" title="${KlyoCopy.escape(KlyoCopy.text("Remove"))}">×</button>
   `;
 
   const productSelect = row.querySelector(".line-product-select");
@@ -2496,7 +2499,7 @@ function recomputeQuoteTotals() {
     const totals=KlyoQuoteCore.computeTotals(currentQuoteLineItems,Number(document.getElementById('quoteTaxRate')?.value||0),{...KlyoQuoteTemplates.discount(),pricing_groups:typeof KlyoBundles!=="undefined"?KlyoBundles.groups():[]});
     els.quoteItemsContainer.querySelectorAll('.quote-line-row').forEach((row,index)=>row.querySelector('.line-total-display').textContent=fmtMoney(totals.computed[index].line_total,currency,2));
     els.quoteSubtotalValue.textContent=fmtMoney(totals.subtotal,currency,2);els.quoteDiscountValue.textContent='−'+fmtMoney(totals.discountTotal,currency,2);els.quoteTotalValue.textContent=fmtMoney(totals.total,currency,2);
-    document.getElementById('quoteTaxRow').hidden=!totals.tax_rate;document.getElementById('quoteTaxLabel').textContent=(KlyoI18n.getLang()==='pl'?'Podatek':'Tax')+` (${totals.tax_rate}%)`;document.getElementById('quoteTaxValue').textContent=fmtMoney(totals.tax_total,currency,2);
+    document.getElementById('quoteTaxRow').hidden=!totals.tax_rate;document.getElementById('quoteTaxLabel').textContent=(KlyoI18n.getLang()==='pl'?'Podatek':KlyoCopy.text("Tax"))+` (${totals.tax_rate}%)`;document.getElementById('quoteTaxValue').textContent=fmtMoney(totals.tax_total,currency,2);
   }catch{els.quoteTotalValue.textContent='—';}
 }
 
@@ -2509,8 +2512,8 @@ let quotePendingSendId = null;
 async function saveQuote(alsoSend) {
   els.quoteFormError.textContent = "";
   const contactId = Number(els.quoteContactSelect.value) || currentQuotePrefillContactId;
-  if (!contactId) { els.quoteFormError.textContent = "Pick who this quote is for."; return; }
-  if (!currentQuoteLineItems.length) { els.quoteFormError.textContent = "Add at least one line item."; return; }
+  if (!contactId) { els.quoteFormError.textContent = KlyoCopy.text("Pick who this quote is for."); return; }
+  if (!currentQuoteLineItems.length) { els.quoteFormError.textContent = KlyoCopy.text("Add at least one line item."); return; }
 
   const contact = allContactsCache.find((c) => c.id === contactId);
   const payload = {
@@ -2543,7 +2546,7 @@ async function saveQuote(alsoSend) {
       await openQuoteSendPreview(quoteId);
     } else {
       closeQuoteModal();
-      toast("Draft saved");
+      toast(KlyoCopy.text("Draft saved"));
     }
     loadQuotes();
     if (currentPanelContactId === contactId) openPanel(contactId);
@@ -2591,7 +2594,7 @@ async function confirmSendQuote() {
       ...KlyoQuoteStudio.sendOptions(),
     });
     closeQuotePreview();
-    toast("Quote sent");
+    toast(KlyoCopy.text("Quote sent"));
     loadQuotes();
   } catch (err) {
     els.quotePreviewError.textContent = err.message;
@@ -2663,7 +2666,7 @@ async function handleAcceptQuote() {
   const id = els.quotePanelOverlay.dataset.quoteId;
   try {
     await API.post(`/quotes/${id}/accept`, {});
-    toast("Quote marked accepted — purchase recorded for future reminders.");
+    toast(KlyoCopy.text("Quote marked accepted — purchase recorded for future reminders."));
     closeQuotePanel();
     loadQuotes();
   } catch (err) {
@@ -2674,7 +2677,7 @@ async function handleDeclineQuote() {
   const id = els.quotePanelOverlay.dataset.quoteId;
   try {
     await API.post(`/quotes/${id}/decline`, {});
-    toast("Quote marked declined");
+    toast(KlyoCopy.text("Quote marked declined"));
     closeQuotePanel();
     loadQuotes();
   } catch (err) {
@@ -2683,10 +2686,10 @@ async function handleDeclineQuote() {
 }
 async function handleDeleteQuote() {
   const id = els.quotePanelOverlay.dataset.quoteId;
-  if (!confirm("Delete this quote?")) return;
+  if (!confirm(KlyoCopy.text("Delete this quote?"))) return;
   try {
     await API.del(`/quotes/${id}`);
-    toast("Quote deleted");
+    toast(KlyoCopy.text("Quote deleted"));
     closeQuotePanel();
     loadQuotes();
   } catch (err) {
@@ -2840,7 +2843,7 @@ async function loadHistory(reset = false) {
     });
 
     historyOffset += entries.length;
-    els.historyCount.textContent = `${Math.min(historyOffset, total)} of ${total} entries`;
+    els.historyCount.textContent = KlyoCopy.format("{0} of {1} entries", Math.min(historyOffset, total), total);
     const hasMore = historyOffset < total;
     els.historyLoadMoreWrap.style.display = hasMore ? "" : "none";
   } catch (err) {
@@ -2888,7 +2891,7 @@ async function handleActivityLogSubmit(e) {
     await API.post(`/contacts/${currentPanelContactId}/activity`, { type: els.activityLogType.value, description });
     els.activityLogDescription.value = "";
     loadContactTimeline(currentPanelContactId);
-    toast("Logged");
+    toast(KlyoCopy.text("Logged"));
   } catch (err) {
     toast(err.message, "error");
   }
@@ -2939,7 +2942,7 @@ function wireEvents() {
         link.href = URL.createObjectURL(blob);
         link.click();
       })
-      .catch(() => toast("Export failed", "error"));
+      .catch(() => toast(KlyoCopy.text("Export failed"), "error"));
   });
   els.exportCompaniesBtn.addEventListener("click", () => {
     fetch("/api/companies/export", { headers: API.headers() })
@@ -2950,7 +2953,7 @@ function wireEvents() {
         link.setAttribute("download", "companies.csv");
         link.click();
       })
-      .catch(() => toast("Export failed", "error"));
+      .catch(() => toast(KlyoCopy.text("Export failed"), "error"));
   });
   // CSV / Excel import
   els.importContactsBtn.addEventListener("click", () => els.importContactsFile.click());
@@ -2971,11 +2974,11 @@ function wireEvents() {
       }
       const res = await API.post("/contacts/import", { csv: csvText });
       if (res.imported === 0 && res.skipped > 0) {
-        const hint = res.errors?.[0] || "Wszystkie wiersze pominięte.";
-        toast(`Zaimportowano 0 — ${hint}`, "error");
+        const hint = res.errors?.[0] || KlyoCopy.text("All rows were skipped.");
+        toast(KlyoCopy.format("Imported 0 — {0}", hint), "error");
         console.warn("Import skipped rows:", res.errors);
       } else {
-        toast(`Zaimportowano ${res.imported}${res.skipped ? `, pominięto ${res.skipped}` : ""}`);
+        toast(KlyoCopy.format("Imported: {0}. Skipped: {1}.", res.imported, res.skipped || 0));
         if (res.errors?.length) console.warn("Import row errors:", res.errors);
       }
       await loadContacts({ refreshPickers: true });
@@ -3024,7 +3027,7 @@ function wireEvents() {
       els.cCompanySelect.value = company.id;
       els.newCompanyInlineWrap.classList.add("hidden");
       els.newCompanyInlineInput.value = "";
-      toast(`Company "${name}" created`);
+      toast(KlyoCopy.format("Company created: {0}", name));
     } catch (err) {
       toast(err.message, "error");
     } finally {
@@ -3056,23 +3059,23 @@ function wireEvents() {
   els.savePasswordBtn.addEventListener("click", handleSavePassword);
   els.saveCurrencyBtn.addEventListener("click", handleSaveCurrency);
   els.saveAiContextBtn.addEventListener("click", handleSaveAiContext);
-  els.appLangPicker.addEventListener("change", () => {
-    KlyoI18n.setLang(els.appLangPicker.value);
-    KlyoI18n.applyTranslations();
-    switchView(currentView);
-    // Re-render the active view so dynamic content gets translated
-    if      (currentView === "pipeline")   { loadContacts(); loadThemes(); }
-    else if (currentView === "companies")  loadCompanies();
-    else if (currentView === "quotes")     loadQuotes();
-    else if (currentView === "reminders")  loadReminders();
-    else if (currentView === "tasks")      loadTasks();
-    else if (currentView === "deals")      loadDeals();
-    else if (currentView === "history")    loadHistory();
-    else if (currentView === "team")       loadTeam();
-    else if (currentView === "clients")    loadClients();
-    else if (currentView === "products")   loadProductsView();
-    else if (currentView === "calendar")   loadCalendar();
-    toast(KlyoI18n.t("settings.language") + " → " + KlyoI18n.LANG_NAMES[KlyoI18n.getLang()]);
+  els.appLangPicker.addEventListener("change", async () => {
+    const language = els.appLangPicker.value, previous = KlyoI18n.getLang();
+    if (!KlyoI18n.SUPPORTED.includes(language) || language === previous) return;
+    document.querySelectorAll('[data-language-choice]').forEach(b => b.disabled = true);
+    try {
+      await API.put('/auth/language', {language});
+      const user = API.getUser(); if (user) API.setUser({...user,language});
+      KlyoI18n.setLang(language, true);
+      // Recreate every view in the chosen language, including cached menus and dialogs.
+      location.reload();
+    } catch (error) {
+      els.appLangPicker.value = previous;
+      window.dispatchEvent(new Event('klyo:language'));
+      toast(error.message || KlyoCopy.text('Could not save language.'), 'error');
+    } finally {
+      document.querySelectorAll('[data-language-choice]').forEach(b => b.disabled = false);
+    }
   });
   els.joinWorkspaceBtn.addEventListener("click", handleJoinWorkspace);
   els.settingsUpgradeBtn.addEventListener("click", () => {
@@ -3233,7 +3236,7 @@ async function loadDeals(filters = {}) {
 
 function refreshDealStageFilter() {
   const cur = els.dealStageFilter.value;
-  els.dealStageFilter.innerHTML = '<option value="">All stages</option>';
+  els.dealStageFilter.innerHTML = KlyoCopy.html("<option value=\"\">All stages</option>");
   dealsStagesCache.forEach(s => {
     const o = document.createElement("option");
     o.value = s.id; o.textContent = s.name;
@@ -3398,7 +3401,7 @@ async function openDealModal(deal) {
   const stageLoad=KlyoPipelines.prepareDeal(deal);
 
   // Populate assigned select from team
-  els.dealAssignedSelect.innerHTML = '<option value="">Unassigned</option>';
+  els.dealAssignedSelect.innerHTML = KlyoCopy.html("<option value=\"\">Unassigned</option>");
   team.forEach(u => {
     const o = document.createElement("option");
     o.value = u.id; o.textContent = u.name;
@@ -3407,7 +3410,7 @@ async function openDealModal(deal) {
   });
 
   // Contacts — use allContactsCache (loaded on boot)
-  els.dealContactSelect.innerHTML = '<option value="">No contact</option>';
+  els.dealContactSelect.innerHTML = KlyoCopy.html("<option value=\"\">No contact</option>");
   allContactsCache.forEach(c => {
     const o = document.createElement("option");
     o.value = c.id; o.textContent = c.full_name;
@@ -3416,7 +3419,7 @@ async function openDealModal(deal) {
   });
 
   // Companies
-  els.dealCompanySelect.innerHTML = '<option value="">No company</option>';
+  els.dealCompanySelect.innerHTML = KlyoCopy.html("<option value=\"\">No company</option>");
   companies.forEach(co => {
     const o = document.createElement("option");
     o.value = co.id; o.textContent = co.name;
@@ -3425,7 +3428,7 @@ async function openDealModal(deal) {
   });
 
   // Products
-  els.dealProductSelect.innerHTML = '<option value="">No product</option>';
+  els.dealProductSelect.innerHTML = KlyoCopy.html("<option value=\"\">No product</option>");
   products.forEach(p => {
     const o = document.createElement("option");
     o.value = p.id; o.textContent = p.name;
@@ -3506,14 +3509,14 @@ async function openDealPanel(dealId) {
       ["Probability",Number(d.effective_probability??d.probability??0)+"%"],
       ["Weighted value",fmtMoney(d.weighted_value??Number(d.value||0)*Number(d.probability||0)/100,d.currency)],
       d.assigned_name ? ["Owner",   escHtml(d.assigned_name)] : null,
-      d.expected_close_date ? ["Close",  new Date(d.expected_close_date).toLocaleDateString()] : null,
+      d.expected_close_date ? ["Close",  new Date(d.expected_close_date).toLocaleDateString(KlyoI18n.getLang() === "pl" ? "pl-PL" : "en-GB")] : null,
       d.product_name  ? ["Product", escHtml(d.product_name)] : null,
       d.quantity != null ? ["Qty",  escHtml(d.quantity)] : null,
-      ["Status",  `<span class="status-badge status-${d.status}">${d.status.charAt(0).toUpperCase()+d.status.slice(1)}</span>`],
+      ["Status",  `<span class="status-badge status-${d.status}">${KlyoCopy.escape(KlyoCopy.text(d.status.charAt(0).toUpperCase()+d.status.slice(1)))}</span>`],
     ].filter(Boolean);
 
     els.dealPanelDetails.innerHTML = rows.map(([k,v]) =>
-      `<div class="detail-row"><span class="detail-label">${k}</span><span class="detail-value">${v}</span></div>`
+      `<div class="detail-row"><span class="detail-label">${KlyoCopy.escape(KlyoCopy.text(k))}</span><span class="detail-value">${v}</span></div>`
     ).join("");
     KlyoOperations.dealActions(d,els.dealPanelDetails);
 
@@ -3555,12 +3558,12 @@ async function handleMarkDeal(status, lostReason) {
 }
 
 async function handleDeleteDeal() {
-  if (!currentDealPanelId || !confirm("Delete this deal?")) return;
+  if (!currentDealPanelId || !confirm(KlyoCopy.text("Delete this deal?"))) return;
   try {
     await API.del(`/deals/${currentDealPanelId}`);
     closeDealPanel();
     await loadDeals();
-    toast("Deal deleted");
+    toast(KlyoCopy.text("Deal deleted"));
   } catch (err) { toast(err.message, "error"); }
 }
 
@@ -3593,10 +3596,10 @@ function renderStagesList() {
     row.dataset.stageId = s.id;
     row.draggable = true;
     row.innerHTML = `
-      <span class="stage-drag-handle" title="Drag to reorder">⠿</span>
+      <span class="stage-drag-handle" title="${KlyoCopy.escape(KlyoCopy.text("Drag to reorder"))}">⠿</span>
       <div class="stage-dot-edit" style="background:${s.color}"></div>
       <span class="stage-name">${escHtml(s.name)}</span>
-      <button class="btn btn-danger btn-sm" data-delete-stage="${s.id}" title="Delete stage">×</button>
+      <button class="btn btn-danger btn-sm" data-delete-stage="${s.id}" title="${KlyoCopy.escape(KlyoCopy.text("Delete stage"))}">×</button>
     `;
 
     // delete
@@ -3606,7 +3609,7 @@ function renderStagesList() {
         await API.del(`/deals/stages/${s.id}`);
         await loadDeals();
         renderStagesList();
-        toast("Stage deleted");
+        toast(KlyoCopy.text("Stage deleted"));
       } catch (err) { toast(err.message, "error"); }
     });
 
@@ -3648,14 +3651,14 @@ function renderStagesList() {
 
 async function handleAddStage() {
   const name = els.newStageName.value.trim();
-  if (!name) { els.stagesFormError.textContent = "Enter a stage name."; return; }
+  if (!name) { els.stagesFormError.textContent = KlyoCopy.text("Enter a stage name."); return; }
   els.stagesFormError.textContent = "";
   try {
     await API.post("/deals/stages", { pipeline_id:KlyoPipelines.selected(), name, color: els.newStageColor.value });
     els.newStageName.value = "";
     await loadDeals();
     renderStagesList();
-    toast("Stage added");
+    toast(KlyoCopy.text("Stage added"));
   } catch (err) { els.stagesFormError.textContent = err.message; }
 }
 
@@ -3724,12 +3727,12 @@ function renderTasksTable() {
     const done = t.status === "done";
     const overdue = t.due_date && t.due_date.slice(0,10) < today && !done;
     const dueLbl = t.due_date
-      ? `<span class="${overdue ? "due-overdue" : ""}">${new Date(t.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>`
-      : '<span class="muted">—</span>';
+      ? `<span class="${overdue ? "due-overdue" : ""}">${new Date(t.due_date).toLocaleDateString(KlyoI18n.getLang() === "pl" ? "pl-PL" : "en-GB", { month: "short", day: "numeric" })}</span>`
+      : KlyoCopy.html("<span class=\"muted\">—</span>");
     const linked = [t.contact_name, t.deal_title].filter(Boolean).join(" · ") || "—";
     return `<tr class="${done ? "task-row-done" : ""}" data-task-id="${t.id}">
       <td style="text-align:center;">
-        <input type="checkbox" class="task-checkbox" data-id="${t.id}" ${done ? "checked" : ""} title="Toggle done" />
+        <input type="checkbox" class="task-checkbox" data-id="${t.id}" ${done ? "checked" : ""} title="${KlyoCopy.escape(KlyoCopy.text("Toggle done"))}" />
       </td>
       <td>
         <div style="font-weight:600; font-size:13px;">${escHtml(t.title)}</div>
@@ -3740,7 +3743,7 @@ function renderTasksTable() {
       <td>${dueLbl}</td>
       <td><span class="priority-badge priority-${t.priority}">${window.t("tasks.priority_" + t.priority) || t.priority}</span></td>
       <td style="white-space:nowrap;">
-        <button class="btn btn-ghost btn-sm task-edit-btn" data-id="${t.id}" title="Edit">
+        <button class="btn btn-ghost btn-sm task-edit-btn" data-id="${t.id}" title="${KlyoCopy.escape(KlyoCopy.text("Edit"))}">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
         ${API.getUser()?.role !== "viewer" ? `<button type="button" class="btn btn-ghost btn-sm btn-danger-outline task-delete-btn" data-id="${t.id}" title="${escHtml(window.t("tasks.delete_task"))}" aria-label="${escHtml(window.t("tasks.delete_task"))}: ${escHtml(t.title)}">

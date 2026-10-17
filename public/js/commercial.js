@@ -80,7 +80,7 @@ const KlyoCommercial = (() => {
       .join("");
   async function onView() {
     try {
-      g("commercialRows").innerHTML = "<tr><td>Loading…</td></tr>";
+      g("commercialRows").innerHTML = KlyoCopy.html("<tr><td>Loading…</td></tr>");
       const result = await API.get(
         "/commercial/cases?search=" +
           encodeURIComponent(g("commercialSearch").value),
@@ -144,7 +144,7 @@ const KlyoCommercial = (() => {
       }
       const units = async () => {
         const cid = form.elements.company_id.value;
-        form.elements.company_unit_id.innerHTML = '<option value="">—</option>';
+        form.elements.company_unit_id.innerHTML = KlyoCopy.html("<option value=\"\">—</option>");
         if (cid) {
           const d = await API.get(`/commercial/companies/${cid}/details`);
           form.elements.company_unit_id.innerHTML += options(
@@ -586,7 +586,7 @@ const KlyoCommercial = (() => {
       const version = ++generation,
         cid = companySelect.value,
         select = g("commercialUnit-" + kind);
-      select.innerHTML = '<option value="">—</option>';
+      select.innerHTML = KlyoCopy.html("<option value=\"\">—</option>");
       if (!/^\d+$/.test(cid)) return;
       try {
         const d = await API.get(`/commercial/companies/${cid}/details`);

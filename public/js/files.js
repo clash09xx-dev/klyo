@@ -16,13 +16,13 @@ const KlyoFiles = (() => {
       .querySelector('.nav [data-view="history"]')
       .insertAdjacentHTML(
         "beforebegin",
-        '<a href="#" class="nav-item" data-view="files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h7l2-3h9v17H3z"/></svg><span data-i18n="nav.files">Files</span></a>',
+        KlyoCopy.html("<a href=\"#\" class=\"nav-item\" data-view=\"files\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><path d=\"M3 7h7l2-3h9v17H3z\"/></svg><span data-i18n=\"nav.files\">Files</span></a>"),
       );
     document
       .getElementById("productsView")
       .insertAdjacentHTML(
         "afterend",
-        '<section id="filesView" class="hidden"><div id="filesStatus"></div><div class="files-view-toolbar"><strong id="filesHeading">Workspace files</strong><button class="btn btn-ghost" id="filesClearFilter" hidden>All files</button><button class="btn btn-ghost" id="filesLink">Link from SharePoint</button><button class="btn btn-primary" id="filesUpload">Upload files</button><input type="file" id="filesInput" multiple hidden></div><div id="filesRows" class="table-card"></div></section>',
+        KlyoCopy.html("<section id=\"filesView\" class=\"hidden\"><div id=\"filesStatus\"></div><div class=\"files-view-toolbar\"><strong id=\"filesHeading\">Workspace files</strong><button class=\"btn btn-ghost\" id=\"filesClearFilter\" hidden>All files</button><button class=\"btn btn-ghost\" id=\"filesLink\">Link from SharePoint</button><button class=\"btn btn-primary\" id=\"filesUpload\">Upload files</button><input type=\"file\" id=\"filesInput\" multiple hidden></div><div id=\"filesRows\" class=\"table-card\"></div></section>"),
       );
     document.getElementById("filesUpload").onclick = () =>
       chooseRecord(filter, (record) => {
@@ -38,7 +38,7 @@ const KlyoFiles = (() => {
           try {
             await API.post("/sharepoint/link", { item_id: item.id, ...record });
             await refresh();
-            toast("File linked");
+            toast(KlyoCopy.text("File linked"));
           } catch (e) {
             toast(e.message, "error");
           }
@@ -54,7 +54,7 @@ const KlyoFiles = (() => {
     const c = state.connection,
       pl = KlyoI18n.getLang() === "pl",
       box = document.getElementById("filesStatus");
-    box.innerHTML = `<div class="files-status"><div><h3>SharePoint ${state.ready ? "· Connected" : state.connected ? "· Choose a folder" : "· Not connected"}</h3><div class="files-note">${state.ready ? esc([c.site_name, c.drive_name, c.root_name].join(" / ")) : state.configured ? "Connect your Microsoft work account and choose a document library for CRM files." : "Microsoft sign-in has not been configured yet. The app owner must complete the Entra setup before connecting."}</div><small>${API.scope() === "personal" ? "Personal connection · only you" : "Team connection · shared workspace"}</small></div>${state.can_manage ? '<button class="btn btn-ghost" id="filesSettings">' + (pl ? "Konfiguracja SharePoint" : "Configure SharePoint") + "</button>" : ""}</div>`;
+    box.innerHTML = `<div class="files-status"><div><h3>SharePoint ${state.ready ? KlyoCopy.text("· Connected") : state.connected ? KlyoCopy.text("· Choose a folder") : KlyoCopy.text("· Not connected")}</h3><div class="files-note">${state.ready ? esc([c.site_name, c.drive_name, c.root_name].join(" / ")) : state.configured ? KlyoCopy.text("Connect your Microsoft work account and choose a document library for CRM files.") : KlyoCopy.text("Microsoft sign-in has not been configured yet. The app owner must complete the Entra setup before connecting.")}</div><small>${API.scope() === "personal" ? KlyoCopy.text("Personal connection · only you") : KlyoCopy.text("Team connection · shared workspace")}</small></div>${state.can_manage ? KlyoCopy.html("<button class=\"btn btn-ghost\" id=\"filesSettings\">") + (pl ? "Konfiguracja SharePoint" : "Configure SharePoint") + "</button>" : ""}</div>`;
     document
       .getElementById("filesSettings")
       ?.addEventListener("click", () =>
@@ -65,15 +65,15 @@ const KlyoFiles = (() => {
     document.getElementById("filesLink").disabled = !state.ready || !editable();
     document.getElementById("filesClearFilter").hidden = !filter;
     document.getElementById("filesHeading").textContent = filter
-      ? "Files · " + filter.name
-      : "Workspace files";
+      ? KlyoCopy.text("Files") + " · " + filter.name
+      : KlyoCopy.text("Workspace files");
     const query = filter
         ? "?entity=" + filter.entity + "&entity_id=" + filter.entity_id
         : "",
       data = await API.get("/sharepoint/files" + query);
     document.getElementById("filesRows").innerHTML = data.files.length
-      ? `<div class="doc-scroll"><table class="doc-table"><thead><tr><th>File</th><th>Size</th><th>Linked record</th><th>Added</th><th></th></tr></thead><tbody>${data.files.map((f) => `<tr><td>${esc(f.name)}</td><td>${size(f.size)}</td><td>${esc(f.entity || "Workspace")}${f.entity_id ? " #" + f.entity_id : ""}</td><td>${esc(String(f.created_at).slice(0, 10))}</td><td><button class="btn btn-ghost btn-sm" data-open-file="${f.id}" ${state.ready ? "" : "disabled"}>Open</button>${editable() ? `<button class="btn btn-ghost btn-sm" data-unlink-file="${f.id}">Unlink</button>` : ""}</td></tr>`).join("")}</tbody></table></div>`
-      : '<div class="empty-state"><h3>No files linked yet</h3><p>Upload documents to your connected SharePoint folder, or link an existing file to a CRM record.</p></div>';
+      ? `<div class="doc-scroll"><table class="doc-table"><thead><tr><th>${KlyoCopy.label("File")}</th><th>${KlyoCopy.label("Size")}</th><th>${KlyoCopy.label("Linked record")}</th><th>${KlyoCopy.label("Added")}</th><th></th></tr></thead><tbody>${data.files.map((f) => `<tr><td>${esc(f.name)}</td><td>${size(f.size)}</td><td>${esc(f.entity || KlyoCopy.text("Workspace"))}${f.entity_id ? " #" + f.entity_id : ""}</td><td>${esc(String(f.created_at).slice(0, 10))}</td><td><button class="btn btn-ghost btn-sm" data-open-file="${f.id}" ${state.ready ? "" : "disabled"}>${KlyoCopy.label("Open")}</button>${editable() ? `<button class="btn btn-ghost btn-sm" data-unlink-file="${f.id}">${KlyoCopy.label("Unlink")}</button>` : ""}</td></tr>`).join("")}</tbody></table></div>`
+      : KlyoCopy.html("<div class=\"empty-state\"><h3>No files linked yet</h3><p>Upload documents to your connected SharePoint folder, or link an existing file to a CRM record.</p></div>");
     document.querySelectorAll("[data-open-file]").forEach(
       (b) =>
         (b.onclick = async () => {
@@ -96,7 +96,7 @@ const KlyoFiles = (() => {
         (b.onclick = async () => {
           if (
             !confirm(
-              "Remove this CRM link? The original file stays in SharePoint.",
+              KlyoCopy.text("Remove this CRM link? The original file stays in SharePoint."),
             )
           )
             return;
@@ -112,10 +112,10 @@ const KlyoFiles = (() => {
   async function configure() {
     state = await API.get("/sharepoint/status");
     if (!state.can_manage)
-      throw new Error("Only the owner can configure the workspace connection.");
+      throw new Error(KlyoCopy.text("Only the owner can configure the workspace connection."));
     const d = dialog(
-      "SharePoint connection",
-      `<p>${API.scope() === "personal" ? "This connection is private to your Personal space." : "This connection is shared with your team. Only the team owner can change it."}</p>${!state.configured ? '<p>Microsoft sign-in needs to be enabled by the Klyo app owner. See the setup guide for Entra app registration and Railway settings.</p><a class="btn btn-ghost" href="/docs/sharepoint-setup" target="_blank" rel="noopener">Open setup guide</a>' : `<p>${esc(state.connection?.account_name || "Sign in with your Microsoft work or school account.")}</p><div class="doc-actions"><button class="btn btn-primary" id="connectMicrosoft">${state.connected ? "Reconnect Microsoft" : "Connect Microsoft"}</button>${state.connected ? '<button class="btn btn-ghost" id="chooseLibrary">Choose library / folder</button><button class="btn btn-ghost" id="disconnectMicrosoft">Disconnect</button>' : ""}</div><div id="librarySetup"></div>`}`,
+      KlyoCopy.text("SharePoint connection"),
+      `<p>${API.scope() === "personal" ? KlyoCopy.text("This connection is private to your Personal space.") : KlyoCopy.text("This connection is shared with your team. Only the team owner can change it.")}</p>${!state.configured ? KlyoCopy.html("<p>Microsoft sign-in needs to be enabled by the Klyo app owner. See the setup guide for Entra app registration and Railway settings.</p><a class=\"btn btn-ghost\" href=\"/docs/sharepoint-setup\" target=\"_blank\" rel=\"noopener\">Open setup guide</a>") : `<p>${esc(state.connection?.account_name || KlyoCopy.text("Sign in with your Microsoft work or school account."))}</p><div class="doc-actions"><button class="btn btn-primary" id="connectMicrosoft">${state.connected ? KlyoCopy.text("Reconnect Microsoft") : KlyoCopy.text("Connect Microsoft")}</button>${state.connected ? KlyoCopy.html("<button class=\"btn btn-ghost\" id=\"chooseLibrary\">Choose library / folder</button><button class=\"btn btn-ghost\" id=\"disconnectMicrosoft\">Disconnect</button>") : ""}</div><div id="librarySetup"></div>`}`,
     );
     d.find("#connectMicrosoft")?.addEventListener("click", async () => {
       try {
@@ -130,7 +130,7 @@ const KlyoFiles = (() => {
     d.find("#disconnectMicrosoft")?.addEventListener("click", async () => {
       if (
         !confirm(
-          "Disconnect SharePoint for this workspace? Files remain in Microsoft and CRM links are kept.",
+          KlyoCopy.text("Disconnect SharePoint for this workspace? Files remain in Microsoft and CRM links are kept."),
         )
       )
         return;
@@ -148,7 +148,7 @@ const KlyoFiles = (() => {
   async function setup(d) {
     const host = d.find("#librarySetup");
     host.innerHTML =
-      '<label>Find your SharePoint site<input id="sharepointSiteSearch" placeholder="Company or site name"></label><button class="btn btn-ghost" id="findSharepointSites">Search sites</button><div id="sharepointSites"></div><div id="sharepointLibraries"></div><div id="sharepointSetupFolders"></div>';
+      KlyoCopy.html("<label>Find your SharePoint site<input id=\"sharepointSiteSearch\" placeholder=\"Company or site name\"></label><button class=\"btn btn-ghost\" id=\"findSharepointSites\">Search sites</button><div id=\"sharepointSites\"></div><div id=\"sharepointLibraries\"></div><div id=\"sharepointSetupFolders\"></div>");
     d.find("#findSharepointSites").onclick = async () => {
       try {
         const data = await API.get(
@@ -162,7 +162,7 @@ const KlyoFiles = (() => {
                   `<button class="doc-folder" data-sp-site="${esc(s.id)}">${esc(s.name)}</button>`,
               )
               .join("")
-          : "<p>No matching sites. Check Microsoft permissions or try another site name.</p>";
+          : KlyoCopy.html("<p>No matching sites. Check Microsoft permissions or try another site name.</p>");
         d.root.querySelectorAll("[data-sp-site]").forEach(
           (b) =>
             (b.onclick = async () => {
@@ -172,7 +172,7 @@ const KlyoFiles = (() => {
                     encodeURIComponent(b.dataset.spSite),
                 );
                 d.find("#sharepointLibraries").innerHTML =
-                  "<h3>Document libraries</h3>" +
+                  KlyoCopy.html("<h3>Document libraries</h3>") +
                   drives.drives
                     .map(
                       (l) =>
@@ -211,7 +211,7 @@ const KlyoFiles = (() => {
                 (cursor ? "&cursor=" + encodeURIComponent(cursor) : ""),
             );
           if (!append)
-            host.innerHTML = `<p>${path.map((p) => esc(p.name)).join(" / ")}</p><div class="doc-actions"><button class="btn btn-ghost" id="spSetupBack" ${path.length < 2 ? "disabled" : ""}>Parent folder</button><button class="btn btn-primary" id="spUseFolder">Use this folder for CRM files</button></div><div id="spSetupItems"></div><button class="btn btn-ghost" id="spMoreSetup" hidden>Load more</button>`;
+            host.innerHTML = `<p>${path.map((p) => esc(p.name)).join(" / ")}</p><div class="doc-actions"><button class="btn btn-ghost" id="spSetupBack" ${path.length < 2 ? "disabled" : ""}>${KlyoCopy.label("Parent folder")}</button><button class="btn btn-primary" id="spUseFolder">${KlyoCopy.label("Use this folder for CRM files")}</button></div><div id="spSetupItems"></div><button class="btn btn-ghost" id="spMoreSetup" hidden>${KlyoCopy.label("Load more")}</button>`;
           host.querySelector("#spSetupItems").insertAdjacentHTML(
             "beforeend",
             data.items
@@ -245,7 +245,7 @@ const KlyoFiles = (() => {
               });
               d.close();
               await refresh();
-              toast("SharePoint folder connected");
+              toast(KlyoCopy.text("SharePoint folder connected"));
             } catch (e) {
               d.error(e);
             }
@@ -264,7 +264,7 @@ const KlyoFiles = (() => {
     const status = await API.get("/sharepoint/status");
     if (!status.ready)
       throw new Error("Open Files and connect a SharePoint folder first.");
-    const d = dialog("Choose a SharePoint file", '<div id="spPicker"></div>');
+    const d = dialog(KlyoCopy.text("Choose a SharePoint file"), KlyoCopy.html("<div id=\"spPicker\"></div>"));
     let path = [
       { id: status.connection.root_id, name: status.connection.root_name },
     ];
@@ -277,7 +277,7 @@ const KlyoFiles = (() => {
           ),
           host = d.find("#spPicker");
         if (!append)
-          host.innerHTML = `<p>${path.map((p) => esc(p.name)).join(" / ")}</p><button class="btn btn-ghost" id="spPickerBack" ${path.length < 2 ? "disabled" : ""}>Parent folder</button><div id="spPickerItems"></div><button class="btn btn-ghost" id="spPickerMore" hidden>Load more</button>`;
+          host.innerHTML = `<p>${path.map((p) => esc(p.name)).join(" / ")}</p><button class="btn btn-ghost" id="spPickerBack" ${path.length < 2 ? "disabled" : ""}>${KlyoCopy.label("Parent folder")}</button><div id="spPickerItems"></div><button class="btn btn-ghost" id="spPickerMore" hidden>${KlyoCopy.label("Load more")}</button>`;
         host
           .querySelector("#spPickerItems")
           .insertAdjacentHTML(
@@ -321,15 +321,15 @@ const KlyoFiles = (() => {
       return;
     }
     const d = dialog(
-      "Link files to a record",
-      '<p>Keep these files in the workspace, or attach them to a particular customer, product or offer.</p><div class="files-record"><select id="fileRecordType"><option value="">Workspace files</option><option value="contact">Contact</option><option value="company">Company</option><option value="deal">Deal</option><option value="product">Product</option><option value="quote">Quote</option><option value="project">Project</option><option value="order">Order</option><option value="equipment">Equipment</option></select><select id="fileRecordId" disabled><option value="">Choose a record</option></select></div><button id="fileRecordContinue" class="btn btn-primary">Continue</button>',
+      KlyoCopy.text("Link files to a record"),
+      KlyoCopy.html("<p>Keep these files in the workspace, or attach them to a particular customer, product or offer.</p><div class=\"files-record\"><select id=\"fileRecordType\"><option value=\"\">Workspace files</option><option value=\"contact\">Contact</option><option value=\"company\">Company</option><option value=\"deal\">Deal</option><option value=\"product\">Product</option><option value=\"quote\">Quote</option><option value=\"project\">Project</option><option value=\"order\">Order</option><option value=\"equipment\">Equipment</option></select><select id=\"fileRecordId\" disabled><option value=\"\">Choose a record</option></select></div><button id=\"fileRecordContinue\" class=\"btn btn-primary\">Continue</button>"),
     );
     d.find("#fileRecordType").onchange = async () => {
       try {
         const kind = d.find("#fileRecordType").value,
           el = d.find("#fileRecordId");
         el.disabled = !kind;
-        el.innerHTML = '<option value="">Choose a record</option>';
+        el.innerHTML = KlyoCopy.html("<option value=\"\">Choose a record</option>");
         if (!kind) return;
         const data = await API.get(
             "/" +
@@ -378,14 +378,14 @@ const KlyoFiles = (() => {
   async function upload(files, record) {
     if (!files.length) return;
     const d = dialog(
-      "Upload to SharePoint",
-      '<p id="fileUploadName"></p><progress class="files-progress" id="fileUploadProgress" value="0" max="100"></progress><p id="fileUploadLabel">Preparing…</p><p>You can keep working after the upload finishes. Closing this window stops after the current chunk. A short filename suffix protects existing documents from being replaced.</p>',
+      KlyoCopy.text("Upload to SharePoint"),
+      KlyoCopy.html("<p id=\"fileUploadName\"></p><progress class=\"files-progress\" id=\"fileUploadProgress\" value=\"0\" max=\"100\"></progress><p id=\"fileUploadLabel\">Preparing…</p><p>You can keep working after the upload finishes. Closing this window stops after the current chunk. A short filename suffix protects existing documents from being replaced.</p>"),
     );
     for (let index = 0; index < files.length; index++) {
       if (!d.root.isConnected) break;
       const file = files[index];
       d.find("#fileUploadProgress").value = 0;
-      d.find("#fileUploadLabel").textContent = "Preparing…";
+      d.find("#fileUploadLabel").textContent = KlyoCopy.text("Preparing…");
       d.find("#fileUploadName").textContent =
         `${index + 1}/${files.length} · ${file.name} · ${size(file.size)}`;
       const session = await API.post("/sharepoint/uploads", {
@@ -431,7 +431,7 @@ const KlyoFiles = (() => {
     }
     if (d.root.isConnected) {
       d.close();
-      toast("Files uploaded to SharePoint");
+      toast(KlyoCopy.text("Files uploaded to SharePoint"));
     }
     document.getElementById("filesInput").value = "";
     await refresh();
@@ -447,7 +447,7 @@ const KlyoFiles = (() => {
     b.type = "button";
     b.className = "btn btn-ghost btn-sm";
     b.dataset.recordFiles = "";
-    b.textContent = "Files";
+    b.textContent = KlyoCopy.text("Files");
     b.onclick = () => {
       filter = { entity: kind, entity_id: id, name: name || kind };
       document.getElementById(overlay).classList.add("hidden");
@@ -469,13 +469,13 @@ const KlyoFiles = (() => {
     );
     switchView("files");
     if (outcome === "connected") {
-      toast("Microsoft connected. Choose a library and folder.");
+      toast(KlyoCopy.text("Microsoft connected. Choose a library and folder."));
       await configure();
     } else
       toast(
         outcome === "cancelled"
-          ? "Microsoft connection cancelled."
-          : "Unable to connect Microsoft. Try again.",
+          ? KlyoCopy.text("Microsoft connection cancelled.")
+          : KlyoCopy.text("Unable to connect Microsoft. Try again."),
         "error",
       );
   }

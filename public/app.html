@@ -42,9 +42,9 @@
       <div class="brand-name">Kly<span>o</span></div>
     </div>
 
-    <nav class="nav" aria-label="CRM navigation">
-<a href="#" class="nav-item" data-view="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><path d="M14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg><span data-sales-label="overview">Overview</span></a>
-<div class="nav-group"><div class="nav-group-label" data-sales-label="salesGroup">Sales</div>
+    <nav class="nav" aria-label="CRM navigation" data-ui-aria-label="CRM navigation">
+<a href="#" class="nav-item" data-view="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><path d="M14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg><span data-sales-label="overview"><span data-ui-copy="Overview">Overview</span></span></a>
+<div class="nav-group"><div class="nav-group-label" data-sales-label="salesGroup"><span data-ui-copy="Sales">Sales</span></div>
 <a href="#" class="nav-item active" data-view="pipeline">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 7 4-14 3 9 2-5h5"/></svg>
         <span data-i18n="nav.pipeline">Pipeline</span>
@@ -71,7 +71,7 @@
         <span data-i18n="nav.clients">Clients</span>
       </a>
 </div>
-<div class="nav-group"><div class="nav-group-label" data-sales-label="workGroup">Work</div>
+<div class="nav-group"><div class="nav-group-label" data-sales-label="workGroup"><span data-ui-copy="Work">Work</span></div>
 <a href="#" class="nav-item" data-view="tasks">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
         <span data-i18n="nav.tasks">Tasks</span>
@@ -85,7 +85,7 @@
         <span data-i18n="nav.reminders">Reminders</span>
       </a>
 </div>
-<div class="nav-group"><div class="nav-group-label" data-sales-label="workspaceGroup">Workspace</div>
+<div class="nav-group"><div class="nav-group-label" data-sales-label="workspaceGroup"><span data-ui-copy="Workspace">Workspace</span></div>
 <a href="#" class="nav-item" data-view="history">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
         <span data-i18n="nav.history">History</span>
@@ -96,7 +96,7 @@
       </a>
 <a href="#" class="nav-item hidden" data-view="platform" id="platformNavItem" style="border-top:1px solid var(--border-soft); margin-top:8px; padding-top:14px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-        <span>Platform</span>
+        <span><span data-ui-copy="Platform">Platform</span></span>
       </a>
 </div>
     </nav>
@@ -109,7 +109,7 @@
           <div class="user-role" id="userRole">—</div>
         </div>
       </div>
-      <button type="button" class="help-fab nav-item" id="helpFab" title="Replay the welcome tour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4.3 1.7c-1 .8-1.8 1.1-1.8 2.8M12 17h.01"/></svg><span data-sales-label="helpGuide">Help &amp; guide</span></button>
+      <button type="button" class="help-fab nav-item" id="helpFab" title="Replay the welcome tour" data-ui-title="Replay the welcome tour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4.3 1.7c-1 .8-1.8 1.1-1.8 2.8M12 17h.01"/></svg><span data-sales-label="helpGuide"><span data-ui-copy="Help">Help</span> &amp; guide</span></button>
       <a href="#" class="nav-item" id="appearanceBtn" style="margin-top:6px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>
         <span data-i18n="nav.settings">Settings</span>
@@ -123,9 +123,9 @@
 
   <div class="main">
     <header class="topbar">
-      <div class="page-heading"><span class="workspace-context" data-sales-label="workspaceGroup">Workspace</span><span class="breadcrumb-separator" aria-hidden="true">/</span>
-        <h1 id="viewTitle">Pipeline</h1>
-        <div class="topbar-sub" id="viewSub">Every client, connected by name, contact details, and history.</div>
+      <div class="page-heading"><span class="workspace-context" data-sales-label="workspaceGroup"><span data-ui-copy="Workspace">Workspace</span></span><span class="breadcrumb-separator" aria-hidden="true">/</span>
+        <h1 id="viewTitle"><span data-ui-copy="Pipeline">Pipeline</span></h1>
+        <div class="topbar-sub" id="viewSub"><span data-ui-copy="Every client, connected by name, contact details, and history.">Every client, connected by name, contact details, and history.</span></div>
       </div>
       <div class="topbar-actions" style="display:flex; gap:12px; align-items:center;">
 
@@ -148,27 +148,27 @@
     <main class="content">
       <div class="hidden" id="billingBanner" style="display:flex; align-items:center; justify-content:space-between; gap:16px; background:linear-gradient(160deg, var(--surface), var(--bg-soft)); border:1px solid var(--border); border-radius:var(--radius); padding:14px 18px; margin-bottom:20px;">
         <div>
-          <strong id="billingBannerTitle" style="font-size:13.5px;">Your free trial is active</strong>
+          <strong id="billingBannerTitle" style="font-size:13.5px;"><span data-ui-copy="Your free trial is active">Your free trial is active</span></strong>
           <div class="muted" id="billingBannerSub" style="font-size:12.5px; margin-top:2px;"></div>
         </div>
-        <button class="btn btn-primary btn-sm" id="upgradeBtn">Upgrade now</button>
+        <button class="btn btn-primary btn-sm" id="upgradeBtn"><span data-ui-copy="Upgrade now">Upgrade now</span></button>
       </div>
 
       <!-- PIPELINE VIEW -->
       <section id="salesOverviewView" class="hidden">
-        <div class="workspace-heading"><div><div class="eyebrow">Sales workspace</div><h2 data-sales-label="allTime">All-time workspace summary</h2></div><p class="muted" data-sales-label="overviewSub"></p></div>
+        <div class="workspace-heading"><div><div class="eyebrow"><span data-ui-copy="Sales workspace">Sales workspace</span></div><h2 data-sales-label="allTime"><span data-ui-copy="All-time workspace summary">All-time workspace summary</span></h2></div><p class="muted" data-sales-label="overviewSub"></p></div>
         <div class="sales-metrics">
-          <div class="sales-metric"><span data-sales-label="open">Open deals</span><strong id="salesOpenCount">—</strong></div>
-          <div class="sales-metric"><span data-sales-label="won">Won value</span><strong id="salesWonValue">—</strong></div>
-          <div class="sales-metric"><span data-sales-label="winRate">Win rate</span><strong id="salesWinRate">—</strong></div>
-          <div class="sales-metric"><span data-sales-label="overdue">Overdue</span><strong id="salesOverdueCount">—</strong></div>
-          <div class="sales-metric"><span data-sales-label="noNext">No next step</span><strong id="salesNoNextCount">—</strong></div>
+          <div class="sales-metric"><span data-sales-label="open"><span data-ui-copy="Open deals">Open deals</span></span><strong id="salesOpenCount">—</strong></div>
+          <div class="sales-metric"><span data-sales-label="won"><span data-ui-copy="Won value">Won value</span></span><strong id="salesWonValue">—</strong></div>
+          <div class="sales-metric"><span data-sales-label="winRate"><span data-ui-copy="Win rate">Win rate</span></span><strong id="salesWinRate">—</strong></div>
+          <div class="sales-metric"><span data-sales-label="overdue"><span data-ui-copy="Overdue">Overdue</span></span><strong id="salesOverdueCount">—</strong></div>
+          <div class="sales-metric"><span data-sales-label="noNext"><span data-ui-copy="No next step">No next step</span></span><strong id="salesNoNextCount">—</strong></div>
         </div>
-        <div class="overview-columns"><section class="workspace-section"><h3 data-sales-label="pipeline">Open pipeline</h3><div class="table-card"><table><thead><tr><th data-sales-label="stage">Stage</th><th data-sales-label="deals">Deals</th><th data-sales-label="value">Value</th></tr></thead><tbody id="salesStageRows"></tbody></table></div></section><section class="workspace-section"><h3 data-sales-label="lossReasons">Loss reasons</h3><div id="salesLossReasons" class="workspace-list"></div></section></div>
+        <div class="overview-columns"><section class="workspace-section"><h3 data-sales-label="pipeline"><span data-ui-copy="Open pipeline">Open pipeline</span></h3><div class="table-card"><table><thead><tr><th data-sales-label="stage"><span data-ui-copy="Stage">Stage</span></th><th data-sales-label="deals"><span data-ui-copy="Deals">Deals</span></th><th data-sales-label="value"><span data-ui-copy="Value">Value</span></th></tr></thead><tbody id="salesStageRows"></tbody></table></div></section><section class="workspace-section"><h3 data-sales-label="lossReasons"><span data-ui-copy="Loss reasons">Loss reasons</span></h3><div id="salesLossReasons" class="workspace-list"></div></section></div>
         <div class="form-error" id="salesOverviewError"></div>
       </section>
       <section id="pipelineView">
-        <div class="collection-heading"><div><h2 data-sales-label="contactsTitle">Contacts</h2><p data-sales-label="contactsDescription">Contact details, companies and relationship history.</p></div><span id="resultCount" class="collection-count"></span></div>
+        <div class="collection-heading"><div><h2 data-sales-label="contactsTitle"><span data-ui-copy="Contacts">Contacts</span></h2><p data-sales-label="contactsDescription"><span data-ui-copy="Contact details, companies and relationship history.">Contact details, companies and relationship history.</span></p></div><span id="resultCount" class="collection-count"></span></div>
         <div class="stat-grid">
           <div class="stat-card">
             <div class="label"><span class="dot"></span><span data-i18n="ui.stat_total">Total contacts</span></div>
@@ -192,7 +192,7 @@
         <div class="filter-bar contact-toolbar">
         <div class="search-box" id="searchBoxWrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.8-3.8"/></svg>
-          <input id="searchInput" type="text" data-i18n-placeholder="ui.search_contacts" placeholder="Search name, email, phone, company…" />
+          <input id="searchInput" type="text" data-i18n-placeholder="ui.search_contacts" placeholder="Search name, email, phone, company…"  data-ui-placeholder="Search name, email, phone, company…"/>
         </div>
           <select id="filterStatus">
             <option value="" data-i18n="ui.all_stages">All stages</option>
@@ -239,8 +239,8 @@
           <div class="label" style="font-size:12px; color:var(--text-dim); margin-bottom:8px;" data-i18n="ui.invite_teammates">Invite teammates</div>
           <p class="muted" style="font-size:13px; margin-bottom:10px;" data-i18n="ui.invite_sub">Share this code — anyone who signs up with it joins your workspace instead of creating a new one.</p>
           <div id="teamUserLimitNotice" class="team-user-limit" role="status" hidden>
-            <p data-ws-en="This plan has reached its maximum number of users. Upgrade to a higher plan to add more users." data-ws-pl="W tym planie osiągnięto maksymalną liczbę użytkowników. Przejdź na wyższy plan, aby dodać kolejne osoby.">This plan has reached its maximum number of users. Upgrade to a higher plan to add more users.</p>
-            <button type="button" class="btn btn-primary btn-sm" id="upgradeTeamPlanBtn" data-ws-en="Upgrade plan" data-ws-pl="Przejdź na wyższy plan">Upgrade plan</button>
+            <p data-ws-en="This plan has reached its maximum number of users. Upgrade to a higher plan to add more users." data-ws-pl="W tym planie osiągnięto maksymalną liczbę użytkowników. Przejdź na wyższy plan, aby dodać kolejne osoby."><span data-ui-copy="This plan has reached its maximum number of users. Upgrade to a higher plan to add more users.">This plan has reached its maximum number of users. Upgrade to a higher plan to add more users.</span></p>
+            <button type="button" class="btn btn-primary btn-sm" id="upgradeTeamPlanBtn" data-ws-en="Upgrade plan" data-ws-pl="Przejdź na wyższy plan"><span data-ui-copy="Upgrade plan">Upgrade plan</span></button>
           </div>
           <div style="display:flex; gap:10px; align-items:center;">
             <code class="mono" id="inviteCodeValue" style="font-size:16px; padding:8px 12px; background:var(--bg-soft); border:1px solid var(--border-soft); border-radius:var(--radius-sm);">—</code>
@@ -279,7 +279,7 @@
         <div class="filter-bar">
           <div class="search-box" style="width:320px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.8-3.8"/></svg>
-            <input id="companySearchInput" type="text" data-i18n-placeholder="ui.search_companies" placeholder="Search companies…" />
+            <input id="companySearchInput" type="text" data-i18n-placeholder="ui.search_companies" placeholder="Search companies…"  data-ui-placeholder="Search companies…"/>
           </div>
           <div class="spacer"></div>
           <button class="btn btn-ghost btn-sm" id="exportCompaniesBtn">
@@ -402,8 +402,8 @@
 
       <!-- DEALS VIEW -->
       <section id="dealsView" class="hidden">
-        <div class="pipeline-toolbar"><label for="salesPipelineSelect" data-pipeline-label="pipeline">Sales pipeline</label><select id="salesPipelineSelect" aria-label="Sales pipeline"></select><button type="button" class="btn btn-ghost btn-sm" id="editPipelineBtn" data-pipeline-label="edit">Edit pipeline</button><button type="button" class="btn btn-ghost btn-sm" id="addPipelineBtn">+ <span data-pipeline-label="add">Add another pipeline</span></button><button type="button" class="btn btn-ghost btn-sm" id="removePipelineBtn" data-pipeline-label="remove">Delete pipeline</button><details id="pipelinePurpose"><summary data-pipeline-label="purpose">What is this pipeline for?</summary><p id="pipelineDescription"></p></details></div>
-        <div class="saved-views-bar"><input id="dealQuickSearch" type="search" aria-label="Search deals" placeholder="Search deals"/><select id="savedDealView" aria-label="Saved views"><option value="">Saved views</option></select><button class="btn btn-ghost btn-sm" id="saveDealViewBtn" data-sales-label="saveView">Save view</button><button class="btn btn-ghost btn-sm" id="deleteDealViewBtn" data-sales-label="deleteView">Delete view</button><span class="muted" id="dealMatchCount"></span></div>
+        <div class="pipeline-toolbar"><label for="salesPipelineSelect" data-pipeline-label="pipeline"><span data-ui-copy="Sales pipeline">Sales pipeline</span></label><select id="salesPipelineSelect" aria-label="Sales pipeline" data-ui-aria-label="Sales pipeline"></select><button type="button" class="btn btn-ghost btn-sm" id="editPipelineBtn" data-pipeline-label="edit"><span data-ui-copy="Edit pipeline">Edit pipeline</span></button><button type="button" class="btn btn-ghost btn-sm" id="addPipelineBtn">+ <span data-pipeline-label="add"><span data-ui-copy="Add another pipeline">Add another pipeline</span></span></button><button type="button" class="btn btn-ghost btn-sm" id="removePipelineBtn" data-pipeline-label="remove"><span data-ui-copy="Delete pipeline">Delete pipeline</span></button><details id="pipelinePurpose"><summary data-pipeline-label="purpose"><span data-ui-copy="What is this pipeline for?">What is this pipeline for?</span></summary><p id="pipelineDescription"></p></details></div>
+        <div class="saved-views-bar"><input id="dealQuickSearch" type="search" aria-label="Search deals" placeholder="Search deals" data-ui-aria-label="Search deals" data-ui-placeholder="Search deals"/><select id="savedDealView" aria-label="Saved views" data-ui-aria-label="Saved views"><option value="" data-ui-copy="Saved views">Saved views</option></select><button class="btn btn-ghost btn-sm" id="saveDealViewBtn" data-sales-label="saveView"><span data-ui-copy="Save view">Save view</span></button><button class="btn btn-ghost btn-sm" id="deleteDealViewBtn" data-sales-label="deleteView"><span data-ui-copy="Delete view">Delete view</span></button><span class="muted" id="dealMatchCount"></span></div>
         <div class="filter-bar">
           <select id="dealStageFilter"><option value="" data-i18n="ui.all_stages">All stages</option></select>
           <select id="dealAssigneeFilter"><option value="" data-i18n="ui.all_owners">All owners</option></select>
@@ -414,7 +414,7 @@
             <option value="won" data-i18n="deals.status_won">Won</option>
             <option value="lost" data-i18n="deals.status_lost">Lost</option>
           </select>
-          <select id="dealAttentionFilter" aria-label="Activity filter"><option value="" data-sales-label="allActivity">All activity</option><option value="today" data-sales-label="today">Due today</option><option value="overdue" data-sales-label="overdue">Overdue</option><option value="no_next" data-sales-label="noNext">No next step</option><option value="stale" data-sales-label="stale">7+ days in stage</option></select>
+          <select id="dealAttentionFilter" aria-label="Activity filter" data-ui-aria-label="Activity filter"><option value="" data-sales-label="allActivity" data-ui-copy="All activity">All activity</option><option value="today" data-sales-label="today" data-ui-copy="Due today">Due today</option><option value="overdue" data-sales-label="overdue" data-ui-copy="Overdue">Overdue</option><option value="no_next" data-sales-label="noNext" data-ui-copy="No next step">No next step</option><option value="stale" data-sales-label="stale" data-ui-copy="7+ days in stage">7+ days in stage</option></select>
           <div class="spacer"></div>
           <button class="btn btn-ghost btn-sm" id="manageStagesBtn" data-i18n="ui.manage_stages">Manage stages</button>
           <button class="btn btn-primary btn-sm" id="addDealBtn">
@@ -470,19 +470,19 @@
       <section id="platformView" class="hidden">
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="label"><span class="dot"></span>Total workspaces</div>
+            <div class="label"><span class="dot"></span><span data-ui-copy="Total workspaces">Total workspaces</span></div>
             <div class="value" id="platTotalWorkspaces">0</div>
           </div>
           <div class="stat-card">
-            <div class="label"><span class="dot" style="background:var(--customer)"></span>Active subscriptions</div>
+            <div class="label"><span class="dot" style="background:var(--customer)"></span><span data-ui-copy="Active subscriptions">Active subscriptions</span></div>
             <div class="value" id="platActive">0</div>
           </div>
           <div class="stat-card">
-            <div class="label"><span class="dot" style="background:var(--lead)"></span>On trial</div>
+            <div class="label"><span class="dot" style="background:var(--lead)"></span><span data-ui-copy="On trial">On trial</span></div>
             <div class="value" id="platTrial">0</div>
           </div>
           <div class="stat-card">
-            <div class="label"><span class="dot" style="background:var(--accent-2)"></span>Estimated MRR</div>
+            <div class="label"><span class="dot" style="background:var(--accent-2)"></span><span data-ui-copy="Estimated MRR">Estimated MRR</span></div>
             <div class="value" id="platMrr">$0</div>
           </div>
         </div>
@@ -490,38 +490,38 @@
           <span class="muted" id="platSecondaryStats">—</span>
         </div>
 
-        <div class="section-title">Site visits <span class="muted" style="text-transform:none; letter-spacing:0; font-size:11px;">(built-in counter — approximate, not bot-filtered)</span></div>
+        <div class="section-title"><span data-ui-copy="Site visits">Site visits</span> <span class="muted" style="text-transform:none; letter-spacing:0; font-size:11px;"><span data-ui-copy="(built-in counter — approximate, not bot-filtered)">(built-in counter — approximate, not bot-filtered)</span></span></div>
         <div class="stat-grid" style="margin-bottom:20px;">
           <div class="stat-card">
-            <div class="label"><span class="dot"></span>Today</div>
+            <div class="label"><span class="dot"></span><span data-ui-copy="Today">Today</span></div>
             <div class="value" id="platViewsToday">0</div>
           </div>
           <div class="stat-card">
-            <div class="label"><span class="dot" style="background:var(--accent-2)"></span>Last 7 days</div>
+            <div class="label"><span class="dot" style="background:var(--accent-2)"></span><span data-ui-copy="Last 7 days">Last 7 days</span></div>
             <div class="value" id="platViews7d">0</div>
           </div>
           <div class="stat-card">
-            <div class="label"><span class="dot" style="background:var(--customer)"></span>Last 30 days</div>
+            <div class="label"><span class="dot" style="background:var(--customer)"></span><span data-ui-copy="Last 30 days">Last 30 days</span></div>
             <div class="value" id="platViews30d">0</div>
           </div>
           <div class="stat-card">
-            <div class="label"><span class="dot" style="background:var(--lead)"></span>All time</div>
+            <div class="label"><span class="dot" style="background:var(--lead)"></span><span data-ui-copy="All time">All time</span></div>
             <div class="value" id="platViewsTotal">0</div>
           </div>
         </div>
 
-        <div class="section-title">Workspaces</div>
+        <div class="section-title"><span data-ui-copy="Workspaces">Workspaces</span></div>
         <div class="table-card" style="margin-bottom:20px;">
           <table>
-            <thead><tr><th>Business</th><th>Plan</th><th>Tier</th><th>Users</th><th>Contacts</th><th>Signed up</th><th></th></tr></thead>
+            <thead><tr><th><span data-ui-copy="Business">Business</span></th><th><span data-ui-copy="Plan">Plan</span></th><th><span data-ui-copy="Tier">Tier</span></th><th><span data-ui-copy="Users">Users</span></th><th><span data-ui-copy="Contacts">Contacts</span></th><th><span data-ui-copy="Signed up">Signed up</span></th><th></th></tr></thead>
             <tbody id="platWorkspacesBody"></tbody>
           </table>
         </div>
 
-        <div class="section-title">Users</div>
+        <div class="section-title"><span data-ui-copy="Users">Users</span></div>
         <div class="table-card">
           <table>
-            <thead><tr><th>Name</th><th>Email</th><th>Workspace</th><th>Role</th><th>Via</th><th>Joined</th></tr></thead>
+            <thead><tr><th><span data-ui-copy="Name">Name</span></th><th><span data-ui-copy="Email">Email</span></th><th><span data-ui-copy="Workspace">Workspace</span></th><th><span data-ui-copy="Role">Role</span></th><th><span data-ui-copy="Via">Via</span></th><th><span data-ui-copy="Joined">Joined</span></th></tr></thead>
             <tbody id="platUsersBody"></tbody>
           </table>
         </div>
@@ -530,7 +530,7 @@
       <!-- CLIENTS VIEW -->
       <section id="clientsView" class="hidden">
         <div class="filter-bar">
-          <input type="text" id="clientsSearch" class="input" placeholder="Search clients…" style="max-width:260px;" data-i18n-placeholder="clients.search">
+          <input type="text" id="clientsSearch" class="input" placeholder="Search clients…" style="max-width:260px;" data-i18n-placeholder="clients.search" data-ui-placeholder="Search clients…">
           <select id="clientsOwnerFilter">
             <option value="" data-i18n="ui.all_owners">All owners</option>
           </select>
@@ -544,17 +544,17 @@
                 <th data-i18n="ui.col_name">Name</th>
                 <th data-i18n="ui.col_company">Company</th>
                 <th data-i18n="ui.col_owner">Owner</th>
-                <th>Revenue</th>
-                <th>Quotes</th>
-                <th>Last purchase</th>
+                <th><span data-ui-copy="Revenue">Revenue</span></th>
+                <th><span data-ui-copy="Quotes">Quotes</span></th>
+                <th><span data-ui-copy="Last purchase">Last purchase</span></th>
               </tr>
             </thead>
             <tbody id="clientsBody"></tbody>
           </table>
           <div class="empty-state hidden" id="clientsEmptyState">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
-            <h3>No clients yet</h3>
-            <p>Clients appear here when a contact reaches <strong>Customer</strong> stage or has an accepted quote.</p>
+            <h3><span data-ui-copy="No clients yet">No clients yet</span></h3>
+            <p><span data-ui-copy="Clients appear here when a contact reaches">Clients appear here when a contact reaches</span> <strong><span data-ui-copy="Customer">Customer</span></strong> <span data-ui-copy="stage or has an accepted quote.">stage or has an accepted quote.</span></p>
           </div>
         </div>
       </section>
@@ -562,12 +562,12 @@
       <!-- PRODUCTS VIEW -->
       <section id="productsView" class="hidden">
         <div class="filter-bar">
-          <input type="text" id="productsSearch" class="input" placeholder="Search products…" style="max-width:240px;">
+          <input type="text" id="productsSearch" class="input" placeholder="Search products…" style="max-width:240px;" data-ui-placeholder="Search products…">
           <select id="productsCategoryFilter">
-            <option value="">All categories</option>
+            <option value="" data-ui-copy="All categories">All categories</option>
           </select>
           <div class="spacer"></div>
-          <button class="btn btn-primary btn-sm" id="addProductViewBtn">+ Add product</button>
+          <button class="btn btn-primary btn-sm" id="addProductViewBtn"><span data-ui-copy="+ Add product">+ Add product</span></button>
         </div>
         <div class="table-card">
           <table id="productsTable">
@@ -575,10 +575,10 @@
               <tr>
                 <th></th>
                 <th data-i18n="ui.col_name">Name</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Currency</th>
-                <th>Unit</th>
+                <th><span data-ui-copy="Category">Category</span></th>
+                <th><span data-ui-copy="Price">Price</span></th>
+                <th><span data-ui-copy="Currency">Currency</span></th>
+                <th><span data-ui-copy="Unit">Unit</span></th>
                 <th></th>
               </tr>
             </thead>
@@ -586,8 +586,8 @@
           </table>
           <div class="empty-state hidden" id="productsEmptyState">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-            <h3>No products yet</h3>
-            <p>Add your first product or service to start building quotes.</p>
+            <h3><span data-ui-copy="No products yet">No products yet</span></h3>
+            <p><span data-ui-copy="Add your first product or service to start building quotes.">Add your first product or service to start building quotes.</span></p>
           </div>
         </div>
       </section>
@@ -603,13 +603,13 @@
           <button class="btn btn-primary btn-sm" id="addEventBtn" data-i18n="calendar.add_event_btn">+ Add event</button>
         </div>
         <div id="calendarDayHeader" style="display:grid; grid-template-columns:repeat(7,1fr); gap:1px; margin-bottom:1px;">
-          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">SUN</div>
-          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">MON</div>
-          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">TUE</div>
-          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">WED</div>
-          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">THU</div>
-          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">FRI</div>
-          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;">SAT</div>
+          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;"><span data-ui-copy="SUN">SUN</span></div>
+          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;"><span data-ui-copy="MON">MON</span></div>
+          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;"><span data-ui-copy="TUE">TUE</span></div>
+          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;"><span data-ui-copy="WED">WED</span></div>
+          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;"><span data-ui-copy="THU">THU</span></div>
+          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;"><span data-ui-copy="FRI">FRI</span></div>
+          <div style="text-align:center; font-size:11px; font-weight:600; color:var(--text-faint); padding:6px 0;"><span data-ui-copy="SAT">SAT</span></div>
         </div>
         <div id="calendarGrid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:1px; background:var(--border-soft); border-radius:10px; overflow:hidden;">
         </div>
@@ -623,7 +623,7 @@
 <div class="overlay hidden" id="productModalOverlay">
   <div class="modal" style="max-width:560px;">
     <div class="modal-head">
-      <h2 id="productModalTitle">Add product</h2>
+      <h2 id="productModalTitle"><span data-ui-copy="Add product">Add product</span></h2>
       <button class="modal-close" id="closeProductModalBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
@@ -632,21 +632,21 @@
       <p id="productFormError" class="form-error"></p>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
         <div class="field" style="grid-column:1/-1;">
-          <label>Name *</label>
+          <label><span data-ui-copy="Name *">Name *</span></label>
           <input type="text" id="productName" class="input" required>
-          <label><input type="checkbox" id="productSerialRequired"> Serial numbers required when selling</label>
-          <label for="productSku">SKU / product code</label><input type="text" id="productSku" class="input" maxlength="100" placeholder="Optional unique product code">
+          <label><input type="checkbox" id="productSerialRequired"> <span data-ui-copy="Serial numbers required when selling">Serial numbers required when selling</span></label>
+          <label for="productSku"><span data-ui-copy="SKU / product code">SKU / product code</span></label><input type="text" id="productSku" class="input" maxlength="100" placeholder="Optional unique product code" data-ui-placeholder="Optional unique product code">
         </div>
         <div class="field" style="grid-column:1/-1;">
-          <label>Description</label>
+          <label><span data-ui-copy="Description">Description</span></label>
           <textarea id="productDesc" class="input" rows="2"></textarea>
         </div>
         <div class="field">
-          <label>Price</label>
+          <label><span data-ui-copy="Price">Price</span></label>
           <input type="number" id="productPrice" class="input" min="0" step="0.01" value="0">
         </div>
         <div class="field">
-          <label>Currency</label>
+          <label><span data-ui-copy="Currency">Currency</span></label>
           <select id="productCurrency" class="input">
             <option value="USD">USD $</option>
             <option value="EUR">EUR €</option>
@@ -661,32 +661,32 @@
           </select>
         </div>
         <div class="field">
-          <label>Unit</label>
-          <input type="text" id="productUnit" class="input" placeholder="unit, hr, kg…" value="unit">
+          <label><span data-ui-copy="Unit">Unit</span></label>
+          <input type="text" id="productUnit" class="input" placeholder="unit, hr, kg…" value="unit" data-ui-placeholder="unit, hr, kg…">
         </div>
         <div class="field">
-          <label>Category</label>
-          <input type="text" id="productCategory" class="input" placeholder="e.g. Software, Service…">
+          <label><span data-ui-copy="Category">Category</span></label>
+          <input type="text" id="productCategory" class="input" placeholder="e.g. Software, Service…" data-ui-placeholder="e.g. Software, Service…">
         </div>
         <div class="field" style="grid-column:1/-1;">
-          <label>Image URL</label>
+          <label><span data-ui-copy="Image URL">Image URL</span></label>
           <input type="url" id="productImageUrl" class="input" placeholder="https://…">
         </div>
         <div class="field" style="grid-column:1/-1;">
-          <label>Service interval (months)</label>
-          <input type="number" id="productInterval" class="input" min="1" placeholder="Leave blank if none">
+          <label><span data-ui-copy="Service interval (months)">Service interval (months)</span></label>
+          <input type="number" id="productInterval" class="input" min="1" placeholder="Leave blank if none" data-ui-placeholder="Leave blank if none">
         </div>
         <div class="field" style="grid-column:1/-1;">
-          <label>Notes / details</label>
-          <textarea id="productNotes" class="input" rows="3" placeholder="Internal notes, specs, terms…"></textarea>
+          <label><span data-ui-copy="Notes / details">Notes / details</span></label>
+          <textarea id="productNotes" class="input" rows="3" placeholder="Internal notes, specs, terms…" data-ui-placeholder="Internal notes, specs, terms…"></textarea>
         </div>
       </div>
-      <div class="field"><label for="productWarrantyMonths">Warranty period · months (60 = 5 years)</label><input id="productWarrantyMonths" type="number" min="1" max="1200" step="1"></div>
+      <div class="field"><label for="productWarrantyMonths"><span data-ui-copy="Warranty period · months (60 = 5 years)">Warranty period · months (60 = 5 years)</span></label><input id="productWarrantyMonths" type="number" min="1" max="1200" step="1"></div>
       <section id="productCustomFields" class="record-custom-fields"></section>
       <input type="hidden" id="productId">
       <div class="modal-foot" style="margin-top:16px;">
-        <button type="button" class="btn btn-ghost" id="cancelProductBtn">Cancel</button>
-        <button type="submit" class="btn btn-primary" id="productSubmitBtn">Add product</button>
+        <button type="button" class="btn btn-ghost" id="cancelProductBtn"><span data-ui-copy="Cancel">Cancel</span></button>
+        <button type="submit" class="btn btn-primary" id="productSubmitBtn"><span data-ui-copy="Add product">Add product</span></button>
       </div>
     </form>
   </div>
@@ -696,7 +696,7 @@
 <div class="overlay hidden" id="eventModalOverlay">
   <div class="modal" style="max-width:500px;">
     <div class="modal-head">
-      <h2 id="eventModalTitle">Add event</h2>
+      <h2 id="eventModalTitle"><span data-ui-copy="Add event">Add event</span></h2>
       <button class="modal-close" id="closeEventModalBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
@@ -755,35 +755,35 @@
 <div class="overlay hidden" id="grantModalOverlay">
   <div class="modal">
     <div class="modal-head">
-      <h2>Grant free access</h2>
+      <h2><span data-ui-copy="Grant free access">Grant free access</span></h2>
       <button class="modal-close" id="closeGrantModalBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
-    <p class="muted" style="font-size:12.5px; margin-bottom:14px;">For <strong id="grantWorkspaceName">—</strong>. This bypasses billing entirely — no Stripe charge happens.</p>
+    <p class="muted" style="font-size:12.5px; margin-bottom:14px;"><span data-ui-copy="For">For</span> <strong id="grantWorkspaceName">—</strong><span data-ui-copy=". This bypasses billing entirely — no Stripe charge happens.">. This bypasses billing entirely — no Stripe charge happens.</span></p>
     <div class="field">
-      <label for="grantTierSelect">Tier</label>
+      <label for="grantTierSelect"><span data-ui-copy="Tier">Tier</span></label>
       <select id="grantTierSelect">
-        <option value="personal">Personal</option>
+        <option value="personal" data-ui-copy="Personal">Personal</option>
         <option value="plus">Plus</option>
         <option value="pro">Pro</option>
         <option value="ultra" selected>Ultra</option>
       </select>
     </div>
     <div class="field">
-      <label for="grantDurationSelect">For how long</label>
+      <label for="grantDurationSelect"><span data-ui-copy="For how long">For how long</span></label>
       <select id="grantDurationSelect">
-        <option value="1_month">1 month</option>
-        <option value="3_months">3 months</option>
-        <option value="6_months">6 months</option>
-        <option value="1_year">1 year</option>
-        <option value="forever" selected>Forever</option>
+        <option value="1_month" data-ui-copy="1 month">1 month</option>
+        <option value="3_months" data-ui-copy="3 months">3 months</option>
+        <option value="6_months" data-ui-copy="6 months">6 months</option>
+        <option value="1_year" data-ui-copy="1 year">1 year</option>
+        <option value="forever" selected data-ui-copy="Forever">Forever</option>
       </select>
     </div>
     <div class="form-error" id="grantFormError"></div>
     <div class="modal-actions">
-      <button type="button" class="btn btn-ghost" id="cancelGrantBtn">Cancel</button>
-      <button type="button" class="btn btn-primary" id="confirmGrantBtn">Grant access</button>
+      <button type="button" class="btn btn-ghost" id="cancelGrantBtn"><span data-ui-copy="Cancel">Cancel</span></button>
+      <button type="button" class="btn btn-primary" id="confirmGrantBtn"><span data-ui-copy="Grant access">Grant access</span></button>
     </div>
   </div>
 </div>
@@ -793,7 +793,7 @@
 <div class="overlay hidden" id="contactModalOverlay">
   <div class="modal">
     <div class="modal-head">
-      <h2 id="contactModalTitle">New contact</h2>
+      <h2 id="contactModalTitle"><span data-ui-copy="New contact">New contact</span></h2>
       <button class="modal-close" data-close-modal>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
@@ -802,77 +802,77 @@
       <input type="hidden" id="contactId" />
       <div class="field-row">
         <div class="field">
-          <label for="cFirstName">First name</label>
+          <label for="cFirstName"><span data-ui-copy="First name">First name</span></label>
           <input id="cFirstName" type="text" placeholder="Jamie" required />
         </div>
         <div class="field">
-          <label for="cLastName">Last name</label>
+          <label for="cLastName"><span data-ui-copy="Last name">Last name</span></label>
           <input id="cLastName" type="text" placeholder="Lawson" />
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="cEmail">Email</label>
+          <label for="cEmail"><span data-ui-copy="Email">Email</span></label>
           <input id="cEmail" type="email" placeholder="jamie@client.com" />
         </div>
         <div class="field">
-          <label for="cPhone">Phone</label>
+          <label for="cPhone"><span data-ui-copy="Phone">Phone</span></label>
           <input id="cPhone" type="text" placeholder="+1 555 010 2030" />
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="cCompanySelect">Company</label>
-          <select id="cCompanySelect"><option value="">No company</option></select>
+          <label for="cCompanySelect"><span data-ui-copy="Company">Company</span></label>
+          <select id="cCompanySelect"><option value="" data-ui-copy="No company">No company</option></select>
           <div id="newCompanyInlineWrap" class="hidden" style="margin-top:6px; display:flex; gap:6px;">
-            <input id="newCompanyInlineInput" type="text" placeholder="New company name" style="flex:1;" />
-            <button type="button" class="btn btn-sm btn-primary" id="createInlineCompanyBtn">Create</button>
+            <input id="newCompanyInlineInput" type="text" placeholder="New company name" style="flex:1;"  data-ui-placeholder="New company name"/>
+            <button type="button" class="btn btn-sm btn-primary" id="createInlineCompanyBtn"><span data-ui-copy="Create">Create</span></button>
             <button type="button" class="btn btn-sm btn-ghost" id="cancelInlineCompanyBtn">✕</button>
           </div>
         </div>
         <div class="field">
-          <label for="cTheme">Marketing theme</label>
-          <input id="cTheme" type="text" placeholder="Spring promo, referral, etc." />
+          <label for="cTheme"><span data-ui-copy="Marketing theme">Marketing theme</span></label>
+          <input id="cTheme" type="text" placeholder="Spring promo, referral, etc."  data-ui-placeholder="Spring promo, referral, etc."/>
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="cTitle">Title at company</label>
-          <input id="cTitle" type="text" placeholder="Owner, Supervisor, Employee…" />
+          <label for="cTitle"><span data-ui-copy="Title at company">Title at company</span></label>
+          <input id="cTitle" type="text" placeholder="Owner, Supervisor, Employee…"  data-ui-placeholder="Owner, Supervisor, Employee…"/>
         </div>
         <div class="field" style="display:flex; align-items:flex-end; padding-bottom:10px;">
           <label style="display:flex; align-items:center; gap:8px; margin:0; cursor:pointer;">
             <input id="cDecisionMaker" type="checkbox" style="width:auto;" />
-            Decision-maker (offers/quotes can be addressed to them)
+            <span data-ui-copy="Decision-maker (offers/quotes can be addressed to them)">Decision-maker (offers/quotes can be addressed to them)</span>
           </label>
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="cStatus">Stage</label>
+          <label for="cStatus"><span data-ui-copy="Stage">Stage</span></label>
           <select id="cStatus">
-            <option value="lead">Lead</option>
-            <option value="contacted">Contacted</option>
-            <option value="negotiating">Negotiating</option>
-            <option value="customer">Customer</option>
-            <option value="lost">Lost</option>
+            <option value="lead" data-ui-copy="Lead">Lead</option>
+            <option value="contacted" data-ui-copy="Contacted">Contacted</option>
+            <option value="negotiating" data-ui-copy="Negotiating">Negotiating</option>
+            <option value="customer" data-ui-copy="Customer">Customer</option>
+            <option value="lost" data-ui-copy="Lost">Lost</option>
           </select>
         </div>
         <div class="field">
-          <label for="cOwner">Owner</label>
+          <label for="cOwner"><span data-ui-copy="Owner">Owner</span></label>
           <select id="cOwner"></select>
-          <div class="muted" style="font-size:11.5px; margin-top:5px;">Whoever on your team is responsible for following up with this client.</div>
+          <div class="muted" style="font-size:11.5px; margin-top:5px;"><span data-ui-copy="Whoever on your team is responsible for following up with this client.">Whoever on your team is responsible for following up with this client.</span></div>
         </div>
       </div>
       <div class="field">
-        <label for="cNotes">Notes</label>
-        <textarea id="cNotes" placeholder="Anything your team should know before reaching out."></textarea>
+        <label for="cNotes"><span data-ui-copy="Notes">Notes</span></label>
+        <textarea id="cNotes" placeholder="Anything your team should know before reaching out." data-ui-placeholder="Anything your team should know before reaching out."></textarea>
       </div>
       <div class="field">
         <label for="cTagsInput" data-i18n="contact.tags">Tags</label>
         <div class="tag-input-wrap" id="cTagsWrap">
           <div class="tag-pills" id="cTagPills"></div>
-          <input id="cTagsInput" type="text" placeholder="Add tag, press Enter…" autocomplete="off" style="border:none;background:transparent;outline:none;flex:1;min-width:80px;font-size:13px;color:var(--text);" />
+          <input id="cTagsInput" type="text" placeholder="Add tag, press Enter…" autocomplete="off" style="border:none;background:transparent;outline:none;flex:1;min-width:80px;font-size:13px;color:var(--text);"  data-ui-placeholder="Add tag, press Enter…"/>
         </div>
         <div class="muted" style="font-size:11.5px;margin-top:4px;" data-i18n="contact.tags_hint">Press Enter or comma to add a tag. Click tag to remove.</div>
       </div>
@@ -931,7 +931,7 @@
             </div>
           </div>
           <div class="field-row">
-            <div class="field"><label for="cLeadSource" data-i18n="contact.lead_source">Lead source</label><input id="cLeadSource" type="text" placeholder="Website, referral, cold call…" /></div>
+            <div class="field"><label for="cLeadSource" data-i18n="contact.lead_source">Lead source</label><input id="cLeadSource" type="text" placeholder="Website, referral, cold call…"  data-ui-placeholder="Website, referral, cold call…"/></div>
             <div class="field"><label for="cDepartment" data-i18n="contact.department">Department</label><input id="cDepartment" type="text" /></div>
           </div>
         </div>
@@ -940,8 +940,8 @@
       <section id="contactCustomFields" class="record-custom-fields"></section>
       <div class="form-error" id="contactFormError"></div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" data-close-modal>Cancel</button>
-        <button type="submit" class="btn btn-primary" id="contactSubmitBtn">Add contact</button>
+        <button type="button" class="btn btn-ghost" data-close-modal><span data-ui-copy="Cancel">Cancel</span></button>
+        <button type="submit" class="btn btn-primary" id="contactSubmitBtn"><span data-ui-copy="Add contact">Add contact</span></button>
       </div>
     </form>
   </div>
@@ -988,25 +988,25 @@
     <div class="composer">
       <div class="composer-label">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4L12 2z"/></svg>
-        Email draft
+        <span data-ui-copy="Email draft">Email draft</span>
       </div>
-      <div class="template-tools"><select id="emailTemplateSelect" aria-label="Email template"><option value="">Choose a template</option></select><button class="btn btn-ghost btn-sm" id="applyTemplateBtn" data-sales-label="applyTemplate">Use template</button><button class="btn btn-ghost btn-sm" id="deleteEmailTemplateBtn" data-sales-label="deleteTemplate">Delete template</button></div>
-      <button class="btn btn-primary btn-sm" id="writeManualBtn" data-sales-label="blankDraft">Write a message</button>
-      <details class="writing-assistant"><summary data-sales-label="writingAssistant">Writing assistant</summary>
+      <div class="template-tools"><select id="emailTemplateSelect" aria-label="Email template" data-ui-aria-label="Email template"><option value="" data-ui-copy="Choose a template">Choose a template</option></select><button class="btn btn-ghost btn-sm" id="applyTemplateBtn" data-sales-label="applyTemplate"><span data-ui-copy="Use template">Use template</span></button><button class="btn btn-ghost btn-sm" id="deleteEmailTemplateBtn" data-sales-label="deleteTemplate"><span data-ui-copy="Delete template">Delete template</span></button></div>
+      <button class="btn btn-primary btn-sm" id="writeManualBtn" data-sales-label="blankDraft"><span data-ui-copy="Write a message">Write a message</span></button>
+      <details class="writing-assistant"><summary data-sales-label="writingAssistant"><span data-ui-copy="Writing assistant">Writing assistant</span></summary>
 <div class="field">
-        <label for="offerInstructions">Key points to include (optional)</label>
-        <p class="composer-hint" id="offerLanguageHint">Describe the email in your language, or request another output language explicitly.</p>
-        <textarea id="offerInstructions" placeholder="e.g. 15% loyalty discount, mention our new service launching in July" style="min-height:54px;"></textarea>
+        <label for="offerInstructions"><span data-ui-copy="Key points to include (optional)">Key points to include (optional)</span></label>
+        <p class="composer-hint" id="offerLanguageHint"><span data-ui-copy="Describe the email in your language, or request another output language explicitly.">Describe the email in your language, or request another output language explicitly.</span></p>
+        <textarea id="offerInstructions" placeholder="e.g. 15% loyalty discount, mention our new service launching in July" style="min-height:54px;" data-ui-placeholder="e.g. 15% loyalty discount, mention our new service launching in July"></textarea>
       </div>
       <button class="scan-btn" id="generateOfferBtn" data-i18n="panel.generate_offer">Generate with AI</button>
 </details>
       <div class="draft-box" id="draftBox">
         <div class="field" style="margin-top:14px;">
-          <label for="draftSubject">Subject</label>
+          <label for="draftSubject"><span data-ui-copy="Subject">Subject</span></label>
           <input id="draftSubject" type="text" />
         </div>
         <div class="field">
-          <label for="draftBody">Email body</label>
+          <label for="draftBody"><span data-ui-copy="Email body">Email body</span></label>
           <textarea id="draftBody"></textarea>
         </div>
         <div class="modal-actions" style="justify-content:flex-start;">
@@ -1014,18 +1014,18 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
             <span data-i18n="panel.send_email">Send email</span>
           </button>
-          <button type="button" class="btn btn-ghost" id="saveManualDraftBtn" data-sales-label="saveDraft">Save draft</button>
-          <button type="button" class="btn btn-ghost" id="saveEmailTemplateBtn" data-sales-label="saveTemplate">Save as template</button>
+          <button type="button" class="btn btn-ghost" id="saveManualDraftBtn" data-sales-label="saveDraft"><span data-ui-copy="Save draft">Save draft</span></button>
+          <button type="button" class="btn btn-ghost" id="saveEmailTemplateBtn" data-sales-label="saveTemplate"><span data-ui-copy="Save as template">Save as template</span></button>
           <button class="btn btn-ghost" id="discardDraftBtn" data-i18n="common.cancel">Discard</button>
         </div>
       </div>
       <p class="composer-hint" data-sales-label="placeholders"></p>
-      <p class="composer-hint" data-sales-label="manual">Messages are sent only when you click Send.</p>
+      <p class="composer-hint" data-sales-label="manual"><span data-ui-copy="Messages are sent only when you click Send.">Messages are sent only when you click Send.</span></p>
     </div>
 
     <div class="section-title" data-i18n="panel.quotes_section">Quotes</div>
     <div id="panelQuotesList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;"></div>
-    <button class="btn btn-ghost btn-sm" id="newQuoteForContactBtn" style="width:100%;">+ Build a quote for this contact</button>
+    <button class="btn btn-ghost btn-sm" id="newQuoteForContactBtn" style="width:100%;"><span data-ui-copy="+ Build a quote for this contact">+ Build a quote for this contact</span></button>
 
     <div class="section-title" data-i18n="panel.timeline">Timeline</div>
     <form class="activity-log-form" id="activityLogForm">
@@ -1034,14 +1034,14 @@
         <option value="meeting_logged" data-i18n="panel.meeting">Meeting</option>
         <option value="note_logged" data-i18n="panel.note">Note</option>
       </select>
-      <input id="activityLogDescription" type="text" placeholder="Quick note about it…" />
+      <input id="activityLogDescription" type="text" placeholder="Quick note about it…"  data-ui-placeholder="Quick note about it…"/>
       <button type="submit" class="btn btn-sm" data-i18n="panel.add_log">Log</button>
     </form>
     <div class="timeline" id="panelTimeline"></div>
     <div id="panelTimelineEmpty" class="hidden" style="text-align:center; padding:16px 0; font-size:12.5px; color:var(--text-faint);" data-i18n="panel.no_activity">No activity yet</div>
 
     <div class="modal-actions" style="justify-content:space-between; margin-top:26px;">
-      <button class="btn btn-danger btn-sm" id="deleteContactBtn">Delete contact</button>
+      <button class="btn btn-danger btn-sm" id="deleteContactBtn"><span data-ui-copy="Delete contact">Delete contact</span></button>
       <button class="btn btn-ghost btn-sm" id="editContactBtn" data-i18n="panel.edit">Edit details</button>
     </div>
   </div>
@@ -1053,7 +1053,7 @@
 <div class="overlay hidden" id="companyModalOverlay">
   <div class="modal">
     <div class="modal-head">
-      <h2 id="companyModalTitle">New company</h2>
+      <h2 id="companyModalTitle"><span data-ui-copy="New company">New company</span></h2>
       <button class="modal-close" id="closeCompanyModalBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
@@ -1061,22 +1061,22 @@
     <form id="companyForm">
       <input type="hidden" id="companyId" />
       <div class="field">
-        <label for="coName">Company name</label>
+        <label for="coName"><span data-ui-copy="Company name">Company name</span></label>
         <input id="coName" type="text" placeholder="Lawson & Co." required />
       </div>
-      <div class="field"><label for="coParent" data-pipeline-label="parent">Parent company</label><select id="coParent"><option value="">Independent company</option></select></div>
+      <div class="field"><label for="coParent" data-pipeline-label="parent"><span data-ui-copy="Parent company">Parent company</span></label><select id="coParent"><option value="" data-ui-copy="Independent company">Independent company</option></select></div>
       <div class="field">
-        <label for="coIndustry">Industry (optional)</label>
-        <input id="coIndustry" type="text" placeholder="Retail, healthcare, manufacturing…" />
+        <label for="coIndustry"><span data-ui-copy="Industry (optional)">Industry (optional)</span></label>
+        <input id="coIndustry" type="text" placeholder="Retail, healthcare, manufacturing…"  data-ui-placeholder="Retail, healthcare, manufacturing…"/>
       </div>
       <div class="field">
-        <label for="coNotes">Notes</label>
+        <label for="coNotes"><span data-ui-copy="Notes">Notes</span></label>
         <textarea id="coNotes"></textarea>
       </div>
       <div id="companyCustomFields"></div><div class="form-error" id="companyFormError"></div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" id="cancelCompanyBtn">Cancel</button>
-        <button type="submit" class="btn btn-primary" id="companySubmitBtn">Add company</button>
+        <button type="button" class="btn btn-ghost" id="cancelCompanyBtn"><span data-ui-copy="Cancel">Cancel</span></button>
+        <button type="submit" class="btn btn-primary" id="companySubmitBtn"><span data-ui-copy="Add company">Add company</span></button>
       </div>
     </form>
   </div>
@@ -1096,22 +1096,22 @@
     </div>
 
     <div class="hidden" id="companyPanelNotesWrap">
-      <div class="section-title">Notes</div>
+      <div class="section-title"><span data-ui-copy="Notes">Notes</span></div>
       <div class="notes-box" id="companyPanelNotes"></div>
     </div>
 
     <section id="companyGroup" class="company-group"></section>
-    <div class="section-title">People</div>
+    <div class="section-title"><span data-ui-copy="People">People</span></div>
     <div class="table-card" style="margin-bottom:16px;">
       <table>
-        <thead><tr><th>Name</th><th>Title</th><th>Decision-maker</th></tr></thead>
+        <thead><tr><th><span data-ui-copy="Name">Name</span></th><th><span data-ui-copy="Title">Title</span></th><th><span data-ui-copy="Decision-maker">Decision-maker</span></th></tr></thead>
         <tbody id="companyContactsBody"></tbody>
       </table>
     </div>
 
     <div class="modal-actions" style="justify-content:space-between;">
-      <button class="btn btn-danger btn-sm" id="deleteCompanyBtn">Delete company</button>
-      <button class="btn btn-ghost btn-sm" id="editCompanyBtn">Edit details</button>
+      <button class="btn btn-danger btn-sm" id="deleteCompanyBtn"><span data-ui-copy="Delete company">Delete company</span></button>
+      <button class="btn btn-ghost btn-sm" id="editCompanyBtn"><span data-ui-copy="Edit details">Edit details</span></button>
     </div>
   </div>
 </div>
@@ -1120,23 +1120,23 @@
 <div class="overlay hidden" id="productsModalOverlay">
   <div class="modal" style="width:600px;">
     <div class="modal-head">
-      <h2>Catalog</h2>
+      <h2><span data-ui-copy="Catalog">Catalog</span></h2>
       <button class="modal-close" id="closeProductsModalBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
-    <p class="muted" style="font-size:12.5px; margin-bottom:12px;">What you sell — quotes are built from this list. Set a service interval on anything that needs recurring maintenance (e.g. annual calibration) to enable automatic reminders.</p>
+    <p class="muted" style="font-size:12.5px; margin-bottom:12px;"><span data-ui-copy="What you sell — quotes are built from this list. Set a service interval on anything that needs recurring maintenance (e.g. annual calibration) to enable automatic reminders.">What you sell — quotes are built from this list. Set a service interval on anything that needs recurring maintenance (e.g. annual calibration) to enable automatic reminders.</span></p>
     <div style="display:flex; gap:8px; margin-bottom:10px; align-items:center;">
-      <input id="productCategoryFilter" type="text" placeholder="Filter by category…" style="flex:1; font-size:12.5px;" />
+      <input id="productCategoryFilter" type="text" placeholder="Filter by category…" style="flex:1; font-size:12.5px;"  data-ui-placeholder="Filter by category…"/>
       <span class="muted" style="font-size:12px;" id="productsCount"></span>
     </div>
     <div id="productsList" style="margin-bottom:14px;"></div>
     <div class="product-row-add" style="background:var(--bg-soft); border-radius:var(--radius-sm); padding:8px; display:grid; grid-template-columns:1.6fr 70px 70px 90px 110px 28px; gap:6px; align-items:center;">
-      <input id="newProductName" type="text" placeholder="Name" />
-      <input id="newProductPrice" type="number" min="0" step="0.01" placeholder="Price" />
+      <input id="newProductName" type="text" placeholder="Name"  data-ui-placeholder="Name"/>
+      <input id="newProductPrice" type="number" min="0" step="0.01" placeholder="Price"  data-ui-placeholder="Price"/>
       <input id="newProductUnit" type="text" placeholder="unit" />
-      <input id="newProductInterval" type="number" min="0" placeholder="Svc mo." title="Months between required service" />
-      <input id="newProductCategory" type="text" placeholder="Category" />
+      <input id="newProductInterval" type="number" min="0" placeholder="Svc mo." title="Months between required service"  data-ui-placeholder="Svc mo." data-ui-title="Months between required service"/>
+      <input id="newProductCategory" type="text" placeholder="Category"  data-ui-placeholder="Category"/>
       <button class="btn btn-sm btn-primary" id="addProductBtn" style="padding:6px 10px;">+</button>
     </div>
     <div class="form-error" id="oldProductFormError"></div>
@@ -1147,7 +1147,7 @@
 <div class="overlay hidden" id="quoteModalOverlay">
   <div class="modal quote-modal">
     <div class="modal-head">
-      <h2 id="quoteModalTitle">New quote</h2>
+      <h2 id="quoteModalTitle"><span data-ui-copy="New quote">New quote</span></h2>
       <button class="modal-close" id="closeQuoteModalBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
@@ -1157,27 +1157,27 @@
       <div id="quoteTemplateControls"></div>
       <div class="field-row">
         <div class="field">
-          <label for="quoteContactSelect">For contact</label>
+          <label for="quoteContactSelect"><span data-ui-copy="For contact">For contact</span></label>
           <select id="quoteContactSelect" required></select>
         </div>
         <div class="field">
-          <label for="quoteTitleInput">Title</label>
-          <input id="quoteTitleInput" maxlength="240" type="text" placeholder="Q3 service package" />
+          <label for="quoteTitleInput"><span data-ui-copy="Title">Title</span></label>
+          <input id="quoteTitleInput" maxlength="240" type="text" placeholder="Q3 service package"  data-ui-placeholder="Q3 service package"/>
         </div>
       </div>
 
       <div class="field hidden" id="quoteRecipientsField">
-        <label>Send to (decision-makers at this company)</label>
+        <label><span data-ui-copy="Send to (decision-makers at this company)">Send to (decision-makers at this company)</span></label>
         <div class="recipient-checklist" id="quoteRecipientsList"></div>
       </div>
 
       <div class="field">
-        <label for="quoteIntroInput">Intro message (optional)</label>
-        <textarea maxlength="6000" id="quoteIntroInput" placeholder="A short note to open the email with" style="min-height:54px;"></textarea>
+        <label for="quoteIntroInput"><span data-ui-copy="Intro message (optional)">Intro message (optional)</span></label>
+        <textarea maxlength="6000" id="quoteIntroInput" placeholder="A short note to open the email with" style="min-height:54px;" data-ui-placeholder="A short note to open the email with"></textarea>
       </div>
 
       <div class="field" style="margin-bottom:10px;">
-        <label for="quoteCurrencySelect">Currency</label>
+        <label for="quoteCurrencySelect"><span data-ui-copy="Currency">Currency</span></label>
         <select id="quoteCurrencySelect" style="max-width:200px;">
           <option value="USD">USD $</option>
           <option value="EUR">EUR €</option>
@@ -1203,27 +1203,27 @@
       </div>
 
       <div id="quoteDocumentControls"></div>
-      <div class="section-title">Line items</div>
+      <div class="section-title"><span data-ui-copy="Line items">Line items</span></div>
       <div class="quote-line-headers">
-        <span></span><span>Product</span><span>Description</span><span>Qty</span><span>Unit price</span><span>Disc. %</span><span>Total</span><span></span>
+        <span></span><span><span data-ui-copy="Product">Product</span></span><span><span data-ui-copy="Description">Description</span></span><span><span data-ui-copy="Qty">Qty</span></span><span><span data-ui-copy="Unit price">Unit price</span></span><span><span data-ui-copy="Disc. %">Disc. %</span></span><span><span data-ui-copy="Total">Total</span></span><span></span>
       </div>
       <div class="quote-items" id="quoteItemsContainer"></div>
-      <button type="button" class="btn btn-ghost btn-sm" id="addLineItemBtn">+ Add line item</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="addLineItemBtn"><span data-ui-copy="+ Add line item">+ Add line item</span></button>
 
-      <div class="quote-discount-controls"><label for="quoteDiscountType">Whole-quote discount / Rabat całej oferty</label><select id="quoteDiscountType"><option value="none">No extra discount / Brak</option><option value="percent">Percentage / Procent</option><option value="fixed">Fixed amount / Kwota</option></select><input id="quoteDiscountAmount" type="number" min="0" step="0.01" value="0" aria-label="Whole quote discount value"></div>
+      <div class="quote-discount-controls"><label for="quoteDiscountType"><span data-ui-copy="Whole-quote discount / Rabat całej oferty">Whole-quote discount / Rabat całej oferty</span></label><select id="quoteDiscountType"><option value="none" data-ui-copy="No extra discount / Brak">No extra discount / Brak</option><option value="percent" data-ui-copy="Percentage / Procent">Percentage / Procent</option><option value="fixed" data-ui-copy="Fixed amount / Kwota">Fixed amount / Kwota</option></select><input id="quoteDiscountAmount" type="number" min="0" step="0.01" value="0" aria-label="Whole quote discount value" data-ui-aria-label="Whole quote discount value"></div>
       <div class="quote-totals">
-        <div><span>Subtotal</span><span class="mono" id="quoteSubtotalValue">$0.00</span></div>
-        <div><span>Discount</span><span class="mono" id="quoteDiscountValue">−$0.00</span></div>
-        <div id="quoteTaxRow" hidden><span id="quoteTaxLabel">Tax</span><span class="mono" id="quoteTaxValue"></span></div>
-        <div class="quote-total-final"><span>Total</span><span class="mono" id="quoteTotalValue">$0.00</span></div>
+        <div><span><span data-ui-copy="Subtotal">Subtotal</span></span><span class="mono" id="quoteSubtotalValue">$0.00</span></div>
+        <div><span><span data-ui-copy="Discount">Discount</span></span><span class="mono" id="quoteDiscountValue">−$0.00</span></div>
+        <div id="quoteTaxRow" hidden><span id="quoteTaxLabel"><span data-ui-copy="Tax">Tax</span></span><span class="mono" id="quoteTaxValue"></span></div>
+        <div class="quote-total-final"><span><span data-ui-copy="Total">Total</span></span><span class="mono" id="quoteTotalValue">$0.00</span></div>
       </div>
 
       <div class="form-error" id="quoteFormError"></div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" id="quoteCancelBtn">Cancel</button>
-        <button type="button" class="btn" id="quoteSaveDraftBtn">Save draft</button>
-        <button type="button" class="btn" id="quoteSavePdfBtn" data-quote-label="savePdf">Save & preview PDF</button>
-        <button type="submit" class="btn btn-primary" id="quoteSendBtn">Save & preview</button>
+        <button type="button" class="btn btn-ghost" id="quoteCancelBtn"><span data-ui-copy="Cancel">Cancel</span></button>
+        <button type="button" class="btn" id="quoteSaveDraftBtn"><span data-ui-copy="Save draft">Save draft</span></button>
+        <button type="button" class="btn" id="quoteSavePdfBtn" data-quote-label="savePdf"><span data-ui-copy="Save">Save</span> & preview PDF</button>
+        <button type="submit" class="btn btn-primary" id="quoteSendBtn"><span data-ui-copy="Save">Save</span> & preview</button>
       </div>
     </form>
   </div>
@@ -1242,25 +1242,25 @@
       </button>
     </div>
     <div id="quotePanelBadge" style="margin-top:10px;"></div>
-    <div class="section-title">Line items</div>
+    <div class="section-title"><span data-ui-copy="Line items">Line items</span></div>
     <div id="quotePanelItems" style="font-size:13px; display:flex; flex-direction:column; gap:6px;"></div>
     <div class="quote-totals">
-      <div class="quote-total-final"><span>Total</span><span class="mono" id="quotePanelTotal">$0.00</span></div>
+      <div class="quote-total-final"><span><span data-ui-copy="Total">Total</span></span><span class="mono" id="quotePanelTotal">$0.00</span></div>
     </div>
     <div class="modal-actions" style="justify-content:space-between; flex-wrap:wrap; gap:8px;">
-      <button class="btn btn-danger btn-sm" id="deleteQuoteBtn">Delete</button>
+      <button class="btn btn-danger btn-sm" id="deleteQuoteBtn"><span data-ui-copy="Delete">Delete</span></button>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <a class="btn btn-ghost btn-sm" id="quotePrintLink" href="#" target="_blank" rel="noopener">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          Open share link
+          <span data-ui-copy="Open share link">Open share link</span>
         </a>
-        <button class="btn btn-ghost btn-sm" id="quoteDownloadPdfBtn" data-quote-label="download">Download PDF</button>
-        <button class="btn btn-ghost btn-sm" id="quoteViewPdfBtn" data-quote-label="previewPdf">Preview PDF</button>
-        <button class="btn btn-ghost btn-sm" id="quoteDuplicateBtn" data-quote-label="duplicate">Duplicate</button>
-        <button class="btn btn-ghost btn-sm hidden" id="editQuoteBtn">Edit</button>
-        <button class="btn btn-ghost btn-sm hidden" id="declineQuoteBtn">Mark declined</button>
-        <button class="btn btn-primary btn-sm hidden" id="acceptQuoteBtn">Mark accepted</button>
-        <button class="btn btn-primary btn-sm hidden" id="sendQuoteFromPanelBtn">Send</button>
+        <button class="btn btn-ghost btn-sm" id="quoteDownloadPdfBtn" data-quote-label="download"><span data-ui-copy="Download PDF">Download PDF</span></button>
+        <button class="btn btn-ghost btn-sm" id="quoteViewPdfBtn" data-quote-label="previewPdf"><span data-ui-copy="Preview PDF">Preview PDF</span></button>
+        <button class="btn btn-ghost btn-sm" id="quoteDuplicateBtn" data-quote-label="duplicate"><span data-ui-copy="Duplicate">Duplicate</span></button>
+        <button class="btn btn-ghost btn-sm hidden" id="editQuoteBtn"><span data-ui-copy="Edit">Edit</span></button>
+        <button class="btn btn-ghost btn-sm hidden" id="declineQuoteBtn"><span data-ui-copy="Mark declined">Mark declined</span></button>
+        <button class="btn btn-primary btn-sm hidden" id="acceptQuoteBtn"><span data-ui-copy="Mark accepted">Mark accepted</span></button>
+        <button class="btn btn-primary btn-sm hidden" id="sendQuoteFromPanelBtn"><span data-ui-copy="Send">Send</span></button>
       </div>
     </div>
   </div>
@@ -1270,25 +1270,33 @@
 <div class="overlay hidden" id="appearanceModalOverlay">
   <div class="modal settings-modal" style="max-height:88vh; overflow-y:auto;">
     <div class="modal-head">
-      <h2>Settings</h2>
+      <h2><span data-ui-copy="Settings">Settings</span></h2>
       <button class="modal-close" id="closeAppearanceBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
 
-    <div class="settings-tabs" role="tablist" aria-label="Settings"><button type="button" data-settings-tab="personal" role="tab" aria-selected="true" data-pref-label="personal" class="miy-wordmark">Make It Yours</button><button type="button" data-settings-tab="account" role="tab" aria-selected="false" data-pref-label="account">Account &amp; organization</button></div>
+    <div class="settings-tabs" role="tablist" aria-label="Settings" data-ui-aria-label="Settings"><button type="button" data-settings-tab="personal" role="tab" aria-selected="true" data-pref-label="personal" class="miy-wordmark">Make It Yours</button><button type="button" data-settings-tab="account" role="tab" aria-selected="false" data-pref-label="account">Account &amp; organization</button></div>
     <section id="personalSettings">
-      <div class="personal-intro"><h3 data-pref-label="intro">Your colors. Your workflow.</h3><p data-pref-label="description"></p></div>
-      <h4 data-pref-label="presets">Color presets</h4><div id="themeGrid" class="personal-preset-grid"></div>
+      <div class="personal-intro"><h3 data-pref-label="intro"><span data-ui-copy="Your colors. Your workflow.">Your colors. Your workflow.</span></h3><p data-pref-label="description"></p></div>
+      <h4 data-pref-label="presets"><span data-ui-copy="Color presets">Color presets</span></h4><div id="themeGrid" class="personal-preset-grid"></div>
       <fieldset id="customPaletteFields"></fieldset>
-      <div class="contrast-controls"><select id="prefTextMode" aria-label="Text contrast"></select><label class="preference-checkbox"><input type="checkbox" id="prefHighContrast"><span data-pref-label="contrast">Stronger contrast</span></label><span id="colorContrastValue"></span></div>
+      <div class="contrast-controls"><select id="prefTextMode" aria-label="Text contrast" data-ui-aria-label="Text contrast"></select><label class="preference-checkbox"><input type="checkbox" id="prefHighContrast"><span data-pref-label="contrast"><span data-ui-copy="Stronger contrast">Stronger contrast</span></span></label><span id="colorContrastValue"></span></div>
       <p class="preference-hint" data-pref-label="autoNote"></p>
       <div id="layoutControls" class="layout-controls"></div>
       <p class="preference-hint" data-pref-label="drag"></p>
-      <div class="preference-lists"><section><h4 data-pref-label="menu">Menu order &amp; visibility</h4><ol id="prefList-nav"></ol></section><section><h4 data-pref-label="columns">Contact columns</h4><ol id="prefList-columns"></ol><h4 data-pref-label="widgets">Overview widgets</h4><ol id="prefList-widgets"></ol></section></div>
-      <div class="form-error" id="preferencesError"></div><div class="preferences-actions"><span data-pref-label="only"></span><button type="button" class="btn btn-ghost" id="resetPreferencesBtn" data-pref-label="reset">Reset to defaults</button><button type="button" class="btn btn-primary" id="savePreferencesBtn" data-pref-label="save">Save my workspace</button></div>
+      <div class="preference-lists"><section><h4 data-pref-label="menu">Menu order &amp; visibility</h4><ol id="prefList-nav"></ol></section><section><h4 data-pref-label="columns"><span data-ui-copy="Contact columns">Contact columns</span></h4><ol id="prefList-columns"></ol><h4 data-pref-label="widgets"><span data-ui-copy="Overview widgets">Overview widgets</span></h4><ol id="prefList-widgets"></ol></section></div>
+      <div class="form-error" id="preferencesError"></div><div class="preferences-actions"><span data-pref-label="only"></span><button type="button" class="btn btn-ghost" id="resetPreferencesBtn" data-pref-label="reset"><span data-ui-copy="Reset to defaults">Reset to defaults</span></button><button type="button" class="btn btn-primary" id="savePreferencesBtn" data-pref-label="save"><span data-ui-copy="Save my workspace">Save my workspace</span></button></div>
     </section>
     <section id="accountSettings" class="hidden">
+    <div class="section-title" data-i18n="settings.language">Language</div>
+    <p class="muted" style="font-size:12.5px; margin-bottom:10px;" data-i18n="settings.language_sub">Choose the language for the Klyo interface.</p>
+    <select id="appLangPicker" style="font-size:13px; padding:7px 10px; margin-bottom:4px;">
+      <option value="en">English</option>
+      <option value="pl">Polski</option>
+    </select>
+
+
     <!-- Mail / SMTP card (admin only) -->
     <div class="hidden" id="mailCard">
       <div class="section-title" style="margin-top:0;" data-i18n="settings.mail_title">Email sending</div>
@@ -1355,77 +1363,67 @@
       <input id="profileNameInput" type="text" />
     </div>
     <div class="field">
-      <label>Email</label>
+      <label><span data-ui-copy="Email">Email</span></label>
       <div class="mono muted" id="profileEmailDisplay" style="font-size:13px; padding:4px 0;">—</div>
     </div>
     <div class="form-error" id="profileNameError"></div>
     <button class="btn btn-sm" id="saveProfileNameBtn" data-i18n="settings.save_profile">Save name</button>
 
-    <div class="section-title">Plan</div>
+    <div class="section-title"><span data-ui-copy="Plan">Plan</span></div>
     <div class="detail-item" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
       <div>
-        <div class="k">Current plan</div>
+        <div class="k"><span data-ui-copy="Current plan">Current plan</span></div>
         <div class="v" id="settingsCurrentPlan">—</div>
         <div class="muted" id="settingsPlanDetail" style="font-size:11.5px; margin-top:4px;"></div>
       </div>
-      <button class="btn btn-sm btn-primary" id="settingsUpgradeBtn">Upgrade plan</button>
+      <button class="btn btn-sm btn-primary" id="settingsUpgradeBtn"><span data-ui-copy="Upgrade plan">Upgrade plan</span></button>
     </div>
-    <button class="btn btn-sm btn-danger hidden" id="settingsCancelBtn" style="width:100%; margin-bottom:6px;">Cancel subscription</button>
-    <button class="btn btn-sm hidden" id="settingsResumeBtn" style="width:100%; margin-bottom:6px;">Resume subscription</button>
+    <button class="btn btn-sm btn-danger hidden" id="settingsCancelBtn" style="width:100%; margin-bottom:6px;"><span data-ui-copy="Cancel subscription">Cancel subscription</span></button>
+    <button class="btn btn-sm hidden" id="settingsResumeBtn" style="width:100%; margin-bottom:6px;"><span data-ui-copy="Resume subscription">Resume subscription</span></button>
 
     <div class="section-title" data-i18n="settings.password">Password</div>
     <p class="muted hidden" id="googleOnlyNotice" style="font-size:12.5px; margin-bottom:10px;">
-      You signed in with Google and don't have a password yet — you can set one below as a backup way to sign in.
+      <span data-ui-copy="You signed in with Google and don&#x27;t have a password yet — you can set one below as a backup way to sign in.">You signed in with Google and don't have a password yet — you can set one below as a backup way to sign in.</span>
     </p>
     <div class="field hidden" id="currentPasswordField">
-      <label for="currentPasswordInput">Current password</label>
+      <label for="currentPasswordInput"><span data-ui-copy="Current password">Current password</span></label>
       <input id="currentPasswordInput" type="password" />
     </div>
     <div class="field">
-      <label for="newPasswordInput" id="newPasswordLabel">New password</label>
-      <input id="newPasswordInput" type="password" placeholder="At least 6 characters" />
+      <label for="newPasswordInput" id="newPasswordLabel"><span data-ui-copy="New password">New password</span></label>
+      <input id="newPasswordInput" type="password" placeholder="At least 6 characters"  data-ui-placeholder="At least 6 characters"/>
     </div>
     <div class="form-error" id="passwordError"></div>
     <button class="btn btn-sm" id="savePasswordBtn" data-i18n="settings.save_password">Update password</button>
 
-    <div class="section-title" data-i18n="settings.language">Language</div>
-    <p class="muted" style="font-size:12.5px; margin-bottom:10px;" data-i18n="settings.language_sub">Choose the language for the Klyo interface.</p>
-    <select id="appLangPicker" style="font-size:13px; padding:7px 10px; margin-bottom:4px;">
-      <option value="en">English</option>
-      <option value="pl">Polski</option>
-      <option value="es">Español</option>
-      <option value="fr">Français</option>
-      <option value="de">Deutsch</option>
-    </select>
-
     <div id="currencySettingsSection" class="hidden">
-      <div class="section-title">Organization</div>
+      <div class="section-title"><span data-ui-copy="Organization">Organization</span></div>
       <div class="field">
-        <label for="workspaceCurrencySelect">Workspace currency</label>
+        <label for="workspaceCurrencySelect"><span data-ui-copy="Workspace currency">Workspace currency</span></label>
         <select id="workspaceCurrencySelect">
-          <option value="USD">USD — US Dollar</option>
-          <option value="EUR">EUR — Euro</option>
-          <option value="GBP">GBP — British Pound</option>
-          <option value="PLN">PLN — Polish Złoty</option>
-          <option value="CHF">CHF — Swiss Franc</option>
-          <option value="CAD">CAD — Canadian Dollar</option>
-          <option value="AUD">AUD — Australian Dollar</option>
-          <option value="JPY">JPY — Japanese Yen</option>
-          <option value="SEK">SEK — Swedish Krona</option>
-          <option value="NOK">NOK — Norwegian Krone</option>
-          <option value="DKK">DKK — Danish Krone</option>
-          <option value="CZK">CZK — Czech Koruna</option>
-          <option value="HUF">HUF — Hungarian Forint</option>
-          <option value="RON">RON — Romanian Leu</option>
-          <option value="BGN">BGN — Bulgarian Lev</option>
-          <option value="HRK">HRK — Croatian Kuna</option>
-          <option value="INR">INR — Indian Rupee</option>
-          <option value="BRL">BRL — Brazilian Real</option>
-          <option value="MXN">MXN — Mexican Peso</option>
-          <option value="SGD">SGD — Singapore Dollar</option>
+          <option value="USD" data-ui-copy="USD — US Dollar">USD — US Dollar</option>
+          <option value="EUR" data-ui-copy="EUR — Euro">EUR — Euro</option>
+          <option value="GBP" data-ui-copy="GBP — British Pound">GBP — British Pound</option>
+          <option value="PLN" data-ui-copy="PLN — Polish Złoty">PLN — Polish Złoty</option>
+          <option value="CHF" data-ui-copy="CHF — Swiss Franc">CHF — Swiss Franc</option>
+          <option value="CAD" data-ui-copy="CAD — Canadian Dollar">CAD — Canadian Dollar</option>
+          <option value="AUD" data-ui-copy="AUD — Australian Dollar">AUD — Australian Dollar</option>
+          <option value="JPY" data-ui-copy="JPY — Japanese Yen">JPY — Japanese Yen</option>
+          <option value="SEK" data-ui-copy="SEK — Swedish Krona">SEK — Swedish Krona</option>
+          <option value="NOK" data-ui-copy="NOK — Norwegian Krone">NOK — Norwegian Krone</option>
+          <option value="DKK" data-ui-copy="DKK — Danish Krone">DKK — Danish Krone</option>
+          <option value="CZK" data-ui-copy="CZK — Czech Koruna">CZK — Czech Koruna</option>
+          <option value="HUF" data-ui-copy="HUF — Hungarian Forint">HUF — Hungarian Forint</option>
+          <option value="RON" data-ui-copy="RON — Romanian Leu">RON — Romanian Leu</option>
+          <option value="BGN" data-ui-copy="BGN — Bulgarian Lev">BGN — Bulgarian Lev</option>
+          <option value="HRK" data-ui-copy="HRK — Croatian Kuna">HRK — Croatian Kuna</option>
+          <option value="INR" data-ui-copy="INR — Indian Rupee">INR — Indian Rupee</option>
+          <option value="BRL" data-ui-copy="BRL — Brazilian Real">BRL — Brazilian Real</option>
+          <option value="MXN" data-ui-copy="MXN — Mexican Peso">MXN — Mexican Peso</option>
+          <option value="SGD" data-ui-copy="SGD — Singapore Dollar">SGD — Singapore Dollar</option>
         </select>
       </div>
-      <p class="muted" style="font-size:12.5px;">Changes the default and relabels uncommitted deals, catalog prices, draft quotes, register cases and draft orders without changing amounts. Sent quotes, confirmed orders, invoices and their linked records keep their original currency. Imported price lists and purchase costs are not converted. No exchange-rate conversion is performed.</p>
+      <p class="muted" style="font-size:12.5px;"><span data-ui-copy="Changes the default and relabels uncommitted deals, catalog prices, draft quotes, register cases and draft orders without changing amounts. Sent quotes, confirmed orders, invoices and their linked records keep their original currency. Imported price lists and purchase costs are not converted. No exchange-rate conversion is performed.">Changes the default and relabels uncommitted deals, catalog prices, draft quotes, register cases and draft orders without changing amounts. Sent quotes, confirmed orders, invoices and their linked records keep their original currency. Imported price lists and purchase costs are not converted. No exchange-rate conversion is performed.</span></p>
       <div class="form-error" id="currencyError"></div>
       <button class="btn btn-sm" id="saveCurrencyBtn" data-i18n="settings.save_currency">Save currency</button>
     </div>
@@ -1441,13 +1439,13 @@
     <div class="section-title" data-i18n="settings.join_org">Join another organization</div>
     <p class="muted" style="font-size:12.5px; margin-bottom:10px;" data-i18n="settings.join_sub">Have an invite code from a colleague? Enter it below to switch into their workspace. You'll leave your current workspace.</p>
     <div style="display:flex; gap:8px; margin-bottom:6px;">
-      <input id="joinInviteCodeInput" type="text" placeholder="Invite code (e.g. A1B2C3D4E5)" style="flex:1; text-transform:uppercase; letter-spacing:0.05em;" />
+      <input id="joinInviteCodeInput" type="text" placeholder="Invite code (e.g. A1B2C3D4E5)" style="flex:1; text-transform:uppercase; letter-spacing:0.05em;"  data-ui-placeholder="Invite code (e.g. A1B2C3D4E5)"/>
       <button class="btn btn-sm btn-primary" id="joinWorkspaceBtn" data-i18n="settings.join_btn">Join</button>
     </div>
     <div class="form-error" id="joinWorkspaceError"></div>
 
     <div class="section-title" data-i18n="settings.help">Help</div>
-    <p><a href="/docs/sales-and-operations.html" target="_blank" rel="noopener">Sales &amp; operations guide (PL)</a> · <a href="/docs/communications-setup" target="_blank" rel="noopener">Integrations setup</a> · <a href="/docs/calendar-setup.html" target="_blank" rel="noopener">Google / Outlook calendar setup</a></p>
+    <p><a href="/docs/sales-and-operations.html" target="_blank" rel="noopener"><span data-ui-copy="Sales &amp; operations guide">Sales &amp; operations guide</span></a> · <a href="/docs/communications-setup" target="_blank" rel="noopener"><span data-ui-copy="Integrations setup">Integrations setup</span></a> · <a href="/docs/calendar-setup.html" target="_blank" rel="noopener"><span data-ui-copy="Google / Outlook calendar setup">Google / Outlook calendar setup</span></a></p>
     <button class="btn btn-ghost" id="replayTourBtn" style="width:100%;" data-i18n="ui.replay_tour">Replay the welcome tour</button>
 
     <!-- ───── Danger Zone ───── -->
@@ -1499,7 +1497,7 @@
 
       <div id="resetPasswordWrap" class="hidden" style="margin-bottom:14px;">
         <label style="font-size:12.5px; font-weight:600; display:block; margin-bottom:6px;" data-i18n="reset.enter_password">Enter your password to confirm</label>
-        <input id="resetPasswordInput" type="password" placeholder="Your current password" style="width:100%;" />
+        <input id="resetPasswordInput" type="password" placeholder="Your current password" style="width:100%;"  data-ui-placeholder="Your current password"/>
       </div>
 
       <div class="form-error" id="resetConfirmError"></div>
@@ -1515,25 +1513,25 @@
 <div class="overlay hidden" id="termsModalOverlay" style="z-index:1100;">
   <div class="modal" style="max-width:480px;">
     <div class="modal-head">
-      <h2>Zanim przejdziesz dalej</h2>
+      <h2><span data-ui-copy="Zanim przejdziesz dalej">Zanim przejdziesz dalej</span></h2>
     </div>
     <div style="padding:0 24px 24px;">
-      <p style="margin:0 0 16px; color:var(--text-dim); font-size:14px; line-height:1.6;">Zaktualizowaliśmy nasze dokumenty prawne. Prosimy o zapoznanie się z nimi i potwierdzenie akceptacji przed dalszym korzystaniem z aplikacji.</p>
+      <p style="margin:0 0 16px; color:var(--text-dim); font-size:14px; line-height:1.6;"><span data-ui-copy="Zaktualizowaliśmy nasze dokumenty prawne. Prosimy o zapoznanie się z nimi i potwierdzenie akceptacji przed dalszym korzystaniem z aplikacji.">Zaktualizowaliśmy nasze dokumenty prawne. Prosimy o zapoznanie się z nimi i potwierdzenie akceptacji przed dalszym korzystaniem z aplikacji.</span></p>
       <div style="display:flex; gap:16px; margin-bottom:20px; font-size:14px;">
         <a href="/terms" target="_blank" style="color:var(--accent-1); display:flex; align-items:center; gap:6px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Warunki Korzystania
+          <span data-ui-copy="Warunki Korzystania">Warunki Korzystania</span>
         </a>
         <a href="/privacy" target="_blank" style="color:var(--accent-1); display:flex; align-items:center; gap:6px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Polityka Prywatności
+          <span data-ui-copy="Polityka Prywatności">Polityka Prywatności</span>
         </a>
       </div>
       <label style="display:flex; gap:10px; align-items:flex-start; cursor:pointer; margin-bottom:20px; font-size:14px; color:var(--text);">
         <input type="checkbox" id="termsAcceptCheckbox" style="margin-top:2px; flex-shrink:0; accent-color:var(--accent-1);" />
-        <span>Akceptuję <a href="/terms" target="_blank" style="color:var(--accent-1);">Warunki Korzystania</a> i zapoznałem/am się z <a href="/privacy" target="_blank" style="color:var(--accent-1);">Polityką Prywatności</a></span>
+        <span><span data-ui-copy="Akceptuję">Akceptuję</span> <a href="/terms" target="_blank" style="color:var(--accent-1);"><span data-ui-copy="Warunki Korzystania">Warunki Korzystania</span></a> <span data-ui-copy="i zapoznałem/am się z">i zapoznałem/am się z</span> <a href="/privacy" target="_blank" style="color:var(--accent-1);"><span data-ui-copy="Polityką Prywatności">Polityką Prywatności</span></a></span>
       </label>
-      <button class="btn btn-primary" id="confirmTermsBtn" style="width:100%;" disabled>Akceptuję i kontynuuję</button>
+      <button class="btn btn-primary" id="confirmTermsBtn" style="width:100%;" disabled><span data-ui-copy="Akceptuję i kontynuuję">Akceptuję i kontynuuję</span></button>
     </div>
   </div>
 </div>
@@ -1542,16 +1540,16 @@
 <div class="overlay hidden" id="pricingModalOverlay">
   <div class="modal pricing-modal">
     <div class="modal-head">
-      <h2>Choose a plan</h2>
+      <h2><span data-ui-copy="Choose a plan">Choose a plan</span></h2>
       <button class="modal-close" id="closePricingBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div style="display:flex; gap:8px; margin-bottom:16px;" id="billingModeToggle">
-      <button type="button" class="btn btn-sm btn-primary" data-mode="subscription" style="flex:1;">Monthly (auto-renews)</button>
-      <button type="button" class="btn btn-sm btn-ghost" data-mode="one_time" style="flex:1;">One month only</button>
+      <button type="button" class="btn btn-sm btn-primary" data-mode="subscription" style="flex:1;"><span data-ui-copy="Monthly (auto-renews)">Monthly (auto-renews)</span></button>
+      <button type="button" class="btn btn-sm btn-ghost" data-mode="one_time" style="flex:1;"><span data-ui-copy="One month only">One month only</span></button>
     </div>
-    <p class="muted">Each plan includes a fixed user limit. Upgrade to a higher plan when your team needs more users.</p><div class="pricing-grid" id="pricingGrid"></div>
+    <p class="muted"><span data-ui-copy="Each plan includes a fixed user limit. Upgrade to a higher plan when your team needs more users.">Each plan includes a fixed user limit. Upgrade to a higher plan when your team needs more users.</span></p><div class="pricing-grid" id="pricingGrid"></div>
   </div>
 </div>
 
@@ -1565,10 +1563,10 @@
     <p class="tour-step-body" id="tourBody">—</p>
     <div class="tour-dots" id="tourDots"></div>
     <div class="tour-actions">
-      <button class="btn btn-ghost btn-sm" id="tourSkipBtn">Skip</button>
+      <button class="btn btn-ghost btn-sm" id="tourSkipBtn"><span data-ui-copy="Skip">Skip</span></button>
       <div style="display:flex; gap:8px;">
-        <button class="btn btn-sm hidden" id="tourBackBtn">Back</button>
-        <button class="btn btn-primary btn-sm" id="tourNextBtn">Next</button>
+        <button class="btn btn-sm hidden" id="tourBackBtn"><span data-ui-copy="Back">Back</span></button>
+        <button class="btn btn-primary btn-sm" id="tourNextBtn"><span data-ui-copy="Next">Next</span></button>
       </div>
     </div>
   </div>
@@ -1580,31 +1578,31 @@
 <div class="overlay hidden" id="quotePreviewOverlay">
   <div class="modal" style="width:560px;">
     <div class="modal-head">
-      <h2>Preview before sending</h2>
+      <h2><span data-ui-copy="Preview before sending">Preview before sending</span></h2>
       <button class="modal-close" id="closeQuotePreviewBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
-    <p class="muted" style="font-size:12.5px; margin-bottom:14px;">This is exactly what will be sent — nothing goes out until you confirm.</p>
+    <p class="muted" style="font-size:12.5px; margin-bottom:14px;"><span data-ui-copy="This is exactly what will be sent — nothing goes out until you confirm.">This is exactly what will be sent — nothing goes out until you confirm.</span></p>
     <div class="field">
-      <label>To</label>
+      <label><span data-ui-copy="To">To</span></label>
       <div class="mono" id="quotePreviewTo" style="font-size:13px; padding:8px 0;">—</div>
     </div>
     <div class="field">
-      <label for="quotePreviewSubject">Subject</label>
+      <label for="quotePreviewSubject"><span data-ui-copy="Subject">Subject</span></label>
       <input id="quotePreviewSubject" type="text" />
     </div>
     <div class="field">
-      <label for="quotePreviewBody">Body</label>
+      <label for="quotePreviewBody"><span data-ui-copy="Body">Body</span></label>
       <textarea id="quotePreviewBody" style="min-height:220px;"></textarea>
     </div>
-    <div class="quote-attachment"><label><input type="checkbox" id="quoteAttachPdf" checked> <span data-quote-label="attach">Attach proposal PDF</span></label><span id="quoteAttachmentName"></span><button type="button" class="btn btn-ghost btn-sm" id="quoteEmailPdfPreview" data-quote-label="previewPdf">Preview PDF</button></div>
+    <div class="quote-attachment"><label><input type="checkbox" id="quoteAttachPdf" checked> <span data-quote-label="attach"><span data-ui-copy="Attach proposal PDF">Attach proposal PDF</span></span></label><span id="quoteAttachmentName"></span><button type="button" class="btn btn-ghost btn-sm" id="quoteEmailPdfPreview" data-quote-label="previewPdf"><span data-ui-copy="Preview PDF">Preview PDF</span></button></div>
     <div class="form-error" id="quotePreviewError"></div>
     <div class="modal-actions">
-      <button type="button" class="btn btn-ghost" id="backToEditQuoteBtn">Back to edit</button>
+      <button type="button" class="btn btn-ghost" id="backToEditQuoteBtn"><span data-ui-copy="Back to edit">Back to edit</span></button>
       <button type="button" class="btn btn-primary" id="confirmSendQuoteBtn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-        Send now
+        <span data-ui-copy="Send now">Send now</span>
       </button>
     </div>
   </div>
@@ -1614,7 +1612,7 @@
 <div class="overlay hidden" id="taskModalOverlay">
   <div class="modal" style="width:500px;">
     <div class="modal-head">
-      <h2 id="taskModalTitle">New task</h2>
+      <h2 id="taskModalTitle"><span data-ui-copy="New task">New task</span></h2>
       <button class="modal-close" id="closeTaskModalBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
@@ -1622,56 +1620,56 @@
     <form id="taskForm">
       <input type="hidden" id="taskId" />
       <div class="field">
-        <label for="taskTitle">Task</label>
-        <input id="taskTitle" type="text" placeholder="e.g. Send contract to Lawson & Co." required />
+        <label for="taskTitle"><span data-ui-copy="Task">Task</span></label>
+        <input id="taskTitle" type="text" placeholder="e.g. Send contract to Lawson & Co." required  data-ui-placeholder="e.g. Send contract to Lawson &amp; Co."/>
       </div>
       <div class="field">
-        <label for="taskDescription">Description <span class="muted">(optional)</span></label>
-        <textarea id="taskDescription" placeholder="Any extra context…" style="min-height:56px;"></textarea>
+        <label for="taskDescription"><span data-ui-copy="Description">Description</span> <span class="muted"><span data-ui-copy="(optional)">(optional)</span></span></label>
+        <textarea id="taskDescription" placeholder="Any extra context…" style="min-height:56px;" data-ui-placeholder="Any extra context…"></textarea>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="taskAssignedSelect">Assign to</label>
-          <select id="taskAssignedSelect"><option value="">Unassigned</option></select>
+          <label for="taskAssignedSelect"><span data-ui-copy="Assign to">Assign to</span></label>
+          <select id="taskAssignedSelect"><option value="" data-ui-copy="Unassigned">Unassigned</option></select>
         </div>
         <div class="field">
-          <label for="taskPrioritySelect">Priority</label>
+          <label for="taskPrioritySelect"><span data-ui-copy="Priority">Priority</span></label>
           <select id="taskPrioritySelect">
-            <option value="low">Low</option>
-            <option value="medium" selected>Medium</option>
-            <option value="high">High</option>
+            <option value="low" data-ui-copy="Low">Low</option>
+            <option value="medium" selected data-ui-copy="Medium">Medium</option>
+            <option value="high" data-ui-copy="High">High</option>
           </select>
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="taskDueDate">Due date</label>
+          <label for="taskDueDate"><span data-ui-copy="Due date">Due date</span></label>
           <input id="taskDueDate" type="date" />
         </div>
         <div class="field">
-          <label for="taskStatusSelect">Status</label>
+          <label for="taskStatusSelect"><span data-ui-copy="Status">Status</span></label>
           <select id="taskStatusSelect">
-            <option value="todo">To do</option>
-            <option value="in_progress">In progress</option>
-            <option value="done">Done</option>
+            <option value="todo" data-ui-copy="To do">To do</option>
+            <option value="in_progress" data-ui-copy="In progress">In progress</option>
+            <option value="done" data-ui-copy="Done">Done</option>
           </select>
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="taskContactSelect">Contact <span class="muted">(optional)</span></label>
-          <select id="taskContactSelect"><option value="">None</option></select>
+          <label for="taskContactSelect"><span data-ui-copy="Contact">Contact</span> <span class="muted"><span data-ui-copy="(optional)">(optional)</span></span></label>
+          <select id="taskContactSelect"><option value="" data-ui-copy="None">None</option></select>
         </div>
         <div class="field">
-          <label for="taskDealSelect">Deal <span class="muted">(optional)</span></label>
-          <select id="taskDealSelect"><option value="">None</option></select>
+          <label for="taskDealSelect"><span data-ui-copy="Deal">Deal</span> <span class="muted"><span data-ui-copy="(optional)">(optional)</span></span></label>
+          <select id="taskDealSelect"><option value="" data-ui-copy="None">None</option></select>
         </div>
       </div>
       <div class="form-error" id="taskFormError"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-danger-outline hidden" id="deleteTaskBtn" style="margin-right:auto;" data-i18n="tasks.delete_task">Delete task</button>
-        <button type="button" class="btn btn-ghost" id="cancelTaskBtn">Cancel</button>
-        <button type="submit" class="btn btn-primary" id="taskSubmitBtn">Add task</button>
+        <button type="button" class="btn btn-ghost" id="cancelTaskBtn"><span data-ui-copy="Cancel">Cancel</span></button>
+        <button type="submit" class="btn btn-primary" id="taskSubmitBtn"><span data-ui-copy="Add task">Add task</span></button>
       </div>
     </form>
   </div>
@@ -1681,66 +1679,66 @@
 <div class="overlay hidden" id="dealModalOverlay">
   <div class="modal" style="width:540px;">
     <div class="modal-head">
-      <h2 id="dealModalTitle">New deal</h2>
+      <h2 id="dealModalTitle"><span data-ui-copy="New deal">New deal</span></h2>
       <button class="modal-close" id="closeDealModalBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <form id="dealForm">
       <input type="hidden" id="dealId" />
-      <div class="field"><label for="dealPipelineSelect" data-pipeline-label="pipeline">Sales pipeline</label><select id="dealPipelineSelect" required></select></div>
+      <div class="field"><label for="dealPipelineSelect" data-pipeline-label="pipeline"><span data-ui-copy="Sales pipeline">Sales pipeline</span></label><select id="dealPipelineSelect" required></select></div>
       <div class="field">
-        <label for="dealTitle">Deal title</label>
-        <input id="dealTitle" type="text" placeholder="e.g. Office fit-out — Lawson & Co." required />
+        <label for="dealTitle"><span data-ui-copy="Deal title">Deal title</span></label>
+        <input id="dealTitle" type="text" placeholder="e.g. Office fit-out — Lawson & Co." required  data-ui-placeholder="e.g. Office fit-out — Lawson &amp; Co."/>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="dealContactSelect">Contact</label>
-          <select id="dealContactSelect"><option value="">No contact</option></select>
+          <label for="dealContactSelect"><span data-ui-copy="Contact">Contact</span></label>
+          <select id="dealContactSelect"><option value="" data-ui-copy="No contact">No contact</option></select>
         </div>
         <div class="field">
-          <label for="dealCompanySelect">Company</label>
-          <select id="dealCompanySelect"><option value="">No company</option></select>
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label for="dealStageSelect">Stage</label>
-          <select id="dealStageSelect"><option value="">No stage</option></select>
-        </div>
-        <div class="field">
-          <label for="dealAssignedSelect">Assigned to</label>
-          <select id="dealAssignedSelect"><option value="">Unassigned</option></select>
+          <label for="dealCompanySelect"><span data-ui-copy="Company">Company</span></label>
+          <select id="dealCompanySelect"><option value="" data-ui-copy="No company">No company</option></select>
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="dealProductSelect">Product</label>
-          <select id="dealProductSelect"><option value="">No product</option></select>
+          <label for="dealStageSelect"><span data-ui-copy="Stage">Stage</span></label>
+          <select id="dealStageSelect"><option value="" data-ui-copy="No stage">No stage</option></select>
         </div>
         <div class="field">
-          <label for="dealQty">Quantity</label>
+          <label for="dealAssignedSelect"><span data-ui-copy="Assigned to">Assigned to</span></label>
+          <select id="dealAssignedSelect"><option value="" data-ui-copy="Unassigned">Unassigned</option></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="dealProductSelect"><span data-ui-copy="Product">Product</span></label>
+          <select id="dealProductSelect"><option value="" data-ui-copy="No product">No product</option></select>
+        </div>
+        <div class="field">
+          <label for="dealQty"><span data-ui-copy="Quantity">Quantity</span></label>
           <input id="dealQty" type="number" min="0" step="any" value="1" />
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="dealValue">Deal value</label>
+          <label for="dealValue"><span data-ui-copy="Deal value">Deal value</span></label>
           <input id="dealValue" type="number" min="0" step="0.01" placeholder="0.00" />
         </div>
         <div class="field">
-          <label for="dealCloseDate">Expected close</label>
+          <label for="dealCloseDate"><span data-ui-copy="Expected close">Expected close</span></label>
           <input id="dealCloseDate" type="date" />
         </div>
       </div>
       <div class="field">
-        <label for="dealNotes">Notes</label>
-        <textarea id="dealNotes" placeholder="Any context on this opportunity…" style="min-height:64px;"></textarea>
+        <label for="dealNotes"><span data-ui-copy="Notes">Notes</span></label>
+        <textarea id="dealNotes" placeholder="Any context on this opportunity…" style="min-height:64px;" data-ui-placeholder="Any context on this opportunity…"></textarea>
       </div>
       <div class="form-error" id="dealFormError"></div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" id="cancelDealBtn">Cancel</button>
-        <button type="submit" class="btn btn-primary" id="dealSubmitBtn">Add deal</button>
+        <button type="button" class="btn btn-ghost" id="cancelDealBtn"><span data-ui-copy="Cancel">Cancel</span></button>
+        <button type="submit" class="btn btn-primary" id="dealSubmitBtn"><span data-ui-copy="Add deal">Add deal</span></button>
       </div>
     </form>
   </div>
@@ -1761,20 +1759,20 @@
     <p id="dealLossReason" class="deal-loss-reason hidden"></p>
     <div id="dealPanelStageBadge" style="margin-top:10px;"></div>
     <div class="detail-grid" id="dealPanelDetails" style="margin-top:14px;"></div>
-    <section class="deal-work-section"><h3 data-sales-label="nextStep">Next step</h3><div class="next-step-current"><p id="nextStepCurrent"></p><button class="btn btn-ghost btn-sm hidden" id="nextStepComplete" data-sales-label="complete">Mark complete</button></div><form id="nextStepForm"><label class="sr-only" for="nextStepTitle" data-sales-label="taskTitle">What needs to happen?</label><input id="nextStepTitle" required maxlength="300" placeholder="What needs to happen?"/><label class="sr-only" for="nextStepDue" data-sales-label="dueDate">Due date</label><input id="nextStepDue" type="date" required/><button class="btn btn-primary btn-sm" id="nextStepSubmit" data-sales-label="addStep">Add next step</button></form><div class="form-error" id="nextStepError"></div></section>
-    <section class="deal-work-section"><h3 data-sales-label="history">Stage &amp; status history</h3><div id="dealStageHistory"></div></section>
+    <section class="deal-work-section"><h3 data-sales-label="nextStep"><span data-ui-copy="Next step">Next step</span></h3><div class="next-step-current"><p id="nextStepCurrent"></p><button class="btn btn-ghost btn-sm hidden" id="nextStepComplete" data-sales-label="complete"><span data-ui-copy="Mark complete">Mark complete</span></button></div><form id="nextStepForm"><label class="sr-only" for="nextStepTitle" data-sales-label="taskTitle"><span data-ui-copy="What needs to happen?">What needs to happen?</span></label><input id="nextStepTitle" required maxlength="300" placeholder="What needs to happen?" data-ui-placeholder="What needs to happen?"/><label class="sr-only" for="nextStepDue" data-sales-label="dueDate"><span data-ui-copy="Due date">Due date</span></label><input id="nextStepDue" type="date" required/><button class="btn btn-primary btn-sm" id="nextStepSubmit" data-sales-label="addStep"><span data-ui-copy="Add next step">Add next step</span></button></form><div class="form-error" id="nextStepError"></div></section>
+    <section class="deal-work-section"><h3 data-sales-label="history"><span data-ui-copy="Stage">Stage</span> &amp; status history</h3><div id="dealStageHistory"></div></section>
     <div id="dealPanelNotesWrap" class="hidden">
-      <div class="section-title">Notes</div>
+      <div class="section-title"><span data-ui-copy="Notes">Notes</span></div>
       <div class="notes-box" id="dealPanelNotes"></div>
     </div>
     <div class="modal-actions" style="justify-content:space-between; margin-top:24px;">
       <div style="display:flex; gap:8px;">
-        <button class="btn btn-sm btn-ghost" id="markDealWonBtn">Mark won</button>
-        <button class="btn btn-sm btn-ghost" id="markDealLostBtn">Mark lost</button>
+        <button class="btn btn-sm btn-ghost" id="markDealWonBtn"><span data-ui-copy="Mark won">Mark won</span></button>
+        <button class="btn btn-sm btn-ghost" id="markDealLostBtn"><span data-ui-copy="Mark lost">Mark lost</span></button>
       </div>
       <div style="display:flex; gap:8px;">
-        <button class="btn btn-danger btn-sm" id="deleteDealBtn">Delete</button>
-        <button class="btn btn-ghost btn-sm" id="editDealBtn">Edit</button>
+        <button class="btn btn-danger btn-sm" id="deleteDealBtn"><span data-ui-copy="Delete">Delete</span></button>
+        <button class="btn btn-ghost btn-sm" id="editDealBtn"><span data-ui-copy="Edit">Edit</span></button>
       </div>
     </div>
   </div>
@@ -1784,17 +1782,17 @@
 <div class="overlay hidden" id="stagesModalOverlay">
   <div class="modal" style="width:480px;">
     <div class="modal-head">
-      <h2>Pipeline stages</h2>
+      <h2><span data-ui-copy="Pipeline stages">Pipeline stages</span></h2>
       <button class="modal-close" id="closeStagesModalBtn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
-    <p class="muted" style="font-size:12.5px; margin-bottom:12px;">Drag to reorder. Changes apply to all deals.</p>
+    <p class="muted" style="font-size:12.5px; margin-bottom:12px;"><span data-ui-copy="Drag to reorder. Changes apply to all deals.">Drag to reorder. Changes apply to all deals.</span></p>
     <div id="stagesList" style="display:flex; flex-direction:column; gap:6px; margin-bottom:14px;"></div>
     <div style="display:flex; gap:8px;">
-      <input id="newStageName" type="text" placeholder="New stage name" style="flex:1;" />
+      <input id="newStageName" type="text" placeholder="New stage name" style="flex:1;"  data-ui-placeholder="New stage name"/>
       <input id="newStageColor" type="color" value="#6366f1" style="width:40px; padding:2px; border-radius:6px; cursor:pointer;" />
-      <button class="btn btn-primary btn-sm" id="addStageBtn">Add</button>
+      <button class="btn btn-primary btn-sm" id="addStageBtn"><span data-ui-copy="Add">Add</span></button>
     </div>
     <div class="form-error" id="stagesFormError"></div>
   </div>
@@ -1803,9 +1801,12 @@
 <script src="/js/api.js"></script>
 <script src="/js/i18n.js"></script>
 <script src="/js/module-i18n.js"></script>
-<div class="overlay hidden" id="salesNameOverlay"><div class="modal"><div class="modal-head"><h2 id="salesNameTitle">Save</h2></div><form id="salesNameForm"><div class="field"><label for="salesNameInput" data-sales-label="name">Name</label><input id="salesNameInput" required maxlength="80"/></div><div class="form-error" id="salesNameError"></div><div class="modal-actions"><button type="button" class="btn btn-ghost" id="salesNameCancel" data-sales-label="cancel">Cancel</button><button class="btn btn-primary" id="salesNameSubmit" data-sales-label="save">Save</button></div></form></div></div>
-<div class="overlay hidden" id="lossReasonOverlay"><div class="modal"><div class="modal-head"><h2 data-sales-label="markLost">Mark as lost</h2></div><form id="lossReasonForm"><div class="field"><label for="lossReasonInput" data-sales-label="lostReason">Reason for losing this deal</label><textarea id="lossReasonInput" required maxlength="1000"></textarea></div><div class="form-error" id="lossReasonError"></div><div class="modal-actions"><button type="button" class="btn btn-ghost" id="lossReasonCancel" data-sales-label="cancel">Cancel</button><button class="btn btn-primary" data-sales-label="markLost">Mark as lost</button></div></form></div></div>
-<div class="overlay hidden" id="quotePdfOverlay"><div class="modal quote-pdf-modal"><div class="modal-head"><div><h2 data-quote-label="previewPdf">Preview PDF</h2><p id="quotePdfFilename" class="muted"></p></div><button type="button" class="modal-close" id="closeQuotePdfBtn" aria-label="Close PDF">×</button></div><div id="quotePdfError" class="form-error"></div><div id="quotePdfFrame" class="quote-pdf-viewer" role="region" aria-label="Proposal PDF preview"></div><p class="quote-pdf-mobile-hint" data-quote-label="mobilePdf">If your browser cannot display the preview, download the PDF to open it.</p><div class="modal-actions"><button type="button" class="btn btn-primary" id="downloadPreviewPdfBtn" data-quote-label="download">Download PDF</button></div></div></div>
+<script src="/js/ui-copy.js"></script>
+<script defer src="/js/language-picker.js"></script>
+<link rel="stylesheet" href="/css/language-picker.css">
+<div class="overlay hidden" id="salesNameOverlay"><div class="modal"><div class="modal-head"><h2 id="salesNameTitle"><span data-ui-copy="Save">Save</span></h2></div><form id="salesNameForm"><div class="field"><label for="salesNameInput" data-sales-label="name"><span data-ui-copy="Name">Name</span></label><input id="salesNameInput" required maxlength="80"/></div><div class="form-error" id="salesNameError"></div><div class="modal-actions"><button type="button" class="btn btn-ghost" id="salesNameCancel" data-sales-label="cancel"><span data-ui-copy="Cancel">Cancel</span></button><button class="btn btn-primary" id="salesNameSubmit" data-sales-label="save"><span data-ui-copy="Save">Save</span></button></div></form></div></div>
+<div class="overlay hidden" id="lossReasonOverlay"><div class="modal"><div class="modal-head"><h2 data-sales-label="markLost"><span data-ui-copy="Mark as lost">Mark as lost</span></h2></div><form id="lossReasonForm"><div class="field"><label for="lossReasonInput" data-sales-label="lostReason"><span data-ui-copy="Reason for losing this deal">Reason for losing this deal</span></label><textarea id="lossReasonInput" required maxlength="1000"></textarea></div><div class="form-error" id="lossReasonError"></div><div class="modal-actions"><button type="button" class="btn btn-ghost" id="lossReasonCancel" data-sales-label="cancel"><span data-ui-copy="Cancel">Cancel</span></button><button class="btn btn-primary" data-sales-label="markLost"><span data-ui-copy="Mark as lost">Mark as lost</span></button></div></form></div></div>
+<div class="overlay hidden" id="quotePdfOverlay"><div class="modal quote-pdf-modal"><div class="modal-head"><div><h2 data-quote-label="previewPdf"><span data-ui-copy="Preview PDF">Preview PDF</span></h2><p id="quotePdfFilename" class="muted"></p></div><button type="button" class="modal-close" id="closeQuotePdfBtn" aria-label="Close PDF" data-ui-aria-label="Close PDF">×</button></div><div id="quotePdfError" class="form-error"></div><div id="quotePdfFrame" class="quote-pdf-viewer" role="region" aria-label="Proposal PDF preview" data-ui-aria-label="Proposal PDF preview"></div><p class="quote-pdf-mobile-hint" data-quote-label="mobilePdf"><span data-ui-copy="If your browser cannot display the preview, download the PDF to open it.">If your browser cannot display the preview, download the PDF to open it.</span></p><div class="modal-actions"><button type="button" class="btn btn-primary" id="downloadPreviewPdfBtn" data-quote-label="download"><span data-ui-copy="Download PDF">Download PDF</span></button></div></div></div>
 <script src="/js/quote-canvas-core.js"></script>
 <script src="/js/quote-core.js"></script>
 <script src="/js/quote-templates.js"></script>
@@ -1831,7 +1832,7 @@
 <script src="/js/customize.js"></script>
 <script src="/js/dashboard-editor.js"></script>
 <script src="/js/sales.js"></script>
-<div class="overlay hidden" id="pipelineOverlay"><div class="modal"><div class="modal-head"><h2 id="pipelineModalTitle">Add another pipeline</h2><button type="button" class="modal-close" id="closePipelineBtn" aria-label="Close">×</button></div><form id="pipelineForm"><input id="pipelineId" type="hidden"/><div class="field"><label for="pipelineName" data-pipeline-label="name">Pipeline name</label><input id="pipelineName" required maxlength="100"/></div><div class="field"><label for="pipelineText" data-pipeline-label="description">What do you sell here?</label><textarea id="pipelineText" maxlength="2000"></textarea></div><div class="field" id="pipelineCopyField"><label for="pipelineCopy" data-pipeline-label="copy">Starting stages</label><select id="pipelineCopy"></select></div><div id="pipelineDeleteSection" class="field hidden"><p id="pipelineDeleteHint" class="muted"></p><label for="pipelineDeleteTarget" data-pipeline-label="moveTo">Move deals to</label><select id="pipelineDeleteTarget"></select></div><div id="pipelineFormError" class="form-error"></div><div class="modal-actions"><button type="button" class="btn btn-danger btn-sm hidden" id="deletePipelineBtn" data-pipeline-label="remove">Delete pipeline</button><button type="button" class="btn btn-ghost" id="pipelineCancel" data-pipeline-label="cancel">Cancel</button><button class="btn btn-primary" id="pipelineSave" data-pipeline-label="save">Save pipeline</button></div></form></div></div>
+<div class="overlay hidden" id="pipelineOverlay"><div class="modal"><div class="modal-head"><h2 id="pipelineModalTitle"><span data-ui-copy="Add another pipeline">Add another pipeline</span></h2><button type="button" class="modal-close" id="closePipelineBtn" aria-label="Close" data-ui-aria-label="Close">×</button></div><form id="pipelineForm"><input id="pipelineId" type="hidden"/><div class="field"><label for="pipelineName" data-pipeline-label="name"><span data-ui-copy="Pipeline name">Pipeline name</span></label><input id="pipelineName" required maxlength="100"/></div><div class="field"><label for="pipelineText" data-pipeline-label="description"><span data-ui-copy="What do you sell here?">What do you sell here?</span></label><textarea id="pipelineText" maxlength="2000"></textarea></div><div class="field" id="pipelineCopyField"><label for="pipelineCopy" data-pipeline-label="copy"><span data-ui-copy="Starting stages">Starting stages</span></label><select id="pipelineCopy"></select></div><div id="pipelineDeleteSection" class="field hidden"><p id="pipelineDeleteHint" class="muted"></p><label for="pipelineDeleteTarget" data-pipeline-label="moveTo"><span data-ui-copy="Move deals to">Move deals to</span></label><select id="pipelineDeleteTarget"></select></div><div id="pipelineFormError" class="form-error"></div><div class="modal-actions"><button type="button" class="btn btn-danger btn-sm hidden" id="deletePipelineBtn" data-pipeline-label="remove"><span data-ui-copy="Delete pipeline">Delete pipeline</span></button><button type="button" class="btn btn-ghost" id="pipelineCancel" data-pipeline-label="cancel"><span data-ui-copy="Cancel">Cancel</span></button><button class="btn btn-primary" id="pipelineSave" data-pipeline-label="save"><span data-ui-copy="Save pipeline">Save pipeline</span></button></div></form></div></div>
 <script src="/js/pipelines.js"></script>
 <script src="/js/workspace-tools.js"></script>
 <script src="/js/app.js"></script>

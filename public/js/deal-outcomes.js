@@ -126,7 +126,7 @@ const KlyoOutcomes = (() => {
     g("dealsView").insertAdjacentHTML(
       "afterbegin",
       `<div id="outcomeTabs" class="outcome-tabs" role="tablist" aria-label="${l("Sales results", "Wyniki sprzedaży")}">${[
-        ["pipeline", "Pipeline", "Lejek"],
+        ["pipeline", KlyoCopy.text("Pipeline"), "Lejek"],
         ["won", "✓ Won", "✓ Wygrane"],
         ["lost", "× Lost", "× Przegrane"],
         ["results", "Results & charts", "Wyniki i wykresy"],

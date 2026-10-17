@@ -14,7 +14,7 @@ const KlyoDocumentTools = (() => {
   function dialog(title, body, wide = false) {
     const overlay = document.createElement("div");
     overlay.className = "doc-overlay";
-    overlay.innerHTML = `<section role="dialog" aria-modal="true" aria-label="${esc(title)}" class="doc-dialog ${wide ? "doc-wide" : ""}"><header><h2>${esc(title)}</h2><button type="button" class="btn btn-ghost" aria-label="Close">×</button></header><div class="doc-content">${body}</div><p class="doc-error" role="alert"></p></section>`;
+    overlay.innerHTML = `<section role="dialog" aria-modal="true" aria-label="${esc(title)}" class="doc-dialog ${wide ? "doc-wide" : ""}"><header><h2>${esc(title)}</h2><button type="button" class="btn btn-ghost" aria-label="${KlyoCopy.escape(KlyoCopy.text("Close"))}">×</button></header><div class="doc-content">${body}</div><p class="doc-error" role="alert"></p></section>`;
     const previous = document.activeElement;
     const close = () => {
       overlay.remove();
@@ -54,7 +54,7 @@ const KlyoDocumentTools = (() => {
       close,
       error: (e) => {
         overlay.querySelector(".doc-error").textContent =
-          e?.message || String(e || "");
+          KlyoCopy.text(e?.message || String(e || ""));
       },
       find: (q) => overlay.querySelector(q),
     };
@@ -66,7 +66,7 @@ const KlyoDocumentTools = (() => {
     });
     if (!r.ok) {
       const b = await r.json().catch(() => ({}));
-      throw new Error(b.error || "Unable to transfer file.");
+      throw new Error(KlyoCopy.text(b.error || "Unable to transfer file."));
     }
     return r;
   }

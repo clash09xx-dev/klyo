@@ -190,8 +190,8 @@ async function run(engine, name) {
     if(screenshotDir)await page.screenshot({path:path.join(screenshotDir,`${name}-plan-user-limit.png`),animations:'disabled'});
     await page.locator('#upgradeTeamPlanBtn').click();
     await page.locator('#pricingGrid .tier-card').first().waitFor();
-    assert.deepEqual(await page.locator('#pricingGrid .tier-price').allTextContents(),['$9 / month','$29 / month','$79 / month','$199 / month']);
-    assert.match(await page.locator('#pricingGrid .tier-card').nth(1).innerText(),/Up to 5 team members/);
+    assert.deepEqual(await page.locator('#pricingGrid .tier-price').allTextContents(),['$9 / miesiąc','$29 / miesiąc','$79 / miesiąc','$199 / miesiąc']);
+    assert.match(await page.locator('#pricingGrid .tier-card').nth(1).innerText(),/Liczba osób w zespole: do 5/);
     await page.locator('#pricingGrid [data-tier=plus]').click();
     await page.locator('#pricingModalOverlay.hidden').waitFor({state:'attached'});
     await page.waitForFunction(()=>document.querySelector('#teamUserLimitNotice').hidden);

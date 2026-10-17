@@ -45,7 +45,7 @@ const KlyoCalendar = (() => {
       .querySelector(".filter-bar")
       .insertAdjacentHTML(
         "afterend",
-        '<div id="calendarConnectionNotice" class="calendar-notice" role="status"></div>',
+        KlyoCopy.html("<div id=\"calendarConnectionNotice\" class=\"calendar-notice\" role=\"status\"></div>"),
       );
     g("calendarConnections").onclick = run(settings);
     g("calendarRefresh").onclick = run(() => loadCalendar());
