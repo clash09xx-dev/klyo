@@ -1,6 +1,16 @@
 /* Authored interface copy only. Never translate CRM record values or API payloads. */
 window.KlyoCopy = (() => {
   const data = {
+    "Users: {0} · contacts: {1} · quotes sent: {2} · AI offers sent: {3} · new workspaces this week: {4} · complimentary access: {5}":
+      "Użytkownicy: {0} · kontakty: {1} · wysłane oferty: {2} · wysłane wiadomości AI: {3} · nowe przestrzenie w tym tygodniu: {4} · bezpłatny dostęp: {5}",
+    Complimentary: "Bezpłatny dostęp",
+    Trial: "Okres próbny",
+    Past_due: "Zaległa płatność",
+    Cancelled: "Anulowany",
+    Canceled: "Anulowany",
+    "No industry set": "Nie określono branży",
+    "Offer ({0})": "Wiadomość z ofertą ({0})",
+    "Quote ({0})": "Oferta ({0})",
     "Commercial register": "Rejestr handlowy",
     Projects: "Projekty",
     Orders: "Zamówienia",

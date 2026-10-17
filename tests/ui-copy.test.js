@@ -51,3 +51,14 @@ test("HTML translation preserves open fragments, options and escaping", () => {
   );
   assert.ok(!r.copy.label("<img src=x>").includes("<img"));
 });
+
+test("platform summary localizes fixed copy without rewriting account names", () => {
+  const r = runtime();
+  r.setLang("pl");
+  assert.equal(r.copy.text("Complimentary"), "Bezpłatny dostęp");
+  assert.equal(r.copy.text("No industry set"), "Nie określono branży");
+  assert.equal(
+    r.copy.format("Quote ({0})", "Acme & Sons"),
+    "Oferta (Acme & Sons)",
+  );
+});

@@ -1118,15 +1118,14 @@ async function loadPlatformDashboard() {
     els.platTrial.textContent = overview.workspaces.trial;
     els.platMrr.textContent = `$${overview.estimated_mrr.toLocaleString()}`;
     els.platSecondaryStats.textContent =
-      `${overview.total_users} total users · ${overview.total_contacts} contacts tracked · ${overview.quotes_sent} quotes sent · ` +
-      `${overview.offers_sent} AI offers sent · ${overview.signups_7d} new workspaces this week · ${overview.workspaces.comped} comped`;
+      KlyoCopy.format("Users: {0} · contacts: {1} · quotes sent: {2} · AI offers sent: {3} · new workspaces this week: {4} · complimentary access: {5}", overview.total_users, overview.total_contacts, overview.quotes_sent, overview.offers_sent, overview.signups_7d, overview.workspaces.comped);
 
     els.platWorkspacesBody.innerHTML = workspaces
       .map(
         (w) => `
       <tr>
         <td class="name-cell" style="--stage-color:var(--accent-1)">${escapeHtml(w.name)}</td>
-        <td><span class="quote-status-badge ${w.plan === "active" ? "accepted" : w.plan === "trial" ? "sent" : "declined"}">${w.is_comped ? "comped" : w.plan}</span>${w.is_comped && w.comped_until ? `<div class="muted" style="font-size:10.5px; margin-top:3px;">${KlyoCopy.label("until")} ${formatDate(w.comped_until)}</div>` : ""}</td>
+        <td><span class="quote-status-badge ${w.plan === "active" ? "accepted" : w.plan === "trial" ? "sent" : "declined"}">${KlyoCopy.escape(KlyoCopy.text(w.is_comped ? "Complimentary" : capitalize(w.plan)))}</span>${w.is_comped && w.comped_until ? `<div class="muted" style="font-size:10.5px; margin-top:3px;">${KlyoCopy.label("until")} ${formatDate(w.comped_until)}</div>` : ""}</td>
         <td class="muted">${escapeHtml(w.tier)}</td>
         <td>${w.user_count}</td>
         <td>${w.contact_count}</td>
@@ -1156,7 +1155,7 @@ async function loadPlatformDashboard() {
         <td>${escapeHtml(u.name)}</td>
         <td class="mono">${escapeHtml(u.email)}</td>
         <td class="muted">${escapeHtml(u.workspace_name)}</td>
-        <td class="muted">${escapeHtml(u.role)}</td>
+        <td class="muted">${escapeHtml(KlyoCopy.text(capitalize(u.role)))}</td>
         <td class="muted">${u.via_google ? "Google" : KlyoCopy.text("Password")}</td>
         <td class="mono muted">${formatDate(u.created_at)}</td>
       </tr>`
@@ -2021,11 +2020,11 @@ function timelineIcon(kind, type) {
 
 function timelineLabel(ev) {
   if (ev.kind === "offer") {
-    const status = ev.status === "sent" ? "Offer sent" : ev.status === "draft" ? "Offer drafted" : `Offer (${ev.status})`;
+    const status = ev.status === "sent" ? "Offer sent" : ev.status === "draft" ? "Offer drafted" : KlyoCopy.format("Offer ({0})", KlyoCopy.text(capitalize(ev.status)));
     return `${KlyoCopy.escape(KlyoCopy.text(status))}${ev.subject ? ` — <em>${escapeHtml(ev.subject)}</em>` : ""}`;
   }
   if (ev.kind === "quote") {
-    const status = ev.status === "sent" ? "Quote sent" : ev.status === "accepted" ? "Quote accepted ✓" : ev.status === "declined" ? "Quote declined" : `Quote (${ev.status})`;
+    const status = ev.status === "sent" ? "Quote sent" : ev.status === "accepted" ? "Quote accepted ✓" : ev.status === "declined" ? "Quote declined" : KlyoCopy.format("Quote ({0})", t("ui.status_" + ev.status));
     const val = ev.total ? ` · ${ev.currency || ""} ${Number(ev.total).toFixed(2)}` : "";
     return `${KlyoCopy.escape(KlyoCopy.text(status))}${ev.title ? ` — <em>${escapeHtml(ev.title)}</em>` : ""}${val}`;
   }
@@ -2222,7 +2221,7 @@ async function openCompanyPanel(id) {
   KlyoFiles.recordButton("company",company.id,"companyPanelOverlay",company.name);
   attachMailHistory("company",company.id,"companyPanelOverlay",company.name);
   els.companyPanelName.textContent = company.name;
-  els.companyPanelIndustry.textContent = company.industry || "No industry set";
+  els.companyPanelIndustry.textContent = company.industry || KlyoCopy.text("No industry set");
   if (company.notes) {
     els.companyPanelNotesWrap.classList.remove("hidden");
     els.companyPanelNotes.textContent = company.notes;
