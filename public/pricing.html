@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pricing — Klyo</title>
+    <meta
+      name="description"
+      content="Current Klyo plans and included workspace limits."
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://klyolabs.com/pricing" />
+    <meta property="og:title" content="Pricing — Klyo" />
+    <meta
+      property="og:description"
+      content="Current Klyo plans and included workspace limits."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/landing.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Klyo",
+        "url": "https://klyolabs.com",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "description": "CRM for contacts, deals, tasks and quotes."
+      }
+    </script>
+    <link rel="icon" href="/favicon.ico?v=klyo-2" sizes="16x16 32x32 48x48" />
+    <link
+      rel="icon"
+      href="/favicon.svg?v=klyo-2"
+      type="image/svg+xml"
+      sizes="any"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="/apple-touch-icon.png?v=klyo-2"
+      sizes="180x180"
+    />
+    <link rel="stylesheet" href="/css/marketing-pages.css" />
+    <link rel="canonical" href="https://klyolabs.com/pricing" />
+  </head>
+  <body class="marketing-page">
+    <header class="site-header">
+      <nav class="site-nav page-width" aria-label="Main navigation">
+        <a class="wordmark" href="/" aria-label="Klyo home"
+          ><span class="brand-symbol"
+            ><svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <path d="M2 12h4l2 7 4-14 3 9 2-5h5" /></svg></span
+          >Klyo</a
+        >
+        <div class="nav-center">
+          <a href="/features">Features</a><a href="/pricing">Pricing</a
+          ><a href="/why-klyo">Why Klyo</a
+          ><a href="/customization">Customization</a>
+        </div>
+        <div class="nav-actions">
+          <button
+            type="button"
+            id="motionToggle"
+            aria-pressed="false"
+            title="Pause animations"
+          >
+            Ⅱ <span>Motion</span></button
+          ><a class="login-link" href="/login">Log in</a
+          ><a class="button button-lime" href="/signup"
+            >Start free trial <span>↗</span></a
+          >
+        </div>
+      </nav>
+    </header>
+    <main>
+      <section class="marketing-hero page-width">
+        <p class="eyebrow">CLEAR WORKSPACE PRICING</p>
+        <h1>Pick your workspace.<br />Make it your own.</h1>
+        <p>
+          Choose a plan for your team size and contact volume. Every workspace
+          includes flexible sales tools, PDF proposals and a layout you can make
+          your own.
+        </p>
+      </section>
+      <section class="pricing-section page-width" id="pricing">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ROOM TO GROW</p>
+            <h2>Start solo.<br /><span>Bring the team.</span></h2>
+          </div>
+          <p>
+            Choose the workspace size that fits today. All plans include
+            contacts, separate sales pipelines, PDF quotes, tasks and personal
+            workspace settings.
+          </p>
+        </div>
+        <div class="pricing-grid" id="pricingGrid" aria-live="polite">
+          <p class="pricing-loading">Loading plans…</p>
+        </div>
+        <p id="pricingError" class="pricing-error" hidden>
+          Plans could not be loaded.
+          <button type="button" id="retryPricing">Try again</button> or
+          <a href="/signup">start your trial</a> and review plans in Settings.
+        </p>
+        <noscript
+          ><p>
+            <a href="/signup">Start your trial</a> and view available plans in
+            your workspace.
+          </p></noscript
+        >
+        <div class="pricing-footnote">
+          <span
+            >USD per workspace / month · 7-day trial<br />User limits are
+            included in each plan. Upgrade your plan as your team grows.</span
+          ><span
+            >AI drafts are optional. You always review and send messages
+            yourself.</span
+          >
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer page-width">
+      <a class="wordmark" href="/">Klyo</a><span>© 2026 Klyo</span>
+      <div>
+        <a href="/privacy">Privacy</a><a href="/terms">Terms</a
+        ><a href="mailto:clash.09xx@gmail.com">Contact</a>
+      </div>
+    </footer>
+    <script src="/js/pricing-page.js" defer></script>
+    <script src="/js/marketing-pages.js" defer></script>
+  </body>
+</html>

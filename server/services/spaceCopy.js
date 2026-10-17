@@ -284,6 +284,7 @@ async function copy(pool, user, body) {
         "custom_fields",
         "items",
         "customer_confirmation",
+        "pricing_groups",
         "logistics",
       ])
         if (key in data) values[keys.indexOf(key)] = JSON.stringify(data[key]);

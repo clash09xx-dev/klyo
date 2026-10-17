@@ -545,6 +545,14 @@ const KlyoCommercial = (() => {
       .querySelector(".commercial-margins")
       ?.addEventListener("toggle", scheduleMargin);
     const side = g("quoteForm").querySelector(".commercial-margins");
+    g("quoteMarginToggle")?.remove();
+    if(side){
+      side.open=false;
+      const toggle=document.createElement('button');toggle.id='quoteMarginToggle';toggle.type='button';toggle.className='btn btn-ghost btn-sm';toggle.textContent=t('Show internal margins','Pokaż marżę wewnętrzną');toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-controls','commercialMarginData');
+      toggle.onclick=()=>{side.open=!side.open;};
+      side.addEventListener('toggle',()=>{toggle.setAttribute('aria-expanded',String(side.open));toggle.textContent=side.open?t('Hide internal margins','Ukryj marżę wewnętrzną'):t('Show internal margins','Pokaż marżę wewnętrzną');});
+      g('quoteModalOverlay').querySelector('.modal-head').append(toggle);
+    }
     if (side) {
       side.setAttribute("role", "complementary");
       side.setAttribute(
@@ -556,6 +564,7 @@ const KlyoCommercial = (() => {
         "Kliknij, aby otworzyć lub zamknąć panel marży",
       );
     }
+    if(typeof KlyoBundles!=="undefined")KlyoBundles.mount();
     decorateRows();
     scheduleMargin();
   }
@@ -641,6 +650,7 @@ const KlyoCommercial = (() => {
         currentQuoteLineItems[i].bundle_name = remove ? "" : name;
       });
       renderQuoteLineItems();
+      if(typeof KlyoBundles!=="undefined")KlyoBundles.mount();
       scheduleMargin();
     } catch (e) {
       error(e);
@@ -687,6 +697,8 @@ const KlyoCommercial = (() => {
         Number(i.unit_price),
         Number(i.discount_percent) || 0,
       ]),
+      pricing_groups:typeof KlyoBundles!=="undefined"?KlyoBundles.groups():[],
+      bundles:currentQuoteLineItems.map(i=>[i.bundle_id,i.show_component_price]),
       currency: v.currency ?? g("quoteCurrencySelect")?.value,
       tax: Number(v.tax_rate ?? g("quoteTaxRate")?.value ?? 0),
       discount_type: v.discount_type ?? g("quoteDiscountType")?.value ?? "none",
@@ -719,6 +731,7 @@ const KlyoCommercial = (() => {
             discount_type: g("quoteDiscountType")?.value || "none",
             discount_value: Number(g("quoteDiscountAmount")?.value || 0),
             currency: g("quoteCurrencySelect").value,
+            pricing_groups:typeof KlyoBundles!=="undefined"?KlyoBundles.groups():[],
           });
       if (version !== request) return;
       out.innerHTML = `<div class="commercial-margin-summary"><strong>${t("Profit", "Zysk")}: ${d.profit == null ? "—" : money(d.profit, d.currency)}</strong><span>${t("Margin", "Marża")}: ${pct(d.margin_percent)}</span><span>${t("Markup", "Narzut")}: ${pct(d.markup_percent)}</span></div>${d.missing_costs ? `<p>${t("Missing purchase cost for", "Brak kosztu zakupu dla")} ${d.missing_costs} ${t("items. Total margin cannot be calculated.", "pozycji. Nie można obliczyć marży całkowitej.")}</p>` : ""}<div class="commercial-scroll"><table><thead><tr><th>${KlyoModuleI18n.label("Item", "Pozycja")}</th><th>${KlyoModuleI18n.label("Net revenue after discounts", "Przychód netto po rabatach")}</th><th>${KlyoModuleI18n.label("Profit", "Zysk")}</th><th>${KlyoModuleI18n.label("Margin", "Marża")}</th><th>${KlyoModuleI18n.label("Markup", "Narzut")}</th></tr></thead><tbody>${d.rows.map((r) => `<tr><td>${esc(r.description)}</td><td>${money(r.revenue, d.currency)}</td><td>${r.cost_missing ? "—" : money(r.profit, d.currency)}</td><td>${pct(r.margin_percent)}</td><td>${pct(r.markup_percent)}</td></tr>`).join("")}</tbody></table></div>`;

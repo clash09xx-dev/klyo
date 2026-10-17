@@ -73,6 +73,8 @@ app.use("/api/calendar-integrations",require("./routes/calendar-integrations"));
 app.use("/api/clients", clientsRoutes);
 app.use("/api/settings", dataResetRoutes);
 app.use("/api", trackingRoutes);
+app.use("/api/deal-outcomes", require("./routes/deal-outcomes"));
+app.use("/api/mfa", require("./routes/mfa"));
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
@@ -89,6 +91,7 @@ app.get("/terms",   (req, res) => res.sendFile(path.join(publicDir, "terms.html"
 app.get("/privacy", (req, res) => res.sendFile(path.join(publicDir, "privacy.html")));
 app.get("/docs/communications-setup",(req,res)=>res.sendFile(path.join(publicDir,"docs/communications-setup.html")));
 app.get("/docs/sharepoint-setup",(req,res)=>res.sendFile(path.join(publicDir,"docs/sharepoint-setup.html")));
+for (const page of ['features','pricing','why-klyo']) app.get('/'+page,(req,res)=>res.sendFile(path.join(publicDir,page+'.html')));
 app.get("/customization",(req,res)=>res.sendFile(path.join(publicDir,"customization.html")));
 app.get("/login",   (req, res) => res.sendFile(path.join(publicDir, "login.html")));
 app.get("/signup",  (req, res) => res.sendFile(path.join(publicDir, "login.html")));

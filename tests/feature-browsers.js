@@ -9,6 +9,7 @@ for (const suite of [
   "communications",
   "calendar-integrations",
   "sales-completion",
+  "visual-workspace",
 ]) {
   const result = spawnSync(
     process.execPath,

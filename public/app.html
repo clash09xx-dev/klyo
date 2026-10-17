@@ -28,6 +28,7 @@
 <link rel="icon" href="/favicon.ico?v=klyo-2" sizes="16x16 32x32 48x48">
 <link rel="icon" href="/favicon.svg?v=klyo-2" type="image/svg+xml" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=klyo-2" sizes="180x180">
+<link rel="stylesheet" href="/css/visual-workspace.css">
 </head>
 <body>
 
@@ -1811,9 +1812,12 @@
 <script src="/js/quote-studio.js"></script>
 <script src="/js/quote-designer.js"></script>
 <script src="/js/document-tools.js"></script>
+<script src="/js/quote-bundles.js"></script>
+<script src="/js/mfa.js"></script>
 <script src="/js/sales-insights.js"></script>
 <script src="/js/analytics.js"></script>
 <script src="/js/deal-views.js"></script>
+<script src="/js/deal-outcomes.js"></script>
 <script src="/js/files.js"></script>
 <script src="/js/price-lists.js"></script>
 <script src="/js/completion.js"></script>
@@ -1824,6 +1828,7 @@
 <script src="/js/cloud-files.js"></script>
 <script src="/js/preferences-core.js"></script>
 <script src="/js/customize.js"></script>
+<script src="/js/dashboard-editor.js"></script>
 <script src="/js/sales.js"></script>
 <div class="overlay hidden" id="pipelineOverlay"><div class="modal"><div class="modal-head"><h2 id="pipelineModalTitle">Add another pipeline</h2><button type="button" class="modal-close" id="closePipelineBtn" aria-label="Close">×</button></div><form id="pipelineForm"><input id="pipelineId" type="hidden"/><div class="field"><label for="pipelineName" data-pipeline-label="name">Pipeline name</label><input id="pipelineName" required maxlength="100"/></div><div class="field"><label for="pipelineText" data-pipeline-label="description">What do you sell here?</label><textarea id="pipelineText" maxlength="2000"></textarea></div><div class="field" id="pipelineCopyField"><label for="pipelineCopy" data-pipeline-label="copy">Starting stages</label><select id="pipelineCopy"></select></div><div id="pipelineDeleteSection" class="field hidden"><p id="pipelineDeleteHint" class="muted"></p><label for="pipelineDeleteTarget" data-pipeline-label="moveTo">Move deals to</label><select id="pipelineDeleteTarget"></select></div><div id="pipelineFormError" class="form-error"></div><div class="modal-actions"><button type="button" class="btn btn-danger btn-sm hidden" id="deletePipelineBtn" data-pipeline-label="remove">Delete pipeline</button><button type="button" class="btn btn-ghost" id="pipelineCancel" data-pipeline-label="cancel">Cancel</button><button class="btn btn-primary" id="pipelineSave" data-pipeline-label="save">Save pipeline</button></div></form></div></div>
 <script src="/js/pipelines.js"></script>

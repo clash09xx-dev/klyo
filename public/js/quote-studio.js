@@ -138,6 +138,7 @@ const KlyoQuoteStudio = (() => {
       if (sub) result[key][sub] = el.value;
       else result[key] = el.value;
     }
+    if(typeof KlyoBundles!=="undefined")result.pricing_groups=KlyoBundles.groups();
     result.pricing_mode = typeof KlyoCommercial!=="undefined" ? KlyoCommercial.pricingMode() : result.pricing_mode;
     return Q.normalizeDocument(KlyoQuoteTemplates.readDocument(result));
   }
@@ -159,13 +160,14 @@ const KlyoQuoteStudio = (() => {
         quote.created_at || new Date().toISOString(),
       ).slice(0, 10);
     render();
+    if(typeof KlyoBundles!=="undefined")KlyoBundles.open(documentState.pricing_groups);
     await KlyoPriceLists.openQuote(quote);
     if(typeof KlyoCommercial!=="undefined")await KlyoCommercial.openQuote(quote);
     g("quoteTaxRate").value = Number(quote?.tax_rate) || 0;
     g("quoteDiscountType").value=quote?.discount_type||"none";g("quoteDiscountAmount").value=quote?.discount_value||0;
     try{await KlyoQuoteTemplates.open();}catch(e){g("quoteTemplateControls").textContent=e.message;}
   }
-  function applyTemplate(content){const current=read();documentState=Q.normalizeDocument({...content.document,buyer:current.buyer,reference:current.reference,issued_on:new Date().toISOString().slice(0,10),valid_until:''});render();if(typeof KlyoCommercial!=="undefined")KlyoCommercial.setPricingMode(documentState.pricing_mode);g('quoteTaxRate').value=content.tax_rate||0;g('quoteDiscountType').value=content.discount_type||'none';g('quoteDiscountAmount').value=content.discount_value||0;}
+  function applyTemplate(content){if(typeof KlyoBundles!=="undefined")KlyoBundles.open(content.document?.pricing_groups||[]);const current=read();documentState=Q.normalizeDocument({...content.document,buyer:current.buyer,reference:current.reference,issued_on:new Date().toISOString().slice(0,10),valid_until:''});render();if(typeof KlyoCommercial!=="undefined")KlyoCommercial.setPricingMode(documentState.pricing_mode);g('quoteTaxRate').value=content.tax_rate||0;g('quoteDiscountType').value=content.discount_type||'none';g('quoteDiscountAmount').value=content.discount_value||0;}
   function collect() {
     documentState = read();
     return {

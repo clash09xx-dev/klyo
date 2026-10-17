@@ -335,7 +335,10 @@ function showLimitOrError(err, fallbackEl) {
   wireEvents();
   KlyoSales.init();
   KlyoPipelines.init();
+  KlyoOutcomes.init();
   KlyoCustomize.init();
+  KlyoMFA.init();
+  KlyoDashboard.init();
   KlyoQuoteStudio.init();
   await KlyoWorkspace.init();
   KlyoNotifications.init();
@@ -1693,6 +1696,7 @@ function switchView(view) {
 
   currentView = view;
   KlyoSales.onView(view);
+  KlyoOutcomes.onView(view);
   KlyoAnalytics.onView(view);
   if(view==='commercial')KlyoCommercial.onView();
   KlyoOperations.onView(view).catch(e=>toast(e.message,"error"));
@@ -2489,7 +2493,7 @@ function buildLineItemRow(item, index) {
 function recomputeQuoteTotals() {
   const currency=els.quoteCurrencySelect.value||workspaceDefaultCurrency;
   try{
-    const totals=KlyoQuoteCore.computeTotals(currentQuoteLineItems,Number(document.getElementById('quoteTaxRate')?.value||0),KlyoQuoteTemplates.discount());
+    const totals=KlyoQuoteCore.computeTotals(currentQuoteLineItems,Number(document.getElementById('quoteTaxRate')?.value||0),{...KlyoQuoteTemplates.discount(),pricing_groups:typeof KlyoBundles!=="undefined"?KlyoBundles.groups():[]});
     els.quoteItemsContainer.querySelectorAll('.quote-line-row').forEach((row,index)=>row.querySelector('.line-total-display').textContent=fmtMoney(totals.computed[index].line_total,currency,2));
     els.quoteSubtotalValue.textContent=fmtMoney(totals.subtotal,currency,2);els.quoteDiscountValue.textContent='−'+fmtMoney(totals.discountTotal,currency,2);els.quoteTotalValue.textContent=fmtMoney(totals.total,currency,2);
     document.getElementById('quoteTaxRow').hidden=!totals.tax_rate;document.getElementById('quoteTaxLabel').textContent=(KlyoI18n.getLang()==='pl'?'Podatek':'Tax')+` (${totals.tax_rate}%)`;document.getElementById('quoteTaxValue').textContent=fmtMoney(totals.tax_total,currency,2);
@@ -2519,7 +2523,7 @@ async function saveQuote(alsoSend) {
     recipient_ids: els.quoteRecipientsField.classList.contains("hidden") ? [] : collectQuoteRecipientIds(),
   };
 
-  try{Object.assign(payload,KlyoQuoteStudio.collect());KlyoQuoteCore.computeTotals(payload.line_items,payload.tax_rate,{type:payload.discount_type,value:payload.discount_value});}catch(error){els.quoteFormError.textContent=error.message;return;}
+  try{Object.assign(payload,KlyoQuoteStudio.collect());KlyoQuoteCore.computeTotals(payload.line_items,payload.tax_rate,{type:payload.discount_type,value:payload.discount_value,pricing_groups:payload.document?.pricing_groups||[]});}catch(error){els.quoteFormError.textContent=error.message;return;}
   const id = els.quoteId.value;
   document.getElementById('quoteSavePdfBtn').disabled=true;
   els.quoteSendBtn.disabled = true;
@@ -2715,7 +2719,7 @@ async function handleEditQuoteFromPanel() {
     if (box) box.checked = true;
   });
   currentQuoteLineItems = lineItems.map((i) => ({
-    bundle_id:i.bundle_id||"",bundle_name:i.bundle_name||"",sku:i.sku||"",
+    bundle_id:i.bundle_id||"",bundle_name:i.bundle_name||"",sku:i.sku||"",show_component_price:i.show_component_price===true,
     product_id: i.product_id, description: i.description, quantity: i.quantity, unit_price: i.unit_price, discount_percent: i.discount_percent,
   }));
   await KlyoQuoteStudio.open(quote,allContactsCache.find(c=>c.id===quote.contact_id)||{});

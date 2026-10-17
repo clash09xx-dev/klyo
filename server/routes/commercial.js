@@ -133,6 +133,7 @@ router.post("/margins/preview", async (req, res) => {
     t = Q.computeTotals(b.line_items, b.tax_rate || 0, {
       type: b.discount_type,
       value: b.discount_value,
+      pricing_groups:b.pricing_groups||[],
     }),
     currency = normalizeCurrency(b.currency);
   if (!currency) throw invalid("Choose a supported currency.");
@@ -686,8 +687,9 @@ router.get("/orders/:id/confirmation.pdf", async (req, res) => {
             email: order.contact_email || "",
           },
     });
-  let items = Q.computeTotals(order.items || [], 0).computed;
-  let totals = Q.computeTotals(items, 0);
+  d.pricing_groups=order.pricing_groups||[];
+  let items = order.items || [];
+  let totals = Q.computeTotals(items, 0, {pricing_groups:d.pricing_groups});
   const negotiated = S.money(order.total ?? totals.total);
   if (negotiated > totals.total) {
     items.push({
@@ -699,9 +701,10 @@ router.get("/orders/:id/confirmation.pdf", async (req, res) => {
       unit_price: Math.round((negotiated - totals.total) * 100) / 100,
       discount_percent: 0,
     });
-    totals = Q.computeTotals(items, 0);
+    totals = Q.computeTotals(items, 0, {pricing_groups:d.pricing_groups});
     items = totals.computed;
   }
+  items=totals.computed;
   const discount = Math.round((totals.total - negotiated) * 100) / 100;
   const quote = {
     ...order,

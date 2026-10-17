@@ -114,7 +114,7 @@ async function saveDraft(req, id) {
     const totals = Q.computeTotals(
         b.line_items,
         b.tax_rate ?? existing?.tax_rate ?? 0,
-        {type:b.discount_type??existing?.discount_type??'none',value:b.discount_value??existing?.discount_value??0},
+        {type:b.discount_type??existing?.discount_type??'none',value:b.discount_value??existing?.discount_value??0,pricing_groups:b.document?.pricing_groups??existing?.document?.pricing_groups??[]},
       ),
       recipients = b.recipient_ids || [];
     const contact = await S.validateLinks(
@@ -276,7 +276,7 @@ function buildSendableEmail(full) {
     d.language === "pl" ? "Dzień dobry," : "Hello,",
     "",
     quote.intro_message || "",
-    ...Q.presentItems(lineItems,d).map(
+    ...Q.presentItems(lineItems,d,quote.currency).map(
       (i) =>
         i.hide_prices ? `${i.description}: ${i.quantity}` : `${i.description}: ${i.quantity} x ${money(i.unit_price)}${Number(i.discount_percent) ? ` (-${i.discount_percent}%)` : ""} = ${money(i.line_total)}`,
     ),

@@ -411,6 +411,7 @@ async function order(user, n, b) {
       d = { ...p, ...b };
     if (!n && d.quote_id) {
       const q = await row(c, "quotes", user.workspace_id, d.quote_id);
+      d.pricing_groups = d.pricing_groups ?? q.document?.pricing_groups ?? [];
       d.title = d.title || q.title;
       d.currency = d.currency || q.currency;
       d.contact_id = d.contact_id || q.contact_id;
@@ -483,6 +484,7 @@ async function order(user, n, b) {
         sku: txt(item.sku, 100),
         bundle_id: txt(item.bundle_id, 80),
         bundle_name: txt(item.bundle_name, 200),
+        show_component_price: item.show_component_price === true,
         discount_percent: num(item.discount_percent, 100),
         quantity,
         unit_price: price,
@@ -492,6 +494,7 @@ async function order(user, n, b) {
     const totals = require("../../public/js/quote-core").computeTotals(
       clean,
       0,
+      { pricing_groups: d.pricing_groups || [] },
     );
     const logistics = d.logistics || {};
     if (typeof logistics !== "object" || Array.isArray(logistics))
@@ -526,6 +529,12 @@ async function order(user, n, b) {
           : !Object.hasOwn(b, "items") && d.total != null
             ? d.total
             : totals.total,
+      ),
+      pricing_groups: JSON.stringify(
+        require("../../public/js/quote-core").normalizeGroups(
+          d.pricing_groups || [],
+          clean,
+        ),
       ),
       confirmed_delivery_date: date(d.confirmed_delivery_date),
       logistics: JSON.stringify({

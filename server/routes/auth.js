@@ -24,19 +24,8 @@ const {
 const preferences = require("../../public/js/preferences-core");
 const router = require("../middleware/safeRouter")();
 
-function signToken(user) {
-  return jwt.sign(
-    {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      workspace_id: user.workspace_id,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: "30d" },
-  );
-}
+const M = require('../services/mfa');
+const signToken = M.signToken;
 
 function randomInviteCode() {
   return crypto.randomBytes(5).toString("hex").toUpperCase(); // e.g. "A1B2C3D4E5"
@@ -190,6 +179,8 @@ router.post("/login", async (req, res) => {
       .json({ error: "Please enter a valid email address." });
   }
 
+  await M.limit("password-login-ip:" + req.ip, 300, 900);
+  await M.limit("password-login-account:" + email.toLowerCase().trim(), 20, 900);
   const result = await db.query("SELECT * FROM users WHERE email = $1", [
     email.toLowerCase().trim(),
   ]);
@@ -218,14 +209,7 @@ router.post("/login", async (req, res) => {
       });
   }
 
-  const user = {
-    id: row.id,
-    name: row.name,
-    email: row.email,
-    role: row.role,
-    workspace_id: row.workspace_id,
-  };
-  res.json({ token: signToken(user), user });
+  res.json(await M.login(row, req.ip));
 });
 
 // GET /api/auth/me — includes theme + onboarding status, which aren't in the token
@@ -604,14 +588,9 @@ router.get("/google/callback", async (req, res) => {
       }
     }
 
-    const token = signToken({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      workspace_id: user.workspace_id,
-    });
-    res.redirect(`${appUrl}/login?google_token=${token}`);
+    const result = await M.login(user, req.ip);
+    if(result.mfa_required) res.redirect(`${appUrl}/login?mfa_challenge=${result.challenge}`);
+    else res.redirect(`${appUrl}/login?google_token=${result.token}`);
   } catch (err) {
     console.error("Google sign-in failed:", err.message);
     res.redirect(`${appUrl}/login?google_error=failed`);
@@ -636,7 +615,7 @@ router.post("/join", requireAuth, async (req, res) => {
     role: result.user.role,
     workspace_id: result.user.workspace_id,
   };
-  res.json({ token: signToken(user), user, workspace_name: result.name });
+  res.json({ token: signToken({...user,mfa_version:req.account.mfa_version,auth_time:req.authToken.auth_time||req.authToken.iat}), user, workspace_name: result.name });
 });
 
 // PUT /api/auth/language — save UI language preference

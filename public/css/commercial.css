@@ -353,3 +353,15 @@
     max-width: calc(100vw - 560px);
   }
 }
+/* Private controls remain discoverable while the customer-facing document stays clean. */
+#quoteModalOverlay>.modal>.modal-head {flex-wrap:wrap;gap:8px;}
+#quoteMarginToggle {margin-left:auto;border:1px solid var(--border);}
+#quoteMarginToggle[aria-expanded=true] {background:var(--accent-1);color:var(--on-accent);}
+.pricing-group-card {display:grid;grid-template-columns:2fr 1.6fr 1fr .8fr;gap:12px;padding:18px;margin:14px 0;border:1px solid var(--border);border-left:3px solid var(--accent-1);background:var(--surface-2);}
+.pricing-group-card label,.pricing-component label {display:flex;flex-direction:column;gap:6px;min-width:0;}
+.pricing-group-card input,.pricing-group-card select,.pricing-component select {width:100%;min-height:38px;}
+.group-create {display:flex;gap:10px;margin:18px 0;}.group-create input {flex:1;min-width:0;}
+.group-checkbox {flex-direction:row!important;align-items:center;}.group-checkbox input {width:auto;min-height:initial;}
+.pricing-component {display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);}
+#pricingGroupPreview {padding:16px;background:var(--surface-2);margin:18px 0;}
+@media(max-width:700px){.pricing-group-card,.pricing-component {grid-template-columns:minmax(0,1fr);}#quoteMarginToggle {margin-left:0;}#quoteModalOverlay .modal-head h2 {flex-basis:calc(100% - 45px);}}

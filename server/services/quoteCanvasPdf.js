@@ -159,9 +159,9 @@ module.exports = async function canvasPdf(quote, items, d) {
           const v = [
             row.description,
             row.first ? String(Number(row.item.quantity)) : "",
-            row.first ? money(row.item.unit_price) : "",
-            row.first ? (Number(row.item.discount_percent) || 0) + "%" : "",
-            row.first ? money(row.item.line_total) : "",
+            row.first && !row.item.hide_prices ? money(row.item.unit_price) : "",
+            row.first && !row.item.hide_prices ? (Number(row.item.discount_percent) || 0) + "%" : "",
+            row.first && !row.item.hide_prices ? money(row.item.line_total) : "",
           ];
           if(d.pricing_mode === "total_only")v.splice(2);
           let left = x;
