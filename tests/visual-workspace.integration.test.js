@@ -186,6 +186,17 @@ test(
         ).total,
         0,
       );
+      const legacy = await create("Legacy win without date", "won", 2000);
+      await f.db.query("UPDATE deals SET closed_at=NULL WHERE id=$1", [
+        legacy.id,
+      ]);
+      const all = await ok("/deal-outcomes?currency=PLN");
+      assert.equal(all.filters.month, "all");
+      assert.equal(all.summary.won_count, 3);
+      assert.equal(Number(all.summary.won_value), 17000);
+      assert.ok(
+        all.deals.some((d) => d.id === legacy.id && d.closed_on === null),
+      );
       const foreign = (await ok("/pipelines", "GET", undefined, 3))
         .pipelines[0];
       assert.equal(

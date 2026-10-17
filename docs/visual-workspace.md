@@ -10,7 +10,7 @@ Adjust navigation width or choose grouped sections, two-column tiles or a simple
 
 ## Won, Lost and reporting
 
-**Deals → Won / Lost / Results & charts** opens dedicated closed-result views. Choose the closing month and currency; the selected pipeline is respected. Click a deal to inspect it. The Results view includes actual closed results over six months, recorded loss reasons, value bands and source results. Open-deal aging explicitly covers all currently open records. Won/Lost cards also work as dashboard widgets and lead back to the results view.
+**Deals → Won / Lost / Results & charts** opens dedicated closed-result views. All dates is selected by default and includes older deals and records without a closing date. Turn it off to choose a closing month. Choose the currency; the selected pipeline is respected. Click a deal to inspect it. The Results view includes actual closed results over six months, recorded loss reasons, value bands and source results. Open-deal aging explicitly covers all currently open records. Won/Lost cards also work as dashboard widgets and lead back to the results view.
 
 These are actual CRM records and owner-defined targets, not invented industry benchmarks. Currencies remain separate. A win rate describes won deals among the closed cohort in the selected period, not conversion at every stage. Historical reports use the current saved records; they are not historical snapshots of deleted or edited data.
 

@@ -141,6 +141,8 @@ const assert = require("node:assert/strict"),
         await page.goto(f.base + "/app", { waitUntil: "networkidle" });
         await page.locator(".nav [data-view=deals]").click();
         await page.locator("[data-outcome=won]").click();
+        assert.equal(await page.locator("#outcomeAllDates").isChecked(), true);
+        assert.equal(await page.locator("#outcomeMonth").isDisabled(), true);
         await page
           .locator("#outcomeContent")
           .filter({ hasText: "Won sensor rollout" })
@@ -153,6 +155,23 @@ const assert = require("node:assert/strict"),
             );
             throw e;
           });
+        const monthly = page.waitForResponse(
+          (r) =>
+            r.url().includes("/api/deal-outcomes?") &&
+            !r.url().includes("month=all"),
+        );
+        await page.locator("#outcomeAllDates").uncheck();
+        await monthly;
+        await page.locator("#outcomeContent[aria-busy=false]").waitFor();
+        assert.equal(await page.locator("#outcomeMonth").isDisabled(), false);
+        const allHistory = page.waitForResponse(
+          (r) =>
+            r.url().includes("/api/deal-outcomes?") &&
+            r.url().includes("month=all"),
+        );
+        await page.locator("#outcomeAllDates").check();
+        await allHistory;
+        await page.locator("#outcomeContent[aria-busy=false]").waitFor();
         await page.locator(`[data-outcome-deal="${won.id}"]`).click();
         await page.locator("#closeDealPanelBtn").click();
         await page.locator("[data-outcome=lost]").click();
