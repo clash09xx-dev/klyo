@@ -3,23 +3,35 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Klyo Customization — A CRM built around you</title>
+    <title>Make It Yours — Your Klyo, your way</title>
     <meta
       name="description"
       content="Your own fields, proposal templates, colours, layouts and sales pipelines. Switch between shared Team and private Personal CRM."
     />
-    <link rel="canonical" href="https://klyolabs.com/customization" />
+    <link rel="canonical" href="https://klyolabs.com/make-it-yours" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/landing.css" />
     <link rel="stylesheet" href="/css/customization.css" />
     <script defer src="/js/customization-demo.js"></script>
     <link rel="icon" href="/favicon.ico?v=klyo-2" sizes="16x16 32x32 48x48" />
-    <link rel="icon" href="/favicon.svg?v=klyo-2" type="image/svg+xml" sizes="any" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=klyo-2" sizes="180x180" />
+    <link
+      rel="icon"
+      href="/favicon.svg?v=klyo-2"
+      type="image/svg+xml"
+      sizes="any"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="/apple-touch-icon.png?v=klyo-2"
+      sizes="180x180"
+    />
+    <link rel="stylesheet" href="/css/marketing-pages.css" />
+<link rel="stylesheet" href="/css/make-it-yours.css" />
+<script defer src="/js/marketing-pages.js"></script>
   </head>
   <body>
     <header class="site-header">
@@ -36,7 +48,16 @@
               <path d="M2 12h4l2 7 4-14 3 9 2-5h5" /></svg></span
           >Klyo</a
         >
-        <div class="nav-center"><a href="/features">Features</a><a href="/pricing">Pricing</a><a href="/why-klyo">Why Klyo</a><a href="/customization">Customization</a></div>
+        <div class="nav-center">
+          <a href="/features">Features</a><a href="/pricing">Pricing</a
+          ><a href="/why-klyo">Why Klyo</a
+          ><a
+            class="miy-wordmark"
+            aria-label="Make It Yours"
+            href="/make-it-yours"
+            >Make It Yours</a
+          >
+        </div>
         <div class="nav-actions">
           <a class="login-link" href="/login">Log in</a
           ><a class="button button-lime" href="/signup"
@@ -50,11 +71,15 @@
       <section class="custom-hero page-width">
         <div>
           <p class="eyebrow">THE WORKSPACE IS YOURS TO SHAPE</p>
-          <h1>A CRM built<br />around <span>you.</span></h1>
+          <h1>
+            <span class="miy-wordmark">Make It Yours</span><br />A CRM built<br />around
+            <span>you.</span>
+          </h1>
           <p>
-            Your client details. Your sales process. Your proposal. Change the
-            parts you work with every day, and keep your team connected without
-            mixing in your private work.
+            Move it. Resize it. Give it a little tilt. Open Make It Yours in
+            Settings and build a dashboard that fits the way you work. Magnetic
+            guides when you want them, free placement when you don’t. Your
+            client fields, colours and menu stay yours too.
           </p>
           <div class="hero-actions">
             <a class="button button-lime button-large" href="/signup"
@@ -95,6 +120,54 @@
           </form>
         </div>
       </section>
+      <section class="page-width">
+        <div class="flagship-pair">
+          <article class="flagship-card">
+            <span class="flagship-kicker">THE WORKSPACE, ON YOUR TERMS</span
+            ><span class="miy-wordmark">Make It Yours</span>
+            <h2>Your work.<br />Your kind of organized.</h2>
+            <p>
+              Open Make It Yours in Settings. Move and resize your dashboard,
+              use magnetic guides or free placement, and give a widget a little
+              tilt. Keep your own colours, menu and shortcuts.
+            </p>
+            <div
+              class="flagship-mini-layout"
+              aria-label="Illustrative sample layout"
+            >
+              <span>WON THIS MONTH<b>24</b></span
+              ><span>NEXT ACTION<b>↗</b></span
+              ><span>YOUR VIEW<b>◫</b></span>
+            </div>
+            <span class="flagship-chip lime">Move</span
+            ><span class="flagship-chip pink">Resize</span
+            ><span class="flagship-chip">Tilt</span
+            ><a class="flagship-link" href="/make-it-yours"
+              >Explore Make It Yours ↗</a
+            >
+          </article>
+          <article class="flagship-card">
+            <span class="flagship-kicker">THE PROPOSAL, BUILT BY YOU</span
+            ><span class="flagship-chip pink">QUOTE CREATOR</span>
+            <h2>A blank A4.<br />A quote with your name on it.</h2>
+            <p>
+              Design your template, bring in your price lists and build product
+              bundles. Choose which prices to show, layer your discounts and
+              preview the actual PDF before you send.
+            </p>
+            <div class="flagship-paper">
+              <span>A4 ↗</span
+              ><small
+                >Your logo &amp; layout<br />Live customer fields<br />Bundles
+                &amp; discounts<br />A PDF ready to review</small
+              >
+            </div>
+            <a class="flagship-link" href="/features#quotes"
+              >Meet the Quote Creator ↗</a
+            >
+          </article>
+        </div>
+      </section>
       <section class="custom-capabilities page-width">
         <div class="section-heading">
           <div>
@@ -121,7 +194,11 @@
             <span>02 / PROPOSALS</span>
             <h3>Templates with your name on them</h3>
             <p>
-              Start from a blank A4 page. Add text, images, shapes and automatic client, date and price fields. Drag, resize and position every element, arrange layers and add pages. Save your own template, import CSV or Excel price lists, and apply line or whole-quote discounts.
+              Start from a blank A4 page. Add text, images, shapes and automatic
+              client, date and price fields. Drag, resize and position every
+              element, arrange layers and add pages. Save your own template,
+              import CSV or Excel price lists, and apply line or whole-quote
+              discounts.
             </p>
           </article>
           <article>
@@ -135,16 +212,53 @@
           </article>
           <article>
             <span>04 / WORKSPACE</span>
-            <h3>Colours, layout &amp; focus</h3>
+            <h3>Make It Yours · layout &amp; focus</h3>
             <p>
               Start with six themes or build your palette. Move navigation,
               choose density, reorder or hide menu items and contact columns,
-              and arrange overview widgets.
+              and freely arrange, resize or tilt dashboard widgets.
             </p>
           </article>
         </div>
       </section>
-      <section class="canvas-story page-width"><div class="section-heading"><div><p class="eyebrow">BUILD IT ON A BLANK PAGE</p><h2>The proposal looks<br>exactly like yours.</h2></div><p>Use “Create your own template” inside Quotes. Arrange your page, bind the live client and price fields, then preview the actual PDF before saving.</p></div><figure class="product-shot canvas-shot"><picture><source type="image/webp" srcset="/images/a4-designer.webp 1x, /images/a4-designer@2x.webp 2x"><img src="/images/a4-designer.png" width="1440" height="1000" loading="lazy" alt="Klyo freeform A4 proposal template designer"></picture><figcaption>Actual Klyo editor · fictional sample workspace</figcaption></figure><p class="proposal-note">Keep your documents alongside the work: connect SharePoint, upload to a chosen CRM folder, and link files to clients, products, deals or proposals. Microsoft connection setup is required.</p></section><section class="space-story">
+      <section class="canvas-story page-width">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">BUILD IT ON A BLANK PAGE</p>
+            <h2>The proposal looks<br />exactly like yours.</h2>
+          </div>
+          <p>
+            Use “Create your own template” inside Quotes. Arrange your page,
+            bind the live client and price fields, then preview the actual PDF
+            before saving.
+          </p>
+        </div>
+        <figure class="product-shot canvas-shot">
+          <picture
+            ><source
+              type="image/webp"
+              srcset="
+                /images/a4-designer.webp    1x,
+                /images/a4-designer@2x.webp 2x
+              " />
+            <img
+              src="/images/a4-designer.png"
+              width="1440"
+              height="1000"
+              loading="lazy"
+              alt="Klyo freeform A4 proposal template designer"
+          /></picture>
+          <figcaption>
+            Actual Klyo editor · fictional sample workspace
+          </figcaption>
+        </figure>
+        <p class="proposal-note">
+          Keep your documents alongside the work: connect SharePoint, upload to
+          a chosen CRM folder, and link files to clients, products, deals or
+          proposals. Microsoft connection setup is required.
+        </p>
+      </section>
+      <section class="space-story">
         <div class="page-width">
           <div class="section-heading">
             <div>

@@ -157,3 +157,66 @@ test("invalid group structures, excess discounts and arbitrary dashboard content
     /navigation width/,
   );
 });
+
+test("Make It Yours preserves fine geometry and safe tilt while rejecting unsafe layout values", () => {
+  const value = P.normalize(
+    {
+      layout: {
+        dashboard_snap: "free",
+        dashboard: [
+          { id: "shortcut_deal", x: 1.37, y: 3.43, w: 3.5, h: 2.25, tilt: 3.5 },
+        ],
+      },
+    },
+    true,
+  );
+  assert.deepEqual(value.layout.dashboard[0], {
+    id: "shortcut_deal",
+    x: 1.37,
+    y: 3.43,
+    w: 3.5,
+    h: 2.25,
+    tilt: 3.5,
+  });
+  assert.deepEqual(P.normalize(value, true), value);
+  for (const bad of [NaN, Infinity, 7, -7, "rotate(20deg)"])
+    assert.throws(
+      () =>
+        P.normalize(
+          { layout: { dashboard: [{ id: "metrics", tilt: bad }] } },
+          true,
+        ),
+      /tilt/,
+    );
+  assert.throws(
+    () => P.normalize({ layout: { dashboard_snap: "unsafe" } }, true),
+    /snapping/,
+  );
+  const legacy = P.normalize(
+    { layout: { dashboard: [{ id: "metrics", x: 0, y: 0, w: 12, h: 5 }] } },
+    true,
+  );
+  assert.equal(legacy.layout.dashboard[0].tilt, 0);
+  assert.equal(legacy.layout.dashboard_snap, "magnetic");
+  const packed = P.packDashboard(
+    [
+      { id: "metrics", x: 0, y: 0, w: 6, h: 5 },
+      { id: "goal", x: 0.25, y: 0.5, w: 6, h: 3 },
+    ],
+    "goal",
+  );
+  const [a, b] = packed;
+  assert.ok(
+    !(a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y),
+  );
+  assert.equal(b.x, 0.25);
+  assert.equal(b.y, 0.5);
+});
+
+test("fine adjacent dashboard widgets do not drift because of decimal rounding", () => {
+  const adjacent = [
+    { id: "metrics", x: 0.1, y: 0, w: 2.2, h: 3 },
+    { id: "goal", x: 2.3, y: 0, w: 2.2, h: 3 },
+  ];
+  assert.deepEqual(P.packDashboard(adjacent), adjacent);
+});

@@ -22,7 +22,7 @@ const KlyoCustomize = (() => {
     initialized = false;
   const words = {
     en: {
-      personal: "My workspace",
+      personal: "Make It Yours",
       account: "Account & organization",
       intro: "Your colors. Your workflow.",
       description:
@@ -81,7 +81,7 @@ const KlyoCustomize = (() => {
         "Describe the email in your language, or request another output language explicitly.",
     },
     pl: {
-      personal: "Mój CRM",
+      personal: "Make It Yours",
       account: "Konto i organizacja",
       intro: "Twoje kolory. Twój sposób pracy.",
       description:

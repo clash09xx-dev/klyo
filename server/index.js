@@ -92,7 +92,8 @@ app.get("/privacy", (req, res) => res.sendFile(path.join(publicDir, "privacy.htm
 app.get("/docs/communications-setup",(req,res)=>res.sendFile(path.join(publicDir,"docs/communications-setup.html")));
 app.get("/docs/sharepoint-setup",(req,res)=>res.sendFile(path.join(publicDir,"docs/sharepoint-setup.html")));
 for (const page of ['features','pricing','why-klyo']) app.get('/'+page,(req,res)=>res.sendFile(path.join(publicDir,page+'.html')));
-app.get("/customization",(req,res)=>res.sendFile(path.join(publicDir,"customization.html")));
+app.get("/make-it-yours",(req,res)=>res.sendFile(path.join(publicDir,"customization.html")));
+app.get("/customization",(req,res)=>res.redirect(301,"/make-it-yours"));
 app.get("/login",   (req, res) => res.sendFile(path.join(publicDir, "login.html")));
 app.get("/signup",  (req, res) => res.sendFile(path.join(publicDir, "login.html")));
 
