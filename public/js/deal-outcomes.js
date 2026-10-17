@@ -52,7 +52,7 @@ const KlyoOutcomes = (() => {
     g("outcomeContent").setAttribute("aria-busy", "true");
     try {
       const params = new URLSearchParams({
-        month: g("outcomeMonth").value,
+        month: g("outcomeAllDates").checked ? "all" : g("outcomeMonth").value,
         currency: g("outcomeCurrency").value,
         pipeline_id: g("salesPipelineSelect").value,
         user_id: g("dealAssigneeFilter").value,
@@ -64,8 +64,8 @@ const KlyoOutcomes = (() => {
       g("outcomeContent").innerHTML =
         cards(r) +
         (mode === "results"
-          ? `<div class="outcome-charts"><article><h3>${l("Won vs lost · six months", "Wygrane i przegrane · sześć miesięcy")}</h3>${chart(r.trend)}</article><article><h3>${l("Reasons for lost opportunities", "Powody przegranych")}</h3>${bars(r.reasons)}</article><article><h3>${l("Closed opportunity values", "Wartości zamkniętych spraw")} · ${h(r.filters.currency)}</h3>${chart(r.bands)}</article><article><h3>${l("Age of all currently open opportunities", "Wiek wszystkich obecnie otwartych spraw")}</h3>${bars(r.aging)}</article><article><h3>${l("Results by source · closed this month", "Wyniki według źródła · zamknięte w miesiącu")}</h3>${chart(r.sources)}</article></div>`
-          : `<div class="table-card outcome-table"><table class="doc-table"><thead><tr><th>${l("Opportunity", "Szansa")}</th><th>${l("Company", "Firma")}</th><th>${l("Value", "Wartość")}</th><th>${l("Closed", "Zamknięto")}</th><th>${l("Owner / reason", "Opiekun / powód")}</th></tr></thead><tbody>${r.deals.map((d) => `<tr><td><button class="commercial-link" data-outcome-deal="${d.id}">${h(d.title)}</button></td><td>${h(d.company_name || "—")}</td><td>${h(fmtMoney(d.value, d.currency, 2))}</td><td>${h(d.closed_on)}</td><td>${h(d.owner || "—")}<small>${h(d.lost_reason || "")}</small></td></tr>`).join("") || `<tr><td colspan="5">${l("No closed deals in this period.", "Brak zamkniętych spraw w tym okresie.")}</td></tr>`}</tbody></table></div><div class="outcome-pages"><button id="outcomePrev" class="btn btn-ghost" ${page === 0 ? "disabled" : ""}>←</button><span>${page + 1} · ${r.total} ${l("deals", "spraw")}</span><button id="outcomeNext" class="btn btn-ghost" ${(page + 1) * 50 >= r.total ? "disabled" : ""}>→</button></div>`);
+          ? `<div class="outcome-charts"><article><h3>${l("Won vs lost · six months", "Wygrane i przegrane · sześć miesięcy")}</h3>${chart(r.trend)}</article><article><h3>${l("Reasons for lost opportunities", "Powody przegranych")}</h3>${bars(r.reasons)}</article><article><h3>${l("Closed opportunity values", "Wartości zamkniętych spraw")} · ${h(r.filters.currency)}</h3>${chart(r.bands)}</article><article><h3>${l("Age of all currently open opportunities", "Wiek wszystkich obecnie otwartych spraw")}</h3>${bars(r.aging)}</article><article><h3>${l(r.filters.month === "all" ? "All closed results by source" : "Results by source · closed this month", r.filters.month === "all" ? "Wszystkie zamknięte sprawy według źródła" : "Wyniki według źródła · zamknięte w miesiącu")}</h3>${chart(r.sources)}</article></div>`
+          : `<div class="table-card outcome-table"><table class="doc-table"><thead><tr><th>${l("Opportunity", "Szansa")}</th><th>${l("Company", "Firma")}</th><th>${l("Value", "Wartość")}</th><th>${l("Closed", "Zamknięto")}</th><th>${l("Owner / reason", "Opiekun / powód")}</th></tr></thead><tbody>${r.deals.map((d) => `<tr><td><button class="commercial-link" data-outcome-deal="${d.id}">${h(d.title)}</button></td><td>${h(d.company_name || "—")}</td><td>${h(fmtMoney(d.value, d.currency, 2))}</td><td>${h(d.closed_on || "—")}</td><td>${h(d.owner || "—")}<small>${h(d.lost_reason || "")}</small></td></tr>`).join("") || `<tr><td colspan="5">${l("No closed deals in this period.", "Brak zamkniętych spraw w tym okresie.")}</td></tr>`}</tbody></table></div><div class="outcome-pages"><button id="outcomePrev" class="btn btn-ghost" ${page === 0 ? "disabled" : ""}>←</button><span>${page + 1} · ${r.total} ${l("deals", "spraw")}</span><button id="outcomeNext" class="btn btn-ghost" ${(page + 1) * 50 >= r.total ? "disabled" : ""}>→</button></div>`);
       bind(g("outcomeContent"));
       if (g("outcomePrev")) {
         g("outcomePrev").onclick = () => {
@@ -111,7 +111,11 @@ const KlyoOutcomes = (() => {
       )
     )
       g("salesPipelineSelect").value = params.pipeline_id;
-    if (params.month) g("outcomeMonth").value = params.month;
+    if (params.month) {
+      g("outcomeAllDates").checked = params.month === "all";
+      g("outcomeMonth").disabled = params.month === "all";
+      if (params.month !== "all") g("outcomeMonth").value = params.month;
+    }
     if (params.currency) {
       g("outcomeCurrency").value = params.currency;
       currencyInitialized = true;
@@ -133,9 +137,14 @@ const KlyoOutcomes = (() => {
         )
         .join(
           "",
-        )}</div><section id="outcomesPanel" hidden><form id="outcomeFilters" class="outcome-filters"><label>${l("Closed in month", "Zamknięte w miesiącu")}<input id="outcomeMonth" type="month" value="${new Date().toISOString().slice(0, 7)}" required></label><label>${l("Currency", "Waluta")}<select id="outcomeCurrency">${["USD", "PLN", "EUR", "GBP", "CHF", "CAD", "AUD", "JPY", "SEK", "NOK", "DKK", "CZK", "HUF", "RON", "BGN", "HRK", "INR", "BRL", "MXN", "SGD"].map((c) => `<option>${c}</option>`).join("")}</select></label><button class="btn btn-primary">${l("Apply", "Zastosuj")}</button></form><p class="muted">${l("Closed results use the actual closing date. Currencies are kept separate; rates describe closed deals, not stage-by-stage conversion.", "Wyniki dotyczą rzeczywistej daty zamknięcia. Waluty są oddzielne; skuteczność dotyczy zamkniętych spraw, a nie konwersji między etapami.")}</p><p class="form-error" id="outcomeError" role="alert"></p><div id="outcomeContent"></div></section>`,
+        )}</div><section id="outcomesPanel" hidden><form id="outcomeFilters" class="outcome-filters"><label class="outcome-all-dates"><input type="checkbox" id="outcomeAllDates" checked>${l("All closing dates", "Wszystkie daty zamknięcia")}</label><label>${l("Closed in month", "Zamknięte w miesiącu")}<input id="outcomeMonth" type="month" disabled value="${new Date().toISOString().slice(0, 7)}" required></label><label>${l("Currency", "Waluta")}<select id="outcomeCurrency">${["USD", "PLN", "EUR", "GBP", "CHF", "CAD", "AUD", "JPY", "SEK", "NOK", "DKK", "CZK", "HUF", "RON", "BGN", "HRK", "INR", "BRL", "MXN", "SGD"].map((c) => `<option>${c}</option>`).join("")}</select></label><button class="btn btn-primary">${l("Apply", "Zastosuj")}</button></form><p class="muted">${l("All dates includes older deals and records without a closing date. Monthly filters use the actual closing date. Currencies are kept separate; win rate is calculated among closed deals.", "Wszystkie daty obejmują starsze sprawy i wpisy bez daty zamknięcia. Filtr miesiąca korzysta z faktycznej daty zamknięcia. Waluty są oddzielne; skuteczność dotyczy zamkniętych spraw.")}</p><p class="form-error" id="outcomeError" role="alert"></p><div id="outcomeContent"></div></section>`,
     );
     g("outcomeCurrency").value = workspaceDefaultCurrency;
+    g("outcomeAllDates").onchange = () => {
+      g("outcomeMonth").disabled = g("outcomeAllDates").checked;
+      page = 0;
+      if (mode !== "pipeline") load();
+    };
     g("outcomeTabs").onclick = (e) => {
       const b = e.target.closest("[data-outcome]");
       if (b) show(b.dataset.outcome);

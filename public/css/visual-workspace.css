@@ -726,3 +726,15 @@ body[data-sidebar-collapsed="true"]
 .sidebar .personal-nav details[open] > summary {
   list-style: disclosure-open;
 }
+
+.outcome-filters .outcome-all-dates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+}
+#outcomeAllDates {
+  min-height: 0;
+  width: 16px;
+  height: 16px;
+}
