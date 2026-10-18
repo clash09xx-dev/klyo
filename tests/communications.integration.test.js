@@ -33,6 +33,7 @@ test(
       oldInvoice = I.api;
     try {
       await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
       assert.throws(() => C.graphURL("https://evil.example/v1.0/me/messages"));
       assert.throws(() => C.graphURL("/v1.0/users/another/messages"));
       assert.equal(
@@ -115,7 +116,7 @@ test(
             Authorization:
               "Bearer " +
               jwt.sign(
-                { id: users[who].id, workspace_id: users[who].workspace_id },
+                { sms_verified: true, id: users[who].id, workspace_id: users[who].workspace_id },
                 process.env.JWT_SECRET,
               ),
             "Content-Type": "application/json",

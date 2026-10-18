@@ -18,7 +18,7 @@ const { isCurrentlyComped } = require("../services/limits");
 async function requirePaidAccess(req, res, next) {
   try {
     const result = await db.query(
-      "SELECT id, plan, is_comped, comped_until, trial_ends_at, current_period_end, stripe_subscription_id FROM workspaces WHERE id = (SELECT COALESCE(billing_workspace_id,id) FROM workspaces WHERE id=$1)",
+      "SELECT id, plan, is_comped, comped_until, trial_ends_at, current_period_end, stripe_subscription_id, onboarding_payment_required FROM workspaces WHERE id = (SELECT COALESCE(billing_workspace_id,id) FROM workspaces WHERE id=$1)",
       [req.user.workspace_id],
     );
     const workspace = result.rows[0];
@@ -37,6 +37,10 @@ async function requirePaidAccess(req, res, next) {
         .json({ error: "You don't have permission to change shared records." });
     await require("./scopedLinks")(req);
     if (isCurrentlyComped(workspace)) return next();
+
+    if (workspace.onboarding_payment_required) return res.status(402).json({
+      error: "Choose a subscription and complete Stripe checkout to start your 7-day trial.", code: "CHECKOUT_REQUIRED"
+    });
 
     // A time-limited grant just lapsed — clear the flag so the
     // Platform dashboard and Settings stop reporting it as comped.

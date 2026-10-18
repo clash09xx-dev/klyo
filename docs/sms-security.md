@@ -1,6 +1,6 @@
 # SMS two-step sign-in with Twilio Verify
 
-SMS verification is optional and is enabled per account after the phone has been verified. The account setting applies to both Team and Personal and to password and Google sign-in. No existing account is enrolled automatically.
+SMS verification is mandatory for every account and each new sign-in, including Google. Existing accounts must enroll on their next login; no CRM token is issued before verification. It cannot be disabled. Password recovery leaves SMS enabled.
 
 ## Administrator setup
 
@@ -11,16 +11,6 @@ SMS verification is optional and is enabled per account after the phone has been
 
 ## User enrollment and sign-in
 
-Enter your international phone number, such as `+48123456789`, and your current password. A Google-only account must have signed in recently (within five minutes). Request the verification SMS, enter its code, and save the ten recovery codes shown once. Keep them outside Klyo in a private location. Each recovery code works once. Enrollment invalidates older sessions; the session that completed enrollment receives a new token.
+Enter an international phone at registration or after password/Google sign-in for an existing account. SMS is sent automatically on each subsequent sign-in. Challenges expire after five minutes and allow five attempts. Resend waits 60 seconds without extending expiry or restoring attempts. Provider failure never grants access. Recovery codes do not replace SMS.
 
-At the next password or Google sign-in, no CRM session is issued until an SMS or recovery code is accepted. A login challenge expires after five minutes and allows at most five code attempts. Resending requires a 60-second wait, preserves the expiry and attempts, and is subject to account/provider limits. Verification sends are limited per account and checks are limited separately. Failure or absence of the provider never bypasses the second step: a saved recovery code is required.
-
-To turn SMS verification off, open the same security screen and confirm with your password (or recent Google sign-in) plus an SMS or unused recovery code. Existing recovery codes are removed and old sessions become invalid. Disable then enroll again to change your number or generate a fresh recovery-code set. There is no support-side bypass button.
-
-The CRM does not log SMS codes, recovery codes, plaintext phone numbers or provider credentials in team audit records. The security screen only displays the phone's final four digits. Configuration is deployment-wide, while enrollment and recovery codes are account-specific.
-
-Official references:
-- [Twilio Verify API](https://www.twilio.com/docs/verify/api)
-- [Start a verification](https://www.twilio.com/docs/verify/api/verification)
-- [Check a verification](https://www.twilio.com/docs/verify/api/verification-check)
-- [Provider rate limits](https://www.twilio.com/docs/verify/api/rate-limits-and-timeouts)
+Account email recovery uses Resend, configured with RESEND_API_KEY and RESEND_FROM_EMAIL. See /docs/account-access.html for domain verification, Stripe trial onboarding and rollout checks.

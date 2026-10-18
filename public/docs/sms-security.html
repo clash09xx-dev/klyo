@@ -86,12 +86,7 @@
       data-doc-title="SMS two-step sign-in with Twilio Verify"
     >
       <h1>SMS two-step sign-in with Twilio Verify</h1>
-      <p>
-        SMS verification is optional and is enabled per account after the phone
-        has been verified. The account setting applies to both Team and Personal
-        and to password and Google sign-in. No existing account is enrolled
-        automatically.
-      </p>
+      <p>SMS verification is mandatory for every account, including password and Google sign-in. Existing accounts add and confirm a phone on their next sign-in. Every new sign-in automatically sends a code; no CRM session is issued until SMS is verified. This requirement cannot be disabled.</p>
       <h2>Administrator setup</h2>
       <p>
         1. Open the Twilio Console and create a
@@ -118,33 +113,7 @@
         permissions before rolling out to users. Automated Klyo tests use a
         simulated provider, not actual SMS delivery.
       </p>
-      <h2>User enrollment and sign-in</h2>
-      <p>
-        Enter your international phone number, such as
-        <code>+48123456789</code>, and your current password. A Google-only
-        account must have signed in recently (within five minutes). Request the
-        verification SMS, enter its code, and save the ten recovery codes shown
-        once. Keep them outside Klyo in a private location. Each recovery code
-        works once. Enrollment invalidates older sessions; the session that
-        completed enrollment receives a new token.
-      </p>
-      <p>
-        At the next password or Google sign-in, no CRM session is issued until
-        an SMS or recovery code is accepted. A login challenge expires after
-        five minutes and allows at most five code attempts. Resending requires a
-        60-second wait, preserves the expiry and attempts, and is subject to
-        account/provider limits. Verification sends are limited per account and
-        checks are limited separately. Failure or absence of the provider never
-        bypasses the second step: a saved recovery code is required.
-      </p>
-      <p>
-        To turn SMS verification off, open the same security screen and confirm
-        with your password (or recent Google sign-in) plus an SMS or unused
-        recovery code. Existing recovery codes are removed and old sessions
-        become invalid. Disable then enroll again to change your number or
-        generate a fresh recovery-code set. There is no support-side bypass
-        button.
-      </p>
+      <h2>User enrollment and sign-in</h2><p>Enter your phone with its international country code at signup. Existing accounts are asked for it after password or Google authentication. Confirm the SMS code to continue. A challenge expires after five minutes and allows five attempts. Resend SMS is available after 60 seconds and never extends the original expiry or resets attempts.</p><p>Every subsequent sign-in automatically sends another SMS. Recovery codes cannot substitute for SMS. If SMS delivery is unavailable, sign-in stays blocked until delivery is restored. Resetting a password leaves SMS enabled and revokes old sessions. <a href="/docs/account-access.html">Account email and payment setup</a>.</p>
       <p>
         The CRM does not log SMS codes, recovery codes, plaintext phone numbers
         or provider credentials in team audit records. The security screen only

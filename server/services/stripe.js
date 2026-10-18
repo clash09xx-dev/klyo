@@ -47,6 +47,7 @@ async function createCheckoutSession(
     {
       mode: billingMode === "one_time" ? "payment" : "subscription",
       line_items: lineItems,
+      ...(billingMode === "subscription" ? { payment_method_collection: "always" } : {}),
       customer: workspace.stripe_customer_id || undefined,
       client_reference_id: String(workspace.id),
       metadata: {
@@ -57,6 +58,7 @@ async function createCheckoutSession(
         ? {
             subscription_data: {
               metadata: { workspace_id: String(workspace.id), tier: tierKey },
+              ...(workspace.onboarding_payment_required && !workspace.trial_used ? { trial_period_days: 7 } : {}),
             },
           }
         : {}),
@@ -64,7 +66,7 @@ async function createCheckoutSession(
       cancel_url: cancelUrl,
     },
     {
-      idempotencyKey: `klyo-checkout-${workspace.id}-${tierKey}-${billingMode}-${workspace.current_period_end || "initial"}-${new Date().toISOString().slice(0, 10)}`,
+      idempotencyKey: `klyo-checkout-${workspace.onboarding_payment_required ? (workspace.checkout_session_id || "signup-initial") : "standard"}-${workspace.id}-${tierKey}-${billingMode}-${workspace.current_period_end || "initial"}-${new Date().toISOString().slice(0, 10)}`,
     },
   );
 }

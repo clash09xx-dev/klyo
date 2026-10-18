@@ -68,6 +68,7 @@ const assert = require("node:assert/strict"),
         console.log(engineName + ": boot ready");
         for (const preset of ["classic", "explorer", "notebook", "command"]) {
           await page.locator("#miyEditInterface").click();
+        await page.locator('[data-editor-tab="structure"]').click();
           await page
             .locator(
               '#interfaceEditor [data-interface-preset="' + preset + '"]',
@@ -121,6 +122,7 @@ const assert = require("node:assert/strict"),
         console.log(engineName + ": preset checks passed");
         // Customize real working pages, navigation, shortcuts and a named layout.
         await page.locator("#miyEditInterface").click();
+        await page.locator('[data-editor-tab="structure"]').click();
         await page
           .locator('#interfaceEditor [data-interface-preset="explorer"]')
           .click();
@@ -184,6 +186,7 @@ const assert = require("node:assert/strict"),
         assert.equal((await req("/auth/me")).user.is_platform_admin, false);
         const platform = await req("/integrations/platform/status");
         assert.deepEqual(Object.keys(platform).sort(), [
+          "account_email_configured",
           "ai_configured",
           "billing_configured",
           "google_signin_configured",
@@ -200,6 +203,7 @@ const assert = require("node:assert/strict"),
         );
         // Named layouts reload structure, and navigation resizing has a keyboard equivalent.
         await page.locator("#miyEditInterface").click();
+        await page.locator('[data-editor-tab="structure"]').click();
         await page.locator(".miy-nav-resize").focus();
         await page.keyboard.press("ArrowRight");
         assert.equal(
@@ -231,6 +235,7 @@ const assert = require("node:assert/strict"),
         await page.locator('[data-open-module="pipeline"]').click();
         // Editor blocks record creation. Cancel and failed saves keep persisted preferences unchanged.
         await page.locator("#miyEditInterface").click();
+        await page.locator('[data-editor-tab="structure"]').click();
         const blocked = await page.evaluate(() =>
           API.post("/contacts", { full_name: "Must not be created" })
             .then(() => false)
@@ -286,6 +291,7 @@ const assert = require("node:assert/strict"),
           "explorer",
         );
         await page.locator("#miyEditInterface").click();
+        await page.locator('[data-editor-tab="structure"]').click();
         await page
           .locator('#interfaceEditor [data-interface-preset="command"]')
           .click();
@@ -315,7 +321,7 @@ const assert = require("node:assert/strict"),
         await page.locator("#appearanceBtn").click();
         await page.locator("#integrationsSettingsTab").click();
         await page.waitForSelector('[data-integration="fakturownia"]');
-        assert.equal(await page.locator("[data-integration]").count(), 16);
+        assert.equal(await page.locator("[data-integration]").count(), 17);
         assert.match(
           await page.locator('[data-integration="dropbox"]').innerText(),
           /Operator setup needed/,
@@ -443,6 +449,7 @@ const assert = require("node:assert/strict"),
         await page.locator("#closeAppearanceBtn").click();
         await page.setViewportSize({ width: 390, height: 844 });
         await page.locator("#miyEditInterface").click();
+        await page.locator('[data-editor-tab="structure"]').click();
         await page
           .locator('#interfaceEditor [data-interface-preset="command"]')
           .click();

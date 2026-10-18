@@ -1,6 +1,16 @@
 /* Authored interface copy only. Never translate CRM record values or API payloads. */
 window.KlyoCopy = (() => {
   const data = {
+    "Manage subscription": "Zarządzaj subskrypcją",
+    "{0} — 7-day free trial": "{0} — 7-dniowy okres próbny",
+    "Your subscription starts charging on {0}. Cancel in Settings before then to avoid renewal.": "Opłaty za subskrypcję rozpoczną się {0}. Anuluj wcześniej w Ustawieniach, aby uniknąć odnowienia.",
+    "Password recovery email is temporarily unavailable. Please contact Klyo support.": "Odzyskiwanie hasła przez email jest chwilowo niedostępne. Skontaktuj się z obsługą Klyo.",
+    "SMS verification is required. Sign in again.": "Weryfikacja SMS jest wymagana. Zaloguj się ponownie.",
+    "SMS verification is temporarily unavailable. Please try again later.": "Weryfikacja SMS jest chwilowo niedostępna. Spróbuj później.",
+    "Choose a subscription and complete Stripe checkout to start your 7-day trial.": "Wybierz subskrypcję i dokończ konfigurację w Stripe, aby rozpocząć 7-dniowy okres próbny.",
+    "This reset link has expired or already been used.": "Ten link resetujący wygasł albo został już użyty.",
+    "Use a valid reset link and a password with 8–128 characters.": "Użyj poprawnego linku i hasła o długości od 8 do 128 znaków.",
+
     "Users: {0} · contacts: {1} · quotes sent: {2} · AI offers sent: {3} · new workspaces this week: {4} · complimentary access: {5}":
       "Użytkownicy: {0} · kontakty: {1} · wysłane oferty: {2} · wysłane wiadomości AI: {3} · nowe przestrzenie w tym tygodniu: {4} · bezpłatny dostęp: {5}",
     Complimentary: "Bezpłatny dostęp",

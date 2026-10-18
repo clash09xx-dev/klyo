@@ -32,6 +32,7 @@ const assert = require("node:assert/strict"),
   fs.mkdirSync(out, { recursive: true });
   try {
     await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
     const app = express();
     app.use(express.json({ limit: "50mb" }));
     for (const name of [
@@ -128,7 +129,7 @@ const assert = require("node:assert/strict"),
         );
       }
       const token = jwt.sign(
-          { id: user.id, workspace_id: wid, role: "admin" },
+          { sms_verified: true, id: user.id, workspace_id: wid, role: "admin" },
           process.env.JWT_SECRET,
         ),
         browser = await engine.launch({
@@ -341,7 +342,7 @@ const assert = require("node:assert/strict"),
             )
           ).rows[0],
           viewerToken = jwt.sign(
-            { id: viewerUser.id, workspace_id: wid, role: "viewer" },
+            { sms_verified: true, id: viewerUser.id, workspace_id: wid, role: "viewer" },
             process.env.JWT_SECRET,
           ),
           viewerContext = await browser.newContext({

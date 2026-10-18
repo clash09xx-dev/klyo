@@ -36,7 +36,9 @@ test(
     let server;
     try {
       await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
       await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
       const workspaces = [];
       for (const name of ["Team", "Other"])
         workspaces.push(
@@ -75,7 +77,7 @@ test(
       });
       const tokens = users.map((u) =>
         jwt.sign(
-          { id: u.id, workspace_id: u.workspace_id, role: u.role },
+          { sms_verified: true, id: u.id, workspace_id: u.workspace_id, role: u.role },
           process.env.JWT_SECRET,
         ),
       );

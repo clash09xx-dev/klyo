@@ -65,7 +65,9 @@ test(
     let server;
     try {
       await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
       await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
       const a = (
           await db.query(
             "INSERT INTO workspaces(name,invite_code,is_comped,default_currency) VALUES('Shared team','TEAM-A',true,'PLN') RETURNING id",
@@ -132,7 +134,7 @@ test(
       });
       const tokens = users.map((u) =>
         jwt.sign(
-          {
+          { sms_verified: true,
             id: u.id,
             workspace_id: u.workspace_id,
             name: u.name,

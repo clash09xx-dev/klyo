@@ -69,7 +69,9 @@ test(
     };
     try {
       await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
       await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
       await db.query(
         "INSERT INTO workspaces(id,name,invite_code,is_comped) VALUES(1,'Studio','A',true),(2,'Other','B',true)",
       );
@@ -99,7 +101,7 @@ test(
           headers.Authorization =
             "Bearer " +
             jwt.sign(
-              {
+              { sms_verified: true,
                 id: user,
                 workspace_id: user === 3 ? 2 : 1,
                 role: user === 2 ? "viewer" : "admin",

@@ -98,8 +98,8 @@ const assert = require("node:assert/strict"),
       if (process.env.KLYO_BROWSER && process.env.KLYO_BROWSER !== name)
         continue;
       await f.db.query(
-        "UPDATE users SET mfa_enabled=false,mfa_version=0,mfa_phone=NULL,workspace_preferences='{}'::jsonb WHERE id=$1",
-        [f.users[0].id],
+        "UPDATE users SET mfa_enabled=true,mfa_version=0,mfa_phone=$2,workspace_preferences='{}'::jsonb WHERE id=$1",
+        [f.users[0].id,f.S.encrypt("+48123456789")],
       );
       await f.db.query("DELETE FROM mfa_challenges");
       await f.db.query("DELETE FROM mfa_recovery_codes");
@@ -126,7 +126,7 @@ const assert = require("node:assert/strict"),
           errors = [];
         page.on("pageerror", (e) => {
           errors.push(e.message);
-          console.error(name, e.message);
+          console.error(name, e.stack);
         });
         page.on("dialog", (d) => d.accept());
         page.on("response", async (r) => {
@@ -237,9 +237,9 @@ const assert = require("node:assert/strict"),
         await page
           .locator("[data-widget-id=daily] [data-remove-widget]")
           .click();
-        await page.locator(".miy-nav-options>summary").click();
-        await page.locator("#organizerNavMode").selectOption("tiles");
-        await page.locator("#organizerNavWidth").fill("300");
+        await page.locator('[data-editor-tab="structure"]').click();
+        await page.locator('[data-interface-control="nav_mode"]').selectOption("tiles");
+        await page.locator('[data-interface-control="sidebar_width"]').fill("300");
         assert.equal(
           Math.round((await page.locator(".sidebar").boundingBox()).width),
           300,
@@ -252,14 +252,10 @@ const assert = require("node:assert/strict"),
               .boundingBox()
           ).height >= 68,
         );
-        await page.locator(".organizer-navigation summary").click();
-        await page.locator("[data-nav-visible=equipment]").uncheck();
-        assert.equal(
-          await page.locator(".personal-nav [data-view=equipment]").isVisible(),
-          false,
-        );
-        await page.locator(".organizer-navigation summary").click();
-        await page.locator(".miy-nav-options>summary").click();
+        await page.locator('[data-editor-tab="modules"]').click();
+        await page.locator('[data-module-visible="equipment"]').uncheck();
+        assert.equal(await page.locator('.personal-nav [data-view="equipment"]').isVisible(),false);
+        await page.locator('[data-editor-tab="page"]').click();
         await page.locator("#organizerSnap").selectOption("free");
         const dragCard = page.locator("[data-widget-id=shortcut_deal]");
         await dragCard.locator("header strong").scrollIntoViewIfNeeded();
@@ -315,7 +311,7 @@ const assert = require("node:assert/strict"),
         await page.screenshot({
           path: path.join(out, name + "-make-it-yours-editor.png"),
         });
-        await page.locator("#dashboardSave").click();
+        await page.locator("#miySave").click();
         await page
           .locator("#dashboardOrganizer")
           .waitFor({ state: "detached" });
@@ -344,7 +340,6 @@ const assert = require("node:assert/strict"),
         );
         await page.locator("#customizeDashboardQuick").click();
         await page.locator("[data-editor-tab=page]").click();
-        await page.locator("#miyGoOverview").click();
         await page.locator('[data-placement="tilt"]').fill("-4");
         assert.ok(
           await page.evaluate(
@@ -356,7 +351,7 @@ const assert = require("node:assert/strict"),
         await page
           .locator("[data-widget-id=shortcut_deal] [data-remove-widget]")
           .click();
-        await page.locator("#dashboardCancel").click();
+        await page.locator("#miyCancelBottom").click();
         assert.equal(
           await page
             .locator("[data-widget-id=metrics]")
@@ -485,25 +480,9 @@ const assert = require("node:assert/strict"),
         await page.locator("#appearanceBtn").click();
         await page.locator("[data-settings-tab=account]").click();
         await page.locator("#securitySettings").click();
-        let d = page.locator(".doc-overlay").last();
-        await d.locator("[name=phone]").fill("+48123456789");
-        await d.locator("[name=password]").fill("Strong-test-42");
-        await d.locator("form button").click();
-        d = page.locator(".doc-overlay").last();
-        await d.locator("[name=code]").fill("123456");
-        await d.locator("form button").click();
-        await page
-          .getByRole("dialog", {
-            name: "Save your recovery codes",
-            exact: true,
-          })
-          .waitFor();
-        assert.equal(
-          (await page.locator(".doc-overlay pre").innerText())
-            .trim()
-            .split("\n").length,
-          10,
-        );
+        const security = page.locator(".doc-overlay").last();
+        assert.match(await security.innerText(),/SMS verification is always on/);
+        assert.equal(await security.locator("form").count(),0,"SMS has no disable form");
         await page.evaluate(() => API.clearToken());
         await page.goto(f.base + "/login.html");
         await page.locator("#goLoginBtn").click();

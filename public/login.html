@@ -2,6 +2,7 @@
 <html lang="en" data-theme="blanc">
 <head>
 <meta charset="UTF-8" />
+<meta name="referrer" content="no-referrer" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Klyo – CRM for Small Businesses</title>
 <meta name="description" content="Klyo is a simple, fast CRM for small businesses. Manage contacts, build quotes, send AI-drafted emails, and track your sales pipeline in one place." />
@@ -102,6 +103,7 @@
           <label for="loginPassword" data-i18n="auth.password">Password</label>
           <input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••" required />
         </div>
+        <button type="button" id="forgotPasswordBtn" class="auth-back-link" style="margin-top:14px"></button>
         <div class="form-error" id="loginError"></div>
         <button class="btn btn-primary" type="submit" style="width:100%; padding:11px;" id="loginSubmitBtn" data-i18n="auth.sign_in">Sign in</button>
       </form>
@@ -165,6 +167,7 @@
             <span><span data-ui-copy="Akceptuję">Akceptuję</span> <a href="/terms" target="_blank" style="color:var(--accent-1);"><span data-ui-copy="Warunki Korzystania">Warunki Korzystania</span></a> <span data-ui-copy="i zapoznałem/am się z">i zapoznałem/am się z</span> <a href="/privacy" target="_blank" style="color:var(--accent-1);"><span data-ui-copy="Polityką Prywatności">Polityką Prywatności</span></a></span>
           </label>
         </div>
+        <div class="field"><label for="signupPhone" id="signupPhoneLabel">Mobile phone</label><input id="signupPhone" name="phone" type="tel" autocomplete="tel" placeholder="+48123456789" pattern="\+[1-9][0-9]{7,14}" required><p class="field-hint" id="signupPhoneHint"></p></div>
         <div class="form-error" id="signupError"></div>
         <button class="btn btn-primary" type="submit" style="width:100%; padding:11px;" id="signupSubmitBtn" data-i18n="auth.create_account">Create account</button>
       </form>
@@ -189,6 +192,7 @@
 <script defer src="/js/language-picker.js"></script>
 <link rel="stylesheet" href="/css/language-picker.css">
 <script src="/js/mfa.js"></script>
+<script src="/js/account-access.js"></script>
 <script>
   // Track visit (non-logged-in only)
   if (!localStorage.getItem("klyo_token")) {
@@ -209,6 +213,15 @@
     document.title = KlyoCopy.text("Klyo – CRM for Small Businesses");
   });
 
+  const authText = (en,pl) => KlyoI18n.getLang()==="pl"?pl:en;
+  function translateSecurity(){
+    document.getElementById("forgotPasswordBtn").textContent=authText("Forgot password?","Nie pamiętasz hasła?");
+    document.getElementById("signupPhoneLabel").textContent=authText("Mobile phone","Telefon komórkowy");
+    document.getElementById("signupPhoneHint").textContent=authText("An SMS code is required at signup and every sign-in. Next: choose a plan and start your 7-day trial with Stripe.","Kod SMS jest wymagany przy rejestracji i każdym logowaniu. Następnie wybierzesz plan i rozpoczniesz 7-dniowy okres próbny w Stripe.");
+  }
+  translateSecurity();
+  window.addEventListener("klyo:language",translateSecurity);
+  document.getElementById("forgotPasswordBtn").onclick=()=>KlyoAccountAccess.forgot();
   // ---- email validation ----
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -313,7 +326,7 @@
     if (emailErr) { document.getElementById("signupEmailError").textContent = emailErr; return; }
     if (password.length < 6) { signupError.textContent = KlyoCopy.text("Password must be at least 6 characters."); return; }
 
-    const payload = { name, email, password };
+    const payload = { name, email, password, phone: document.getElementById("signupPhone").value.trim() };
     if (signupMode === "create") {
       const wn = document.getElementById("signupWorkspace").value.trim();
       if (!wn) { signupError.textContent = KlyoCopy.text("Please enter your business name."); return; }
@@ -328,9 +341,10 @@
     submitBtn.disabled = true;
     try {
       const result = await API.post("/auth/register", payload);
+      if(KlyoMFA.login(result))return;
       API.setToken(result.token);
       API.setUser(result.user);
-      window.location.href = "/app";
+      window.location.href = "/onboarding";
     } catch (err) {
       signupError.textContent = err.message || KlyoCopy.text("Could not create account. Please try again.");
     } finally {
@@ -374,6 +388,10 @@
 
   // ---- Google redirect handler ----
   async function handleGoogleRedirect() {
+    const fragment = new URLSearchParams(location.hash.slice(1));
+    if(fragment.get("reset_token")){KlyoAccountAccess.reset(fragment.get("reset_token"));return true;}
+    if(fragment.get("enrollment_token")){KlyoMFA.login({mfa_enrollment_required:true,enrollment_token:fragment.get("enrollment_token")});return true;}
+    if(fragment.get("mfa_challenge")){KlyoMFA.login({mfa_required:true,challenge:fragment.get("mfa_challenge")});return true;}
     const params = new URLSearchParams(window.location.search);
     if(params.get("mfa_challenge")){KlyoMFA.login({mfa_required:true,challenge:params.get("mfa_challenge")});return true;}
     const token = params.get("google_token");
@@ -404,6 +422,8 @@
     }
     return false;
   }
+
+  window.addEventListener("hashchange", () => { handleGoogleRedirect(); });
 
   (async function boot() {
     const handledByGoogle = await handleGoogleRedirect();

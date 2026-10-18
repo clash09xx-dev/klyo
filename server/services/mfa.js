@@ -34,6 +34,7 @@ const signToken = (u) =>
     {
       ...publicUser(u),
       mfa_version: u.mfa_version || 0,
+      sms_verified: true,
       auth_time: u.auth_time || Math.floor(Date.now() / 1000),
     },
     process.env.JWT_SECRET,
@@ -122,6 +123,7 @@ async function start(u, purpose, number, ip = "") {
   await limit("mfa-send-user:" + u.id, 6, 3600);
   await limit("mfa-send-ip:" + ip, 1000, 3600);
   await limit("mfa-day:" + u.id, 12, 86400);
+  await limit("mfa-phone:" + number, 20, 86400);
   const token = crypto.randomBytes(32).toString("hex");
   return transaction(async (c) => {
     const locked = (
@@ -155,9 +157,9 @@ async function start(u, purpose, number, ip = "") {
         sid = r.sid;
         sent = true;
       } catch (e) {
-        if (purpose === "enroll") throw e;
+        if (purpose !== "login") throw e;
       }
-    } else if (purpose === "enroll")
+    } else if (purpose !== "login")
       throw fail(
         "Configure Twilio Verify before enabling SMS verification.",
         503,
@@ -174,10 +176,24 @@ async function start(u, purpose, number, ip = "") {
     };
   });
 }
+function enrollment(u) {
+  return { mfa_enrollment_required: true, enrollment_token: jwt.sign(
+    { id: u.id, purpose: "mfa_enrollment", version: u.mfa_version || 0 },
+    process.env.JWT_SECRET, { expiresIn: "10m" }
+  ) };
+}
+async function enrollmentUser(token) {
+  let p;
+  try { p = jwt.verify(token, process.env.JWT_SECRET); } catch { throw fail("Sign in again to verify your phone.", 401); }
+  if (p.purpose !== "mfa_enrollment") throw fail("Invalid phone verification session.", 401);
+  const u = (await db.query("SELECT * FROM users WHERE id=$1", [p.id])).rows[0];
+  if (!u || u.mfa_enabled || (u.mfa_version || 0) !== p.version) throw fail("Sign in again to verify your phone.", 401);
+  return u;
+}
 async function login(u, ip) {
-  return u.mfa_enabled
+  return u.mfa_enabled && u.mfa_phone
     ? start(u, "login", S.decrypt(u.mfa_phone), ip)
-    : session(u);
+    : enrollment(u);
 }
 async function check(token, code, expectedUser) {
   if (
@@ -209,6 +225,7 @@ async function check(token, code, expectedUser) {
     ).rows[0];
     if (
       !ch ||
+      ch.purpose === "disable" ||
       ch.consumed_at ||
       new Date(ch.expires_at) <= new Date() ||
       ch.attempts >= 5 ||
@@ -216,7 +233,7 @@ async function check(token, code, expectedUser) {
       (expectedUser && u.id !== expectedUser)
     )
       return { error: fail("Verification expired or used. Start again.", 401) };
-    if (ch.purpose !== "login" && !expectedUser)
+    if (!["login", "login_enroll", "signup"].includes(ch.purpose) && !expectedUser)
       return { error: fail("Sign in before changing security settings.", 401) };
     await c.query(
       "UPDATE mfa_challenges SET attempts=attempts+1 WHERE token_hash=$1",
@@ -224,7 +241,7 @@ async function check(token, code, expectedUser) {
     );
     let approved = false;
     const recovery = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (ch.purpose !== "enroll" && /^[A-F0-9]{20}$/.test(recovery))
+    if (!["login", "signup", "login_enroll", "enroll"].includes(ch.purpose) && /^[A-F0-9]{20}$/.test(recovery))
       approved = !!(
         await c.query(
           "UPDATE mfa_recovery_codes SET used_at=now() WHERE user_id=$1 AND code_hash=$2 AND used_at IS NULL RETURNING code_hash",
@@ -251,16 +268,8 @@ async function check(token, code, expectedUser) {
       [tokenHash],
     );
     let codes;
-    if (ch.purpose === "enroll") {
-      codes = Array.from({ length: 10 }, () =>
-        crypto.randomBytes(10).toString("hex").toUpperCase(),
-      );
+    if (["enroll", "signup", "login_enroll"].includes(ch.purpose)) {
       await c.query("DELETE FROM mfa_recovery_codes WHERE user_id=$1", [u.id]);
-      for (const value of codes)
-        await c.query(
-          "INSERT INTO mfa_recovery_codes(user_id,code_hash) VALUES($1,$2)",
-          [u.id, hash(u.id + ":" + value)],
-        );
       await c.query(
         "UPDATE users SET mfa_enabled=true,mfa_phone=$1,mfa_version=mfa_version+1 WHERE id=$2",
         [ch.phone, u.id],
@@ -287,12 +296,13 @@ async function resend(token) {
   return transaction(async (c) => {
     const ch = (
       await c.query(
-        "SELECT * FROM mfa_challenges WHERE token_hash=$1 AND purpose='login' FOR UPDATE",
+        "SELECT * FROM mfa_challenges WHERE token_hash=$1 AND purpose IN ('login','signup','login_enroll') FOR UPDATE",
         [hash(token)],
       )
     ).rows[0];
     if (
       !ch ||
+      ch.purpose === "disable" ||
       ch.consumed_at ||
       ch.attempts >= 5 ||
       new Date(ch.expires_at) <= new Date()
@@ -320,6 +330,8 @@ async function resend(token) {
   });
 }
 module.exports = {
+  enrollment,
+  enrollmentUser,
   resend,
   configured,
   phone,

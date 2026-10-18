@@ -53,6 +53,9 @@ async function createUniqueInviteCode() {
 //    (you join as a regular member).
 router.post("/register", async (req, res) => {
   const { name, email, password, workspace_name, invite_code } = req.body || {};
+  const number = M.phone(req.body?.phone);
+  await M.limit("register-ip:" + req.ip, 20, 3600);
+  if (!M.configured()) return res.status(503).json({ error: "SMS verification is temporarily unavailable. Please try again later." });
 
   if (!name || !email || !password) {
     return res
@@ -121,9 +124,9 @@ router.post("/register", async (req, res) => {
           });
       }
       const code = await createUniqueInviteCode();
-      const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const trialEndsAt = null;
       const wsResult = await client.query(
-        "INSERT INTO workspaces (name, invite_code, plan, trial_ends_at) VALUES ($1, $2, 'trial', $3) RETURNING id",
+        "INSERT INTO workspaces (name, invite_code, plan, trial_ends_at, onboarding_payment_required) VALUES ($1, $2, 'pending', $3, true) RETURNING id",
         [workspace_name.trim(), code, trialEndsAt],
       );
       workspaceId = wsResult.rows[0].id;
@@ -150,11 +153,11 @@ router.post("/register", async (req, res) => {
       ]);
     await client.query("COMMIT");
     transactionOpen = false;
-    res.status(201).json({ token: signToken(user), user });
+    res.status(201).json(await M.start({ ...user, mfa_version: 0 }, "signup", number, req.ip));
   } catch (err) {
-    await client.query("ROLLBACK");
+    if (transactionOpen) await client.query("ROLLBACK");
     transactionOpen = false;
-    console.error(err);
+    console.error("Registration failed:", err.status || "internal");
     res
       .status(500)
       .json({ error: "Could not create your account. Please try again." });
@@ -210,6 +213,18 @@ router.post("/login", async (req, res) => {
   }
 
   res.json(await M.login(row, req.ip));
+});
+
+// Public recovery endpoints deliberately return the same message for known and unknown addresses.
+router.post("/forgot-password", async (req, res) => {
+  if (!require("../services/accountEmail").configured()) return res.status(503).json({error:"Password recovery email is temporarily unavailable. Please contact Klyo support."});
+  await require("../services/accountEmail").requestReset(req.body?.email, req.ip, req.body?.language);
+  res.json({ ok: true, message: "If an account exists, a password reset email will arrive shortly." });
+});
+router.post("/reset-password", async (req, res) => {
+  await M.limit("reset-password-ip:" + req.ip, 30, 900);
+  await require("../services/accountEmail").reset(req.body?.token, req.body?.password);
+  res.json({ ok: true });
 });
 
 // GET /api/auth/me — includes theme + onboarding status, which aren't in the token
@@ -535,11 +550,11 @@ router.get("/google/callback", async (req, res) => {
         }
       } else {
         const code2 = await createUniqueInviteCode();
-        const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        const trialEndsAt = null;
         const workspaceName =
           payload.workspace_name || `${profile.name || "New"}'s business`;
         const wsResult = await db.query(
-          "INSERT INTO workspaces (name, invite_code, plan, trial_ends_at) VALUES ($1, $2, 'trial', $3) RETURNING id",
+          "INSERT INTO workspaces (name, invite_code, plan, trial_ends_at, onboarding_payment_required) VALUES ($1, $2, 'pending', $3, true) RETURNING id",
           [workspaceName, code2, trialEndsAt],
         );
         workspaceId = wsResult.rows[0].id;
@@ -589,8 +604,8 @@ router.get("/google/callback", async (req, res) => {
     }
 
     const result = await M.login(user, req.ip);
-    if(result.mfa_required) res.redirect(`${appUrl}/login?mfa_challenge=${result.challenge}`);
-    else res.redirect(`${appUrl}/login?google_token=${result.token}`);
+    if(result.mfa_required) res.redirect(`${appUrl}/login#mfa_challenge=${result.challenge}`);
+    else res.redirect(`${appUrl}/login#enrollment_token=${result.enrollment_token}`);
   } catch (err) {
     console.error("Google sign-in failed:", err.message);
     res.redirect(`${appUrl}/login?google_error=failed`);

@@ -49,7 +49,7 @@ module.exports = async function setup() {
       users.push(
         (
           await db.query(
-            "INSERT INTO users(workspace_id,name,email,password_hash,role,language,has_seen_onboarding,terms_accepted_at) VALUES($1,$2,$3,'fixture',$4,'en',true,now()) RETURNING *",
+            "INSERT INTO users(workspace_id,name,email,password_hash,role,language,has_seen_onboarding,terms_accepted_at,mfa_enabled) VALUES($1,$2,$3,'fixture',$4,'en',true,now(),true) RETURNING *",
             [wid, name, name + "@calendar.test", role],
           )
         ).rows[0],
@@ -198,7 +198,8 @@ module.exports = async function setup() {
         "/api/" + file.slice(0, -3),
         require("../../server/routes/" + file),
       );
-    for(const name of ["features","pricing","why-klyo","login"])app.get("/"+name,(_,res)=>res.sendFile(path.join(__dirname,"../../public/"+name+".html")));
+    for(const name of ["features","pricing","why-klyo","login","onboarding"])app.get("/"+name,(_,res)=>res.sendFile(path.join(__dirname,"../../public/"+name+".html")));
+    app.get("/signup",(_,res)=>res.sendFile(path.join(__dirname,"../../public/login.html")));
     app.get("/make-it-yours",(_,res)=>res.sendFile(path.join(__dirname,"../../public/customization.html")));
     app.get("/customization",(_,res)=>res.redirect(301,"/make-it-yours"));
     app.use(express.static(path.join(__dirname, "../../public")));
@@ -211,7 +212,7 @@ module.exports = async function setup() {
     const base = `http://127.0.0.1:${server.address().port}`,
       token = (u) =>
         jwt.sign(
-          { id: users[u].id, workspace_id: users[u].workspace_id },
+          { id: users[u].id, workspace_id: users[u].workspace_id, sms_verified:true },
           process.env.JWT_SECRET,
         );
     async function req(

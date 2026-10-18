@@ -235,6 +235,7 @@ const KlyoCustomize = (() => {
       item.classList.toggle("personal-hidden", layout.hidden_nav.includes(key));
       item.title = navName(key);
       item.setAttribute("aria-label", navName(key));
+      if (key === "overview") { item.classList.remove("personal-hidden"); list.prepend(item); continue; }
       if (layout.nav_mode === "list") {
         list.append(item);
         continue;
@@ -333,7 +334,8 @@ const KlyoCustomize = (() => {
       summary = view?.querySelector(".stat-grid");
     if (summary) {
       summary.hidden = !layout.summary_visible;
-      if (layout.summary_position === "below")
+      if (layout.ui.pages.pipeline) { /* The page designer owns placement. */ }
+      else if (layout.summary_position === "below")
         view.querySelector(".table-card").after(summary);
       else view.querySelector(".contact-toolbar").before(summary);
     }

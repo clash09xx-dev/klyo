@@ -24,6 +24,7 @@ test(
     let server;
     try {
       await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
       const w = (
           await db.query(
             "INSERT INTO workspaces(name,invite_code,is_comped) VALUES('Files','files',true) RETURNING id",
@@ -98,7 +99,7 @@ test(
         const s = app.listen(0, "127.0.0.1", () => r(s));
       });
       const token = jwt.sign(
-        { id: user.id, workspace_id: w },
+        { sms_verified: true, id: user.id, workspace_id: w },
         process.env.JWT_SECRET,
       );
       async function files(entity, id, scope = "team") {

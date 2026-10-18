@@ -22,6 +22,7 @@ test(
     let server;
     try {
       await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
       await require("../server/migrations/operations")(db.pool);
       if (
         require("fs").existsSync(
@@ -57,7 +58,7 @@ test(
             Authorization:
               "Bearer " +
               jwt.sign(
-                { id: user, workspace_id: user === 2 ? 2 : 1 },
+                { sms_verified: true, id: user, workspace_id: user === 2 ? 2 : 1 },
                 process.env.JWT_SECRET,
               ),
             "x-klyo-scope": scope,
@@ -503,7 +504,7 @@ test(
           );
           assert.equal(r.data.order.customer_confirmation.layout, "executive");
           const token = jwt.sign(
-              { id: 1, workspace_id: 1 },
+              { sms_verified: true, id: 1, workspace_id: 1 },
               process.env.JWT_SECRET,
             ),
             response = await fetch(
@@ -662,7 +663,7 @@ test(
             400,
           );
           const token = jwt.sign(
-              { id: 1, workspace_id: 1 },
+              { sms_verified: true, id: 1, workspace_id: 1 },
               process.env.JWT_SECRET,
             ),
             pdf = await fetch(

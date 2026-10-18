@@ -325,6 +325,10 @@ function showLimitOrError(err, fallbackEl) {
     return;
   }
 
+  try {
+    const access = await API.get("/billing/status");
+    if (access.checkout_required) { location.replace("/onboarding"); return; }
+  } catch (e) { console.warn("Billing readiness check failed."); }
   KlyoFiles.init();
   KlyoPriceLists.init();
   KlyoAnalytics.init();
@@ -382,7 +386,7 @@ function showLimitOrError(err, fallbackEl) {
     }
   }
 
-  if (!API.getUser().has_seen_onboarding) startTour();
+  if (!API.getUser()?.has_seen_onboarding) startTour();
 })();
 
 function handleGmailRedirectParam() {
@@ -496,6 +500,12 @@ async function loadBillingStatus() {
       els.billingBanner.classList.add("hidden");
       return;
     }
+    if (status.trial_active && status.has_subscription && !status.cancel_at_period_end) {
+      els.billingBannerTitle.textContent=KlyoCopy.text("Your free trial is active");
+      els.billingBannerSub.textContent=KlyoCopy.format("Your subscription starts charging on {0}. Cancel in Settings before then to avoid renewal.",formatDate(status.trial_ends_at));
+      els.upgradeBtn.textContent=KlyoCopy.text("Manage subscription");els.upgradeBtn.dataset.action="manage";
+      els.billingBanner.classList.remove("hidden");return;
+    }
     if (status.plan === "active") {
       if (status.cancel_at_period_end && status.current_period_end) {
         const daysLeft = daysUntil(status.current_period_end);
@@ -528,7 +538,9 @@ async function loadBillingStatus() {
 }
 
 function handleUpgradeClick() {
-  if (els.upgradeBtn.dataset.action === "resume") {
+  if (els.upgradeBtn.dataset.action === "manage") {
+    openAppearanceModal();KlyoCustomize.showTab("account");
+  } else if (els.upgradeBtn.dataset.action === "resume") {
     handleResumeSubscription(els.upgradeBtn);
   } else {
     openPricingModal();
@@ -606,7 +618,7 @@ async function updateSettingsPlanDisplay() {
           daysLeft != null ? KlyoCopy.format("Access until {0} ({1} days remaining). Renewal cancelled.", formatDate(status.current_period_end), daysLeft) : "";
         els.settingsResumeBtn.classList.remove("hidden");
       } else {
-        els.settingsCurrentPlan.textContent = KlyoCopy.format("{0} — active", tierLabel);
+        els.settingsCurrentPlan.textContent = status.trial_active ? KlyoCopy.format("{0} — 7-day free trial",tierLabel) : KlyoCopy.format("{0} — active", tierLabel);
         els.settingsPlanDetail.textContent =
           daysLeft != null ? KlyoCopy.format("Renews on {0} ({1} days remaining).", formatDate(status.current_period_end), daysLeft) : "";
         if (status.has_subscription) els.settingsCancelBtn.classList.remove("hidden");

@@ -42,7 +42,8 @@ const KlyoDashboard = (() => {
     outcomesRequest = null,
     resizeObserver = null,
     gesture = null,
-    selectedId = null;
+    selectedId = null,
+    embedded = null;
   const title = (id) => l(...names[id]);
   function beforeRender() {
     resizeObserver?.disconnect();
@@ -136,7 +137,7 @@ const KlyoDashboard = (() => {
     const w =
       preview?.id === selectedId ? preview : item(selectedId, draft.layout);
     panel.hidden = !w;
-    g("inspectorEmpty").hidden = !!w;
+    if (g("inspectorEmpty")) g("inspectorEmpty").hidden = !!w;
     if (!w) return;
     g("inspectorTitle").textContent = title(w.id);
     for (const [key, value] of Object.entries({
@@ -149,7 +150,7 @@ const KlyoDashboard = (() => {
       const input = panel.querySelector(`[data-placement="${key}"]`);
       if (input && document.activeElement !== input) input.value = value;
     }
-    g("widgetTiltValue").textContent = (w.tilt || 0) + "°";
+    if (g("widgetTiltValue")) g("widgetTiltValue").textContent = (w.tilt || 0) + "°";
   }
   function reconcile(r, params) {
     report = r;
@@ -302,6 +303,7 @@ const KlyoDashboard = (() => {
       beforeRender();
       if (r) reconcile(r, new URLSearchParams(q));
     } else arrange();
+    if (embedded) embedded(P.clone(draft.layout.dashboard));
     if (editing) renderCatalog();
   }
   function adjust(id, change) {
@@ -362,6 +364,7 @@ const KlyoDashboard = (() => {
     gesture = null;
     cancelAnimationFrame(a.frame);
     a.controller.abort();
+    a.guide?.remove();
     a.card.classList.remove("widget-moving");
     try {
       a.handle.releasePointerCapture(a.pointerId);
@@ -404,6 +407,9 @@ const KlyoDashboard = (() => {
       pitch = (board.width + 12) / 12;
     gesture.grabX = e.clientX - board.left - original.x * pitch;
     gesture.grabY = e.clientY - board.top - original.y * 64;
+    gesture.guide=document.createElement("div");
+    gesture.guide.className="miy-canvas-guide";
+    grid.append(gesture.guide);
     card.classList.add("widget-moving");
     handle.setPointerCapture(e.pointerId);
     const tick = () => {
@@ -414,6 +420,7 @@ const KlyoDashboard = (() => {
       if (edge) window.scrollBy(0, edge * 10);
       a.preview = gesturePreview(ev);
       arrange(a.preview);
+      applyPosition(a.guide,a.preview);
       a.frame = requestAnimationFrame(tick);
     };
     gesture.frame = requestAnimationFrame(tick);
@@ -443,7 +450,7 @@ const KlyoDashboard = (() => {
     header.draggable = false;
     header.tabIndex = editing ? 0 : -1;
     header.setAttribute("aria-label", l("Move ", "Przesuń ") + title(id));
-    header.onpointerdown = (e) => startGesture(e, card, id, "move");
+    header.onpointerdown = null;
     header.onkeydown = (e) => {
       if (
         !editing ||
@@ -492,6 +499,11 @@ const KlyoDashboard = (() => {
         );
       arrange();
     };
+    card.onpointerdown = (e) => {
+      if (e.target.closest(".widget-organize,.widget-resize")) return;
+      startGesture(e, card, id, "move");
+    };
+    card.dataset.organizerControl = "";
     const resize = card.querySelector(".widget-resize");
     resize.onpointerdown = (e) => startGesture(e, card, id, "resize");
     resize.onkeydown = (e) => {
@@ -537,6 +549,7 @@ const KlyoDashboard = (() => {
         e.dataTransfer.setData("text/plain", drag);
       };
     });
+    if (!grid?.isConnected) return;
     grid.ondragover = (e) => {
       if (editing && drag) e.preventDefault();
     };
@@ -731,7 +744,7 @@ const KlyoDashboard = (() => {
     document.addEventListener(
       "click",
       (e) => {
-        if (editing && !e.target.closest("[data-organizer-control]")) {
+        if (editing && !embedded && !e.target.closest("[data-organizer-control]")) {
           e.preventDefault();
           e.stopImmediatePropagation();
         }
@@ -741,7 +754,7 @@ const KlyoDashboard = (() => {
     document.addEventListener(
       "keydown",
       (e) => {
-        if (editing && e.key === "Escape") {
+        if (editing && !embedded && e.key === "Escape") {
           e.preventDefault();
           e.stopImmediatePropagation();
           exit();
@@ -750,5 +763,29 @@ const KlyoDashboard = (() => {
       true,
     );
   }
-  return { init, begin, beforeRender, reconcile, isEditing: () => editing };
+  function embed(value, notify) {
+    embedded = notify;
+    draft = value;
+    editing = true;
+    document.body.classList.add("dashboard-editing");
+    if (!selectedId || !item(selectedId,draft.layout)) selectedId=draft.layout.dashboard[0]?.id || null;
+    arrange();
+  }
+  function unembed() {
+    if (!embedded) return;
+    finishGesture(true); embedded=null; editing=false;
+    document.body.classList.remove("dashboard-editing");
+    arrange();
+  }
+  function controls(container) {
+    container.innerHTML=`<div id="dashboardOrganizer" class="miy-embedded-dashboard"><p>${l("Grab anywhere on a widget. Drag its corner to resize. All charts remain available below.","Chwyć dowolne miejsce elementu. Przeciągnij róg, aby zmienić rozmiar. Wszystkie wykresy są dostępne poniżej.")}</p><label>${l("Placement","Układanie")}<select id="organizerSnap"><option value="magnetic">${l("Magnetic guides","Prowadnice magnetyczne")}</option><option value="grid">${l("Grid","Siatka")}</option><option value="free">${l("Free placement","Bez siatki")}</option></select></label><p id="inspectorEmpty">${l("Select a widget","Wybierz element")}</p><fieldset id="widgetInspector"><legend id="inspectorTitle"></legend><label>${l("Tilt","Nachylenie")} <output id="widgetTiltValue"></output><input data-placement="tilt" type="range" min="-6" max="6" step=".5"></label><button type="button" id="widgetStraighten" class="btn btn-ghost">${l("Straighten","Wyprostuj")}</button></fieldset><h3>${l("Add charts & features","Dodaj wykresy i funkcje")}</h3><div id="widgetCatalog"></div><button type="button" id="organizerReset" class="btn btn-ghost">${l("Restore all default charts","Przywróć domyślne wykresy")}</button></div>`;
+    g("organizerSnap").value=draft.layout.dashboard_snap;
+    g("organizerSnap").onchange=e=>{draft.layout.dashboard_snap=e.target.value;embedded?.(P.clone(draft.layout.dashboard));};
+    g("widgetInspector").oninput=e=>{if(e.target.dataset.placement)adjust(selectedId,{tilt:Number(e.target.value)});};
+    g("widgetStraighten").onclick=()=>adjust(selectedId,{tilt:0});
+    g("organizerReset").onclick=()=>{draft.layout.dashboard=P.defaultDashboard();update(true);};
+    renderCatalog();refreshInspector();
+  }
+  return { init, begin, beforeRender, reconcile, embed, unembed, controls, isEditing: () => editing };
+
 })();

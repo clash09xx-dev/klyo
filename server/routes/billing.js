@@ -51,7 +51,7 @@ router.get("/tiers", (req, res) => {
 router.get("/status", requireAuth, async (req, res) => {
   const result = await db.query(
     `SELECT plan, tier, is_comped, comped_until, trial_ends_at, current_period_end, cancel_at_period_end,
-            billing_mode, stripe_subscription_id IS NOT NULL AS has_subscription
+            billing_mode, onboarding_payment_required, stripe_subscription_id IS NOT NULL AS has_subscription
      FROM workspaces WHERE id = $1`,
     [req.user.billing_workspace_id],
   );
@@ -67,6 +67,8 @@ router.get("/status", requireAuth, async (req, res) => {
   const active = comped || workspace.plan === "active" || trialActive;
 
   res.json({
+    trial_active: Boolean(workspace.trial_ends_at && new Date(workspace.trial_ends_at)>new Date() && (workspace.plan === "trial" || workspace.has_subscription)),
+    checkout_required: workspace.onboarding_payment_required && !comped,
     plan: workspace.plan,
     tier: workspace.tier,
     is_comped: comped,
@@ -78,6 +80,15 @@ router.get("/status", requireAuth, async (req, res) => {
     has_subscription: workspace.has_subscription,
     active,
   });
+});
+
+router.post("/onboarding/checkout", requireAuth, async (req,res) => {
+  if (!canBill(req)) return res.status(403).json({error:"Only the workspace owner can choose its subscription."});
+  res.json(await require("../services/onboardingBilling").checkout(req.user.billing_workspace_id,req.body?.tier));
+});
+router.post("/onboarding/complete", requireAuth, async (req,res) => {
+  if (!canBill(req)) return res.status(403).json({error:"Only the workspace owner can confirm checkout."});
+  res.json(await require("../services/onboardingBilling").complete(req.user.billing_workspace_id,req.body?.session_id));
 });
 
 // POST /api/billing/checkout — admin picks a tier + billing mode in the
@@ -104,6 +115,10 @@ router.post("/checkout", requireAuth, async (req, res) => {
   if (!workspace)
     return res.status(404).json({ error: "Workspace not found." });
 
+  if (workspace.onboarding_payment_required && !isCurrentlyComped(workspace)) {
+    if (billingMode !== "subscription") return res.status(400).json({error:"Choose a monthly subscription to start your 7-day trial."});
+    return res.json(await require("../services/onboardingBilling").checkout(workspace.id,tier));
+  }
   seats.assertPlanOnly(req.body.extra_seats);
   const capacity = TIERS[tier].maxSeats;
   const used = (
@@ -321,6 +336,12 @@ router.post("/webhook", async (req, res) => {
         session.payment_status !== "no_payment_required"
       )
         return res.json({ received: true });
+      const onboarding = (await client.query("SELECT onboarding_payment_required FROM workspaces WHERE id=$1", [session.client_reference_id])).rows[0];
+      if (onboarding?.onboarding_payment_required) {
+        await require("../services/onboardingBilling").activate(session,client);
+        await client.query("COMMIT"); transactionOpen=false;
+        return res.json({received:true});
+      }
       const purchasedTier =
         session.metadata?.tier && TIER_ORDER.includes(session.metadata.tier)
           ? session.metadata.tier

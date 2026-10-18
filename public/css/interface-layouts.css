@@ -1180,3 +1180,43 @@ body.interface-editing .topbar > .miy-region-grip {
     white-space: nowrap;
   }
 }
+/* Unified direct-manipulation canvas; the controls dock is shared with Overview. */
+body.interface-editing.dashboard-editing .content { padding-right:24px; }
+#interfaceEditor #dashboardOrganizer.miy-embedded-dashboard { position:static;inset:auto;width:auto;height:auto;border:0;box-shadow:none;padding:0;background:transparent;overflow:visible; }
+body.interface-editing .miy-page-part { cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;transition:left .16s,top .16s,width .16s,height .16s; }
+body.interface-editing .miy-page-part > :not(.miy-part-tools):not(.miy-panel-resize) { pointer-events:none; }
+body.interface-editing .miy-page-part :is(input,textarea) { user-select:none; }
+body.interface-editing .miy-part-tools [data-part-grip] { pointer-events:none; }
+.miy-page-canvas {position:relative;display:block!important;}
+.miy-page-canvas>.miy-page-part {box-sizing:border-box;overflow:auto;margin:0!important;}
+body.interface-editing .miy-panel-moving {z-index:25;cursor:grabbing;transition:none;box-shadow:0 12px 36px #0003;}
+body.interface-editing .miy-gesture-active {background-image:linear-gradient(to right,color-mix(in srgb,var(--accent-1) 18%,transparent) 1px,transparent 1px),linear-gradient(to bottom,color-mix(in srgb,var(--accent-1) 18%,transparent) 1px,transparent 1px);background-size:calc(100% / 12) 32px;}
+.miy-panel-resize {display:block;position:absolute;right:0;bottom:0;z-index:28;width:30px;height:30px;padding:0;background:var(--accent-1);color:var(--on-accent);border:0;border-radius:5px 0 0;cursor:nwse-resize;touch-action:none;}
+.miy-canvas-guide {position:absolute;pointer-events:none;z-index:29;border:2px solid var(--accent-1);border-radius:5px;background:color-mix(in srgb,var(--accent-1) 12%,transparent);box-shadow:0 0 0 5px color-mix(in srgb,var(--accent-1) 12%,transparent);}
+.miy-drag-ghost {position:fixed;pointer-events:none;z-index:200;max-width:230px;background:var(--accent-1);color:var(--on-accent);box-shadow:0 8px 30px #0004;padding:14px;border-radius:8px;font-size:13px;}
+body[data-shortcut-dragging] .miy-drop-zone {outline:2px solid var(--accent-1);background:color-mix(in srgb,var(--accent-1) 16%,var(--surface));}
+.miy-shortcut-card {user-select:none;-webkit-user-select:none;touch-action:none;}
+body.dashboard-editing .dashboard-widget {touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;}
+body.interface-editing #dashboardOrganizer .widget-catalog-card {min-height:40px;white-space:normal;text-align:left;}
+body.interface-editing #dashboardOrganizer #widgetCatalog {display:grid;gap:7px;grid-template-columns:1fr;}
+/* Overview is always a prominent, directly accessible destination. */
+.personal-nav > .nav-item[data-view="overview"] {margin-bottom:12px!important;font-weight:650;border:1px solid var(--nav-border);}
+@media(min-width:981px){
+  body[data-interface="explorer"] .sidebar {grid-template-rows:auto auto minmax(0,1fr) auto;}
+  body[data-interface="explorer"] .sidebar>.brand {grid-row:1;}
+  body[data-interface="explorer"] .sidebar>.workspace-switch-wrap {grid-row:2;}
+  body[data-interface="explorer"] .sidebar>.sidebar-foot {grid-row:4;max-height:34vh;overflow-y:auto;}
+  body[data-interface="explorer"] .sidebar>.nav {min-height:0;overflow-y:auto;overflow-x:hidden;}
+  body[data-sidebar="top"] .sidebar {flex-wrap:wrap;gap:10px 16px;max-height:none;}
+  body[data-sidebar="top"] .sidebar>.nav {min-width:min(350px,100%);flex:1 1 350px;overflow:visible;}
+  body[data-sidebar="top"] .personal-nav {width:100%;min-width:0;}
+  body[data-sidebar="top"] .personal-nav>.nav-item[data-view="overview"] {margin:0 6px 0 0!important;width:auto;}
+  body[data-sidebar="top"] .sidebar-foot {margin-left:auto;}
+  body[data-sidebar="top"] .personal-nav details>.nav-section-items {max-width:min(300px,70vw);}
+  body[data-sidebar="top"] .personal-nav details:last-child>.nav-section-items {left:auto;right:0;}
+}
+@media(max-width:800px){
+  .miy-page-canvas>.miy-page-part {position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:auto!important;margin-bottom:16px!important;}
+  body.interface-editing .miy-drop-zone {display:block;}
+}
+@media(prefers-reduced-motion:reduce){body.interface-editing .miy-page-part {transition:none;}}

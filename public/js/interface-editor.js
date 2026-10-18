@@ -67,7 +67,8 @@ const KlyoInterface = (() => {
     timer,
     returnFocus = null,
     history = [],
-    future = [];
+    future = [],
+    canvasCancel = null;
   const navName = (key) => {
     const name = KlyoI18n.t("nav." + key);
     return name === "nav." + key
@@ -115,7 +116,8 @@ const KlyoInterface = (() => {
     g("createInterfaceLayout").onclick = () => open();
     g("editOverviewWidgets").onclick = () => {
       closeAppearanceModal();
-      KlyoDashboard.begin();
+      open();
+      switchView("overview");
     };
     g("interfaceSettingsIntro").addEventListener("click", (e) => {
       const card = e.target.closest("[data-interface-preset]");
@@ -132,7 +134,7 @@ const KlyoInterface = (() => {
       (e) => {
         if (!editing) return;
         const safe = e.target.closest(
-          "#interfaceEditor,.miy-part-tools,.miy-drop-zone,.miy-region-grip,.miy-region-zone,.sidebar,.miy-layout-strip",
+          "#interfaceEditor,.miy-page-part,.dashboard-widget,.miy-drop-zone,.miy-region-grip,.miy-region-zone,.sidebar,.miy-layout-strip",
         );
         if (safe) return;
         if (e.target.closest(".shell,.overlay")) {
@@ -364,7 +366,7 @@ const KlyoInterface = (() => {
     }
   }
   function parts(view = document.body.dataset.view) {
-    const root = g(view + "View");
+    const root = pageRoot(view);
     if (!root) return [];
     return Object.entries(P.PAGE_PARTS[view] || {})
       .map(([id, selector]) => ({
@@ -376,7 +378,10 @@ const KlyoInterface = (() => {
   function applyCurrentPage() {
     if (!applied) return;
     const view = document.body.dataset.view,
-      root = g(view + "View");
+      root = pageRoot(view);
+    if (editing) KlyoDashboard.embed(draft, (widgets) => {
+      change(p=>{p.layout.dashboard=widgets;p.layout.dashboard_snap=draft.layout.dashboard_snap;});
+    });
     if (!root) return;
     const config = applied.ui.pages[view],
       items = parts(view);
@@ -437,7 +442,13 @@ const KlyoInterface = (() => {
         });
       }
       if (!editing) tools?.remove();
+      item.node.onpointerdown = editing ? e=>startPanelGesture(e,item,view) : null;
+      let resize=item.node.querySelector(":scope > .miy-panel-resize");
+      if(editing && !resize){resize=document.createElement("button");resize.type="button";resize.className="miy-panel-resize";resize.setAttribute("aria-label",l("Resize panel","Zmień rozmiar panelu"));resize.textContent="◢";item.node.append(resize);}
+      if(resize)resize.onpointerdown=e=>startPanelGesture(e,item,view,"resize");
+      if(!editing)resize?.remove();
     }
+    positionPanels(root,config,items);
   }
   function pageConfig(p, view) {
     return (p.layout.ui.pages[view] ||= {
@@ -474,9 +485,10 @@ const KlyoInterface = (() => {
   function preview() {
     draft = P.normalize(draft, true);
     KlyoCustomize.preview(draft);
+    if (editing) KlyoDashboard.embed(draft,widgets=>change(p=>{p.layout.dashboard=widgets;p.layout.dashboard_snap=draft.layout.dashboard_snap;}));
   }
   function open(preset) {
-    if (KlyoDashboard.isEditing()) {
+    if (KlyoDashboard.isEditing() && !editing) {
       toast(
         l(
           "Finish editing your overview first.",
@@ -502,9 +514,11 @@ const KlyoInterface = (() => {
     dock.id = "interfaceEditor";
     dock.setAttribute("aria-label", "Make It Yours");
     document.body.append(dock);
+    KlyoDashboard.embed(draft,widgets=>change(p=>{p.layout.dashboard=widgets;p.layout.dashboard_snap=draft.layout.dashboard_snap;}));
     render();
     preview();
     regionTools();
+    g("interfaceEditor").querySelector('[data-editor-tab="page"]').click();
     g("interfaceEditor").querySelector("button").focus();
   }
   function render() {
@@ -749,6 +763,10 @@ const KlyoInterface = (() => {
               : p.layout.ui.quick_actions.filter((x) => x !== key)),
         );
     };
+    g("miyShortcutShelf").onpointerdown = (e) => {
+      const card=e.target.closest("[data-shortcut-drag]");
+      if(card && !e.target.matches("input")) startShortcutGesture(e,card);
+    };
     g("miyShortcutShelf").ondragstart = (e) => {
       const item = e.target.closest("[data-shortcut-drag]");
       if (item) {
@@ -958,17 +976,13 @@ const KlyoInterface = (() => {
     const view = document.body.dataset.view;
     if (g("miyPageSelect")) g("miyPageSelect").value = view;
     if (view === "overview") {
-      g("miyPageControls").innerHTML =
-        `<p>${l("Your existing overview canvas is still available, with all charts, widgets and shortcuts.", "Dotychczasowy edytor podsumowania nadal zawiera wszystkie wykresy, elementy i skróty.")}</p>${button(l("Save & edit overview", "Zapisz i edytuj podsumowanie"), 'id="miyGoOverview"', "btn btn-primary")}`;
-      g("miyGoOverview").onclick = async () => {
-        if (await save()) KlyoDashboard.begin();
-      };
+      KlyoDashboard.controls(g("miyPageControls"));
       return;
     }
     const items = parts(view),
       config = draft.layout.ui.pages[view];
     g("miyPageControls").innerHTML =
-      `<p>${l("Drag outlined panels in the work area. Use half/full width, reorder or hide optional panels. The main records always remain accessible.", "Przeciągaj obramowane panele w obszarze pracy. Zmieniaj szerokość, kolejność i widoczność. Główna lista danych pozostaje dostępna.")}</p>` +
+      `<label>${l("Placement","Układanie")}<select id="miyPanelSnap"><option value="magnetic">${l("Magnetic guides","Prowadnice")}</option><option value="grid">${l("Grid","Siatka")}</option><option value="free">${l("Free placement","Bez siatki")}</option></select></label><p>${l("Drag outlined panels in the work area. Use half/full width, reorder or hide optional panels. The main records always remain accessible.", "Przeciągaj obramowane panele w obszarze pracy. Zmieniaj szerokość, kolejność i widoczność. Główna lista danych pozostaje dostępna.")}</p>` +
       items
         .map(
           ({ id }) =>
@@ -997,6 +1011,8 @@ const KlyoInterface = (() => {
           ),
         );
     };
+    g("miyPanelSnap").value=draft.layout.dashboard_snap;
+    g("miyPanelSnap").onchange=e=>change(p=>p.layout.dashboard_snap=e.target.value);
     g("miyResetPage").onclick = () =>
       change((p) => delete p.layout.ui.pages[view]);
   }
@@ -1157,13 +1173,111 @@ const KlyoInterface = (() => {
       }
     };
   }
+  function pageRoot(view) { return g(view === "overview" ? "salesOverviewView" : view + "View"); }
+  function positionPanels(root,config,items) {
+    if(!root)return;
+    const canvas=Boolean(config?.positions && Object.keys(config.positions).length);
+    root.classList.toggle("miy-page-canvas",canvas);
+    let bottom=0;
+    const width=root.clientWidth;
+    for(const {id,node} of items){
+      const p=config?.positions?.[id];
+      if(canvas && p && innerWidth>800){
+        Object.assign(node.style,{position:"absolute",left:(p.x/12*100)+"%",top:p.y+"px",width:(p.w/12*100)+"%",height:p.h+"px"});
+        if(!config.hidden.includes(id))bottom=Math.max(bottom,p.y+p.h);
+      }else for(const k of ["position","left","top","width","height"])node.style.removeProperty(k);
+    }
+    root.style.minHeight=canvas && innerWidth>800?(bottom+32)+"px":"";
+  }
+  function panelGeometry(view) {
+    const root=pageRoot(view),board=root.getBoundingClientRect(),width=root.clientWidth;
+    const positions={};
+    for(const {id,node} of parts(view)){
+      if(node.classList.contains("miy-panel-hidden"))continue;
+      const r=node.getBoundingClientRect();
+      positions[id]={x:Math.max(0,(r.left-board.left)/width*12),y:Math.max(0,r.top-board.top),w:Math.min(12,Math.max(2,r.width/width*12)),h:Math.max(72,r.height)};
+    }
+    return positions;
+  }
+  function startPanelGesture(e,item,view,kind="move") {
+    if(!editing || e.button!==0 || e.target.closest(".miy-part-tools button:not([data-part-grip])") || (kind==="move" && e.target.closest(".miy-panel-resize")))return;
+    if(innerWidth<=800)return;
+    e.preventDefault();e.stopPropagation();
+    const root=pageRoot(view),initial=panelGeometry(view),original=initial[item.id];
+    if(!original)return;
+    const board=root.getBoundingClientRect(),startX=e.clientX,startY=e.clientY,scroll=window.scrollY,
+      controller=new AbortController(),handle=item.node;
+    let preview=structuredClone(initial),last=e,frame;
+    root.classList.add("miy-gesture-active");
+    handle.classList.add("miy-panel-moving");
+    const guide=document.createElement("div");guide.className="miy-canvas-guide";root.append(guide);
+    const snap=(n,step,free)=>free?n:Math.round(n/step)*step;
+    const tick=()=>{
+      const free=draft.layout.dashboard_snap==="free"||last.altKey,strict=draft.layout.dashboard_snap==="grid";
+      const dx=(last.clientX-startX)/root.clientWidth*12,dy=last.clientY-startY+window.scrollY-scroll;
+      const p={...original};
+      if(kind==="move") {p.x=Math.max(0,Math.min(12-p.w,snap(original.x+dx,strict?1:.125,free)));p.y=Math.max(0,snap(original.y+dy,strict?32:8,free));}
+      else {p.w=Math.max(2,Math.min(12-p.x,snap(original.w+dx,strict?1:.125,free)));p.h=Math.max(72,Math.min(10000,snap(original.h+dy,strict?32:8,free)));}
+      p.x=Math.round(p.x*100)/100;p.w=Math.round(p.w*100)/100;p.y=Math.min(20000,Math.round(p.y));p.h=Math.round(p.h);
+      preview=structuredClone(initial);preview[item.id]=p;
+      // Move neighboring panels out of the drop area; no inaccessible overlapping controls.
+      const placed=[p];
+      for(const [id,q] of Object.entries(preview)){
+        if(id===item.id)continue;
+        for(let i=0;i<50;i++){
+          const overlaps=placed.filter(a=>q.x<a.x+a.w-.01 && q.x+q.w>a.x+.01 && q.y<a.y+a.h+12 && q.y+q.h+12>a.y);
+          if(!overlaps.length)break;
+          q.y=Math.max(...overlaps.map(a=>a.y+a.h+16));
+        }
+        placed.push(q);
+      }
+      positionPanels(root,{positions:preview,hidden:[]},parts(view));
+      Object.assign(guide.style,{left:p.x/12*100+"%",top:p.y+"px",width:p.w/12*100+"%",height:p.h+"px"});
+      if(last.clientY>innerHeight-65)window.scrollBy(0,9);else if(last.clientY<70)window.scrollBy(0,-9);
+      frame=requestAnimationFrame(tick);
+    };
+    handle.setPointerCapture(e.pointerId);
+    const finish=(cancel=false)=>{canvasCancel=null;cancelAnimationFrame(frame);controller.abort();guide.remove();root.classList.remove("miy-gesture-active");handle.classList.remove("miy-panel-moving");try{handle.releasePointerCapture(e.pointerId);}catch{}
+      if(!cancel)change(p=>{const c=pageConfig(p,view);c.positions=preview;});else applyCurrentPage();
+    };
+    canvasCancel=()=>finish(true);
+    window.addEventListener("pointermove",ev=>{if(ev.pointerId===e.pointerId)last=ev;},{signal:controller.signal});
+    window.addEventListener("pointerup",ev=>{if(ev.pointerId===e.pointerId)finish();},{signal:controller.signal});
+    window.addEventListener("pointercancel",()=>finish(true),{signal:controller.signal});
+    window.addEventListener("keydown",ev=>{if(ev.key==="Escape"){ev.preventDefault();finish(true);}},{signal:controller.signal,capture:true});
+    frame=requestAnimationFrame(tick);
+  }
+  function startShortcutGesture(e,card) {
+    if(!editing || e.button!==0)return;
+    e.preventDefault();
+    const key=card.dataset.shortcutDrag,controller=new AbortController(),ghost=card.cloneNode(true);
+    ghost.className="miy-drag-ghost";ghost.removeAttribute("draggable");ghost.querySelector("input")?.remove();document.body.append(ghost);
+    document.body.dataset.shortcutDragging="true";
+    let target=null;
+    const update=ev=>{
+      ghost.style.left=ev.clientX+14+"px";ghost.style.top=ev.clientY+14+"px";
+      document.querySelectorAll(".miy-drop-zone").forEach(n=>n.classList.remove("miy-drag-over"));
+      target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest("[data-drop-zone]");
+      target?.classList.add("miy-drag-over");
+    };
+    update(e);card.setPointerCapture(e.pointerId);
+    const finish=cancel=>{controller.abort();ghost.remove();delete document.body.dataset.shortcutDragging;document.querySelectorAll(".miy-drop-zone").forEach(n=>n.classList.remove("miy-drag-over"));
+      if(!cancel && target)change(p=>{p.layout.ui.quick_position=target.dataset.dropZone;if(!p.layout.ui.quick_actions.includes(key))p.layout.ui.quick_actions.push(key);});
+    };
+    window.addEventListener("pointermove",update,{signal:controller.signal});
+    window.addEventListener("pointerup",()=>finish(false),{signal:controller.signal});
+    window.addEventListener("pointercancel",()=>finish(true),{signal:controller.signal});
+  }
+
   function finish() {
+    canvasCancel?.();
     editing = false;
+    KlyoDashboard.unembed();
     document.body.classList.remove("interface-editing");
     g("interfaceEditor")?.remove();
     document
       .querySelectorAll(
-        ".miy-drop-zone,.miy-part-tools,.miy-region-grip,.miy-region-zone,.miy-nav-resize",
+        ".miy-drop-zone,.miy-part-tools,.miy-panel-resize,.miy-drag-ghost,.miy-canvas-guide,.miy-region-grip,.miy-region-zone,.miy-nav-resize",
       )
       .forEach((n) => n.remove());
     delete document.body.dataset.regionDrag;

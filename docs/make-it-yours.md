@@ -8,7 +8,7 @@ In the designer:
 
 - **Layout** changes navigation position (left/right/top), width, menu style, density, icons, type, panel corners, work-area width, action-header position and start page. On desktop, drag the navigation or page-actions grip onto a highlighted placement zone. Drag the menu's edge to resize it. Controls offer the same options without dragging.
 - **Tools** hides modules, reorders them and moves them between sections. Rename and reorder sections. Hiding a module never deletes its data, disables its backend or changes access rights. **All tools** in the header finds hidden modules. Settings, sign-out and permission-gated Platform remain outside the customizable module list.
-- **This page** selects a CRM page and arranges its existing regions. Drag a panel grip or use arrows; choose half or full width. Hide optional panels and restore them from the list. The primary record area cannot be hidden. Overview retains its existing widget canvas, magnetic/free/grid movement, tilt, charts and shortcuts under **Edit overview widgets**. Page selectors only target known, existing regions, not arbitrary HTML or scripts. Some pages have a single main record region; record forms and tables keep their business behavior.
+- **This page** selects a CRM page and arranges its existing regions. Grab a panel anywhere to move it and drag its corner to resize it; choose grid, magnetic or free placement. Arrow and half/full-width controls remain available. Hide optional panels and restore them from the list. The primary record area cannot be hidden. Overview uses the same active editor immediately, retaining its widget canvas, magnetic/free/grid movement, tilt, charts and shortcuts. Page selectors only target known, existing regions, not arbitrary HTML or scripts. Some pages have a single main record region; record forms and tables keep their business behavior.
 - **Shortcuts** places new-deal/contact/quote/task/company, calendar and integrations actions in the header, above the work area or in the navigation footer. Drag a shortcut to a highlighted area or use checkboxes and a position control. Viewer accounts cannot use creation shortcuts.
 - Save up to **six named personal layouts** and reload or remove them. These store structure rather than replacing the color palette or overview charts. A layout is persisted when **Save layout** succeeds. Undo/redo and Cancel remain available; a failed save retains the editor with its error.
 
@@ -16,10 +16,14 @@ Changes are stored against the signed-in account, and do not alter a colleague's
 
 # Settings → Integrations
 
-The directory lists SharePoint, Google Drive, Dropbox, Microsoft 365 inbox, Gmail sending, SMTP, Google and Outlook calendars, Apple/iCalendar file export, Apollo, Fakturownia, DHL Tracking, SMS two-step verification, Google sign-in, the optional email assistant and Klyo subscription billing.
+The directory lists SharePoint, Google Drive, Dropbox, Microsoft 365 inbox, Gmail sending, SMTP, Google and Outlook calendars, Apple/iCalendar file export, Apollo, Fakturownia, DHL Tracking, SMS two-step verification, Google sign-in, the optional email assistant Klyo subscription billing and operator-managed Resend account emails.
 
 Cards show connection/configuration state for the active space, explain private/shared/operator-managed scope and link to the relevant guide. Search or filter by Files, Email, Calendars, Sales & delivery, or Account & services.
 
 Workspace owners configure shared storage, Apollo, Fakturownia and DHL. Existing SMTP/Gmail admin rules are preserved. Each user manages their own calendar, mailbox and SMS enrollment; Team and Personal stay separate. Provider keys are entered directly in the connection form. A saved API key is labeled **Credentials saved**, not a verified working connection. Test provider access through the corresponding tool. Operator configuration flags only expose booleans, never credentials.
 
 Apple Calendar is a manual `.ics` export, not live iCloud synchronization. Stripe manages the Klyo subscription, not customer invoice payments. Configuring a provider does not itself issue invoices, send email, buy services or enable automatic follow-ups.
+
+## Unified direct manipulation
+
+One Make It Yours session includes Overview without saving and opening another editor. Grab a widget body or working-page panel to move it; corner handles resize it. Grid, magnetic and free placement persist as bounded account-only geometry. Neighbors move out of the drop area. Shortcuts use pointer gestures with stable highlighted drop zones. Overview is pinned above module groups. Command wraps navigation and Explorer separately scrolls the tools pane.
