@@ -221,7 +221,7 @@ const assert = require("node:assert/strict"),
         await page.screenshot({
           path: path.join(out, name + "-make-it-yours-settings.png"),
         });
-        await page.locator("#customizeDashboardBtn").click();
+        await page.locator("#editOverviewWidgets").click();
         await page.locator("#dashboardOrganizer").waitFor();
         assert.equal(
           await page
@@ -343,6 +343,8 @@ const assert = require("node:assert/strict"),
           "tiles",
         );
         await page.locator("#customizeDashboardQuick").click();
+        await page.locator("[data-editor-tab=page]").click();
+        await page.locator("#miyGoOverview").click();
         await page.locator('[data-placement="tilt"]').fill("-4");
         assert.ok(
           await page.evaluate(

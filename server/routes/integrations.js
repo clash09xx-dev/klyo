@@ -8,6 +8,13 @@ const { isConfigured, getConsentUrl, exchangeCodeForTokens } = require("../servi
 
 const router = express.Router();
 
+// Readiness only: never expose provider keys or global configuration values.
+router.get("/platform/status", requireAuth, (req, res) => res.json({
+  ai_configured: Boolean(process.env.OPENAI_API_KEY),
+  billing_configured: Boolean(process.env.STRIPE_SECRET_KEY),
+  google_signin_configured: isConfigured(),
+}));
+
 // ─── Generic SMTP / Mail integration ────────────────────────────────────────
 
 // GET /api/integrations/mail/status

@@ -342,6 +342,8 @@ function showLimitOrError(err, fallbackEl) {
   KlyoCustomize.init();
   KlyoMFA.init();
   KlyoDashboard.init();
+  KlyoInterface.init();
+  KlyoIntegrations.init();
   KlyoQuoteStudio.init();
   await KlyoWorkspace.init();
   KlyoNotifications.init();
@@ -1708,6 +1710,7 @@ function switchView(view) {
   KlyoFiles.onView(view);
   KlyoWorkspace.onView(view);
   document.body.dataset.view = view;
+  window.dispatchEvent(new CustomEvent("klyo:view",{detail:{view}}));
   const copy = getViewCopy(view);
   els.viewTitle.textContent = copy.title;
   els.viewSub.textContent = copy.sub;

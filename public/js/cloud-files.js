@@ -455,6 +455,7 @@ const KlyoCloudFiles = (() => {
   }
   return {
     openInvoice,
+    setup,
     init,
     onView(view) {
       return view === "files" ? refresh() : Promise.resolve();

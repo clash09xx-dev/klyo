@@ -6,7 +6,7 @@
     <title>Make It Yours — Your Klyo, your way</title>
     <meta
       name="description"
-      content="Your own fields, proposal templates, colours, layouts and sales pipelines. Switch between shared Team and private Personal CRM."
+      content="Four interface layouts, a visual workspace designer, your own fields, PDF proposal templates, colours and sales pipelines. Make the whole CRM yours."
     />
     <link rel="canonical" href="https://klyolabs.com/make-it-yours" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -32,7 +32,9 @@
     <link rel="stylesheet" href="/css/marketing-pages.css" />
 <link rel="stylesheet" href="/css/make-it-yours.css" />
 <script defer src="/js/marketing-pages.js"></script>
-  </head>
+  <link rel="stylesheet" href="/css/interface-demo.css">
+<script defer src="/js/interface-demo.js"></script>
+</head>
   <body>
     <header class="site-header">
       <nav class="site-nav page-width" aria-label="Main navigation">
@@ -359,7 +361,18 @@
         </div>
       </section>
     </main>
-    <footer class="site-footer page-width">
+    <section class="interface-story page-width reveal" id="workspace-layouts" aria-labelledby="interfaceStoryTitle">
+  <div class="interface-story-heading"><div><p class="eyebrow">MAKE IT YOURS · BEYOND THE DASHBOARD</p><h2 id="interfaceStoryTitle">Same powerful CRM.<br><span>Four ways to make it yours.</span></h2></div><p>A sidebar, a file-style explorer, a quiet page list or a command center. Choose a starting point, then build a layout that fits how you work.</p></div>
+  <div class="interface-demo" data-layout-demo="classic">
+    <div class="interface-demo-tabs" role="tablist" aria-label="Preview workspace layouts"><button type="button" role="tab" id="demoClassicTab" data-demo-layout="classic" aria-selected="true" aria-controls="interfaceDemoCanvas">01 Classic</button><button type="button" role="tab" id="demoExplorerTab" data-demo-layout="explorer" aria-selected="false" aria-controls="interfaceDemoCanvas" tabindex="-1">02 Explorer</button><button type="button" role="tab" id="demoNotebookTab" data-demo-layout="notebook" aria-selected="false" aria-controls="interfaceDemoCanvas" tabindex="-1">03 Notebook</button><button type="button" role="tab" id="demoCommandTab" data-demo-layout="command" aria-selected="false" aria-controls="interfaceDemoCanvas" tabindex="-1">04 Command</button></div>
+    <div class="interface-demo-canvas" id="interfaceDemoCanvas" role="tabpanel" aria-labelledby="demoClassicTab"><div class="interface-demo-rail" aria-hidden="true"><b>K</b><span>▦</span><span>↗</span><span>▤</span><span>□</span></div><aside class="interface-demo-nav"><strong>Klyo <small>Workspace</small></strong><span class="demo-nav-caption">SALES</span><span>Overview</span><span class="demo-nav-active">Contacts</span><span>Companies</span><span>Deals</span><span>Quotes</span><span class="demo-nav-caption">YOUR WORK</span><span>Tasks</span><span>Calendar</span><span class="demo-nav-muted">RFQ register · hidden</span><span class="demo-nav-settings">Make It Yours ↗</span></aside><div class="interface-demo-work"><div class="interface-demo-top"><span>Workspace / Contacts</span><b>＋ New deal</b></div><div class="interface-demo-content"><small>YOUR DAILY WORK</small><h3>A little more you.</h3><p id="interfaceDemoCaption" aria-live="polite">A familiar sidebar. Your everyday tools, together.</p><div class="demo-contact-search">Search contacts… <span>All stages ⌄</span></div><div class="demo-contact-table"><div><span>CONTACT</span><span>COMPANY</span><span>STAGE</span></div><div><b>Anna Reed</b><span>Northline</span><em>Proposal sent</em></div><div><b>Oliver Chen</b><span>Fieldwork</span><em>In progress</em></div><div><b>Maya Green</b><span>Atlas Studio</span><em>Customer</em></div></div><div class="demo-layout-edit"><span>⠿ Your work surface</span><span>Move · Resize · Keep what matters</span></div></div></div></div>
+    <div class="interface-demo-footer"><span>Interactive illustration · sample data</span><a href="/signup">Build your own layout ↗</a></div>
+  </div>
+  <div class="interface-story-points"><article><span class="flagship-chip">YOUR TOOLS</span><h3>Keep the useful. Hide the rest.</h3><p>Hide RFQ, move Orders into your sales section, rename a group and reorder the menu. Restore any tool without losing a single record.</p></article><article><span class="flagship-chip pink">YOUR WORK SURFACE</span><h3>Arrange more than Overview.</h3><p>Move panels on working pages, choose half or full width and hide optional sections. Put shortcuts in the header, work area or navigation.</p></article><article><span class="flagship-chip orange">YOUR SAVED LAYOUTS</span><h3>Build it. Name it. Keep it.</h3><p>Save up to six personal layouts. Change icons, type, density, navigation and panel corners. Your teammates keep their own setup.</p></article></div>
+  <div class="interface-story-links"><a class="button button-dark" href="/make-it-yours">Explore Make It Yours ↗</a><p>And connect your tools in one place: Settings → Integrations.</p></div>
+</section>
+
+<footer class="site-footer page-width">
       <a class="wordmark" href="/">Klyo</a><span>© 2026 Klyo</span>
       <div>
         <a href="/privacy">Privacy</a><a href="/terms">Terms</a
