@@ -185,11 +185,11 @@
           <a class="brand" href="/">Kly<span>o</span></a>
           <div data-lang="pl">
             <h1>Polityka Prywatności</h1>
-            <p class="sub">Ostatnia aktualizacja: 17 października 2026</p>
+            <p class="sub">Ostatnia aktualizacja: 18 października 2026</p>
           </div>
           <div data-lang="en">
             <h1>Privacy Policy</h1>
-            <p class="sub">Last updated: 17 October 2026</p>
+            <p class="sub">Last updated: 18 October 2026</p>
           </div>
         </div>
         <div class="lang-toggle">
@@ -447,6 +447,46 @@
           </p>
         </div>
 
+        <h2 id="dane-dropbox">5A. Opcjonalna integracja Dropbox</h2>
+        <p>
+          Dropbox jest dobrowolnym połączeniem służącym do obsługi dokumentów
+          CRM. Właściciel przestrzeni lub użytkownik swojej przestrzeni
+          prywatnej łączy konto przez OAuth, wybiera istniejący folder CRM i
+          może przeglądać jego podfoldery, przypisywać pliki do rekordów,
+          przesyłać nowe pliki i pobierać przypisane dokumenty.
+        </p>
+        <p>
+          Zakresy <code>files.metadata.read</code>,
+          <code>files.content.read</code> i
+          <code>files.content.write</code> pozwalają odczytywać metadane,
+          pobierać oraz przesyłać pliki. Uprawnienie Full Dropbox obejmuje konto
+          Dropbox, a nie tylko jeden folder. Podczas konfiguracji odczytujemy
+          foldery potrzebne do wyboru lokalizacji; po wyborze folderu Klyo
+          ogranicza operacje na dokumentach do tego folderu i jego podfolderów.
+        </p>
+        <p>
+          Przechowujemy identyfikator konta i połączenia, zaszyfrowany token
+          odświeżania, wybrany folder oraz metadane przypisanych plików:
+          identyfikator, nazwę, rozmiar i powiązanie z rekordem CRM. Token
+          dostępu pobieramy w celu realizacji żądania. Wgrywane i pobierane
+          pliki przechodzą przez serwer Klyo; powiązanie CRM przechowuje
+          metadane, a dokument źródłowy pozostaje w Dropboxie. Obowiązuje limit
+          20 MB na plik.
+        </p>
+        <p>
+          Pliki połączone w przestrzeni Zespół są dostępne członkom tej
+          przestrzeni zgodnie z ich uprawnieniami. Przestrzeń Prywatne korzysta
+          z osobnego połączenia. Usunięcie powiązania CRM nie usuwa oryginału w
+          Dropboxie. Odłączenie przez
+          <strong>Pliki → Dropbox → Odłącz</strong> usuwa zapisane połączenie,
+          token i jego powiązania plików. Dane pozostające w rekordach CRM i
+          wcześniej pobrane kopie podlegają zasadom sekcji 9. Możesz również
+          cofnąć dostęp w ustawieniach połączonych aplikacji Dropbox; cofnięcie
+          dostępu nie usuwa już pobranych kopii ani danych zapisanych w CRM.
+          Przetwarzanie po stronie Dropbox podlega jego własnej polityce
+          prywatności.
+        </p>
+
         <h2>6. Przechowywanie i bezpieczeństwo</h2>
         <p>
           Dane CRM przechowujemy w bazie PostgreSQL na Railway. Publiczne
@@ -459,6 +499,10 @@
 
         <h2>7. Udostępnianie danych</h2>
         <ul>
+          <li>
+            <strong>Dropbox</strong> — opcjonalna obsługa plików opisana w
+            sekcji 5A.
+          </li>
           <li><strong>Railway</strong> — hosting i baza danych.</li>
           <li><strong>Stripe</strong> — przetwarzanie płatności.</li>
           <li>
@@ -750,6 +794,44 @@
           </p>
         </div>
 
+        <h2 id="dropbox-data">5A. Optional Dropbox integration</h2>
+        <p>
+          Dropbox is an optional connection for managing CRM documents. A
+          workspace owner, or a user in their Personal space, connects an
+          account through OAuth, selects an existing CRM folder, and can browse
+          its subfolders, link files to CRM records, upload new files and
+          download linked documents.
+        </p>
+        <p>
+          The scopes <code>files.metadata.read</code>,
+          <code>files.content.read</code> and
+          <code>files.content.write</code> permit metadata access, downloads and
+          uploads. Full Dropbox authorization covers the Dropbox account rather
+          than a single folder. During setup we read folders needed to select
+          the location; after selection, Klyo restricts document operations to
+          that folder and its subfolders.
+        </p>
+        <p>
+          We store the account and connection identifiers, encrypted refresh
+          token, selected folder and linked-file metadata: identifier, name,
+          size and CRM record association. We obtain an access token to perform
+          requests. Uploads and downloads pass through the Klyo server; CRM
+          links store metadata while source documents remain in Dropbox. The
+          transfer limit is 20 MB per file.
+        </p>
+        <p>
+          Files linked in Team space are available to members of that workspace
+          according to their permissions. Personal space uses a separate
+          connection. Removing a CRM link does not delete the Dropbox original.
+          Disconnecting through
+          <strong>Files → Dropbox → Disconnect</strong> deletes the stored
+          connection, token and its file links. Data remaining in CRM records
+          and previously downloaded copies follow section 9. You can also revoke
+          access in Dropbox's connected-app settings; revocation does not erase
+          copies already downloaded or data already recorded in CRM. Processing
+          by Dropbox is governed by its own privacy policy.
+        </p>
+
         <h2>6. Storage and security</h2>
         <p>
           CRM data is stored in PostgreSQL on Railway. Public connections to
@@ -761,6 +843,10 @@
 
         <h2>7. Data sharing</h2>
         <ul>
+          <li>
+            <strong>Dropbox</strong> — optional file operations described in
+            section 5A.
+          </li>
           <li>
             <strong>Railway</strong> — hosting and database infrastructure.
           </li>

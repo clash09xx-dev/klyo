@@ -154,14 +154,14 @@ async function list(conn, folder, cursor) {
       includeItemsFromAllDrives: "true",
     });
     if (cursor) q.set("pageToken", text(cursor, 5000, "cursor"));
-    const r = await module.exports.module.exports.google(conn, "files?" + q);
+    const r = await module.exports.google(conn, "files?" + q);
     return {
       items: (r.files || []).map((x) => item(conn.provider, x)),
       cursor: seal(conn, folder, r.nextPageToken),
     };
   }
   if (f[".tag"] !== "folder") throw invalid("Choose a folder.");
-  const r = await module.exports.module.exports.dropbox(
+  const r = await module.exports.dropbox(
     conn,
     cursor ? "/files/list_folder/continue" : "/files/list_folder",
     cursor
