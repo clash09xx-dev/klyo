@@ -1,0 +1,30 @@
+[
+  {
+    "family": "Inter",
+    "subset": "latin-ext",
+    "file": "inter-latin-ext-a28eb6d3cc.woff2",
+    "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa25L7W0Q5n-wU.woff2",
+    "bytes": 85272
+  },
+  {
+    "family": "Inter",
+    "subset": "latin",
+    "file": "inter-latin-c940764593.woff2",
+    "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2",
+    "bytes": 48432
+  },
+  {
+    "family": "Space Grotesk",
+    "subset": "latin-ext",
+    "file": "space-grotesk-latin-ext-054c266fbb.woff2",
+    "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPb94C_k3HqUtEw.woff2",
+    "bytes": 18924
+  },
+  {
+    "family": "Space Grotesk",
+    "subset": "latin",
+    "file": "space-grotesk-latin-a0d054c4af.woff2",
+    "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4C_k3HqU.woff2",
+    "bytes": 22320
+  }
+]

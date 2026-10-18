@@ -14,6 +14,7 @@
   async function loadPricing() {
     const grid = document.getElementById("pricingGrid"),
       error = document.getElementById("pricingError");
+    if (grid.dataset.serverRendered === "true") return;
     error.hidden = true;
     grid.setAttribute("aria-busy", "true");
     try {

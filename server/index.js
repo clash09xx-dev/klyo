@@ -38,7 +38,9 @@ const calendarRoutes = require("./routes/calendar");
 const clientsRoutes = require("./routes/clients");
 const dataResetRoutes = require("./routes/data-reset");
 
+const publicSite = require("./services/publicSite");
 const app = express();
+app.use(publicSite.headers);
 app.use(cors());
 
 // Stripe's webhook signature check needs the exact raw request bytes,
@@ -83,18 +85,19 @@ app.use('/q',require('./routes/publicQuotes'));
 
 // --- Front-end ---
 const publicDir = path.join(__dirname, "..", "public");
-app.use(express.static(publicDir));
+app.use(publicSite.compression);
+app.use(publicSite.router);
+app.use(express.static(publicDir, {
+  setHeaders(res, file) {
+    if (/\.woff2$/.test(file)) res.set("Cache-Control", "public, max-age=31536000, immutable");
+  },
+}));
 
-// Public pages — served explicitly so they are always accessible without login
-app.get("/",        (req, res) => res.sendFile(path.join(publicDir, "index.html")));
-app.get("/terms",   (req, res) => res.sendFile(path.join(publicDir, "terms.html")));
-app.get("/privacy", (req, res) => res.sendFile(path.join(publicDir, "privacy.html")));
+// Public setup guides and authenticated app entry points.
 app.get("/docs/calendar-setup",(req,res)=>res.sendFile(path.join(publicDir,"docs/calendar-setup.html")));
 app.get("/docs/communications-setup",(req,res)=>res.sendFile(path.join(publicDir,"docs/communications-setup.html")));
 app.get("/docs/sharepoint-setup",(req,res)=>res.sendFile(path.join(publicDir,"docs/sharepoint-setup.html")));
-for (const page of ['features','pricing','why-klyo']) app.get('/'+page,(req,res)=>res.sendFile(path.join(publicDir,page+'.html')));
-app.get("/make-it-yours",(req,res)=>res.sendFile(path.join(publicDir,"customization.html")));
-app.get("/customization",(req,res)=>res.redirect(301,"/make-it-yours"));
+
 app.get("/login",   (req, res) => res.sendFile(path.join(publicDir, "login.html")));
 app.get("/onboarding", (req, res) => res.sendFile(path.join(publicDir, "onboarding.html")));
 app.get("/signup",  (req, res) => res.sendFile(path.join(publicDir, "login.html")));
@@ -103,10 +106,8 @@ app.get("/signup",  (req, res) => res.sendFile(path.join(publicDir, "login.html"
 app.get("/app",     (req, res) => res.sendFile(path.join(publicDir, "app.html")));
 app.get(/^\/app\//, (req, res) => res.sendFile(path.join(publicDir, "app.html")));
 
-// Anything else (old /index.html bookmarks etc.) → redirect to login
-app.get(/^\/(?!api).*/, (req, res) => {
-  res.redirect("/login");
-});
+// Missing public pages must return a real 404, not the login page.
+app.get(/^\/(?!api(?:\/|$)).*/, publicSite.notFound);
 
 const PORT = process.env.PORT || 4000;
 

@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
-Disallow: /app
 Disallow: /api/
 
+# Private app, authentication and shared quote responses carry noindex headers.
+# Allow crawling their public shells so search engines can process those headers.
 Sitemap: https://klyolabs.com/sitemap.xml
