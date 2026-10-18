@@ -8,8 +8,19 @@ const KlyoIntegrations = (() => {
     activeCategory = "all",
     query = "";
   const catalog = [
-    {id:"resend",name:"Resend",category:"email",kind:"platform",mark:"R",color:"#172119",
-      description:["Account emails and password recovery. Managed by the Klyo operator; your outgoing CRM email stays separate.","Wiadomości konta i odzyskiwanie hasła. Konfiguruje operator Klyo; wysyłka ofert CRM pozostaje osobna."],guide:"/docs/account-access.html"},
+    {
+      id: "resend",
+      name: "Resend",
+      category: "email",
+      kind: "platform",
+      mark: "R",
+      color: "#172119",
+      description: [
+        "Account emails and password recovery. Managed by the Klyo operator; your outgoing CRM email stays separate.",
+        "Wiadomości konta i odzyskiwanie hasła. Konfiguruje operator Klyo; wysyłka ofert CRM pozostaje osobna.",
+      ],
+      guide: "/docs/account-access.html",
+    },
     {
       id: "sharepoint",
       name: "SharePoint",
@@ -111,14 +122,14 @@ const KlyoIntegrations = (() => {
     },
     {
       id: "apple_calendar",
-      name: "Apple Calendar / iCalendar",
+      name: "Apple Calendar / iCloud",
       category: "calendar",
-      kind: "export",
+      kind: "private",
       mark: "IC",
       color: "#586476",
       description: [
-        "Export a month of CRM events as .ics. File export, not live iCloud sync.",
-        "Eksportuj miesiąc wydarzeń CRM do .ics. To eksport pliku, a nie synchronizacja z iCloud.",
+        "Connect iCloud, view private events and sync linked CRM appointments both ways.",
+        "Połącz iCloud, wyświetlaj prywatne terminy i synchronizuj powiązane wydarzenia CRM w obie strony.",
       ],
       guide: "/docs/calendar-setup",
     },
@@ -297,14 +308,20 @@ const KlyoIntegrations = (() => {
         item.id === "microsoft_mail" || item.id === "apollo" || !!conn?.root_id;
       error = !!conn?.sync_error;
       detail = conn?.root_name || conn?.account_name || "";
-    } else if (item.id.endsWith("_calendar") && item.id !== "apple_calendar") {
+    } else if (item.id.endsWith("_calendar")) {
       d = data.calendars;
-      const provider = item.id === "google_calendar" ? "google" : "microsoft";
+      const provider =
+        item.id === "google_calendar"
+          ? "google"
+          : item.id === "apple_calendar"
+            ? "icloud"
+            : "microsoft";
       conn = d?.connections?.find((c) => c.provider === provider);
       connected = !!conn;
       configured = !!d?.providers?.find((p) => p.provider === provider)
         ?.configured;
       ready = !!conn?.calendar_id;
+      error = !!conn?.sync_error;
       detail = conn?.calendar_name || conn?.account_name || "";
     } else if (item.id === "sharepoint") {
       d = data.sharepoint;
@@ -322,15 +339,7 @@ const KlyoIntegrations = (() => {
       connected = item.id === "dhl" ? d?.configured : d?.connected;
       configured = item.id === "gmail" ? d?.configured : true;
       detail = d?.email || d?.subdomain || d?.from_email || "";
-    } else if (item.id === "apple_calendar")
-      return {
-        label: l("File export", "Eksport pliku"),
-        style: "neutral",
-        configured: true,
-        connected: false,
-        ready: true,
-      };
-    else {
+    } else {
       d = data.platform;
       configured =
         !!d?.[
@@ -518,17 +527,19 @@ const KlyoIntegrations = (() => {
       } else await KlyoCommunications.connect(id);
       return;
     }
-    if (id === "google_calendar" || id === "outlook_calendar") {
+    if (
+      id === "google_calendar" ||
+      id === "outlook_calendar" ||
+      id === "apple_calendar"
+    ) {
       leaveSettings();
       await KlyoCalendar.settings();
       return;
     }
-    if (id === "apple_calendar") {
-      leaveSettings();
-      switchView("calendar");
+    if (id === "resend") {
+      window.open("/docs/account-access.html", "_blank", "noopener");
       return;
     }
-    if (id === "resend") { window.open("/docs/account-access.html","_blank","noopener"); return; }
     if (id === "sms") {
       leaveSettings();
       await KlyoMFA.settings();

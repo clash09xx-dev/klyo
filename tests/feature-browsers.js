@@ -10,6 +10,7 @@ for (const suite of [
   "operations",
   "communications",
   "calendar-integrations",
+  "icloud-calendar",
   "sales-completion",
   "visual-workspace",
 ]) {

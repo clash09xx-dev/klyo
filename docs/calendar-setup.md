@@ -1,6 +1,6 @@
 # Calendar integrations
 
-In **Calendar → Connect calendars**, each user connects Google Calendar or Outlook / Microsoft 365, chooses a calendar, and sees its events beside CRM events. Connections are private to that user in the active Team or Personal space. Personal and Team have separate connections. A connected account is never automatically shared with colleagues.
+In **Calendar → Connect calendars**, each user connects Google Calendar, Outlook / Microsoft 365 or iCloud, chooses a calendar, and sees its events beside CRM events. Connections are private to that user in the active Team or Personal space. Personal and Team have separate connections. A connected account is never automatically shared with colleagues.
 
 ## Google Calendar
 
@@ -24,7 +24,7 @@ Set `MICROSOFT_CLIENT_ID` and `MICROSOFT_CLIENT_SECRET` in Railway. The calendar
 
 Connect from **Calendar → Connect calendars → Outlook / Microsoft 365**, then choose an accessible calendar. The integration uses the signed-in account's calendars, not arbitrary delegated mailboxes. Calendar policies and permissions still apply.
 
-## How events move
+## How Google and Microsoft events move
 
 - **Refresh** reads the selected provider calendars for the displayed month. Repeated reads do not create CRM records. Recurring events are displayed as instances returned by the provider. All-day end dates are exclusive; times are displayed in the user's local timezone.
 - External events have a provider marker and are private. Open one and choose **Copy to Team CRM** or **Copy to Personal CRM** to copy its title, dates, location and description. Team copying explicitly makes those details visible to colleagues. Repeated copying reuses the existing CRM event.
@@ -36,9 +36,23 @@ Connect from **Calendar → Connect calendars → Outlook / Microsoft 365**, the
 
 Google/Microsoft remain the authority for their own recurring meetings, reminders, attendees and conferencing. This release does not create Google Meet/Teams conferences, manage attendee responses or run background outbound workflows.
 
-## Apple Calendar and other calendar apps
+## Apple Calendar / iCloud — two-way CalDAV
 
-Use **Export CRM .ics** to download CRM events from the currently displayed month. Import the file in Apple Calendar, Outlook or another iCalendar-compatible app. The file contains CRM events only, including intentionally shared CRM copies; it does not include your other private provider events. Importing the same file repeatedly may duplicate entries depending on the calendar application. This is an offline file export, not a live iCloud/CalDAV connection or public subscription URL.
+No operator Apple developer application, OAuth keys or Railway Apple secrets are needed. Each user opens **Settings → Integrations → Apple Calendar / iCloud → Connect**, enters their Apple ID email and an **app-specific password**, then chooses a calendar. In [Apple Account](https://account.apple.com/), open **Sign-In and Security → App-Specific Passwords → Generate** and name it Klyo. Apple requires two-factor authentication for this. Never enter the main Apple Account password in Klyo.
+
+The selected iCloud calendar appears as a private overlay, including all-day dates and expanded recurring occurrences. Reading it does not share its contents with the team. Explicitly **Copy to CRM** or **Send to iCloud** to link an individual event. A writable calendar supports creating and updating ordinary appointments in either direction. There are no attendee invitations or mass imports.
+
+Enable **Automatic two-way sync** in the connection dialog after reviewing its confirmation. Linked changes and deletions then synchronize in both directions, with background checks approximately every two minutes while the CRM subscription and membership permit access. **Sync now** runs a check immediately. The visible calendar refreshes every minute when no editor is open. This is polling, not an instant push service. In Team, colleagues can edit shared linked CRM events; these changes also reach the connected user's iCloud.
+
+Simultaneous local and remote edits are flagged; Klyo preserves both versions until you choose one. **Pull calendar version** deliberately accepts the Apple version; **Publish CRM version** requires first reviewing/pulling a conflicting Apple revision. Read-only calendars cannot receive changes. Recurring series, moved/removed occurrences and meetings with participants are edited in Apple Calendar; the CRM copy shows a warning when it cannot safely update an occurrence. Klyo retains their original recurrence rules, attendees and alarms.
+
+**Pause automatic sync**, **Unlink** or **Disconnect** stops further automatic writes; independent events remain. Changing the selected calendar pauses synchronization. A linked deletion propagates only during an explicitly requested sync or when automatic sync is enabled. Unrelated iCloud appointments are never deleted by CRM cleanup. Revoke the app-specific password in Apple Account to remove provider access; changing your primary Apple Account password revokes those passwords too. Reconnect in Klyo using **Update password**, reselect the calendar and deliberately re-enable sync.
+
+Apple ID, encrypted app-specific password and discovery URLs are stored per user and active Team/Personal workspace. Status APIs do not expose credentials. Only fixed HTTPS Apple CalDAV hosts are contacted; redirects, event paths, response sizes and timeouts are checked.
+
+## Other calendar apps / offline export
+
+Use **Export CRM .ics** to download CRM events from the currently displayed month. Import the file in Apple Calendar, Outlook or another iCalendar-compatible app. The file contains CRM events only, including intentionally shared CRM copies; it does not include your other private provider events. Importing the same file repeatedly may duplicate entries depending on the calendar application. The .ics export is independent of the live iCloud connection; it is not a public subscription URL.
 
 ## Secrets and testing
 
@@ -55,3 +69,5 @@ Official documentation:
 - [Outlook calendars](https://learn.microsoft.com/en-us/graph/api/user-list-calendars?view=graph-rest-1.0)
 - [Outlook calendar view](https://learn.microsoft.com/en-us/graph/api/calendar-list-calendarview?view=graph-rest-1.0)
 - [Microsoft event creation and transaction IDs](https://learn.microsoft.com/en-us/graph/api/user-post-events?view=graph-rest-1.0)
+
+- [Apple app-specific passwords](https://support.apple.com/en-us/102654)
