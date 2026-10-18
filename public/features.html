@@ -51,8 +51,10 @@
     <link rel="stylesheet" href="/css/marketing-pages.css" />
     <link rel="canonical" href="https://klyolabs.com/features" />
     <link rel="stylesheet" href="/css/make-it-yours.css" />
+    <link rel="stylesheet" href="/css/product-stories.css" />
+    <script defer src="/js/product-stories.js"></script>
   </head>
-  <body class="marketing-page">
+  <body class="marketing-page product-story-page">
     <header class="site-header">
       <nav class="site-nav page-width" aria-label="Main navigation">
         <a class="wordmark" href="/" aria-label="Klyo home"
@@ -93,359 +95,667 @@
       </nav>
     </header>
     <main>
-      <section class="marketing-hero page-width">
-        <p class="eyebrow">TWO BIG REASONS. ONE CONNECTED WORKSPACE.</p>
-        <h1>CRM features.<br />Sales, quotes and delivery, connected.</h1>
-        <p>
-          One working space for the sale, the proposal and what happens next.
-          Choose the features you need and arrange them around your day.
-        </p>
-        <div class="flagship-pair">
-          <article class="flagship-card">
-            <span class="flagship-kicker">THE WORKSPACE, ON YOUR TERMS</span
-            ><span class="miy-wordmark">Make It Yours</span>
-            <h2>Your work.<br />Your kind of organized.</h2>
-            <p>
-              Open Make It Yours in Settings. Move and resize your dashboard,
-              use magnetic guides or free placement, and give a widget a little
-              tilt. Keep your own colours, menu and shortcuts.
-            </p>
-            <div
-              class="flagship-mini-layout"
-              aria-label="Illustrative sample layout"
-            >
-              <span>WON THIS MONTH<b>24</b></span
-              ><span>NEXT ACTION<b>↗</b></span
-              ><span>YOUR VIEW<b>◫</b></span>
-            </div>
-            <span class="flagship-chip lime">Move</span
-            ><span class="flagship-chip pink">Resize</span
-            ><span class="flagship-chip">Tilt</span
-            ><a class="flagship-link" href="/make-it-yours"
-              >Explore Make It Yours ↗</a
-            >
-          </article>
-          <article class="flagship-card">
-            <span class="flagship-kicker">THE PROPOSAL, BUILT BY YOU</span
-            ><span class="flagship-chip pink">QUOTE CREATOR</span>
-            <h2>A blank A4.<br />A quote with your name on it.</h2>
-            <p>
-              Design your template, bring in your price lists and build product
-              bundles. Choose which prices to show, layer your discounts and
-              preview the actual PDF before you send.
-            </p>
-            <div class="flagship-paper">
-              <span>A4 ↗</span
-              ><small
-                >Your logo &amp; layout<br />Live customer fields<br />Bundles
-                &amp; discounts<br />A PDF ready to review</small
+      <section class="story-hero page-width">
+        <div class="story-hero-copy">
+          <p class="eyebrow">KLYO LABS / FEATURES</p>
+          <h1>Less busywork.<br />More <span>moving forward.</span></h1>
+          <p>
+            Your clients, your next deal, your best proposal. A connected CRM
+            you can arrange around the way you work.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-lime" href="/signup"
+              >Start a 7-day trial ↗</a
+            ><a class="story-link" href="#sales">Take a look inside ↓</a>
+          </div>
+          <p class="trial-note">
+            Payment method required · Cancel before renewal
+          </p>
+        </div>
+        <div class="hero-product-preview" data-product-preview>
+          <div class="preview-toolbar">
+            <span class="preview-brand">K / INSIDE KLYO</span>
+            <div role="tablist" aria-label="Preview CRM features">
+              <button
+                type="button"
+                role="tab"
+                id="sales-preview-tab"
+                aria-selected="true"
+                aria-controls="sales-preview"
+                data-product-tab
               >
+                Sales</button
+              ><button
+                type="button"
+                role="tab"
+                id="quotes-preview-tab"
+                aria-selected="false"
+                aria-controls="quotes-preview"
+                tabindex="-1"
+                data-product-tab
+              >
+                Quote Creator</button
+              ><button
+                type="button"
+                role="tab"
+                id="settings-preview-tab"
+                aria-selected="false"
+                aria-controls="settings-preview"
+                tabindex="-1"
+                data-product-tab
+              >
+                Make It Yours
+              </button>
             </div>
-            <a class="flagship-link" href="/features#quotes"
-              >Meet the Quote Creator ↗</a
-            >
-          </article>
-        </div>
-        <nav class="feature-index">
-          <a href="#customization">Make It Yours</a
-          ><a href="#sales">Stay on top of the sale</a
-          ><a href="#quotes">Send a proposal built for the customer</a
-          ><a href="#delivery">Keep delivery connected to the deal</a
-          ><a href="#integrations">Connect the tools you already use</a
-          ><a href="#team">Work together, keep personal work private</a>
-        </nav>
-      </section>
-      <section id="customization" class="feature-page-section page-width">
-        <p class="eyebrow">MAKE IT YOURS</p>
-        <h2>Make It Yours</h2>
-        <div class="feature-card-grid">
-          <article>
-            <h3>Make It Yours workspace editor</h3>
-            <p>
-              Choose Classic, Explorer, Notebook or Command for the entire
-              application. Build a personal layout with your own navigation,
-              icons, typography, page panels and shortcuts. Save up to six layouts.
-            </p>
-          </article>
-          <article>
-            <h3>Shortcuts across the workspace</h3>
-            <p>
-              Place shortcuts for a new deal, contact, quote or task next to the
-              information you use. Place global shortcuts in the header, work area or navigation footer.
-            </p>
-          </article>
-          <article>
-            <h3>Readable navigation</h3>
-            <p>
-              Group modules into sections, use a simple list or choose
-              two-column tiles. Adjust the menu width, move it left, right or to the top,
-              rename sections and hide unused modules without deleting data.
-            </p>
-          </article>
-          <article>
-            <h3>Your palette and columns</h3>
-            <p>
-              Pick a theme or set your own background, panels and accent with
-              automatic contrast. Reorder contact columns, change density and
-              choose your starting page.
-            </p>
-          </article>
-        </div>
-      </section>
-      <section id="sales" class="feature-page-section page-width">
-        <p class="eyebrow">SALES</p>
-        <h2>Stay on top of the sale</h2>
-        <div class="feature-card-grid">
-          <article>
-            <h3>Contacts and companies</h3>
-            <p>
-              Connect people, owners, roles, tags, notes, company details,
-              parent companies, subsidiaries, branches and departments.
-            </p>
-          </article>
-          <article>
-            <h3>Multiple sales pipelines</h3>
-            <p>
-              Create named pipelines with their own purpose and stages. Use a
-              board or table and keep independent processes separate.
-            </p>
-          </article>
-          <article>
-            <h3>Won and Lost workspaces</h3>
-            <p>
-              Open dedicated results views, inspect the underlying deals and
-              recorded loss reasons, and review value, win rate and time to win.
-            </p>
-          </article>
-          <article>
-            <h3>Targets and benchmarks</h3>
-            <p>
-              Set monthly targets for sales, new pipeline value, meetings and
-              win rate. Inspect actual results, weighted forecasts, sources, age
-              bands and pipeline health.
-            </p>
-          </article>
-          <article>
-            <h3>Saved views and bulk changes</h3>
-            <p>
-              Keep useful filters, select records for supported bulk changes and
-              export selected deals or reports.
-            </p>
-          </article>
-          <article>
-            <h3>Import and data hygiene</h3>
-            <p>
-              Bring contacts and product data from spreadsheets with mapping and
-              review. Find and merge duplicate contacts while retaining their
-              history.
-            </p>
-          </article>
-        </div>
-      </section>
-      <section id="quotes" class="feature-page-section page-width">
-        <p class="eyebrow">QUOTES</p>
-        <h2>Send a proposal built for the customer</h2>
-        <div class="feature-card-grid">
-          <article>
-            <h3>Quote Creator · A4 designer</h3>
-            <p>
-              Start from a blank A4 page. Position and resize a logo, text,
-              shapes, automatic dates and client fields, pricing tables and
-              totals. Reuse your own templates.
-            </p>
-          </article>
-          <article>
-            <h3>Nested product bundles</h3>
-            <p>
-              Group a complete computer, then group its CPU and GPU inside it.
-              List all components while choosing which group or component prices
-              to disclose.
-            </p>
-          </article>
-          <article>
-            <h3>Layered discounts</h3>
-            <p>
-              Apply item discounts, sub-group discounts, parent discounts and a
-              whole-quote discount in a defined order with exact cent
-              allocation.
-            </p>
-          </article>
-          <article>
-            <h3>Private margin view</h3>
-            <p>
-              Explicitly show or hide purchase costs, profit, margin and markup
-              while composing. Owner-controlled access; internal costs are
-              excluded from customer PDFs.
-            </p>
-          </article>
-          <article>
-            <h3>PDF preview and email</h3>
-            <p>
-              Generate the actual PDF, preview and download it, or attach the
-              approved file to a message you choose to send.
-            </p>
-          </article>
-          <article>
-            <h3>Price lists and commercial register</h3>
-            <p>
-              Import CSV/XLSX price lists, choose a price list while quoting,
-              track case/offer references and review payment and delivery terms
-              in the register.
-            </p>
-          </article>
-          <article>
-            <h3>Optional email assistant</h3>
-            <p>
-              Describe the message in your language or request another output
-              language. Review the draft and send it yourself; no automatic
-              follow-ups.
-            </p>
-          </article>
+          </div>
+          <div
+            role="tabpanel"
+            id="sales-preview"
+            aria-labelledby="sales-preview-tab"
+          >
+            <figure class="story-shot">
+              <a
+                href="/images/personal-workspace.png"
+                target="_blank"
+                rel="noopener"
+                aria-label="View full-size screenshot"
+                ><picture
+                  ><source
+                    type="image/webp"
+                    srcset="
+                      /images/personal-workspace.webp    1x,
+                      /images/personal-workspace@2x.webp 2x
+                    " />
+                  <img
+                    src="/images/personal-workspace.png"
+                    width="1440"
+                    height="820"
+                    loading="eager"
+                    decoding="async"
+                    alt="Klyo sales board with separate stages, owners and next actions" /></picture
+              ></a>
+              <figcaption>
+                <span>Sales board · sample workspace</span
+                ><a
+                  href="/images/personal-workspace.png"
+                  target="_blank"
+                  rel="noopener"
+                  >View screenshot ↗</a
+                >
+              </figcaption>
+            </figure>
+          </div>
+          <div
+            role="tabpanel"
+            id="quotes-preview"
+            aria-labelledby="quotes-preview-tab"
+            hidden
+          >
+            <figure class="story-shot">
+              <a
+                href="/images/a4-designer.png"
+                target="_blank"
+                rel="noopener"
+                aria-label="View full-size screenshot"
+                ><picture
+                  ><source
+                    type="image/webp"
+                    srcset="
+                      /images/a4-designer.webp    1x,
+                      /images/a4-designer@2x.webp 2x
+                    " />
+                  <img
+                    src="/images/a4-designer.png"
+                    width="1440"
+                    height="1000"
+                    loading="lazy"
+                    decoding="async"
+                    alt="Klyo visual A4 template editor with a product table and automatic fields" /></picture
+              ></a>
+              <figcaption>
+                <span>Quote Creator · sample workspace</span
+                ><a
+                  href="/images/a4-designer.png"
+                  target="_blank"
+                  rel="noopener"
+                  >View screenshot ↗</a
+                >
+              </figcaption>
+            </figure>
+          </div>
+          <div
+            role="tabpanel"
+            id="settings-preview"
+            aria-labelledby="settings-preview-tab"
+            hidden
+          >
+            <figure class="story-shot">
+              <a
+                href="/images/personal-settings.png"
+                target="_blank"
+                rel="noopener"
+                aria-label="View full-size screenshot"
+                ><picture
+                  ><source
+                    type="image/webp"
+                    srcset="
+                      /images/personal-settings.webp    1x,
+                      /images/personal-settings@2x.webp 2x
+                    " />
+                  <img
+                    src="/images/personal-settings.png"
+                    width="1440"
+                    height="986"
+                    loading="lazy"
+                    decoding="async"
+                    alt="Klyo personal colour, density and navigation settings" /></picture
+              ></a>
+              <figcaption>
+                <span>Make It Yours · sample workspace</span
+                ><a
+                  href="/images/personal-settings.png"
+                  target="_blank"
+                  rel="noopener"
+                  >View screenshot ↗</a
+                >
+              </figcaption>
+            </figure>
+          </div>
         </div>
       </section>
-      <section id="delivery" class="feature-page-section page-width">
-        <p class="eyebrow">DELIVERY</p>
-        <h2>Keep delivery connected to the deal</h2>
-        <div class="feature-card-grid">
-          <article>
-            <h3>Projects after a win</h3>
-            <p>
-              Future won deals can create one project automatically. The owner
-              can disable this, and existing projects are reused.
-            </p>
-          </article>
-          <article>
-            <h3>Project planning and settlement</h3>
-            <p>
-              Link tasks, people, planned and actual hours, orders, documents
-              and agreements. Owners review separate-currency revenue,
-              purchasing, labor, expenses and profitability.
-            </p>
-          </article>
-          <article>
-            <h3>Orders and confirmations</h3>
-            <p>
-              Manage customer, supplier and internal orders, serial numbers,
-              delivery dates, acknowledgment, invoice references and payments.
-              Generate a customized confirmation PDF.
-            </p>
-          </article>
-          <article>
-            <h3>Equipment and calibration</h3>
-            <p>
-              Track instruments, serial numbers, condition, calibration dates,
-              reservations, check-out and returns. Conflicting reservations are
-              blocked.
-            </p>
-          </article>
-          <article>
-            <h3>Tasks, Kanban and priorities</h3>
-            <p>
-              Use dated tasks, sub-tasks, milestones, reminders, a Kanban board
-              and an urgency/importance matrix.
-            </p>
-          </article>
-          <article>
-            <h3>Warranty and service</h3>
-            <p>
-              Associate purchased products with customers, warranty periods and
-              review dates. See due service reminders in the CRM.
-            </p>
-          </article>
+      <nav class="story-index page-width" aria-label="Explore features">
+        <a href="#sales">01 Sales</a><a href="#quotes">02 Quote Creator</a
+        ><a href="#customization">03 Make It Yours</a
+        ><a href="#delivery">04 Delivery</a
+        ><a href="#all-features">All features ↓</a>
+      </nav>
+      <section id="sales" class="product-chapter page-width">
+        <div class="chapter-copy">
+          <p class="eyebrow">01 / A CLEARER SALES DAY</p>
+          <h2>Know the deal.<br />Know the next step.</h2>
+          <p>
+            Keep people, companies and opportunities connected. Give every sales
+            process its own pipeline and put the next action beside the deal.
+          </p>
+          <ul class="story-points">
+            <li>Contacts, company hierarchies and your own fields</li>
+            <li>Separate pipelines with board and table views</li>
+            <li>Won and Lost results, targets and sales benchmarks</li>
+          </ul>
+          <a class="story-link" href="/signup">Build your sales workspace ↗</a>
+        </div>
+        <div class="chapter-visual">
+          <figure class="story-shot">
+            <a
+              href="/images/personal-workspace.png"
+              target="_blank"
+              rel="noopener"
+              aria-label="View full-size screenshot"
+              ><picture
+                ><source
+                  type="image/webp"
+                  srcset="
+                    /images/personal-workspace.webp    1x,
+                    /images/personal-workspace@2x.webp 2x
+                  " />
+                <img
+                  src="/images/personal-workspace.png"
+                  width="1440"
+                  height="820"
+                  loading="lazy"
+                  decoding="async"
+                  alt="Klyo deals board with stages, values and planned next steps" /></picture
+            ></a>
+            <figcaption>
+              <span>Actual Klyo sales board · sample data</span
+              ><a
+                href="/images/personal-workspace.png"
+                target="_blank"
+                rel="noopener"
+                >View screenshot ↗</a
+              >
+            </figcaption>
+          </figure>
         </div>
       </section>
-      <section id="integrations" class="feature-page-section page-width">
-        <p class="eyebrow">INTEGRATIONS</p>
-        <h2>Connect the tools you already use</h2>
-        <div class="feature-card-grid">
-          <article>
-            <h3>Google and Outlook calendars</h3>
-            <p>
-              Connect your private calendar, choose a calendar, view external
-              events and explicitly copy or publish CRM appointments. Export CRM
-              events as ICS.
-            </p>
-          </article>
-          <article>
-            <h3>Microsoft 365 and RFQs</h3>
-            <p>
-              Import authorized mailboxes, including delegated shared mailboxes,
-              link correspondence and attachments to CRM records and configure
-              future inbound RFQ rules and SLA deadlines.
-            </p>
-          </article>
-          <article>
-            <h3>SharePoint, Drive and Dropbox</h3>
-            <p>
-              With configured provider access, browse the selected CRM folder,
-              upload, download and link files to records. Provider account
-              permissions and file limits apply.
-            </p>
-          </article>
-          <article>
-            <h3>Apollo.io import</h3>
-            <p>
-              Search and enrich contacts using your own authorized API key.
-              Confirm credit use before enrichment and deduplicate imported
-              contacts.
-            </p>
-          </article>
-          <article>
-            <h3>DHL and invoice providers</h3>
-            <p>
-              Fetch DHL tracking with your own approved API key. Other carriers
-              use official tracking portals. Configure Fakturownia separately to
-              review and explicitly issue invoices.
-            </p>
-          </article>
+      <section id="quotes" class="product-chapter page-width chapter-reverse">
+        <div class="chapter-copy">
+          <p class="eyebrow">02 / QUOTE CREATOR</p>
+          <h2>Make the offer<br />worth opening.</h2>
+          <p>
+            Start with a blank A4 page, not another document to fight with.
+            Design the template, bring in your products and check the actual PDF
+            before sharing it.
+          </p>
+          <ul class="story-points">
+            <li>Your logo, text, live client fields and saved A4 layouts</li>
+            <li>Product bundles, selected prices and layered discounts</li>
+            <li>Private margin view, price-list imports and PDF preview</li>
+          </ul>
+          <a class="story-link" href="/pdf-quotes"
+            >Explore the Quote Creator ↗</a
+          >
+        </div>
+        <div class="chapter-visual">
+          <figure class="story-shot">
+            <a
+              href="/images/a4-designer.png"
+              target="_blank"
+              rel="noopener"
+              aria-label="View full-size screenshot"
+              ><picture
+                ><source
+                  type="image/webp"
+                  srcset="
+                    /images/a4-designer.webp    1x,
+                    /images/a4-designer@2x.webp 2x
+                  " />
+                <img
+                  src="/images/a4-designer.png"
+                  width="1440"
+                  height="1000"
+                  loading="lazy"
+                  decoding="async"
+                  alt="Klyo A4 designer with draggable quote elements and automatic pricing" /></picture
+            ></a>
+            <figcaption>
+              <span>Actual A4 template editor · sample data</span
+              ><a href="/images/a4-designer.png" target="_blank" rel="noopener"
+                >View screenshot ↗</a
+              >
+            </figcaption>
+          </figure>
         </div>
       </section>
-      <section id="team" class="feature-page-section page-width">
-        <p class="eyebrow">TEAM</p>
-        <h2>Work together, keep personal work private</h2>
-        <div class="feature-card-grid">
-          <article>
-            <h3>Team and Personal</h3>
-            <p>
-              Switch between shared team records and your private workspace.
-              Copy selected supported records from Team into independent
-              Personal copies.
-            </p>
-          </article>
-          <article>
-            <h3>Owner and access controls</h3>
-            <p>
-              The team owner manages invitations, roles, audit history and
-              internal margin access. The Platform administration page remains
-              restricted to the platform owner.
-            </p>
-          </article>
-          <article>
-            <h3>SMS two-step verification</h3>
-            <p>
-              Connect Twilio Verify at deployment level, then enroll each
-              account with a verified phone. Password and Google sign-in use the
-              extra code when enabled. One-time recovery codes cover SMS
-              outages.
-            </p>
-          </article>
-          <article>
-            <h3>Custom record fields</h3>
-            <p>
-              Create your own fields for customer, company and product
-              characteristics rather than forcing your process into fixed
-              labels.
-            </p>
-          </article>
+      <section id="customization" class="product-chapter page-width">
+        <div class="chapter-copy">
+          <p class="eyebrow">03 / MAKE IT YOURS</p>
+          <h2>Your tools.<br />Your kind of organized.</h2>
+          <p>
+            Choose Classic, Explorer, Notebook or Command. Then make the whole
+            workspace yours: the menu, the colours, the panels and the
+            shortcuts.
+          </p>
+          <ul class="story-points">
+            <li>Drag and resize widgets with guides or free placement</li>
+            <li>Hide unused modules without deleting your records</li>
+            <li>Save personal layouts while teammates keep theirs</li>
+          </ul>
+          <a class="story-link" href="/make-it-yours"
+            >Explore Make It Yours ↗</a
+          >
+        </div>
+        <div class="chapter-visual">
+          <figure class="story-shot">
+            <a
+              href="/images/personal-settings.png"
+              target="_blank"
+              rel="noopener"
+              aria-label="View full-size screenshot"
+              ><picture
+                ><source
+                  type="image/webp"
+                  srcset="
+                    /images/personal-settings.webp    1x,
+                    /images/personal-settings@2x.webp 2x
+                  " />
+                <img
+                  src="/images/personal-settings.png"
+                  width="1440"
+                  height="986"
+                  loading="lazy"
+                  decoding="async"
+                  alt="Klyo settings for a personal colour palette, navigation and density" /></picture
+            ></a>
+            <figcaption>
+              <span>Actual personal settings · sample data</span
+              ><a
+                href="/images/personal-settings.png"
+                target="_blank"
+                rel="noopener"
+                >View screenshot ↗</a
+              >
+            </figcaption>
+          </figure>
         </div>
       </section>
-      <section class="marketing-cta page-width">
-        <h2>Give every user their own setup.</h2>
-        <a class="button button-dark" href="/signup">Start a 7-day trial ↗</a>
-        <p>
-          External integrations require provider setup and authorization. No
-          provider subscriptions or credits are purchased automatically.
-        </p>
+      <section id="delivery" class="delivery-strip page-width">
+        <div>
+          <p class="eyebrow">04 / FROM A WIN TO WHAT’S NEXT</p>
+          <h2>The deal is won.<br />The context stays.</h2>
+          <p>
+            Keep the client, quote and products connected to delivery. Projects,
+            orders and service reminders carry the work forward.
+          </p>
+        </div>
+        <ol class="delivery-flow">
+          <li>
+            <span>01</span><strong>Win the deal</strong>
+            <p>Keep the agreed scope and client together.</p>
+          </li>
+          <li>
+            <span>02</span><strong>Plan delivery</strong>
+            <p>Link the project, orders, people and tasks.</p>
+          </li>
+          <li>
+            <span>03</span><strong>Stay in touch</strong>
+            <p>Track warranty periods and the next service review.</p>
+          </li>
+        </ol>
+      </section>
+      <section id="all-features" class="feature-library page-width">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">THE DETAILS, WHEN YOU NEED THEM</p>
+            <h2>One workspace.<br />A useful set of tools.</h2>
+          </div>
+          <p>Open a section to explore the features behind the view.</p>
+        </div>
+        <details class="feature-group">
+          <summary>
+            <span>Make It Yours</span><span class="group-count">04</span>
+          </summary>
+          <div class="feature-library-grid">
+            <article>
+              <h3>Make It Yours workspace editor</h3>
+              <p>
+                Choose Classic, Explorer, Notebook or Command for the entire
+                application. Build a personal layout with your own navigation,
+                icons, typography, page panels and shortcuts. Save up to six
+                layouts.
+              </p>
+            </article>
+            <article>
+              <h3>Shortcuts across the workspace</h3>
+              <p>
+                Place shortcuts for a new deal, contact, quote or task next to
+                the information you use. Place global shortcuts in the header,
+                work area or navigation footer.
+              </p>
+            </article>
+            <article>
+              <h3>Readable navigation</h3>
+              <p>
+                Group modules into sections, use a simple list or choose
+                two-column tiles. Adjust the menu width, move it left, right or
+                to the top, rename sections and hide unused modules without
+                deleting data.
+              </p>
+            </article>
+            <article>
+              <h3>Your palette and columns</h3>
+              <p>
+                Pick a theme or set your own background, panels and accent with
+                automatic contrast. Reorder contact columns, change density and
+                choose your starting page.
+              </p>
+            </article>
+          </div>
+        </details>
+        <details class="feature-group">
+          <summary>
+            <span>Stay on top of the sale</span
+            ><span class="group-count">06</span>
+          </summary>
+          <div class="feature-library-grid">
+            <article>
+              <h3>Contacts and companies</h3>
+              <p>
+                Connect people, owners, roles, tags, notes, company details,
+                parent companies, subsidiaries, branches and departments.
+              </p>
+            </article>
+            <article>
+              <h3>Multiple sales pipelines</h3>
+              <p>
+                Create named pipelines with their own purpose and stages. Use a
+                board or table and keep independent processes separate.
+              </p>
+            </article>
+            <article>
+              <h3>Won and Lost workspaces</h3>
+              <p>
+                Open dedicated results views, inspect the underlying deals and
+                recorded loss reasons, and review value, win rate and time to
+                win.
+              </p>
+            </article>
+            <article>
+              <h3>Targets and benchmarks</h3>
+              <p>
+                Set monthly targets for sales, new pipeline value, meetings and
+                win rate. Inspect actual results, weighted forecasts, sources,
+                age bands and pipeline health.
+              </p>
+            </article>
+            <article>
+              <h3>Saved views and bulk changes</h3>
+              <p>
+                Keep useful filters, select records for supported bulk changes
+                and export selected deals or reports.
+              </p>
+            </article>
+            <article>
+              <h3>Import and data hygiene</h3>
+              <p>
+                Bring contacts and product data from spreadsheets with mapping
+                and review. Find and merge duplicate contacts while retaining
+                their history.
+              </p>
+            </article>
+          </div>
+        </details>
+        <details class="feature-group">
+          <summary>
+            <span>Send a proposal built for the customer</span
+            ><span class="group-count">07</span>
+          </summary>
+          <div class="feature-library-grid">
+            <article>
+              <h3>Quote Creator · A4 designer</h3>
+              <p>
+                Start from a blank A4 page. Position and resize a logo, text,
+                shapes, automatic dates and client fields, pricing tables and
+                totals. Reuse your own templates.
+              </p>
+            </article>
+            <article>
+              <h3>Nested product bundles</h3>
+              <p>
+                Group a complete computer, then group its CPU and GPU inside it.
+                List all components while choosing which group or component
+                prices to disclose.
+              </p>
+            </article>
+            <article>
+              <h3>Layered discounts</h3>
+              <p>
+                Apply item discounts, sub-group discounts, parent discounts and
+                a whole-quote discount in a defined order with exact cent
+                allocation.
+              </p>
+            </article>
+            <article>
+              <h3>Private margin view</h3>
+              <p>
+                Explicitly show or hide purchase costs, profit, margin and
+                markup while composing. Owner-controlled access; internal costs
+                are excluded from customer PDFs.
+              </p>
+            </article>
+            <article>
+              <h3>PDF preview and email</h3>
+              <p>
+                Generate the actual PDF, preview and download it, or attach the
+                approved file to a message you choose to send.
+              </p>
+            </article>
+            <article>
+              <h3>Price lists and commercial register</h3>
+              <p>
+                Import CSV/XLSX price lists, choose a price list while quoting,
+                track case/offer references and review payment and delivery
+                terms in the register.
+              </p>
+            </article>
+            <article>
+              <h3>Optional email assistant</h3>
+              <p>
+                Describe the message in your language or request another output
+                language. Review the draft and send it yourself; no automatic
+                follow-ups.
+              </p>
+            </article>
+          </div>
+        </details>
+        <details class="feature-group">
+          <summary>
+            <span>Keep delivery connected to the deal</span
+            ><span class="group-count">06</span>
+          </summary>
+          <div class="feature-library-grid">
+            <article>
+              <h3>Projects after a win</h3>
+              <p>
+                Future won deals can create one project automatically. The owner
+                can disable this, and existing projects are reused.
+              </p>
+            </article>
+            <article>
+              <h3>Project planning and settlement</h3>
+              <p>
+                Link tasks, people, planned and actual hours, orders, documents
+                and agreements. Owners review separate-currency revenue,
+                purchasing, labor, expenses and profitability.
+              </p>
+            </article>
+            <article>
+              <h3>Orders and confirmations</h3>
+              <p>
+                Manage customer, supplier and internal orders, serial numbers,
+                delivery dates, acknowledgment, invoice references and payments.
+                Generate a customized confirmation PDF.
+              </p>
+            </article>
+            <article>
+              <h3>Equipment and calibration</h3>
+              <p>
+                Track instruments, serial numbers, condition, calibration dates,
+                reservations, check-out and returns. Conflicting reservations
+                are blocked.
+              </p>
+            </article>
+            <article>
+              <h3>Tasks, Kanban and priorities</h3>
+              <p>
+                Use dated tasks, sub-tasks, milestones, reminders, a Kanban
+                board and an urgency/importance matrix.
+              </p>
+            </article>
+            <article>
+              <h3>Warranty and service</h3>
+              <p>
+                Associate purchased products with customers, warranty periods
+                and review dates. See due service reminders in the CRM.
+              </p>
+            </article>
+          </div>
+        </details>
+        <details class="feature-group">
+          <summary>
+            <span>Connect the tools you already use</span
+            ><span class="group-count">05</span>
+          </summary>
+          <div class="feature-library-grid">
+            <article>
+              <h3>Google, Outlook and iCloud calendars</h3>
+              <p>
+                Connect your private calendar, choose a calendar, view external
+                events and explicitly copy or publish CRM appointments. Export
+                CRM events as ICS. Explicitly linked ordinary iCloud
+                appointments support optional two-way synchronization.
+              </p>
+            </article>
+            <article>
+              <h3>Microsoft 365 and RFQs</h3>
+              <p>
+                Import authorized mailboxes, including delegated shared
+                mailboxes, link correspondence and attachments to CRM records
+                and configure future inbound RFQ rules and SLA deadlines.
+              </p>
+            </article>
+            <article>
+              <h3>SharePoint, Drive and Dropbox</h3>
+              <p>
+                With configured provider access, browse the selected CRM folder,
+                upload, download and link files to records. Provider account
+                permissions and file limits apply.
+              </p>
+            </article>
+            <article>
+              <h3>Apollo.io import</h3>
+              <p>
+                Search and enrich contacts using your own authorized API key.
+                Confirm credit use before enrichment and deduplicate imported
+                contacts.
+              </p>
+            </article>
+            <article>
+              <h3>DHL and invoice providers</h3>
+              <p>
+                Fetch DHL tracking with your own approved API key. Other
+                carriers use official tracking portals. Configure Fakturownia
+                separately to review and explicitly issue invoices.
+              </p>
+            </article>
+          </div>
+        </details>
+        <details class="feature-group">
+          <summary>
+            <span>Work together, keep personal work private</span
+            ><span class="group-count">04</span>
+          </summary>
+          <div class="feature-library-grid">
+            <article>
+              <h3>Team and Personal</h3>
+              <p>
+                Switch between shared team records and your private workspace.
+                Copy selected supported records from Team into independent
+                Personal copies.
+              </p>
+            </article>
+            <article>
+              <h3>Owner and access controls</h3>
+              <p>
+                The team owner manages invitations, roles, audit history and
+                internal margin access. The Platform administration page remains
+                restricted to the platform owner.
+              </p>
+            </article>
+            <article>
+              <h3>SMS two-step verification</h3>
+              <p>
+                SMS verification is required for registration and every sign-in.
+                Each account uses a verified phone; one-time recovery codes help
+                when SMS is unavailable.
+              </p>
+            </article>
+            <article>
+              <h3>Custom record fields</h3>
+              <p>
+                Create your own fields for customer, company and product
+                characteristics rather than forcing your process into fixed
+                labels.
+              </p>
+            </article>
+          </div>
+        </details>
+      </section>
+      <section class="story-closing page-width">
+        <p class="eyebrow">YOUR WORKSPACE IS NEXT</p>
+        <h2>Bring your work.<br />Make room for <span>your way.</span></h2>
+        <a class="button button-lime" href="/signup">Start a 7-day trial ↗</a>
+        <p>Payment method required · Cancel before renewal</p>
       </section>
     </main>
     <footer class="site-footer page-width">

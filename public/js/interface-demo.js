@@ -1,4 +1,5 @@
 (() => {
+  const t = window.KlyoPublicLanguage?.t || (text => text);
   const demo = document.querySelector("[data-layout-demo]");
   if (!demo) return;
   const tabs = [...demo.querySelectorAll("[data-demo-layout]")],
@@ -18,7 +19,7 @@
       .getElementById("interfaceDemoCanvas")
       .setAttribute("aria-labelledby", tab.id);
     document.getElementById("interfaceDemoCaption").textContent =
-      captions[tab.dataset.demoLayout];
+      t(captions[tab.dataset.demoLayout]);
   }
   for (const tab of tabs) {
     tab.addEventListener("click", () => select(tab));
