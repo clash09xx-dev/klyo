@@ -16,13 +16,13 @@ Changes are stored against the signed-in account, and do not alter a colleague's
 
 # Settings → Integrations
 
-The directory lists SharePoint, Google Drive, Dropbox, Microsoft 365 inbox, Gmail sending, SMTP, Google and Outlook calendars, Apple/iCalendar file export, Apollo, Fakturownia, DHL Tracking, SMS two-step verification, Google sign-in, the optional email assistant Klyo subscription billing and operator-managed Resend account emails.
+The directory lists SharePoint, Google Drive, Dropbox, Microsoft 365 inbox, Gmail sending, SMTP, Google and Outlook calendars, Apple/iCloud calendar synchronization, Apollo, Fakturownia, DHL Tracking, SMS two-step verification, Google sign-in, the optional email assistant Klyo subscription billing and operator-managed Resend account emails.
 
 Cards show connection/configuration state for the active space, explain private/shared/operator-managed scope and link to the relevant guide. Search or filter by Files, Email, Calendars, Sales & delivery, or Account & services.
 
 Workspace owners configure shared storage, Apollo, Fakturownia and DHL. Existing SMTP/Gmail admin rules are preserved. Each user manages their own calendar, mailbox and SMS enrollment; Team and Personal stay separate. Provider keys are entered directly in the connection form. A saved API key is labeled **Credentials saved**, not a verified working connection. Test provider access through the corresponding tool. Operator configuration flags only expose booleans, never credentials.
 
-Apple Calendar is a manual `.ics` export, not live iCloud synchronization. Stripe manages the Klyo subscription, not customer invoice payments. Configuring a provider does not itself issue invoices, send email, buy services or enable automatic follow-ups.
+Apple Calendar connects through iCloud CalDAV with a per-user app-specific password. Explicitly linked ordinary appointments can synchronize automatically in both directions; recurring series and invitations remain editable in Apple Calendar. A separate `.ics` export is available. Stripe manages the Klyo subscription, not customer invoice payments. Configuring a provider does not itself issue invoices, send email, buy services or enable automatic follow-ups.
 
 ## Unified direct manipulation
 

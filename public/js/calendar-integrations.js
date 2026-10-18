@@ -18,7 +18,11 @@ const KlyoCalendar = (() => {
     pending = null,
     remoteChanges = new Set();
   const provider = (p) =>
-    p === "google" ? "Google Calendar" : "Outlook / Microsoft 365";
+    p === "google"
+      ? "Google Calendar"
+      : p === "icloud"
+        ? "Apple Calendar / iCloud"
+        : "Outlook / Microsoft 365";
   const run = (fn) => async (e) => {
     const b = e?.currentTarget;
     if (b) b.disabled = true;
@@ -45,7 +49,9 @@ const KlyoCalendar = (() => {
       .querySelector(".filter-bar")
       .insertAdjacentHTML(
         "afterend",
-        KlyoCopy.html("<div id=\"calendarConnectionNotice\" class=\"calendar-notice\" role=\"status\"></div>"),
+        KlyoCopy.html(
+          '<div id="calendarConnectionNotice" class="calendar-notice" role="status"></div>',
+        ),
       );
     g("calendarConnections").onclick = run(settings);
     g("calendarRefresh").onclick = run(() => loadCalendar());
@@ -67,7 +73,7 @@ const KlyoCalendar = (() => {
       );
     g("eventForm").insertAdjacentHTML(
       "beforeend",
-      `<div class="calendar-event-footer"><small>${KlyoModuleI18n.label("Times use your local timezone. For all-day events, the end date is exclusive.", "Godziny używają Twojej strefy czasowej. Dla całodniowych termin końcowy oznacza pierwszy dzień po wydarzeniu.")}</small><button type="button" class="btn btn-ghost" id="eventProviderLinks">${KlyoModuleI18n.label("Google / Outlook", "Google / Outlook")}</button></div>`,
+      `<div class="calendar-event-footer"><small>${KlyoModuleI18n.label("Times use your local timezone. For all-day events, the end date is exclusive.", "Godziny używają Twojej strefy czasowej. Dla całodniowych termin końcowy oznacza pierwszy dzień po wydarzeniu.")}</small><button type="button" class="btn btn-ghost" id="eventProviderLinks">${KlyoModuleI18n.label("Calendar links", "Połączenia kalendarza")}</button></div>`,
     );
     g("eventProviderLinks").onclick = run(() => {
       if (g("eventForm").dataset.calendarSignature !== signature())
@@ -110,6 +116,43 @@ const KlyoCalendar = (() => {
           ),
         500,
       );
+  }
+  setInterval(() => {
+    if (
+      document.visibilityState === "visible" &&
+      g("calendarView") &&
+      !g("calendarView").classList.contains("hidden") &&
+      g("eventModalOverlay")?.classList.contains("hidden") &&
+      !document.querySelector('[role="dialog"]') &&
+      !document.body.classList.contains("interface-editing")
+    )
+      loadCalendar().catch(() => {});
+  }, 60000);
+  async function connectICloud() {
+    const d = dialog(
+      l("Connect iCloud", "Połącz iCloud"),
+      `<form id="icloudConnectForm"><p>${l("Use an Apple app-specific password, never your main Apple Account password. Your credentials are encrypted and private to this account and workspace.", "Użyj hasła aplikacji Apple, nigdy głównego hasła konta Apple. Dane są szyfrowane i prywatne dla tego konta oraz przestrzeni.")}</p><label>${l("Apple ID email", "Adres email Apple ID")}<input name="apple_id" type="email" autocomplete="username" required maxlength="254"></label><label>${l("App-specific password", "Hasło aplikacji")}<input name="app_password" type="password" autocomplete="new-password" placeholder="xxxx-xxxx-xxxx-xxxx" required maxlength="19" pattern="[a-zA-Z]{4}(-[a-zA-Z]{4}){3}"></label><p><a href="https://account.apple.com/" target="_blank" rel="noopener">${l("Apple Account → Sign-In and Security → App-Specific Passwords", "Konto Apple → Logowanie i zabezpieczenia → Hasła aplikacji")}</a></p><button class="btn btn-primary" type="submit">${l("Connect iCloud", "Połącz iCloud")}</button></form>`,
+    );
+    d.find("form").onsubmit = async (e) => {
+      e.preventDefault();
+      const form = e.target,
+        button = form.querySelector("button");
+      button.disabled = true;
+      try {
+        await API.post("/calendar-integrations/icloud/connect", {
+          apple_id: form.elements.apple_id.value,
+          app_password: form.elements.app_password.value,
+        });
+        form.elements.app_password.value = "";
+        d.close();
+        await settings();
+      } catch (error) {
+        form.elements.app_password.value = "";
+        d.error(error);
+      } finally {
+        button.disabled = false;
+      }
+    };
   }
   function nextDay(s) {
     return new Date(Date.parse(s + "T12:00:00Z") + 86400000)
@@ -250,8 +293,8 @@ const KlyoCalendar = (() => {
               )
               .join(" · ")
           : l(
-              "Connect Google or Outlook to see your private calendar alongside CRM events.",
-              "Połącz Google lub Outlook, aby widzieć prywatne terminy obok wydarzeń CRM.",
+              "Connect Google, Outlook or iCloud to see your private calendar alongside CRM events.",
+              "Połącz Google, Outlook lub iCloud, aby widzieć prywatne terminy obok wydarzeń CRM.",
             );
       g("calendarConnectionNotice").classList.toggle(
         "calendar-warning",
@@ -273,20 +316,139 @@ const KlyoCalendar = (() => {
       `<p>${KlyoModuleI18n.label("Your connected calendar is private to your account in the active Team or Personal space. Only events you explicitly copy to CRM become visible to that workspace. Nothing invites attendees.", "Połączony kalendarz jest prywatny dla Twojego konta w aktywnym Team lub Personal. Zespół widzi dopiero wydarzenia jawnie skopiowane do CRM. Integracja nie zaprasza uczestników.")}</p>${state.providers
         .map((p) => {
           const c = state.connections.find((c) => c.provider === p.provider);
-          return `<section class="calendar-provider"><h3>${provider(p.provider)}</h3><p>${esc(c?.account_name || l("Not connected", "Niepołączone"))}</p>${c ? `<p>${esc(c.calendar_name || l("Choose a calendar", "Wybierz kalendarz"))}${c.calendar_id && !c.can_write ? " · " + l("read-only", "tylko odczyt") : ""}</p><button class="btn btn-primary" data-calendar-choose="${c.id}">${KlyoModuleI18n.label("Choose calendar", "Wybierz kalendarz")}</button><button class="btn btn-ghost" data-calendar-disconnect="${c.id}">${KlyoModuleI18n.label("Disconnect", "Odłącz")}</button>` : `<button class="btn btn-primary" data-calendar-connect="${p.provider}" ${p.configured ? "" : "disabled"}>${KlyoModuleI18n.label("Connect", "Połącz")}</button>${p.configured ? "" : `<p>${KlyoModuleI18n.label("Server configuration is required.", "Wymagana konfiguracja serwera.")}</p>`}`}</section>`;
+          return `<section class="calendar-provider"><h3>${provider(p.provider)}</h3><p>${esc(c?.account_name || l("Not connected", "Niepołączone"))}</p>${c ? `<p>${esc(c.calendar_name || l("Choose a calendar", "Wybierz kalendarz"))}${c.calendar_id && !c.can_write ? " · " + l("read-only", "tylko odczyt") : ""}</p><button class="btn btn-primary" data-calendar-choose="${c.id}">${KlyoModuleI18n.label("Choose calendar", "Wybierz kalendarz")}</button><button class="btn btn-ghost" data-calendar-disconnect="${c.id}">${KlyoModuleI18n.label("Disconnect", "Odłącz")}</button>${p.provider === "icloud" ? `<button class="btn btn-ghost" data-calendar-reconnect>${l("Update password", "Zmień hasło aplikacji")}</button>${c.calendar_id ? `<p>${l("Automatic two-way sync", "Automatyczna synchronizacja w obie strony")}: <strong>${c.auto_sync ? l("On", "Włączona") : l("Off", "Wyłączona")}</strong></p><p>${l("Only events copied to CRM or sent to iCloud are linked. Updates and deletions synchronize both ways; simultaneous edits require your decision. Recurring events and invitations stay editable in Apple Calendar.", "Powiązane są tylko terminy skopiowane do CRM lub wysłane do iCloud. Zmiany i usunięcia synchronizują się w obie strony; równoczesne zmiany wymagają Twojej decyzji. Serie i zaproszenia edytujesz w Apple Calendar.")}</p><button class="btn btn-primary" data-calendar-auto="${c.id}" data-enabled="${c.auto_sync}">${c.auto_sync ? l("Pause automatic sync", "Wstrzymaj synchronizację") : l("Enable automatic sync", "Włącz synchronizację")}</button><button class="btn btn-ghost" data-calendar-sync="${c.id}">${l("Sync now", "Synchronizuj teraz")}</button>${c.last_sync_at ? `<p>${l("Last sync", "Ostatnia synchronizacja")}: ${esc(new Date(c.last_sync_at).toLocaleString())}</p>` : ""}${c.sync_error ? `<p class="calendar-warning">${l("Some events need attention. Open their calendar links.", "Niektóre wydarzenia wymagają uwagi. Otwórz ich połączenia kalendarza.")}</p><button class="btn btn-ghost" data-calendar-issues="${c.id}">${l("Review sync issues", "Sprawdź problemy synchronizacji")}</button>` : ""}` : ""}` : ""}` : `<button class="btn btn-primary" data-calendar-connect="${p.provider}" ${p.configured ? "" : "disabled"}>${KlyoModuleI18n.label("Connect", "Połącz")}</button>${p.configured ? "" : `<p>${KlyoModuleI18n.label("Server configuration is required.", "Wymagana konfiguracja serwera.")}</p>`}`}</section>`;
         })
         .join(
           "",
-        )}<p><a href="/docs/calendar-setup.html" target="_blank" rel="noopener">${KlyoModuleI18n.label("Setup guide · Google, Outlook and Apple Calendar", "Instrukcja · Google, Outlook i Apple Calendar")}</a></p><p>${KlyoModuleI18n.label("Apple Calendar and other clients can import Export CRM .ics. This is a file export, not a live iCloud connection.", "Apple Calendar i inne programy mogą zaimportować plik Eksport CRM .ics. To eksport pliku, a nie połączenie na żywo z iCloud.")}</p>`,
+        )}<p><a href="/docs/calendar-setup.html" target="_blank" rel="noopener">${KlyoModuleI18n.label("Setup guide · Google, Outlook and Apple Calendar", "Instrukcja · Google, Outlook i Apple Calendar")}</a></p><p>${KlyoModuleI18n.label("iCloud connects using an Apple app-specific password. Only linked CRM events synchronize. You can also export CRM .ics for other calendar apps.", "iCloud połączysz hasłem aplikacji Apple. Synchronizują się tylko powiązane wydarzenia CRM. Dla innych programów nadal dostępny jest eksport CRM .ics.")}</p>`,
       true,
     );
     d.root.querySelectorAll("[data-calendar-connect]").forEach(
       (b) =>
         (b.onclick = run(async () => {
+          if (b.dataset.calendarConnect === "icloud") {
+            d.close();
+            await connectICloud();
+            return;
+          }
           const data = await API.post("/calendar-integrations/connect", {
             provider: b.dataset.calendarConnect,
           });
           location.assign(data.url);
+        })),
+    );
+    d.root.querySelector("[data-calendar-reconnect]")?.addEventListener(
+      "click",
+      run(async () => {
+        d.close();
+        await connectICloud();
+      }),
+    );
+    const syncConsent = () =>
+      confirm(
+        l(
+          "Synchronize linked events in both directions, including deletions? In Team, colleagues' changes to those CRM events also update your iCloud calendar. Unrelated private events stay private.",
+          "Synchronizować powiązane wydarzenia w obie strony, również usunięcia? W Team zmiany tych wydarzeń CRM przez współpracowników zaktualizują Twój iCloud. Pozostałe prywatne terminy pozostaną prywatne.",
+        ),
+      );
+    d.root.querySelectorAll("[data-calendar-auto]").forEach(
+      (b) =>
+        (b.onclick = run(async () => {
+          const enabled = b.dataset.enabled !== "true";
+          if (enabled && !syncConsent()) return;
+          await API.put(
+            "/calendar-integrations/connections/" +
+              b.dataset.calendarAuto +
+              "/sync",
+            { auto_sync: enabled, confirm_changes: enabled },
+          );
+          d.close();
+          await settings();
+        })),
+    );
+    d.root.querySelectorAll("[data-calendar-sync]").forEach(
+      (b) =>
+        (b.onclick = run(async () => {
+          if (!syncConsent()) return;
+          const result = await API.post(
+            "/calendar-integrations/connections/" +
+              b.dataset.calendarSync +
+              "/sync",
+            { confirm_changes: true },
+          );
+          toast(
+            l("Sync complete", "Synchronizacja zakończona") +
+              `: ↑${result.pushed} ↓${result.pulled} · ${l("Needs attention", "Wymaga uwagi")}: ${result.conflicts + result.errors}`,
+          );
+          d.close();
+          await loadCalendar();
+          await settings();
+        })),
+    );
+    d.root.querySelectorAll("[data-calendar-issues]").forEach(
+      (b) =>
+        (b.onclick = run(async () => {
+          const id = b.dataset.calendarIssues,
+            data = await API.get(
+              "/calendar-integrations/connections/" + id + "/issues",
+            );
+          d.close();
+          const issues = dialog(
+            l("Sync issues", "Problemy synchronizacji"),
+            data.issues
+              .map(
+                (x) =>
+                  `<section class="calendar-provider"><h3>${esc(x.title || l("Deleted CRM event", "Usunięte wydarzenie CRM"))}</h3><p>${esc(x.sync_error)}</p>${x.event_id ? `<button class="btn btn-primary" data-issue-event="${x.event_id}">${l("Review event versions", "Sprawdź wersje wydarzenia")}</button>` : `<button class="btn btn-primary" data-issue-restore="${esc(x.external_id)}">${l("Restore from iCloud", "Przywróć z iCloud")}</button>`}<button class="btn btn-ghost" data-issue-unlink="${x.id}">${l("Unlink and keep iCloud event", "Odłącz i zachowaj wydarzenie iCloud")}</button></section>`,
+              )
+              .join("") || l("No issues.", "Brak problemów."),
+          );
+          issues.root.querySelectorAll("[data-issue-event]").forEach(
+            (b) =>
+              (b.onclick = run(async () => {
+                issues.close();
+                await eventLinks(b.dataset.issueEvent);
+              })),
+          );
+          issues.root.querySelectorAll("[data-issue-restore]").forEach(
+            (b) =>
+              (b.onclick = run(async () => {
+                if (
+                  !confirm(
+                    l(
+                      "Copy this iCloud event back into the active CRM workspace?",
+                      "Skopiować to wydarzenie iCloud ponownie do aktywnej przestrzeni CRM?",
+                    ),
+                  )
+                )
+                  return;
+                await API.post(
+                  "/calendar-integrations/connections/" + id + "/copy",
+                  { external_id: b.dataset.issueRestore, confirm_share: true },
+                );
+                issues.close();
+                await loadCalendar();
+                await settings();
+              })),
+          );
+          issues.root.querySelectorAll("[data-issue-unlink]").forEach(
+            (b) =>
+              (b.onclick = run(async () => {
+                if (
+                  !confirm(
+                    l(
+                      "Unlink without deleting either version?",
+                      "Odłączyć bez usuwania którejkolwiek wersji?",
+                    ),
+                  )
+                )
+                  return;
+                await API.del(
+                  "/calendar-integrations/links/" + b.dataset.issueUnlink,
+                );
+                issues.close();
+                await settings();
+              })),
+          );
         })),
     );
     d.root.querySelectorAll("[data-calendar-choose]").forEach(
@@ -375,7 +537,7 @@ const KlyoCalendar = (() => {
     ]);
     const d = dialog(
       l("Event calendar links", "Połączenia wydarzenia"),
-      `<p>${KlyoModuleI18n.label("Save CRM edits before publishing. Publishing creates a calendar appointment without attendees. Pull explicitly replaces title, dates, description and location in CRM. Unlink keeps both events.", "Zapisz zmiany CRM przed publikacją. Publikacja tworzy termin bez uczestników. Pobranie jawnie zastępuje tytuł, daty, opis i miejsce w CRM. Odłączenie zachowuje oba wydarzenia.")}</p>${data.links.map((k) => `<section class="calendar-provider"><h3>${esc(provider(k.provider) + " · " + k.calendar_name)}</h3><p>${remoteChanges.has(k.connection_id + ":" + id) ? l("External calendar changes available · pull to update CRM", "Są zmiany w kalendarzu · pobierz, aby zaktualizować CRM") : k.kind === "copied" ? l("Copied from your external calendar", "Skopiowano z kalendarza zewnętrznego") : k.status === "pending" ? l("Publication pending · retry using the same link", "Publikacja oczekuje · ponów na tym samym połączeniu") : k.local_changed ? l("CRM changes are not published yet", "Zmiany CRM nie są jeszcze opublikowane") : l("Last synchronized version", "Ostatnia zsynchronizowana wersja")}</p>${k.web_url ? `<a href="${esc(k.web_url)}" target="_blank" rel="noopener">${KlyoModuleI18n.label("Open external calendar", "Otwórz kalendarz zewnętrzny")}</a>` : ""}${editable() ? `<div class="calendar-actions">${k.kind === "published" ? `<button class="btn btn-primary" data-publish-calendar="${k.connection_id}">${KlyoModuleI18n.label("Publish CRM version", "Opublikuj wersję CRM")}</button>` : ""}${k.status === "synced" ? `<button class="btn btn-ghost" data-pull-calendar="${k.id}">${KlyoModuleI18n.label("Pull calendar version", "Pobierz wersję kalendarza")}</button>` : ""}<button class="btn btn-ghost" data-unlink-calendar="${k.id}">${KlyoModuleI18n.label("Unlink", "Odłącz")}</button></div>` : ""}</section>`).join("")}${
+      `<p>${KlyoModuleI18n.label("Save CRM edits before publishing. Publishing creates a calendar appointment without attendees. Pull explicitly replaces title, dates, description and location in CRM. Unlink keeps both events.", "Zapisz zmiany CRM przed publikacją. Publikacja tworzy termin bez uczestników. Pobranie jawnie zastępuje tytuł, daty, opis i miejsce w CRM. Odłączenie zachowuje oba wydarzenia.")}</p>${data.links.map((k) => `<section class="calendar-provider"><h3>${esc(provider(k.provider) + " · " + k.calendar_name)}</h3><p>${k.sync_error ? l("Sync needs attention: ", "Synchronizacja wymaga uwagi: ") + esc(k.sync_error) : k.auto_sync ? l("Automatic sync is on · changes and deletions sync both ways", "Automatyczna synchronizacja włączona · zmiany i usunięcia w obie strony") : remoteChanges.has(k.connection_id + ":" + id) ? l("External calendar changes available · pull to update CRM", "Są zmiany w kalendarzu · pobierz, aby zaktualizować CRM") : k.kind === "copied" ? l("Copied from your external calendar", "Skopiowano z kalendarza zewnętrznego") : k.status === "pending" ? l("Publication pending · retry using the same link", "Publikacja oczekuje · ponów na tym samym połączeniu") : k.local_changed ? l("CRM changes are not published yet", "Zmiany CRM nie są jeszcze opublikowane") : l("Last synchronized version", "Ostatnia zsynchronizowana wersja")}</p>${k.web_url ? `<a href="${esc(k.web_url)}" target="_blank" rel="noopener">${KlyoModuleI18n.label("Open external calendar", "Otwórz kalendarz zewnętrzny")}</a>` : ""}${editable() ? `<div class="calendar-actions">${k.kind === "published" || k.provider === "icloud" ? `<button class="btn btn-primary" data-publish-calendar="${k.connection_id}">${KlyoModuleI18n.label("Publish CRM version", "Opublikuj wersję CRM")}</button>` : ""}${["synced", "conflict"].includes(k.status) ? `<button class="btn btn-ghost" data-pull-calendar="${k.id}">${KlyoModuleI18n.label("Pull calendar version", "Pobierz wersję kalendarza")}</button>` : ""}<button class="btn btn-ghost" data-unlink-calendar="${k.id}">${KlyoModuleI18n.label("Unlink", "Odłącz")}</button></div>` : ""}</section>`).join("")}${
         editable()
           ? `<div class="calendar-actions">${status.connections
               .filter(
@@ -487,6 +649,7 @@ const KlyoCalendar = (() => {
   return {
     init,
     settings,
+    connectICloud,
     load,
     prepare,
     collect,

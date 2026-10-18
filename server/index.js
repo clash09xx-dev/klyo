@@ -89,6 +89,7 @@ app.use(express.static(publicDir));
 app.get("/",        (req, res) => res.sendFile(path.join(publicDir, "index.html")));
 app.get("/terms",   (req, res) => res.sendFile(path.join(publicDir, "terms.html")));
 app.get("/privacy", (req, res) => res.sendFile(path.join(publicDir, "privacy.html")));
+app.get("/docs/calendar-setup",(req,res)=>res.sendFile(path.join(publicDir,"docs/calendar-setup.html")));
 app.get("/docs/communications-setup",(req,res)=>res.sendFile(path.join(publicDir,"docs/communications-setup.html")));
 app.get("/docs/sharepoint-setup",(req,res)=>res.sendFile(path.join(publicDir,"docs/sharepoint-setup.html")));
 for (const page of ['features','pricing','why-klyo']) app.get('/'+page,(req,res)=>res.sendFile(path.join(publicDir,page+'.html')));
@@ -112,6 +113,7 @@ const PORT = process.env.PORT || 4000;
 db.init()
   .then(() => {
     require("./services/communications").start();
+    require("./services/icloudSync").start();
     app.listen(PORT, () => {
       console.log(`\n  Klyo is running → http://localhost:${PORT}\n`);
     });

@@ -4,7 +4,7 @@ const crypto = require("crypto"),
   E = require("./calendarEvents"),
   D = require("./dealWorkspace"),
   { ConfidentialClientApplication } = require("@azure/msal-node");
-const providers = ["google", "microsoft"],
+const providers = ["google", "microsoft", "icloud"],
   base = () => process.env.APP_URL || "http://localhost:4000",
   redirect = (p) =>
     base() + "/api/calendar-integrations/oauth/" + p + "/callback";
@@ -19,11 +19,16 @@ const scopes = (p) =>
     : ["https://graph.microsoft.com/Calendars.ReadWrite", "offline_access"];
 const configured = (p) =>
   providers.includes(p) &&
-  (p === "google"
-    ? Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
-    : Boolean(
-        process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET,
-      ));
+  (p === "icloud"
+    ? true
+    : p === "google"
+      ? Boolean(
+          process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
+        )
+      : Boolean(
+          process.env.MICROSOFT_CLIENT_ID &&
+            process.env.MICROSOFT_CLIENT_SECRET,
+        ));
 function msal() {
   const tenant =
     process.env.CALENDAR_MICROSOFT_TENANT_ID ||
@@ -69,6 +74,8 @@ async function request(url, options = {}) {
   return r;
 }
 async function authorize(p, state, verifier) {
+  if (p === "icloud")
+    throw D.invalid("Connect iCloud with an Apple app-specific password.");
   if (!configured(p))
     throw D.invalid(
       "Enable this provider in server settings first. Read the calendar setup guide.",
@@ -266,6 +273,8 @@ const eventPath = (conn, id) =>
     ? `calendars/${encoded(conn.calendar_id)}/events${id ? "/" + encoded(id) : ""}`
     : `me/calendars/${encoded(conn.calendar_id)}/events${id ? "/" + encoded(id) : ""}`;
 async function calendars(conn, c) {
+  if (conn.provider === "icloud")
+    return require("./icloudCalendar").calendars(conn);
   const out = [];
   let next =
     conn.provider === "google"
@@ -405,6 +414,14 @@ async function normalize(conn, c, v) {
   };
 }
 async function read(conn, c, range) {
+  if (conn.provider === "icloud") {
+    const events = await require("./icloudCalendar").read(conn, range);
+    await c.query(
+      "UPDATE calendar_connections SET last_read_at=now() WHERE id=$1",
+      [conn.id],
+    );
+    return events;
+  }
   if (!conn.calendar_id) return [];
   const query = new URLSearchParams(
     conn.provider === "google"
@@ -467,6 +484,7 @@ function hash(e) {
     .digest("hex");
 }
 function payload(conn, e) {
+  if (conn.provider === "icloud") return E.normalize(e);
   const start = e.all_day
       ? {
           date: E.date(
@@ -511,6 +529,8 @@ function payload(conn, e) {
       };
 }
 async function remote(conn, c, id) {
+  if (conn.provider === "icloud")
+    return require("./icloudCalendar").remote(conn, id);
   return normalize(
     conn,
     c,

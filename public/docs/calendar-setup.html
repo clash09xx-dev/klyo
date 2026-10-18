@@ -85,11 +85,11 @@
       <h1>Calendar integrations</h1>
       <p>
         In <strong>Calendar → Connect calendars</strong>, each user connects
-        Google Calendar or Outlook / Microsoft 365, chooses a calendar, and sees
-        its events beside CRM events. Connections are private to that user in
-        the active Team or Personal space. Personal and Team have separate
-        connections. A connected account is never automatically shared with
-        colleagues.
+        Google Calendar, Outlook / Microsoft 365 or iCloud, chooses a calendar,
+        and sees its events beside CRM events. Connections are private to that
+        user in the active Team or Personal space. Personal and Team have
+        separate connections. A connected account is never automatically shared
+        with colleagues.
       </p>
       <h2>Google Calendar</h2>
       <p>
@@ -159,7 +159,7 @@
         account&#x27;s calendars, not arbitrary delegated mailboxes. Calendar
         policies and permissions still apply.
       </p>
-      <h2>How events move</h2>
+      <h2>Google / Microsoft: how events move</h2>
       <ul>
         <li>
           <strong>Refresh</strong> reads the selected provider calendars for the
@@ -219,16 +219,55 @@
         Google Meet/Teams conferences, manage attendee responses or run
         background outbound workflows.
       </p>
-      <h2>Apple Calendar and other calendar apps</h2>
+      <h2>Apple Calendar / iCloud — two-way synchronization</h2>
       <p>
-        Use <strong>Export CRM .ics</strong> to download CRM events from the
-        currently displayed month. Import the file in Apple Calendar, Outlook or
-        another iCalendar-compatible app. The file contains CRM events only,
-        including intentionally shared CRM copies; it does not include your
-        other private provider events. Importing the same file repeatedly may
-        duplicate entries depending on the calendar application. This is an
-        offline file export, not a live iCloud/CalDAV connection or public
-        subscription URL.
+        Open
+        <strong
+          >Settings → Integrations → Apple Calendar / iCloud → Connect</strong
+        >. Enter your Apple ID email and an
+        <strong>app-specific password</strong>, then choose a calendar. You do
+        not need operator Apple API keys. In
+        <a href="https://account.apple.com/">Apple Account</a>, go to Sign-In
+        and Security → App-Specific Passwords → Generate. Apple requires
+        two-factor authentication. Never enter your main Apple Account password
+        in Klyo.
+      </p>
+      <p>
+        Your selected calendar is private. Use <strong>Copy to CRM</strong> or
+        <strong>Send to iCloud</strong> to link selected appointments. Enable
+        <strong>Automatic two-way sync</strong> after reviewing the
+        confirmation: updates and deletions of linked events then propagate both
+        ways, checked approximately every two minutes.
+        <strong>Sync now</strong> checks immediately. In Team, colleagues' edits
+        to linked shared events also reach your iCloud. Other private
+        appointments are never bulk-imported.
+      </p>
+      <p>
+        Simultaneous changes are flagged for review instead of silently
+        overwritten. Use the event's calendar links to review and pull a
+        version. Recurring series and invitations remain editable in Apple
+        Calendar; Klyo displays their occurrences and retains original
+        recurrence, attendee and alarm data. Some moved or removed occurrences
+        require review in Apple Calendar.
+      </p>
+      <p>
+        <strong>Pause automatic sync</strong>, <strong>Unlink</strong> or
+        <strong>Disconnect</strong> stops automatic synchronization and keeps
+        independent events. Changing calendar pauses sync. Credentials are
+        encrypted per user and Team/Personal space. Revoke the app-specific
+        password in Apple Account to remove access; use
+        <strong>Update password</strong> to reconnect, reselect the calendar and
+        re-enable sync.
+      </p>
+      <p>
+        <strong>Export CRM .ics</strong> remains available as a separate offline
+        file export for compatible calendar apps. Repeated file imports may
+        create duplicates.
+      </p>
+      <p>
+        <a href="https://support.apple.com/en-us/102654"
+          >Apple app-specific password instructions</a
+        >
       </p>
       <h2>Secrets and testing</h2>
       <p>
@@ -371,7 +410,7 @@
         zalogowanej osoby, a nie dowolnych delegowanych skrzynek. Nadal
         obowiązują uprawnienia i polityki dostawcy.
       </p>
-      <h2>Przenoszenie wydarzeń</h2>
+      <h2>Google / Microsoft: przenoszenie wydarzeń</h2>
       <ul>
         <li>
           <strong>Odśwież</strong> odczytuje wybrane kalendarze dla widocznego
@@ -415,11 +454,54 @@
           Wydarzenia CRM pozostają, a mapowania połączenia mogą zostać usunięte.
         </li>
       </ul>
-      <h2>Apple Calendar i inne programy</h2>
+      <h2>Apple Calendar / iCloud — synchronizacja w obie strony</h2>
       <p>
-        Wybierz eksport CRM do pliku <code>.ics</code> i zaimportuj go w Apple
-        Calendar lub innym zgodnym programie. To eksport pliku, a nie połączenie
-        iCloud na żywo. Nie podawaj w Klyo hasła Apple ID.
+        Otwórz
+        <strong
+          >Ustawienia → Integracje → Apple Calendar / iCloud → Połącz</strong
+        >. Wpisz email Apple ID i <strong>hasło aplikacji</strong>, następnie
+        wybierz kalendarz. Operator Klyo nie potrzebuje kluczy API Apple. Na
+        <a href="https://account.apple.com/">koncie Apple</a> wybierz Logowanie
+        i zabezpieczenia → Hasła aplikacji → Wygeneruj. Apple wymaga
+        uwierzytelniania dwupoziomowego. Nigdy nie podawaj w Klyo głównego hasła
+        konta Apple.
+      </p>
+      <p>
+        Wybrany kalendarz pozostaje prywatny. Wybierz
+        <strong>Kopiuj do CRM</strong> lub <strong>Wyślij do iCloud</strong>,
+        aby powiązać konkretne terminy. Po potwierdzeniu włącz
+        <strong>Automatyczną synchronizację w obie strony</strong>: zmiany i
+        usunięcia powiązanych wydarzeń będą przenoszone w obu kierunkach, z
+        kontrolą mniej więcej co dwie minuty.
+        <strong>Synchronizuj teraz</strong> uruchamia kontrolę od razu. W Team
+        zmiany współpracowników w powiązanych wydarzeniach również trafią do
+        Twojego iCloud. Pozostałe prywatne terminy nie są masowo importowane.
+      </p>
+      <p>
+        Równoczesne zmiany wymagają Twojej decyzji. Otwórz połączenia wydarzenia
+        i sprawdź wersję Apple przed jej pobraniem. Serie cykliczne i
+        zaproszenia edytujesz w Apple Calendar; Klyo pokazuje ich wystąpienia,
+        zachowując dane cyklu, uczestników i alarmów. Niektóre przeniesione lub
+        usunięte wystąpienia wymagają sprawdzenia w Apple Calendar.
+      </p>
+      <p>
+        <strong>Wstrzymaj synchronizację</strong>,
+        <strong>Odłącz powiązanie</strong> lub
+        <strong>Odłącz konto</strong> zatrzymuje automatyczne zmiany i zachowuje
+        niezależne wydarzenia. Zmiana wybranego kalendarza wstrzymuje
+        synchronizację. Dane dostępu są szyfrowane osobno dla użytkownika i
+        przestrzeni Team/Personal. Cofnij hasło aplikacji na koncie Apple, aby
+        odebrać dostęp; w Klyo użyj <strong>Zmień hasło aplikacji</strong>,
+        wybierz ponownie kalendarz i włącz synchronizację.
+      </p>
+      <p>
+        <strong>Eksport CRM .ics</strong> pozostaje osobną opcją eksportu pliku
+        do innych programów. Wielokrotny import pliku może tworzyć duplikaty.
+      </p>
+      <p>
+        <a href="https://support.apple.com/en-us/102654"
+          >Instrukcja haseł aplikacji Apple</a
+        >
       </p>
       <h2>Bezpieczeństwo i ograniczenia</h2>
       <p>
