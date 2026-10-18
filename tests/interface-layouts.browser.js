@@ -79,6 +79,17 @@ const assert = require("node:assert/strict"),
             await page.getAttribute("body", "data-interface"),
             preset,
           );
+          assert.equal(
+            await page.locator("#signOutBtn").isVisible(),
+            true,
+            "Sign out stays accessible: " + preset,
+          );
+          assert.equal(
+            await page.locator("#helpFab").isVisible(),
+            true,
+            "Help stays accessible: " + preset,
+          );
+
           await page.waitForTimeout(100);
           await snap("layout-" + preset);
           console.log(engineName + ": preset " + preset);
