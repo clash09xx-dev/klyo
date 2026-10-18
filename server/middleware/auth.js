@@ -19,6 +19,8 @@ async function requireAuth(req, res, next) {
     const user = await S.account(payload.id);
     if (!user) return res.status(401).json({ error: "Account not found." });
     if (payload.purpose || (payload.mfa_version || 0) !== (user.mfa_version || 0)) return res.status(401).json({error:"Security settings changed. Sign in again.",code:"MFA_SESSION_CHANGED"});
+    if (!user.mfa_enabled || !payload.sms_verified)
+      return res.status(401).json({ error: "SMS verification is required. Sign in again.", code: "SMS_REQUIRED" });
     req.authToken = payload;
     // The database is authoritative. Old tokens cannot retain a removed role or team.
     if (payload.workspace_id !== user.workspace_id)

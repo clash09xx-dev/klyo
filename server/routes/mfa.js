@@ -17,6 +17,7 @@ router.get("/status", requireAuth, async (req, res) => {
   ).rows[0];
   res.json({
     configured: M.configured(),
+    required: true,
     enabled: u.mfa_enabled,
     phone: u.mfa_phone ? M.mask(S.decrypt(u.mfa_phone)) : null,
     recovery_codes: (
@@ -38,13 +39,13 @@ router.post("/enroll", requireAuth, async (req, res) => {
     );
   res.json(await M.start(u, "enroll", M.phone(req.body.phone), req.ip));
 });
-router.post("/disable", requireAuth, async (req, res) => {
-  const u = await M.fresh(req);
-  if (!u.mfa_enabled)
-    throw Object.assign(new Error("SMS verification is not enabled."), {
-      status: 409,
-    });
-  res.json(await M.start(u, "disable", S.decrypt(u.mfa_phone), req.ip));
+router.post("/disable", requireAuth, async (req, res) =>
+  res.status(403).json({ error: "SMS verification is required for every account and cannot be disabled." }),
+);
+router.post("/login-enroll", async (req, res) => {
+  await M.limit("enrollment-ip:" + req.ip, 30, 3600);
+  const u = await M.enrollmentUser(req.body.enrollment_token);
+  res.json(await M.start(u, "login_enroll", M.phone(req.body.phone), req.ip));
 });
 router.post("/confirm", requireAuth, async (req, res) =>
   res.json(await M.check(req.body.challenge, req.body.code, req.account.id)),

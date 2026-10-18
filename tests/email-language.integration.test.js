@@ -12,13 +12,14 @@ test('email instruction and saved fallback reach the generator without sending m
  const db=require('../server/db');let server;
  try{
   await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
   await db.query("INSERT INTO workspaces(id,name,invite_code,is_comped,ai_context) VALUES(1,'A','A',true,'English business reference'),(2,'B','B',true,'Other business')");
   await db.query("INSERT INTO users(id,workspace_id,name,email,password_hash,role,language) VALUES(1,1,'Sender','sender@example.test','fixture','admin','pl'),(2,1,'Viewer','viewer@example.test','fixture','viewer','en'),(3,2,'Other','other@example.test','fixture','admin','es')");
   await db.query("INSERT INTO contacts(id,workspace_id,full_name,notes) VALUES(1,1,'Customer','English reference note')");
   const app=express();app.use(express.json());app.use('/api/contacts',require('../server/routes/contacts'));
   server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s));});
   const base=`http://127.0.0.1:${server.address().port}/api/contacts/1/offers/generate`;
-  async function request(body,id=1){const token=jwt.sign({id,workspace_id:id===3?2:1,name:'Sender',role:id===2?'viewer':'admin'},process.env.JWT_SECRET);const r=await fetch(base,{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});return{status:r.status,data:await r.json()};}
+  async function request(body,id=1){const token=jwt.sign({ sms_verified: true,id,workspace_id:id===3?2:1,name:'Sender',role:id===2?'viewer':'admin'},process.env.JWT_SECRET);const r=await fetch(base,{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});return{status:r.status,data:await r.json()};}
   await t.test('Polish guidance stays intact and creates only an unsent draft',async()=>{
    const instruction='Napisz krótki email z pytaniem o termin rozmowy.';
    const result=await request({instructions:instruction});assert.equal(result.status,201,JSON.stringify(result.data));

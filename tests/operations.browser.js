@@ -34,6 +34,7 @@ const assert = require("node:assert/strict"),
   let server;
   try {
     await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
     const app = express();
     app.use(express.json({ limit: "50mb" }));
     for (const name of fs
@@ -81,7 +82,7 @@ const assert = require("node:assert/strict"),
         ws.id,
       ]);
       const token = jwt.sign(
-          { id: user.id, workspace_id: ws.id },
+          { sms_verified: true, id: user.id, workspace_id: ws.id },
           process.env.JWT_SECRET,
         ),
         browser = await engine.launch({ headless: true, executablePath: exe });
@@ -371,7 +372,7 @@ const assert = require("node:assert/strict"),
             )
           ).rows[0],
           viewerToken = jwt.sign(
-            { id: viewer.id, workspace_id: ws.id },
+            { sms_verified: true, id: viewer.id, workspace_id: ws.id },
             process.env.JWT_SECRET,
           );
         await page.evaluate(

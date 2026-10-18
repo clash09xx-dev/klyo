@@ -23,6 +23,7 @@ window.KlyoMFA = (() => {
     API.setUser(fresh.user);
   };
   function login(r) {
+    if (r.mfa_enrollment_required) { enrollLogin(r); return true; }
     if (!r.mfa_required) return false;
     document
       .querySelectorAll("#welcomeScreen,#loginScreen,#signupScreen")
@@ -30,7 +31,7 @@ window.KlyoMFA = (() => {
     document.getElementById("mfaLogin")?.remove();
     const box = document.createElement("section");
     box.id = "mfaLogin";
-    box.innerHTML = `<h1>${l("Verify your sign-in", "Potwierdź logowanie")}</h1><p>${r.sms_sent === false ? l("SMS is unavailable. Use one of your recovery codes.", "SMS jest niedostępny. Użyj kodu odzyskiwania.") : l("Enter the SMS code or a one-time recovery code.", "Wpisz kod SMS albo jednorazowy kod odzyskiwania.")}</p><form><div class="field"><label for="mfaCode">${l("Verification code", "Kod weryfikacyjny")}</label><input id="mfaCode" name="code" autocomplete="one-time-code" required maxlength="40" autofocus></div><p role="alert" class="form-error"></p><button class="btn btn-primary">${l("Verify and sign in", "Potwierdź i zaloguj")}</button></form><button type="button" class="btn btn-ghost" id="mfaResend">${l("Resend SMS (60 seconds)", "Wyślij ponownie (60 sekund)")}</button><a class="btn btn-ghost" href="/login">${l("Back", "Wróć")}</a>`;
+    box.innerHTML = `<h1>${l("Verify your sign-in", "Potwierdź logowanie")}</h1><p>${r.sms_sent === false ? l("SMS could not be sent. Try resending the code.", "Nie udało się wysłać SMS-a. Spróbuj ponownie wysłać kod.") : l("Enter the code sent to your phone. SMS verification is required at every sign-in.", "Wpisz kod wysłany na telefon. Weryfikacja SMS jest wymagana przy każdym logowaniu.")}</p><form><div class="field"><label for="mfaCode">${l("Verification code", "Kod weryfikacyjny")}</label><input id="mfaCode" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4,10}" required maxlength="10" autofocus></div><p role="alert" class="form-error"></p><button class="btn btn-primary">${l("Verify and sign in", "Potwierdź i zaloguj")}</button></form><button type="button" class="btn btn-ghost" id="mfaResend">${l("Resend SMS (60 seconds)", "Wyślij ponownie (60 sekund)")}</button><a class="btn btn-ghost" href="/login">${l("Back", "Wróć")}</a>`;
     document.querySelector(".auth-card").append(box);
     box.querySelector("input").focus();
     box.querySelector("form").onsubmit = async (e) => {
@@ -43,17 +44,23 @@ window.KlyoMFA = (() => {
           code: e.target.elements.code.value.trim(),
         });
         await complete(result);
-        location.href = "/app";
+        location.href = "/onboarding";
       } catch (e) {
         box.querySelector("[role=alert]").textContent = e.message;
       } finally {
         b.disabled = false;
       }
     };
+    let cooldown=0;
+    const resendButton=box.querySelector("#mfaResend");
+    const tick=()=>{resendButton.disabled=cooldown>0;resendButton.textContent=cooldown>0?l(`Resend SMS (${cooldown}s)`,`Wyślij SMS ponownie (${cooldown}s)`):l("Resend SMS","Wyślij SMS ponownie");};
+    if(r.sms_sent!==false)cooldown=60;tick();
+    const timer=setInterval(()=>{if(!box.isConnected){clearInterval(timer);return;}if(cooldown>0)cooldown--;tick();},1000);
     box.querySelector("#mfaResend").onclick = async (e) => {
       e.target.disabled = true;
       try {
         await API.post("/mfa/resend", { challenge: r.challenge });
+        cooldown=60;tick();
         box.querySelector("[role=alert]").textContent = l(
           "SMS sent.",
           "Wysłano SMS.",
@@ -61,36 +68,28 @@ window.KlyoMFA = (() => {
       } catch (e) {
         box.querySelector("[role=alert]").textContent = e.message;
       } finally {
-        e.target.disabled = false;
+        tick();
       }
     };
     history.replaceState({}, "", location.pathname);
     return true;
   }
-  async function settings() {
-    const s = await API.get("/mfa/status"),
-      { dialog } = KlyoDocumentTools;
-    const d = dialog(
-      l("Sign-in security", "Bezpieczeństwo logowania"),
-      `<h3>${l("Two-step verification by SMS", "Weryfikacja dwuetapowa SMS")}</h3><p>${s.enabled ? l("Enabled for", "Włączono dla") + " " + esc(s.phone) : l("Not enabled yet.", "Jeszcze niewłączona.")}</p><p>${s.enabled ? esc(s.recovery_codes) + " " + l("unused recovery codes.", "niewykorzystanych kodów odzyskiwania.") : l("After confirmation, every sign-in requires a code, including Google sign-in.", "Po potwierdzeniu każde logowanie wymaga kodu, także przez Google.")}</p>${!s.configured ? `<p>${l("Ask the administrator to configure Twilio Verify.", "Administrator musi skonfigurować Twilio Verify.")} <a href="/docs/sms-security.html" target="_blank">${l("Setup guide", "Instrukcja konfiguracji")}</a></p>` : ""}<form>${!s.enabled ? `<label>${l("International phone number", "Numer telefonu z kodem kraju")}<input name="phone" type="tel" placeholder="+48123456789" pattern="\\+[1-9][0-9]{7,14}" required></label>` : ""}${API.getUser()?.has_password ? `<label>${l("Current password", "Obecne hasło")}<input name="password" type="password" autocomplete="current-password" required></label>` : `<p>${l("Google accounts must have signed in within the last five minutes.", "Konta Google muszą być zalogowane ponownie w ciągu ostatnich pięciu minut.")}</p>`}<button class="btn btn-primary" ${!s.configured && !s.enabled ? "disabled" : ""}>${s.enabled ? l("Disable with verification", "Wyłącz po weryfikacji") : l("Send verification SMS", "Wyślij SMS weryfikacyjny")}</button></form>`,
-    );
-    d.find("form").onsubmit = async (e) => {
-      e.preventDefault();
-      const b = e.target.querySelector("button");
-      b.disabled = true;
-      try {
-        const r = await API.post(
-          s.enabled ? "/mfa/disable" : "/mfa/enroll",
-          Object.fromEntries(new FormData(e.target)),
-        );
-        d.close();
-        verifySetup(r);
-      } catch (e) {
-        d.error(e);
-      } finally {
-        b.disabled = false;
-      }
+  function enrollLogin(r) {
+    document.querySelectorAll("#welcomeScreen,#loginScreen,#signupScreen").forEach(n=>n.classList.add("hidden"));
+    document.getElementById("mfaLogin")?.remove();
+    const box=document.createElement("section");box.id="mfaLogin";
+    box.innerHTML=`<h1>${l("Secure your account","Zabezpiecz konto")}</h1><p>${l("Every Klyo account requires SMS verification. Add your mobile number to continue.","Każde konto Klyo wymaga weryfikacji SMS. Dodaj numer telefonu, aby kontynuować.")}</p><form><div class="field"><label for="enrollmentPhone">${l("Mobile phone with country code","Telefon z kodem kraju")}</label><input id="enrollmentPhone" name="phone" type="tel" autocomplete="tel" placeholder="+48123456789" required></div><p role="alert" class="form-error"></p><button class="btn btn-primary">${l("Send SMS code","Wyślij kod SMS")}</button></form><a href="/login" class="btn btn-ghost">${l("Back","Wróć")}</a>`;
+    document.querySelector(".auth-card").append(box);
+    box.querySelector("form").onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector("button");b.disabled=true;
+      try{const result=await API.post("/mfa/login-enroll",{enrollment_token:r.enrollment_token,phone:e.target.elements.phone.value.trim()});login(result);}
+      catch(err){box.querySelector("[role=alert]").textContent=err.message;b.disabled=false;}
     };
+    history.replaceState({},"",location.pathname);
+  }
+  async function settings() {
+    const s=await API.get("/mfa/status");
+    KlyoDocumentTools.dialog(l("Sign-in security","Bezpieczeństwo logowania"),
+      `<h3>${l("SMS verification is always on","Weryfikacja SMS jest zawsze włączona")}</h3><p>${l("Every sign-in requires a code sent to","Każde logowanie wymaga kodu wysłanego na")} ${esc(s.phone)}.</p><p>${l("This requirement cannot be disabled. Password recovery does not remove phone verification.","Tego zabezpieczenia nie można wyłączyć. Odzyskanie hasła nie wyłącza weryfikacji telefonu.")}</p>`);
   }
   function verifySetup(r) {
     const d = KlyoDocumentTools.dialog(

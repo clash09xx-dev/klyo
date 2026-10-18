@@ -6,12 +6,14 @@ test('personal workspace preferences persist per account, preserve permissions a
  const url=new URL(process.env.TEST_DATABASE_URL);url.searchParams.set('options',`-c search_path=${schema}`);process.env.DATABASE_URL=url.toString();process.env.PGSSL='false';process.env.JWT_SECRET='isolated-preference-test';process.env.PLATFORM_ADMIN_EMAIL='owner@example.test';
  const db=require('../server/db');let server;
  try{
-  await db.init();await db.init();
+  await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
   await db.query("INSERT INTO workspaces(id,name,invite_code,is_comped) VALUES(1,'A','A',true),(2,'B','B',true)");
   await db.query("INSERT INTO users(id,workspace_id,name,email,password_hash,role,theme) VALUES(1,1,'Owner','owner@example.test','fixture','admin','blanc'),(2,1,'Viewer','viewer@example.test','fixture','viewer','noir'),(3,2,'Other','other@example.test','fixture','admin','blanc')");
   const app=express();app.use(express.json());app.use('/api/auth',require('../server/routes/auth'));app.use('/api/platform',require('../server/routes/platform'));
   server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s));});const base=`http://127.0.0.1:${server.address().port}/api`;
-  async function req(route,method='GET',body,id=2,workspace_id=id===3?2:1){const token=jwt.sign({id,workspace_id,email:id===1?'owner@example.test':id===2?'viewer@example.test':'other@example.test',role:id===2?'viewer':'admin'},process.env.JWT_SECRET);const r=await fetch(base+route,{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});return{status:r.status,data:await r.json()};}
+  async function req(route,method='GET',body,id=2,workspace_id=id===3?2:1){const token=jwt.sign({ sms_verified: true,id,workspace_id,email:id===1?'owner@example.test':id===2?'viewer@example.test':'other@example.test',role:id===2?'viewer':'admin'},process.env.JWT_SECRET);const r=await fetch(base+route,{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});return{status:r.status,data:await r.json()};}
   await t.test('legacy palettes migrate without changing other accounts',async()=>{assert.equal((await req('/auth/preferences')).data.preferences.palette.preset,'midnight');assert.equal((await req('/auth/preferences','GET',undefined,1)).data.preferences.palette.preset,'day');});
   await t.test('a viewer can save their own colors, positions and ordering',async()=>{
    const prefs=P.defaults('custom');prefs.palette.custom.background='#102030';prefs.layout.sidebar='right';prefs.layout.density='comfortable';prefs.layout.start_view='deals';prefs.layout.nav_order=['deals',...P.NAV.filter(k=>k!=='deals')];prefs.layout.hidden_nav=['calendar'];prefs.layout.contact_columns=['name','stage',...P.COLUMNS.filter(k=>!['name','stage'].includes(k))];prefs.layout.hidden_columns=['tags'];prefs.layout.summary_position='below';prefs.layout.overview_order=['losses','metrics','stages'];

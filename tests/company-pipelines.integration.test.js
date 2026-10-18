@@ -23,6 +23,7 @@ test(
     let server;
     try {
       await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
       await db.query(
         "INSERT INTO workspaces(id,name,invite_code,is_comped) VALUES(1,'A','A',true),(2,'B','B',true)",
       );
@@ -58,7 +59,7 @@ test(
         ]);
         const workspace_id = options.workspace || 1,
           token = jwt.sign(
-            {
+            { sms_verified: true,
               id: workspace_id === 2 ? 2 : 1,
               workspace_id,
               role: options.role || "admin",

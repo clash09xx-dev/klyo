@@ -17,11 +17,13 @@ test(
     url.searchParams.set("options", `-c search_path=${schema}`);
     process.env.DATABASE_URL = url.toString();
     process.env.PGSSL = "false";
+    process.env.TWILIO_ACCOUNT_SID="ACfixture";process.env.TWILIO_AUTH_TOKEN="fixture";process.env.TWILIO_VERIFY_SERVICE_SID="VA"+"a".repeat(32);
     process.env.JWT_SECRET = "seat-test-only";
     process.env.STRIPE_SECRET_KEY = "sk_test_mock";
     process.env.STRIPE_WEBHOOK_SECRET = "mock";
     process.env.STRIPE_PRICE_ID_PERSONAL = "price_personal";
     process.env.STRIPE_PRICE_ID_PLUS = "price_plus";
+    require("../server/services/mfa").provider=async()=>({sid:"VEfixture",status:"pending"});
     const prices = {
       price_personal: {
         id: "price_personal",
@@ -123,6 +125,7 @@ test(
     let server;
     try {
       await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
       const ws = (
           await db.query(
             "INSERT INTO workspaces(name,invite_code,plan,tier,current_period_end,stripe_subscription_id,stripe_customer_id) VALUES('Paid team','SEATS','active','personal',now()+interval '30 days','sub_mock','cus_mock') RETURNING *",
@@ -166,7 +169,7 @@ test(
                 Authorization:
                   "Bearer " +
                   jwt.sign(
-                    { id: u.id, workspace_id: ws.id, role: u.role },
+                    { sms_verified: true, id: u.id, workspace_id: ws.id, role: u.role },
                     process.env.JWT_SECRET,
                   ),
                 "stripe-signature": signature,
@@ -194,6 +197,7 @@ test(
       const join = (email) =>
         req("/auth/register", "POST", {
           name: "New teammate",
+          phone:"+48123456789",
           email,
           password: "test-only",
           invite_code: "SEATS",

@@ -487,6 +487,9 @@
           prywatności.
         </p>
 
+        <h2>5B. Weryfikacja SMS i odzyskiwanie hasła</h2>
+        <p>Weryfikacja SMS jest wymagana przy rejestracji i każdym nowym logowaniu, także przez Google. Numer telefonu przekazujemy do Twilio Verify w celu dostarczenia i sprawdzenia kodu. W Klyo przechowujemy numer w postaci zaszyfrowanej i krótkotrwałe metadane próby weryfikacji. Reset hasła nie wyłącza zabezpieczenia SMS.</p>
+        <p>Na Twoje żądanie wysyłamy wiadomość z linkiem resetującym hasło przez Resend, któremu przekazujemy adres email i treść tej wiadomości. Link działa przez 20 minut i tylko raz; w bazie przechowujemy skrót tokenu. Udany reset unieważnia pozostałe linki i dotychczasowe sesje.</p>
         <h2>6. Przechowywanie i bezpieczeństwo</h2>
         <p>
           Dane CRM przechowujemy w bazie PostgreSQL na Railway. Publiczne
@@ -832,6 +835,9 @@
           by Dropbox is governed by its own privacy policy.
         </p>
 
+        <h2>5B. SMS verification and password recovery</h2>
+        <p>SMS verification is required at registration and every new sign-in, including Google sign-in. We send your phone number to Twilio Verify to deliver and check the code. Klyo stores the number encrypted and retains short-lived verification-attempt metadata. Password resets do not disable SMS verification.</p>
+        <p>At your request, Resend delivers a password reset email using your email address and the message content. The link expires after 20 minutes and works once; the database stores a hash of its token. A successful reset invalidates remaining reset links and previous sessions.</p>
         <h2>6. Storage and security</h2>
         <p>
           CRM data is stored in PostgreSQL on Railway. Public connections to

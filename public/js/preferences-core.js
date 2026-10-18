@@ -745,6 +745,21 @@
           12,
           "panel width",
         );
+      if (value.positions !== undefined) {
+        const positions = object(value.positions, "panel positions");
+        target.pages[page].positions = {};
+        for (const key of parts) {
+          if (!positions[key]) continue;
+          const p = object(positions[key], "panel geometry");
+          const width = coordinate(p.w, 2, 12, 12, "panel width");
+          target.pages[page].positions[key] = {
+            x: Math.min(coordinate(p.x, 0, 12, 0, "panel x"),12-width),
+            y: coordinate(p.y, 0, 20000, 0, "panel y"),
+            w: width,
+            h: coordinate(p.h, 72, 10000, 240, "panel height"),
+          };
+        }
+      }
     }
     if (ui.saved !== undefined) {
       if (

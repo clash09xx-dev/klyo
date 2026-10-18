@@ -95,6 +95,7 @@ for (const page of ['features','pricing','why-klyo']) app.get('/'+page,(req,res)
 app.get("/make-it-yours",(req,res)=>res.sendFile(path.join(publicDir,"customization.html")));
 app.get("/customization",(req,res)=>res.redirect(301,"/make-it-yours"));
 app.get("/login",   (req, res) => res.sendFile(path.join(publicDir, "login.html")));
+app.get("/onboarding", (req, res) => res.sendFile(path.join(publicDir, "onboarding.html")));
 app.get("/signup",  (req, res) => res.sendFile(path.join(publicDir, "login.html")));
 
 // CRM app — authenticated SPA served at /app (client-side auth guard in app.js)

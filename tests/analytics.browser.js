@@ -30,6 +30,7 @@ const { chromium, webkit } = require("playwright");
   let server;
   try {
     await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
     const app = express();
     app.use(express.json({ limit: "50mb" }));
     for (const file of fs
@@ -79,7 +80,7 @@ const { chromium, webkit } = require("playwright");
         ws.id,
       ]);
       const token = jwt.sign(
-        { id: user.id, workspace_id: ws.id },
+        { sms_verified: true, id: user.id, workspace_id: ws.id },
         process.env.JWT_SECRET,
       );
       async function api(route, method = "GET", body) {

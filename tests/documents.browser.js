@@ -43,6 +43,7 @@ const publicDir = path.join(__dirname, "../public"),
   let server;
   try {
     await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
     const app = express();
     app.use(express.json({ limit: "50mb" }));
     for (const name of [
@@ -112,7 +113,7 @@ const publicDir = path.join(__dirname, "../public"),
         ws.id,
       ]);
       const token = jwt.sign(
-          {
+          { sms_verified: true,
             id: user.id,
             workspace_id: ws.id,
             name: user.name,

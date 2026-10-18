@@ -11,6 +11,7 @@ const router = express.Router();
 // Readiness only: never expose provider keys or global configuration values.
 router.get("/platform/status", requireAuth, (req, res) => res.json({
   ai_configured: Boolean(process.env.OPENAI_API_KEY),
+  account_email_configured: require("../services/accountEmail").configured(),
   billing_configured: Boolean(process.env.STRIPE_SECRET_KEY),
   google_signin_configured: isConfigured(),
 }));

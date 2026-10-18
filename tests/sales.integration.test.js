@@ -22,7 +22,9 @@ test('manual sales workspace: persistence, history, permissions and isolation', 
   process.env.DATABASE_URL=url.toString();process.env.PGSSL='false';process.env.JWT_SECRET='test-only-sales-secret';
   const db=require('../server/db');let server;
   try{
-    await db.init();await db.init();
+    await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
     await db.query("INSERT INTO workspaces (id,name,invite_code,is_comped,default_currency) VALUES (1,'A','A',true,'PLN'),(2,'B','B',true,'EUR')");
     await db.query("INSERT INTO users (id,workspace_id,name,email,password_hash,role) VALUES (1,1,'Admin','a@example.test','fixture','admin'),(2,1,'Member','m@example.test','fixture','member'),(3,2,'Other','b@example.test','fixture','admin')");
     await db.query("INSERT INTO contacts (id,workspace_id,full_name,email) VALUES (1,1,'Client A','a@client.test'),(2,2,'Client B','b@client.test')");
@@ -36,7 +38,7 @@ test('manual sales workspace: persistence, history, permissions and isolation', 
     async function request(path,method='GET',body,options={}){
       const workspace_id=options.workspace||1,id=options.id||(workspace_id===2?3:1),role=options.role||'admin';
       await db.query('UPDATE users SET role=$1 WHERE id=$2',[role,id]);
-      const token=jwt.sign({id,workspace_id,role,name:'Test user'},process.env.JWT_SECRET);
+      const token=jwt.sign({ sms_verified: true,id,workspace_id,role,name:'Test user'},process.env.JWT_SECRET);
       const response=await fetch(base+path,{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json','X-Klyo-Scope':options.scope||'team'},body:body===undefined?undefined:JSON.stringify(body)});
       const raw=await response.text();let data;try{data=JSON.parse(raw);}catch{data=raw;}
       return{status:response.status,data};

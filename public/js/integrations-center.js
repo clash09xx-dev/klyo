@@ -8,6 +8,8 @@ const KlyoIntegrations = (() => {
     activeCategory = "all",
     query = "";
   const catalog = [
+    {id:"resend",name:"Resend",category:"email",kind:"platform",mark:"R",color:"#172119",
+      description:["Account emails and password recovery. Managed by the Klyo operator; your outgoing CRM email stays separate.","Wiadomości konta i odzyskiwanie hasła. Konfiguruje operator Klyo; wysyłka ofert CRM pozostaje osobna."],guide:"/docs/account-access.html"},
     {
       id: "sharepoint",
       name: "SharePoint",
@@ -164,8 +166,8 @@ const KlyoIntegrations = (() => {
       mark: "2FA",
       color: "#ac4164",
       description: [
-        "Enable verification codes on your phone. The operator configures the SMS service.",
-        "Włącz kody weryfikacyjne na swój telefon. Usługę SMS konfiguruje operator.",
+        "SMS codes are required at signup and every sign-in. The operator configures the service.",
+        "Kod SMS jest wymagany przy rejestracji i każdym logowaniu. Usługę konfiguruje operator.",
       ],
       guide: "/docs/sms-security.html",
     },
@@ -334,6 +336,7 @@ const KlyoIntegrations = (() => {
         !!d?.[
           {
             ai: "ai_configured",
+            resend: "account_email_configured",
             stripe: "billing_configured",
             google_signin: "google_signin_configured",
           }[item.id]
@@ -525,6 +528,7 @@ const KlyoIntegrations = (() => {
       switchView("calendar");
       return;
     }
+    if (id === "resend") { window.open("/docs/account-access.html","_blank","noopener"); return; }
     if (id === "sms") {
       leaveSettings();
       await KlyoMFA.settings();

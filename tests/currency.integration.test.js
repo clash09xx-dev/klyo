@@ -24,6 +24,7 @@ test(
     let server;
     try {
       await db.init();
+    await db.query("ALTER TABLE users ALTER COLUMN mfa_enabled SET DEFAULT true");
       await db.query(
         "INSERT INTO workspaces (id, name, invite_code, is_comped) VALUES (1, 'Fixture A', 'TESTA', true), (2, 'Fixture B', 'TESTB', true)",
       );
@@ -56,7 +57,7 @@ test(
       const base = `http://127.0.0.1:${server.address().port}`;
       const token = (role) =>
         jwt.sign(
-          { id: 1, workspace_id: 1, name: "Admin", role },
+          { sms_verified: true, id: 1, workspace_id: 1, name: "Admin", role },
           process.env.JWT_SECRET,
         );
       async function request(endpoint, method = "GET", body, role = "admin") {
