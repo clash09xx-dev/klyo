@@ -24,6 +24,170 @@
     "history",
     "team",
   ];
+  const GROUPS = ["sales", "delivery", "work", "communication", "workspace"];
+  const MODULE_GROUPS = Object.fromEntries(
+    NAV.map((id) => [
+      id,
+      [
+        "pipeline",
+        "companies",
+        "deals",
+        "quotes",
+        "products",
+        "clients",
+        "commercial",
+      ].includes(id)
+        ? "sales"
+        : ["projects", "orders", "equipment"].includes(id)
+          ? "delivery"
+          : ["tasks", "calendar", "reminders"].includes(id)
+            ? "work"
+            : ["inbox", "rfq", "files"].includes(id)
+              ? "communication"
+              : "workspace",
+    ]),
+  );
+  const INTERFACES = {
+    classic: {
+      icon_style: "line",
+      font: "inter",
+      corners: 5,
+      sidebar: "left",
+      nav_mode: "grouped",
+      sidebar_width: 264,
+      density: "compact",
+    },
+    explorer: {
+      icon_style: "duotone",
+      font: "inter",
+      corners: 10,
+      sidebar: "left",
+      nav_mode: "grouped",
+      sidebar_width: 300,
+      density: "standard",
+    },
+    notebook: {
+      icon_style: "letters",
+      font: "grotesk",
+      corners: 2,
+      sidebar: "left",
+      nav_mode: "list",
+      sidebar_width: 248,
+      density: "comfortable",
+    },
+    command: {
+      icon_style: "solid",
+      font: "mono",
+      corners: 7,
+      sidebar: "top",
+      nav_mode: "grouped",
+      sidebar_width: 264,
+      density: "compact",
+    },
+  };
+  const ACTIONS = [
+    "new_deal",
+    "new_contact",
+    "new_quote",
+    "new_task",
+    "new_company",
+    "integrations",
+    "calendar",
+  ];
+  // These selectors identify existing UI regions; no arbitrary selectors or HTML are accepted.
+  const PAGE_PARTS = {
+    pipeline: {
+      heading: ".collection-heading",
+      summary: ".stat-grid",
+      toolbar: ".contact-toolbar",
+      records: ".table-card",
+    },
+    companies: { toolbar: ".filter-bar", records: ".table-card" },
+    quotes: { toolbar: ".filter-bar", records: ".table-card" },
+    products: { toolbar: ".filter-bar", records: ".table-card" },
+    clients: { toolbar: ".filter-bar", records: ".table-card" },
+    reminders: { records: ".table-card" },
+    history: { toolbar: ".filter-bar", records: ".table-card" },
+    team: {
+      invites: "#inviteCard",
+      records: ".table-card:not(#inviteCard)",
+      insights: "#performanceCard",
+    },
+    tasks: { toolbar: "#opTaskToolbar", records: "#opTasksContent" },
+    projects: { toolbar: ".op-toolbar", records: "#projectsContent" },
+    orders: { toolbar: ".op-toolbar", records: "#ordersContent" },
+    equipment: { toolbar: ".op-toolbar", records: "#equipmentContent" },
+    files: {
+      connections: "#filesStatus",
+      toolbar: ".files-view-toolbar",
+      records: "#filesRows",
+      cloud: "#cloudProviderArea",
+    },
+    commercial: {
+      heading: ".commercial-toolbar:first-child",
+      toolbar: ".commercial-toolbar:nth-child(2)",
+      records: ".commercial-scroll",
+    },
+    inbox: {
+      heading: ".comm-toolbar:first-child",
+      connections: ".comm-connections",
+      toolbar: ".comm-toolbar:not(:first-child)",
+      records: "#commMessages",
+    },
+    rfq: { heading: ".comm-toolbar", records: ".doc-scroll" },
+    deals: {
+      pipelines: ".pipeline-toolbar",
+      tabs: ".outcome-tabs",
+      saved: ".saved-views-bar",
+      toolbar: ".filter-bar",
+      insights: "#salesInsights",
+      records: "#dealsBoardWrap",
+    },
+    calendar: {
+      toolbar: ".filter-bar",
+      connections: "#calendarConnectionNotice",
+      records: "#calendarBoardBlock",
+    },
+  };
+  function interfaceDefaults() {
+    return {
+      preset: "classic",
+      base: "classic",
+      icon_style: "line",
+      font: "inter",
+      corners: 5,
+      content_width: 0,
+      header_position: "top",
+      toolbar_align: "right",
+      quick_position: "header",
+      quick_actions: [],
+      section_order: [...GROUPS],
+      module_groups: { ...MODULE_GROUPS },
+      section_names: {},
+      closed_sections: [],
+      pages: {},
+      saved: [],
+    };
+  }
+  function useInterface(preferences, name) {
+    const next = clone(preferences),
+      kit = INTERFACES[name];
+    if (!kit) return next;
+    next.layout.ui = {
+      ...interfaceDefaults(),
+      ...next.layout.ui,
+      preset: name,
+      base: name,
+      icon_style: kit.icon_style,
+      font: kit.font,
+      corners: kit.corners,
+    };
+    for (const key of ["sidebar", "nav_mode", "sidebar_width", "density"])
+      next.layout[key] = kit[key];
+    next.layout.collapsed = false;
+    next.layout.ui.closed_sections = name === "command" ? [...GROUPS] : [];
+    return next;
+  }
   const COLUMNS = [
     "name",
     "contact",
@@ -223,6 +387,7 @@
         high_contrast: false,
       },
       layout: {
+        ui: interfaceDefaults(),
         dashboard: defaultDashboard(),
         dashboard_snap: "magnetic",
         sidebar_width: 264,
@@ -252,7 +417,7 @@
       fail("Invalid workspace preferences.");
       input = {};
     }
-    if (JSON.stringify(input).length > 20000)
+    if (JSON.stringify(input).length > 60000)
       throw Object.assign(new Error("Workspace preferences are too large."), {
         status: 400,
       });
@@ -325,7 +490,7 @@
     );
     out.layout.sidebar = choice(
       layout.sidebar,
-      ["left", "right"],
+      ["left", "right", "top"],
       "left",
       "sidebar position",
     );
@@ -459,6 +624,167 @@
         out.layout.dashboard = packDashboard(widgets);
       }
     }
+    const ui = object(layout.ui, "interface layout"),
+      target = out.layout.ui;
+    target.preset = choice(
+      ui.preset,
+      [...Object.keys(INTERFACES), "custom"],
+      "classic",
+      "interface preset",
+    );
+    target.base = choice(
+      ui.base,
+      Object.keys(INTERFACES),
+      "classic",
+      "interface base",
+    );
+    target.icon_style = choice(
+      ui.icon_style,
+      ["line", "duotone", "letters", "solid"],
+      "line",
+      "icon style",
+    );
+    target.font = choice(
+      ui.font,
+      ["inter", "grotesk", "mono"],
+      "inter",
+      "interface font",
+    );
+    target.corners = bounded(ui.corners, 0, 20, 5, "corner radius");
+    target.content_width = bounded(
+      ui.content_width,
+      0,
+      2400,
+      0,
+      "content width",
+    );
+    if (target.content_width > 0 && target.content_width < 640) {
+      fail("Content width must be at least 640.");
+      target.content_width = 640;
+    }
+    target.header_position = choice(
+      ui.header_position,
+      ["top", "bottom"],
+      "top",
+      "header position",
+    );
+    target.toolbar_align = choice(
+      ui.toolbar_align,
+      ["left", "right"],
+      "right",
+      "toolbar alignment",
+    );
+    target.quick_position = choice(
+      ui.quick_position,
+      ["header", "workspace", "rail"],
+      "header",
+      "shortcut position",
+    );
+    target.quick_actions = list(
+      ui.quick_actions,
+      ACTIONS,
+      [],
+      "shortcuts",
+      false,
+    );
+    target.section_order = list(
+      ui.section_order,
+      GROUPS,
+      GROUPS,
+      "navigation sections",
+      true,
+    );
+    target.closed_sections = list(
+      ui.closed_sections,
+      GROUPS,
+      [],
+      "closed sections",
+      false,
+    );
+    const groups = object(ui.module_groups, "module groups"),
+      names = object(ui.section_names, "section names");
+    for (const key of NAV)
+      target.module_groups[key] = choice(
+        groups[key],
+        GROUPS,
+        MODULE_GROUPS[key],
+        "module group",
+      );
+    for (const key of GROUPS)
+      if (names[key] !== undefined) {
+        if (typeof names[key] !== "string" || names[key].length > 40) {
+          fail("Section names must be at most 40 characters.");
+          continue;
+        }
+        if (names[key].trim()) target.section_names[key] = names[key].trim();
+      }
+    const pages = object(ui.pages, "page layouts");
+    for (const [page, raw] of Object.entries(pages)) {
+      if (!Object.hasOwn(PAGE_PARTS, page)) {
+        fail("Choose a supported page layout.");
+        continue;
+      }
+      const value = object(raw, "page layout"),
+        parts = Object.keys(PAGE_PARTS[page]);
+      const spans = object(value.spans, "panel widths");
+      target.pages[page] = {
+        order: list(value.order, parts, parts, "panel order", true),
+        hidden: list(
+          value.hidden,
+          parts.filter((p) => p !== "records"),
+          [],
+          "hidden panels",
+          false,
+        ),
+        spans: {},
+      };
+      for (const key of parts)
+        target.pages[page].spans[key] = choice(
+          spans[key],
+          [6, 12],
+          12,
+          "panel width",
+        );
+    }
+    if (ui.saved !== undefined) {
+      if (
+        !Array.isArray(ui.saved) ||
+        ui.saved.length > 6 ||
+        new Set(ui.saved.map((x) => x?.id)).size !== ui.saved.length
+      )
+        fail("Save up to six unique layouts.");
+      else
+        for (const item of ui.saved) {
+          if (
+            !item ||
+            typeof item.id !== "string" ||
+            !/^layout-[a-zA-Z0-9_-]{1,60}$/.test(item.id) ||
+            typeof item.name !== "string" ||
+            !item.name.trim() ||
+            item.name.length > 48
+          ) {
+            fail("Invalid saved layout.");
+            continue;
+          }
+          const raw = object(item.configuration, "saved layout configuration");
+          const clean = normalize(
+            {
+              layout: {
+                ...raw,
+                ui: { ...object(raw.ui, "saved interface"), saved: [] },
+              },
+            },
+            strict,
+          ).layout;
+          // A shell preset never replaces someone's dashboard charts or their color palette.
+          delete clean.dashboard;
+          target.saved.push({
+            id: item.id,
+            name: item.name.trim(),
+            configuration: clean,
+          });
+        }
+    }
     return out;
   }
   const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
@@ -557,6 +883,13 @@
   }
   return {
     NAV,
+    GROUPS,
+    MODULE_GROUPS,
+    INTERFACES,
+    ACTIONS,
+    PAGE_PARTS,
+    interfaceDefaults,
+    useInterface,
     COLUMNS,
     WIDGETS,
     DASHBOARD,

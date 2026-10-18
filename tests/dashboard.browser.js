@@ -432,6 +432,7 @@ async function run(engine, name) {
     await page.locator('#hex-background').fill('#112233');
     await page.locator('#hex-surface').fill('#1c2d40');
     await page.locator('#hex-accent').fill('#82efb1');
+    await page.locator('#miyAdvancedSettings>summary').click();
     await page.selectOption('#pref-sidebar','right');
     await page.selectOption('#pref-density','comfortable');
     await page.selectOption('#pref-start_view','deals');

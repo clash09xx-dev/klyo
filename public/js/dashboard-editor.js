@@ -197,11 +197,20 @@ const KlyoDashboard = (() => {
     );
     grid.append(empty);
     arrange();
-    let observedWidth = grid.clientWidth;
+    let observedWidth = grid.clientWidth,
+      resizeFrame = null;
+    const observedGrid = grid;
     resizeObserver = new ResizeObserver(() => {
-      if (grid.clientWidth !== observedWidth) {
-        observedWidth = grid.clientWidth;
-        arrange(gesture?.preview);
+      if (observedGrid.clientWidth !== observedWidth) {
+        observedWidth = observedGrid.clientWidth;
+        // Apply geometry in the next frame, outside ResizeObserver delivery.
+        // This also coalesces width changes while the whole-app menu is resized.
+        if (resizeFrame === null)
+          resizeFrame = requestAnimationFrame(() => {
+            resizeFrame = null;
+            if (grid === observedGrid && grid.isConnected)
+              arrange(gesture?.preview);
+          });
       }
     });
     resizeObserver.observe(grid);
@@ -707,13 +716,17 @@ const KlyoDashboard = (() => {
     settings.id = "customizeDashboardBtn";
     settings.className = "btn miy-launch";
     settings.type = "button";
-    settings.innerHTML = KlyoCopy.html("<span class=\"miy-wordmark\">Make It Yours</span>");
+    settings.innerHTML = KlyoCopy.html(
+      '<span class="miy-wordmark">Make It Yours</span>',
+    );
     settings.setAttribute("aria-label", "Make It Yours");
-    settings.onclick = begin;
+    settings.onclick = () => KlyoInterface.open();
+    settings.hidden = true;
     g("personalSettings").prepend(settings);
     const b = settings.cloneNode(true);
     b.id = "customizeDashboardQuick";
-    b.onclick = begin;
+    b.hidden = false;
+    b.onclick = () => KlyoInterface.open();
     g("analyticsDashboard").querySelector(".analytics-heading").append(b);
     document.addEventListener(
       "click",

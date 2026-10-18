@@ -7,6 +7,10 @@ const API = (() => {
   }
 
   async function request(method, path, body) {
+    if (window.KlyoInterface?.isEditing() && method !== "GET" && !(method === "PUT" && path === "/auth/preferences")) {
+      const polish = typeof KlyoI18n !== "undefined" && KlyoI18n.getLang() === "pl";
+      throw new Error(polish ? "Zapisz lub anuluj układ przed edycją danych CRM." : "Save or cancel your layout before editing CRM records.");
+    }
     const headers = authHeaders({ "Content-Type": "application/json" });
 
     const res = await fetch(`/api${path}`, {

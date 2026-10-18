@@ -486,6 +486,7 @@ const KlyoCalendar = (() => {
   }
   return {
     init,
+    settings,
     load,
     prepare,
     collect,

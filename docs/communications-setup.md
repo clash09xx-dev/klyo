@@ -72,3 +72,7 @@ Official references:
 - Apollo search: https://docs.apollo.io/reference/people-api-search
 - Apollo enrichment: https://docs.apollo.io/reference/bulk-people-enrichment
 - Fakturownia API: https://github.com/fakturownia/API
+
+## Central connection directory
+
+Open **Settings → Integrations** to find every supported provider without first creating an order or opening a CRM module. Private, workspace-shared and operator-managed connections are labeled separately. API-key providers can be configured directly in this directory. Existing connection screens remain available; see [Make It Yours and the connection directory](make-it-yours.md).

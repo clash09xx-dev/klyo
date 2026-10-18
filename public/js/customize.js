@@ -45,6 +45,7 @@ const KlyoCustomize = (() => {
       position: "Navigation position",
       left: "Left",
       right: "Right",
+      top: "Top",
       collapsed: "Icons-only navigation",
       start: "Open on sign-in",
       menu: "Menu order & visibility",
@@ -104,6 +105,7 @@ const KlyoCustomize = (() => {
       position: "Położenie menu",
       left: "Po lewej",
       right: "Po prawej",
+      top: "U góry",
       collapsed: "Menu z samymi ikonami",
       start: "Widok po zalogowaniu",
       menu: "Kolejność i widoczność menu",
@@ -180,21 +182,6 @@ const KlyoCustomize = (() => {
       }
     }
   }
-  const sections = {
-    sales: [
-      "pipeline",
-      "companies",
-      "deals",
-      "quotes",
-      "products",
-      "clients",
-      "commercial",
-    ],
-    delivery: ["projects", "orders", "equipment"],
-    work: ["tasks", "calendar", "reminders"],
-    communication: ["inbox", "rfq", "files"],
-    workspace: ["overview", "history", "team"],
-  };
   function applyNav(layout) {
     const nav = document.querySelector(".sidebar .nav");
     if (!nav) return;
@@ -209,11 +196,21 @@ const KlyoCustomize = (() => {
       list.className = "personal-nav";
       nav.prepend(list);
     }
-    const closed = new Set(
-      [...list.querySelectorAll("details:not([open])")].map(
-        (n) => n.dataset.section,
-      ),
-    );
+    const navStateKey =
+      "klyo_nav_sections:" +
+      userId +
+      ":" +
+      layout.ui.base +
+      ":" +
+      layout.nav_mode;
+    let remembered = null;
+    if (!window.KlyoInterface?.isEditing())
+      try {
+        const value = JSON.parse(localStorage.getItem(navStateKey) || "null");
+        if (Array.isArray(value) && value.every((k) => P.GROUPS.includes(k)))
+          remembered = value;
+      } catch {}
+    const closed = new Set(remembered || layout.ui.closed_sections);
     list.replaceChildren();
     list.dataset.mode = layout.nav_mode;
     const titles =
@@ -242,18 +239,36 @@ const KlyoCustomize = (() => {
         list.append(item);
         continue;
       }
-      const section =
-        Object.keys(sections).find((s) => sections[s].includes(key)) ||
-        "workspace";
+      const section = layout.ui.module_groups[key] || "workspace";
       let group = list.querySelector(`[data-section="${section}"]`);
       if (!group) {
         group = document.createElement("details");
         group.dataset.section = section;
         group.open = layout.collapsed || !closed.has(section);
-        group.innerHTML = `<summary>${esc(titles[section])}</summary><div class="nav-section-items"></div>`;
+        group.innerHTML = `<summary>${esc(layout.ui.section_names[section] || titles[section])}</summary><div class="nav-section-items"></div>`;
+        group.querySelector("summary").addEventListener("click", () => {
+          if (window.KlyoInterface?.isEditing()) return;
+          if (layout.sidebar === "top" && !group.open)
+            list.querySelectorAll("details").forEach((other) => {
+              if (other !== group) other.open = false;
+            });
+          // Expanding navigation is immediate; no network write or preference-save race.
+          setTimeout(() => {
+            const next = [...list.querySelectorAll("details:not([open])")].map(
+              (d) => d.dataset.section,
+            );
+            try {
+              localStorage.setItem(navStateKey, JSON.stringify(next));
+            } catch {}
+          }, 0);
+        });
         list.append(group);
       }
       group.querySelector("div").append(item);
+    }
+    for (const section of layout.ui.section_order) {
+      const group = list.querySelector(`[data-section="${section}"]`);
+      if (group) list.append(group);
     }
     list
       .querySelectorAll("details")
@@ -313,6 +328,7 @@ const KlyoCustomize = (() => {
     applyNav(layout);
     applyContactColumns(layout);
     applyOverview(layout);
+    window.KlyoInterface?.apply(layout);
     const view = g("pipelineView"),
       summary = view?.querySelector(".stat-grid");
     if (summary) {
@@ -467,7 +483,7 @@ const KlyoCustomize = (() => {
       select(
         "sidebar",
         t("position"),
-        ["left", "right"],
+        ["left", "right", "top"],
         draft.layout.sidebar,
       ) +
       select("start_view", t("start"), P.NAV, draft.layout.start_view) +
@@ -499,6 +515,11 @@ const KlyoCustomize = (() => {
   function showTab(tab) {
     g("personalSettings").classList.toggle("hidden", tab !== "personal");
     g("accountSettings").classList.toggle("hidden", tab !== "account");
+    g("integrationSettings")?.classList.toggle(
+      "hidden",
+      tab !== "integrations",
+    );
+    if (tab === "integrations") window.KlyoIntegrations?.refresh();
     document.querySelectorAll("[data-settings-tab]").forEach((button) => {
       button.setAttribute(
         "aria-selected",
@@ -675,6 +696,8 @@ const KlyoCustomize = (() => {
     applyContactColumns,
     applyLegacy,
     preload,
+    showTab,
+    getDraft: () => P.clone(draft),
     getSaved: () => P.clone(saved),
     preview: apply,
     save: persist,
