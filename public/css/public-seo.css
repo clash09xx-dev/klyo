@@ -1,4 +1,32 @@
 /* Crawlable product content, language links and predictable responsive layout. */
+/* Keep the homepage palette intact; quieter green/neutral surfaces on product pages. */
+body[data-public-page]:not([data-public-page="home"]) {
+  --miy-pink: #e0ead4;
+  --miy-orange: #e9eee3;
+  --orange: #4b6c29;
+}
+body[data-public-page]:not([data-public-page="home"]) .flagship-card:nth-child(2),
+body[data-public-page]:not([data-public-page="home"]) .why-stories article,
+body[data-public-page]:not([data-public-page="home"]) .capability-grid article {
+  background: #f8faf5;
+  border-top-color: #bfd8a1;
+}
+body[data-public-page]:not([data-public-page="home"]) .canvas-illustration article:nth-child(n) {
+  border-color: #7d985c;
+  box-shadow: 5px 6px 0 #d8e3cd;
+}
+body[data-public-page]:not([data-public-page="home"]) .flagship-chip {
+  color: #334323;
+}
+body[data-public-page]:not([data-public-page="home"]) .service-example {
+  border-left-color: #8fae63;
+  box-shadow: 8px 8px 0 #edf3e5;
+}
+body[data-public-page]:not([data-public-page="home"]) .service-example > span {
+  background: #e6efd9;
+  color: #435b29;
+}
+.site-nav { min-height: 80px; height: auto; padding-block: 18px; }
 .seo-language {
   display: flex;
   align-items: center;

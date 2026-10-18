@@ -79,7 +79,7 @@ const assert = require("node:assert/strict"),
           /\$9/,
         );
         await plain.goto(f.base + "/pl/cennik");
-        assert.match(await plain.locator("h1").innerText(), /plan CRM/);
+        assert.match(await plain.locator("h1").innerText(), /Cennik CRM/);
         assert.equal(await plain.locator(".price-card").count(), 4);
         console.log(
           name +

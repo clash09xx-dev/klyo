@@ -8,6 +8,7 @@ const latinFont = fontSources.find(
 ).file;
 const pages = require("../content/publicPages"),
   { TIERS, TIER_ORDER } = require("../config/tiers");
+const PublicLanguage = require("./publicLanguage");
 const compression = require("compression");
 const publicCompression = compression({
   threshold: 1024,
@@ -226,8 +227,16 @@ function decorate(source, p, lang) {
         : tag,
     )
     .replace(/<html\b[^>]*>/i, `<html lang="${lang}">`);
-  html = html.replace("</head>", metadata(p, lang) + "</head>");
-  if (p.file && lang === "en") {
+  html = html.replace(
+    /<head\b[^>]*>/i,
+    '$&<script defer src="/js/public-language.js"></script>',
+  );
+  html = html.replace(
+    "</head>",
+    metadata(p, lang) +
+      `<script type="application/json" id="public-runtime-copy">${json(lang === "pl" ? PublicLanguage.runtime : {})}</script></head>`,
+  );
+  if (p.file) {
     html = html.replace(
       /(<div class="nav-actions">)/,
       "$1" + languagePicker(p, lang),
@@ -249,7 +258,7 @@ function decorate(source, p, lang) {
     html = html.replace(/<main(?![\w-])([^>]*)>/, '<main id="main-content"$1>');
   html = html.replace(
     /<body([^>]*)>/,
-    `<body$1><a class="seo-skip" href="#main-content">${lang === "pl" ? "Przejdź do treści" : "Skip to content"}</a>`,
+    `<body$1 data-public-page="${p.key}"><a class="seo-skip" href="#main-content">${lang === "pl" ? "Przejdź do treści" : "Skip to content"}</a>`,
   );
   const panel = related(p, lang);
   return html.includes("</main>")
@@ -270,8 +279,13 @@ function render(p, lang) {
     rendered.set(
       key,
       decorate(
-        p.file && lang === "en"
-          ? fs.readFileSync(path.join(root, p.file), "utf8")
+        p.file
+          ? lang === "pl"
+            ? PublicLanguage.localize(
+                fs.readFileSync(path.join(root, p.file), "utf8"),
+                pages,
+              )
+            : fs.readFileSync(path.join(root, p.file), "utf8")
           : template(p, lang),
         p,
         lang,

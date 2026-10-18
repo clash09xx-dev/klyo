@@ -3,7 +3,7 @@ const assert = require("node:assert/strict"),
   path = require("node:path"),
   { chromium, webkit } = require("playwright");
 (async () => {
-  const f = await require("./helpers/calendar-fixture")(),
+  const f = await require("./helpers/public-site-fixture")(),
     out =
       process.env.KLYO_QA_SCREENSHOTS ||
       path.join(require("node:os").tmpdir(), "klyo-interface-marketing");
