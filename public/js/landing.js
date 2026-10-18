@@ -29,6 +29,7 @@
   const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   async function loadPricing(){
     const grid=document.getElementById('pricingGrid'),error=document.getElementById('pricingError');
+    if(grid.dataset.serverRendered==='true')return;
     error.hidden=true;grid.setAttribute('aria-busy','true');
     try{
       const response=await fetch('/api/billing/tiers');if(!response.ok)throw new Error('Plans unavailable');
@@ -38,5 +39,5 @@
     }catch{grid.innerHTML='';error.hidden=false;}finally{grid.setAttribute('aria-busy','false');}
   }
   document.getElementById('retryPricing').addEventListener('click',loadPricing);
-  loadPricing();render();email('pl');
+  loadPricing();render();email('en');
 })();

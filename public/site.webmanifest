@@ -1,7 +1,7 @@
 {
-  "name": "Klyo CRM",
+  "name": "Klyo Labs CRM",
   "short_name": "Klyo",
-  "description": "Simple CRM for small teams",
+  "description": "Customizable CRM with PDF quotes, sales pipelines and personal or team workspaces",
   "start_url": "/app",
   "display": "standalone",
   "background_color": "#ffffff",

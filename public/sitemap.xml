@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://klyolabs.com/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://klyolabs.com/privacy</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://klyolabs.com/terms</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<url><loc>https://klyolabs.com/</loc><xhtml:link rel="alternate" hreflang="en" href="https://klyolabs.com/"/><xhtml:link rel="alternate" hreflang="pl" href="https://klyolabs.com/pl"/><xhtml:link rel="alternate" hreflang="x-default" href="https://klyolabs.com/"/></url>
+<url><loc>https://klyolabs.com/pl</loc><xhtml:link rel="alternate" hreflang="en" href="https://klyolabs.com/"/><xhtml:link rel="alternate" hreflang="pl" href="https://klyolabs.com/pl"/><xhtml:link rel="alternate" hreflang="x-default" href="https://klyolabs.com/"/></url>
+<url><loc>https://klyolabs.com/features</loc><xhtml:link rel="alternate" hreflang="en" href="https://klyolabs.com/features"/><xhtml:link rel="alternate" hreflang="pl" href="https://klyolabs.com/pl/funkcje"/><xhtml:link rel="alternate" hreflang="x-default" href="https://klyolabs.com/features"/></url>
+<url><loc>https://klyolabs.com/pl/funkcje</loc><xhtml:link rel="alternate" hreflang="en" href="https://klyolabs.com/features"/><xhtml:link rel="alternate" hreflang="pl" href="https://klyolabs.com/pl/funkcje"/><xhtml:link rel="alternate" hreflang="x-default" href="https://klyolabs.com/features"/></url>
+<url><loc>https://klyolabs.com/pricing</loc><xhtml:link rel="alternate" hreflang="en" href="https://klyolabs.com/pricing"/><xhtml:link rel="alternate" hreflang="pl" href="https://klyolabs.com/pl/cennik"/><xhtml:link rel="alternate" hreflang="x-default" href="https://klyolabs.com/pricing"/></url>
+<url><loc>https://klyolabs.com/pl/cennik</loc><xhtml:link rel="alternate" hreflang="en" href="https://klyolabs.com/pricing"/><xhtml:link rel="alternate" hreflang="pl" href="https://klyolabs.com/pl/cennik"/><xhtml:link rel="alternate" hreflang="x-default" href="https://klyolabs.com/pricing"/></url>
+<url><loc>https://klyolabs.com/why-klyo</loc><xhtml:link rel="alternate" hreflang="en" href="https://klyolabs.com/why-klyo"/><xhtml:link rel="alternate" hreflang="pl" href="https://klyolabs.com/pl/dlaczego-klyo"/><xhtml:link rel="alternate" hreflang="x-default" href="https://klyolabs.com/why-klyo"/></url>
+<url><loc>https://klyolabs.com/pl/dlaczego-klyo</loc><xhtml:link rel="alternate" hreflang="en" href="https://klyolabs.com/why-klyo"/><xhtml:link rel="alternate" hreflang="pl" href="https://klyolabs.com/pl/dlaczego-klyo"/><xhtml:link rel="alternate" hreflang="x-default" href="https://klyolabs.com/why-klyo"/></url>
+<url><loc>https://klyolabs.com/make-it-yours</loc><xhtml:link rel="alternate" hreflang="en" href="https://klyolabs.com/make-it-yours"/><xhtml:link rel="alternate" hreflang="pl" href="https://klyolabs.com/pl/make-it-yours"/><xhtml:link rel="alternate" hreflang="x-default" href="https://klyolabs.com/make-it-yours"/></url>
+<url><loc>https://klyolabs.com/pl/make-it-yours</loc><xhtml:link rel="alternate" hreflang="en" href="https://klyolabs.com/make-it-yours"/><xhtml:link rel="alternate" hreflang="pl" href="https://klyolabs.com/pl/make-it-yours"/><xhtml:link rel="alternate" hreflang="x-default" href="https://klyolabs.com/make-it-yours"/></url>
+<url><loc>https://klyolabs.com/pdf-quotes</loc><xhtml:link rel="alternate" hreflang="en" href="https://klyolabs.com/pdf-quotes"/><xhtml:link rel="alternate" hreflang="pl" href="https://klyolabs.com/pl/oferty-pdf"/><xhtml:link rel="alternate" hreflang="x-default" href="https://klyolabs.com/pdf-quotes"/></url>
+<url><loc>https://klyolabs.com/pl/oferty-pdf</loc><xhtml:link rel="alternate" hreflang="en" href="https://klyolabs.com/pdf-quotes"/><xhtml:link rel="alternate" hreflang="pl" href="https://klyolabs.com/pl/oferty-pdf"/><xhtml:link rel="alternate" hreflang="x-default" href="https://klyolabs.com/pdf-quotes"/></url>
+<url><loc>https://klyolabs.com/integrations</loc><xhtml:link rel="alternate" hreflang="en" href="https://klyolabs.com/integrations"/><xhtml:link rel="alternate" hreflang="pl" href="https://klyolabs.com/pl/integracje"/><xhtml:link rel="alternate" hreflang="x-default" href="https://klyolabs.com/integrations"/></url>
+<url><loc>https://klyolabs.com/pl/integracje</loc><xhtml:link rel="alternate" hreflang="en" href="https://klyolabs.com/integrations"/><xhtml:link rel="alternate" hreflang="pl" href="https://klyolabs.com/pl/integracje"/><xhtml:link rel="alternate" hreflang="x-default" href="https://klyolabs.com/integrations"/></url>
+<url><loc>https://klyolabs.com/privacy</loc></url>
+<url><loc>https://klyolabs.com/terms</loc></url>
 </urlset>

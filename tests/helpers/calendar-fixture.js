@@ -198,6 +198,9 @@ module.exports = async function setup() {
         "/api/" + file.slice(0, -3),
         require("../../server/routes/" + file),
       );
+    app.use(require("../../server/services/publicSite").headers);
+    app.use(require("../../server/services/publicSite").compression);
+    app.use(require("../../server/services/publicSite").router);
     for(const name of ["features","pricing","why-klyo","login","onboarding"])app.get("/"+name,(_,res)=>res.sendFile(path.join(__dirname,"../../public/"+name+".html")));
     app.get("/signup",(_,res)=>res.sendFile(path.join(__dirname,"../../public/login.html")));
     app.get("/make-it-yours",(_,res)=>res.sendFile(path.join(__dirname,"../../public/customization.html")));
