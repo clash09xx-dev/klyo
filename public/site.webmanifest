@@ -1,6 +1,6 @@
 {
   "name": "Klyo Labs CRM",
-  "short_name": "Klyo",
+  "short_name": "Klyo Labs",
   "description": "Customizable CRM with PDF quotes, sales pipelines and personal or team workspaces",
   "start_url": "/app",
   "display": "standalone",
@@ -8,19 +8,19 @@
   "theme_color": "#c7f35b",
   "icons": [
     {
-      "src": "/icons/klyo-192.png?v=klyo-2",
+      "src": "/icons/klyo-labs-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/klyo-512.png?v=klyo-2",
+      "src": "/icons/klyo-labs-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/favicon.svg?v=klyo-2",
+      "src": "/icons/klyo-labs.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     }

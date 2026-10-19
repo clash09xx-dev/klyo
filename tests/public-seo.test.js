@@ -58,9 +58,13 @@ test("public SEO exposes complete canonical HTML and prices without JavaScript",
               ),
             );
           const title = html.match(/<title>([^<]+)<\/title>/)[1];
-          assert.ok(!titles.has(title), "unique title");
-          titles.add(title);
-          assert.match(title, /Klyo Labs/);
+          assert.ok(!titles.has(lang + ":" + title), "unique title");
+          titles.add(lang + ":" + title);
+          assert.match(title, /^Klyo Labs — /);
+          assert.equal(title, page.title[0].replaceAll("&", "&amp;"));
+          assert.match(html, /href="\/icons\/klyo-labs.svg"/);
+          assert.match(html, /href="\/icons\/klyo-labs.ico"/);
+          assert.doesNotMatch(html, /klyo-2/);
           assert.equal((html.match(/name="description"/g) || []).length, 1);
           assert.doesNotMatch(html, /noindex/);
           const data = JSON.parse(

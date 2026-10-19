@@ -314,7 +314,7 @@ function showLimitOrError(err, fallbackEl) {
     // Apply saved language (server preference takes priority)
     KlyoI18n.initLang(user.language || null);
     els.userRole.textContent = KlyoCopy.text(capitalize(user.role));
-    document.title = KlyoCopy.text("Klyo – Dashboard");
+    document.title = "Klyo Labs — Dashboard";
     KlyoCopy.apply();
     KlyoI18n.applyTranslations();
     if (els.appLangPicker) els.appLangPicker.value = KlyoI18n.getLang();

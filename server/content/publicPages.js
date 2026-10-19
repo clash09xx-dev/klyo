@@ -8,7 +8,7 @@ module.exports = [
     image: "personal-workspace",
     title: [
       "Klyo Labs — Customizable CRM & PDF Quote Builder",
-      "Klyo Labs — CRM z własnym układem i ofertami PDF",
+      "Klyo Labs — Customizable CRM & PDF Quote Builder",
     ],
     description: [
       "Make your CRM fit your workflow. Klyo Labs combines customizable layouts, sales pipelines, PDF quotes, client records and team or personal workspaces.",
@@ -61,8 +61,8 @@ module.exports = [
     file: "features.html",
     image: "personal-workspace",
     title: [
-      "CRM Features: Sales, PDF Quotes & Projects | Klyo Labs",
-      "Funkcje CRM: sprzedaż, oferty PDF i projekty | Klyo Labs",
+      "Klyo Labs — CRM Features",
+      "Klyo Labs — CRM Features",
     ],
     description: [
       "Explore Klyo CRM features: custom layouts and fields, sales pipelines, won/lost dashboards, PDF proposals, projects, tasks and connected business tools.",
@@ -107,8 +107,8 @@ module.exports = [
     pl: "/pl/cennik",
     file: "pricing.html",
     title: [
-      "CRM Pricing & 7-Day Trial | Klyo Labs",
-      "Cennik CRM i 7-dniowy okres próbny | Klyo Labs",
+      "Klyo Labs — Pricing & 7-Day Trial",
+      "Klyo Labs — Pricing & 7-Day Trial",
     ],
     description: [
       "Compare Klyo Labs CRM plans for solo users and teams. See monthly workspace prices, included users, contact limits and the 7-day trial conditions.",
@@ -149,8 +149,8 @@ module.exports = [
     file: "why-klyo.html",
     image: "personal-workspace",
     title: [
-      "Why Klyo Labs? A CRM Built Around Your Workflow",
-      "Dlaczego Klyo Labs? CRM dopasowany do Twojej pracy",
+      "Klyo Labs — Why Klyo",
+      "Klyo Labs — Why Klyo",
     ],
     description: [
       "Choose a CRM you can arrange around your work: Make It Yours layouts, an A4 PDF quote designer, product bundles and connected sales-to-delivery records.",
@@ -189,8 +189,8 @@ module.exports = [
     file: "customization.html",
     image: "personal-settings",
     title: [
-      "Make It Yours — Customize Your CRM Layout | Klyo Labs",
-      "Make It Yours — dostosuj cały układ CRM | Klyo Labs",
+      "Klyo Labs — Make It Yours",
+      "Klyo Labs — Make It Yours",
     ],
     description: [
       "Personalize your whole CRM with Make It Yours. Choose four layouts, move and resize panels, hide modules, add shortcuts and save your own workspace designs.",
@@ -243,8 +243,8 @@ module.exports = [
     pl: "/pl/oferty-pdf",
     image: "a4-designer",
     title: [
-      "PDF Quote Builder & Custom A4 Templates | Klyo Labs",
-      "Kreator ofert PDF i własne szablony A4 | Klyo Labs",
+      "Klyo Labs — PDF Quote Builder & A4 Templates",
+      "Klyo Labs — PDF Quote Builder & A4 Templates",
     ],
     description: [
       "Create PDF sales quotes with your own A4 design, imported price lists, product bundles and layered discounts. Review margins privately before exporting.",
@@ -345,8 +345,8 @@ module.exports = [
     pl: "/pl/integracje",
     image: "personal-workspace",
     title: [
-      "CRM Integrations: Calendars, Email & Files | Klyo Labs",
-      "Integracje CRM: kalendarze, poczta i pliki | Klyo Labs",
+      "Klyo Labs — CRM Integrations",
+      "Klyo Labs — CRM Integrations",
     ],
     description: [
       "Connect Klyo CRM with Google Calendar, Outlook, iCloud, SharePoint, Google Drive, Dropbox and business tools. See setup requirements and privacy controls.",
