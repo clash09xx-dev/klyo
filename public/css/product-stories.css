@@ -196,7 +196,7 @@
   line-height: 1.7;
 }
 .story-points li::before {
-  content: "↗";
+  content: "↗︎";
   position: absolute;
   left: 0;
   color: #4a682c;

@@ -27,3 +27,19 @@ Apple Calendar connects through iCloud CalDAV with a per-user app-specific passw
 ## Unified direct manipulation
 
 One Make It Yours session includes Overview without saving and opening another editor. Grab a widget body or working-page panel to move it; corner handles resize it. Grid, magnetic and free placement persist as bounded account-only geometry. Neighbors move out of the drop area. Shortcuts use pointer gestures with stable highlighted drop zones. Overview is pinned above module groups. Command wraps navigation and Explorer separately scrolls the tools pane.
+
+## Phone editing
+
+On phones, the editor starts as a compact bottom bar. **Controls** opens layout,
+tools, page and shortcut settings; **Back to canvas** collapses them. Save,
+Undo/Redo and Cancel remain available. Opening the designer closes the mobile
+navigation drawer so its backdrop cannot intercept editing gestures.
+
+Drag a panel's dotted handle to reorder it, or its lower corner to resize its
+height. Overview charts use the same touch controls. The rest of each panel
+remains scrollable. A green insertion guide shows the drop position, with
+automatic scrolling near the viewport edges. Phone order and heights are saved
+separately from desktop canvas geometry in `layout.ui.mobile`; existing visibility
+choices still apply. All four layout presets and shortcut position controls
+remain available. There are no empty shortcut drop targets covering the phone
+workspace when a shortcut is not being dragged.
