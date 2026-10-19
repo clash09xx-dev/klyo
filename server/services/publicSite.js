@@ -9,6 +9,7 @@ const latinFont = fontSources.find(
 const pages = require("../content/publicPages"),
   { TIERS, TIER_ORDER } = require("../config/tiers");
 const PublicLanguage = require("./publicLanguage");
+const brandIcons = "<link rel=\"icon\" href=\"/icons/klyo-labs.ico\" sizes=\"16x16 32x32 48x48\">\n<link rel=\"icon\" href=\"/icons/klyo-labs-96.png\" type=\"image/png\" sizes=\"96x96\">\n<link rel=\"icon\" href=\"/icons/klyo-labs.svg\" type=\"image/svg+xml\" sizes=\"any\">\n<link rel=\"apple-touch-icon\" href=\"/icons/klyo-labs-180.png\" sizes=\"180x180\">\n<link rel=\"mask-icon\" href=\"/icons/klyo-labs-mask.svg\" color=\"#1b2027\">";
 const compression = require("compression");
 const publicCompression = compression({
   threshold: 1024,
@@ -221,7 +222,7 @@ function decorate(source, p, lang) {
         : tag,
     )
     .replace(/<link\b[^>]*>/gi, (tag) =>
-      /\brel\s*=\s*["'](?:canonical|alternate)["']/i.test(tag) ||
+      /\brel\s*=\s*["'](?:canonical|alternate|icon|shortcut icon|apple-touch-icon|mask-icon)["']/i.test(tag) ||
       /https:\/\/(?:fonts.googleapis.com|fonts.gstatic.com)/i.test(tag)
         ? ""
         : tag,
@@ -233,7 +234,7 @@ function decorate(source, p, lang) {
   );
   html = html.replace(
     "</head>",
-    metadata(p, lang) +
+    brandIcons + metadata(p, lang) +
       `<script type="application/json" id="public-runtime-copy">${json(lang === "pl" ? PublicLanguage.runtime : {})}</script></head>`,
   );
   if (p.file) {
@@ -380,7 +381,7 @@ function notFound(req, res) {
     .set("X-Robots-Tag", "noindex, follow")
     .type("html")
     .send(
-      `<!doctype html><html lang="${pl ? "pl" : "en"}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>${pl ? "Nie znaleziono strony" : "Page not found"} | Klyo Labs</title><link rel="stylesheet" href="/css/landing.css"><link rel="stylesheet" href="/css/public-seo.css"></head><body><main class="seo-not-found page-width"><p class="eyebrow">KLYO LABS · 404</p><h1>${pl ? "Nie ma takiej strony." : "This page could not be found."}</h1><p>${pl ? "Wybierz stronę główną lub sprawdź dostępne funkcje CRM." : "Visit the home page or explore the available CRM features."}</p><a class="button button-lime" href="${pl ? "/pl" : "/"}">${pl ? "Strona główna" : "Home"}</a> <a class="button button-outline" href="${pl ? "/pl/funkcje" : "/features"}">${pl ? "Funkcje CRM" : "CRM features"}</a></main></body></html>`,
+      `<!doctype html><html lang="${pl ? "pl" : "en"}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>Klyo Labs — Page Not Found</title>${brandIcons}<link rel="stylesheet" href="/css/landing.css"><link rel="stylesheet" href="/css/public-seo.css"></head><body><main class="seo-not-found page-width"><p class="eyebrow">KLYO LABS · 404</p><h1>${pl ? "Nie ma takiej strony." : "This page could not be found."}</h1><p>${pl ? "Wybierz stronę główną lub sprawdź dostępne funkcje CRM." : "Visit the home page or explore the available CRM features."}</p><a class="button button-lime" href="${pl ? "/pl" : "/"}">${pl ? "Strona główna" : "Home"}</a> <a class="button button-outline" href="${pl ? "/pl/funkcje" : "/features"}">${pl ? "Funkcje CRM" : "CRM features"}</a></main></body></html>`,
     );
 }
 module.exports = {
