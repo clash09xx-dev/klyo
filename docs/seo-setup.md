@@ -32,3 +32,32 @@ Google sam decyduje o ponownym odczycie, indeksowaniu i pozycji. Zgłoszenie map
 - Opcjonalnie `BING_SITE_VERIFICATION` obsługuje token własności Bing Webmaster Tools. Zgłoszenie mapy w tym narzędziu wykonuje właściciel konta.
 
 Oficjalne instrukcje: [nazwy witryn](https://developers.google.com/search/docs/appearance/site-names), [mapy witryn](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap), [wersje językowe](https://developers.google.com/search/docs/specialty/international/localized-versions), [podstawy SEO](https://developers.google.com/search/docs/fundamentals/seo-starter-guide).
+
+
+## Audyt 19 października 2026
+
+Potwierdzono: 16 adresów mapy odpowiada 200, treści produktowe są renderowane
+na serwerze, a 14 stron EN/PL ma własne canonicale i wzajemne hreflang.
+Poradniki `/docs/...html` przekierowują na `/docs/...`; także końcowe ukośniki
+i wielkie litery na stronach prawnych są normalizowane. Logowanie ma zgodne
+meta i nagłówki noindex. Tytuł Make It Yours zawiera kategorię Customizable CRM.
+Na stronie ofert są prawdziwe przykładowe PDF-y z oznaczeniem fikcyjnych danych.
+Cennik wyjaśnia automatyczne odnowienie i anulowanie. Nie dodano wymyślonych
+opinii, ocen, wolumenów słów ani danych firmy.
+
+`www.klyolabs.com` było nieobecne w DNS. Domena jest przygotowana w Railway;
+rekordy CNAME i TXT należy dodać u dostawcy DNS według bieżącego
+`railway domain status www.klyolabs.com`. Po weryfikacji adres ma przekierowywać
+301 na główną domenę, zachowując ścieżkę i parametry. Nie zmieniać rekordu `@`,
+poczty ani istniejących rekordów weryfikacji Google.
+
+Pełny raport, dowody HTTP i obrazy przeglądarek zapisano w artefaktach zadania
+`artifacts/seo-audit-20261019`. Badanie korzystało z metodyki Claude SEO 2.4.2
+(commit `4b99de2f7de7e7d5247042e5fb5b4ea9368ef734`); model Claude nie był
+zalogowany, a jego samodzielny runtime nie był gotowy. Dane pozyskano naszymi
+narzędziami HTTP i Playwright. PageSpeed API zwróciło limit 429; nie raportujemy
+wyniku Lighthouse ani spełnienia Core Web Vitals. Nie było dostępu API do GSC,
+GA4 ani zewnętrznej bazy backlinków. Podstawowe raporty GSC odczytano ręcznie
+w zalogowanym panelu i zapisano lokalnie w raporcie audytu. Do dalszej oceny
+potrzebne są aktualne inspekcje konkretnych podstron oraz podział na kraje;
+starszego raportu indeksacji nie należy utożsamiać z dzisiejszym testem strony.

@@ -189,8 +189,8 @@ module.exports = [
     file: "customization.html",
     image: "personal-settings",
     title: [
-      "Klyo Labs — Make It Yours",
-      "Klyo Labs — Make It Yours",
+      "Klyo Labs — Customizable CRM | Make It Yours",
+      "Klyo Labs — Customizable CRM | Make It Yours",
     ],
     description: [
       "Personalize your whole CRM with Make It Yours. Choose four layouts, move and resize panels, hide modules, add shortcuts and save your own workspace designs.",

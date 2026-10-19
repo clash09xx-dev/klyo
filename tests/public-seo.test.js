@@ -217,3 +217,90 @@ test("optional ownership tokens are escaped and cannot inject HTML", () => {
     else process.env.GOOGLE_SITE_VERIFICATION = old;
   }
 });
+
+test("audit fixes consolidate public guide URLs and keep authentication metadata consistent", async () => {
+  const f = await require("./helpers/public-site-fixture")();
+  try {
+    for (const name of [
+      "calendar-setup",
+      "sharepoint-setup",
+      "sms-security",
+      "communications-setup",
+      "sales-and-operations",
+      "visual-workspace",
+      "account-access",
+    ]) {
+      const route = "/docs/" + name;
+      const r = await fetch(f.base + route);
+      assert.equal(r.status, 200, route);
+      const html = await r.text();
+      assert.ok(
+        html.includes(
+          'rel="canonical" href="https://klyolabs.com' + route + '"',
+        ),
+      );
+      for (const alias of [route + ".html", route + "/", route.toUpperCase()]) {
+        const redirect = await fetch(f.base + alias + "?ref=guide", {
+          redirect: "manual",
+        });
+        assert.equal(redirect.status, 301, alias);
+        assert.equal(redirect.headers.get("location"), route + "?ref=guide");
+      }
+    }
+    for (const legal of ["/privacy", "/terms"])
+      for (const alias of [legal + "/", legal.toUpperCase()]) {
+        const r = await fetch(f.base + alias, { redirect: "manual" });
+        assert.equal(r.status, 301, alias);
+        assert.equal(r.headers.get("location"), legal);
+      }
+    const login = await fetch(f.base + "/login"),
+      html = await login.text();
+    assert.match(
+      html,
+      /<meta name="robots" content="noindex, nofollow, noarchive"/,
+    );
+    assert.doesNotMatch(
+      html,
+      /<link rel="canonical" href="https:\/\/klyolabs.com\/"/,
+    );
+  } finally {
+    await f.close();
+  }
+});
+test("product proof and trial disclosures are present in server HTML in both languages", async () => {
+  const f = await require("./helpers/public-site-fixture")();
+  try {
+    for (const lang of ["en", "pl"]) {
+      const pricing = await (
+        await fetch(f.base + (lang === "pl" ? "/pl/cennik" : "/pricing"))
+      ).text();
+      assert.match(
+        pricing,
+        lang === "pl"
+          ? /subskrypcja odnawia się automatycznie/
+          : /subscription renews automatically/,
+      );
+      const quote = await (
+        await fetch(f.base + (lang === "pl" ? "/pl/oferty-pdf" : "/pdf-quotes"))
+      ).text();
+      for (const name of ["klyo-proposal", "klyo-custom-a4"]) {
+        assert.match(quote, new RegExp('href="/examples/' + name + '.pdf"'));
+        const file = await fetch(f.base + "/examples/" + name + ".pdf");
+        assert.equal(file.status, 200);
+        assert.match(file.headers.get("content-type"), /pdf/);
+      }
+      assert.match(quote, /<img[^>]*loading="eager" fetchpriority="high"/);
+      const customization = await (
+        await fetch(
+          f.base + (lang === "pl" ? "/pl/make-it-yours" : "/make-it-yours"),
+        )
+      ).text();
+      assert.match(
+        customization,
+        /<title>Klyo Labs — Customizable CRM \| Make It Yours<\/title>/,
+      );
+    }
+  } finally {
+    await f.close();
+  }
+});
