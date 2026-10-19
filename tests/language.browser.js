@@ -204,12 +204,13 @@ const { chromium, webkit } = require("playwright");
           true,
         );
         await page.goto(f.base + "/login", { waitUntil: "networkidle" });
-        // The login picker can be used without an account.
+        // Login retains the selected language without adding language controls to the card.
         await page.evaluate(() => {
           API.clearToken();
         });
         await page.goto(f.base + "/login", { waitUntil: "networkidle" });
-        await page.locator("[data-language-choice=pl]").click();
+        assert.equal(await page.locator("[data-language-choice]").count(), 0);
+        assert.equal(await page.locator("html").getAttribute("lang"), "pl");
         await page.locator("#goSignupBtn").click();
         await page.locator("#signupScreen:not(.hidden)").waitFor();
         await page.locator("#joinModeBtn").click();
