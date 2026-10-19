@@ -7,6 +7,7 @@ for (const suite of [
   "interface-layouts",
   "language",
   "dashboard",
+  "mobile-workspace",
   "analytics",
   "commercial",
   "operations",

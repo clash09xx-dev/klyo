@@ -351,6 +351,7 @@ function showLimitOrError(err, fallbackEl) {
   KlyoQuoteStudio.init();
   await KlyoWorkspace.init();
   KlyoNotifications.init();
+  KlyoMobile.init();
 
   // A failed auxiliary request must never prevent the pipeline from loading.
   const bootResults = await Promise.allSettled([
@@ -817,7 +818,7 @@ function renderClientsTable() {
     const lastPurchase = c.last_purchase_at ? new Date(c.last_purchase_at).toLocaleDateString(KlyoI18n.getLang() === "pl" ? "pl-PL" : "en-GB") : "—";
     return `<tr style="cursor:pointer;" data-contact-id="${c.id}">
       <td><strong>${escapeHtml(c.full_name || (c.first_name + " " + c.last_name).trim())}</strong><br><span class="muted" style="font-size:11px;">${escapeHtml(c.email || "")}</span></td>
-      <td>${escapeHtml(c.company_name || "—")}</td>
+      <td>${escapeHtml(c.company_name || c.company || "—")}</td>
       <td>${escapeHtml(c.owner_name || "—")}</td>
       <td class="mono">${revenueStr}</td>
       <td>${c.accepted_quotes || 0}</td>
@@ -1645,7 +1646,7 @@ function renderContacts(contacts) {
         <div class="mono">${escapeHtml(c.email || "—")}</div>
         <div class="mono muted">${escapeHtml(c.phone || "—")}</div>
       </td>
-      <td>${escapeHtml(c.company_name || "—")}</td>
+      <td>${escapeHtml(c.company_name || c.company || "—")}</td>
       <td>${escapeHtml(c.marketing_theme || "—")}</td>
       <td>${badgeHtml(c.status)}</td>
       <td>${escapeHtml(c.owner_name || "—")}</td>
@@ -1787,7 +1788,9 @@ function initTagInput() {
 }
 
 /* ---------- contact modal ---------- */
-async function openContactModal(contact) {
+async function openContactModal(contact, draft = null) {
+  const editing = Boolean(contact?.id);
+  contact = contact || draft;
   els.contactFormError.textContent = "";
   populateOwnerOptions(els.cOwner, { placeholder: t("common.unassigned"), selected: contact ? contact.owner_id : API.getUser()?.id });
   populateCompanySelect();
@@ -1800,9 +1803,9 @@ async function openContactModal(contact) {
   if (tagInput) tagInput.value = "";
 
   if (contact) {
-    els.contactModalTitle.textContent = t("modal.edit_contact");
-    els.contactSubmitBtn.textContent = t("modal.save_changes");
-    els.contactId.value = contact.id;
+    els.contactModalTitle.textContent = t(editing ? "modal.edit_contact" : "modal.add_contact");
+    els.contactSubmitBtn.textContent = t(editing ? "modal.save_changes" : "modal.add_contact");
+    els.contactId.value = editing ? contact.id : "";
     els.cFirstName.value = contact.first_name || (contact.full_name ? contact.full_name.split(" ")[0] : "");
     els.cLastName.value = contact.last_name || (contact.full_name && contact.full_name.includes(" ") ? contact.full_name.split(" ").slice(1).join(" ") : "");
     els.cEmail.value = contact.email || "";
@@ -1833,6 +1836,10 @@ async function openContactModal(contact) {
     const pEl = document.getElementById("cPriority");
     if (pEl) pEl.value = "medium";
   }
+  let companyText=document.getElementById('cCompanyText');
+  if(!companyText){const wrap=document.createElement('div');wrap.className='field';wrap.id='cCompanyTextWrap';const label=document.createElement('label');label.htmlFor='cCompanyText';label.textContent=KlyoI18n.getLang()==='pl'?'Nazwa firmy':'Company name';companyText=document.createElement('input');companyText.id='cCompanyText';companyText.maxLength=200;wrap.append(label,companyText);els.cCompanySelect.closest('.field-row').after(wrap);}
+  companyText.value=contact?.company||'';
+  document.getElementById('cCompanyTextWrap').hidden=!companyText.value;
   els.contactSubmitBtn.disabled=true;
   els.contactModalOverlay.classList.remove("hidden");
   try{await KlyoWorkspace.editFields("contact",contact);await KlyoCommercial.openRecordUnit("contact",contact||{});els.contactSubmitBtn.disabled=API.getUser()?.role==='viewer';}catch(e){els.contactFormError.textContent=e.message;}
@@ -1857,6 +1864,7 @@ async function handleContactSubmit(e) {
     email: els.cEmail.value.trim(),
     phone: els.cPhone.value.trim(),
     company_id: els.cCompanySelect.value ? Number(els.cCompanySelect.value) : null,
+    company: els.cCompanySelect.value ? "" : (document.getElementById("cCompanyText")?.value || ""),
     title: els.cTitle.value.trim(),
     is_decision_maker: els.cDecisionMaker.checked,
     marketing_theme: els.cTheme.value.trim(),
@@ -1907,12 +1915,12 @@ async function openPanel(id) {
   KlyoWorkspace.showContactFields(contact);
 
   els.panelName.textContent = contact.full_name;
-  els.panelSub.textContent = [contact.company_name, contact.owner_name ? KlyoCopy.format("Owner: {0}", contact.owner_name) : null].filter(Boolean).join(" · ") || KlyoCopy.text("No company on file");
+  els.panelSub.textContent = [contact.company_name || contact.company, contact.owner_name ? KlyoCopy.format("Owner: {0}", contact.owner_name) : null].filter(Boolean).join(" · ") || KlyoCopy.text("No company on file");
   els.panelBadge.innerHTML = badgeHtml(contact.status);
   els.panelEmail.textContent = contact.email || "—";
   els.panelPhone.textContent = contact.phone || "—";
-  els.panelCompany.textContent = contact.company_name
-    ? `${contact.company_name}${contact.title ? ` (${contact.title})` : ""}${contact.is_decision_maker ? " ★" : ""}`
+  els.panelCompany.textContent = (contact.company_name || contact.company)
+    ? `${contact.company_name || contact.company}${contact.title ? ` (${contact.title})` : ""}${contact.is_decision_maker ? " ★" : ""}`
     : "—";
   els.panelTheme.textContent = contact.marketing_theme || "—";
   els.panelCreated.textContent = formatDate(contact.created_at);

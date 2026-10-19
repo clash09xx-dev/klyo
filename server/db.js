@@ -429,6 +429,7 @@ async function init() {
   await require("./migrations/visualWorkspace")(pool);
   await require("./migrations/accountOnboarding")(pool);
   await require("./migrations/icloudCalendar")(pool);
+  await require("./migrations/businessCards")(pool);
   await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS workspace_preferences JSONB NOT NULL DEFAULT '{}'::jsonb");
 }
 

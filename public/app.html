@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Klyo Labs — Dashboard</title>
 <meta name="robots" content="noindex" />
 
@@ -34,6 +34,7 @@
 <link rel="icon" href="/icons/klyo-labs.svg" type="image/svg+xml" sizes="any">
 <link rel="apple-touch-icon" href="/icons/klyo-labs-180.png" sizes="180x180">
 <link rel="mask-icon" href="/icons/klyo-labs-mask.svg" color="#1b2027">
+<link rel="stylesheet" href="/css/mobile-workspace.css" />
 </head>
 <body>
 
@@ -1842,6 +1843,7 @@
 <div class="overlay hidden" id="pipelineOverlay"><div class="modal"><div class="modal-head"><h2 id="pipelineModalTitle"><span data-ui-copy="Add another pipeline">Add another pipeline</span></h2><button type="button" class="modal-close" id="closePipelineBtn" aria-label="Close" data-ui-aria-label="Close">×</button></div><form id="pipelineForm"><input id="pipelineId" type="hidden"/><div class="field"><label for="pipelineName" data-pipeline-label="name"><span data-ui-copy="Pipeline name">Pipeline name</span></label><input id="pipelineName" required maxlength="100"/></div><div class="field"><label for="pipelineText" data-pipeline-label="description"><span data-ui-copy="What do you sell here?">What do you sell here?</span></label><textarea id="pipelineText" maxlength="2000"></textarea></div><div class="field" id="pipelineCopyField"><label for="pipelineCopy" data-pipeline-label="copy"><span data-ui-copy="Starting stages">Starting stages</span></label><select id="pipelineCopy"></select></div><div id="pipelineDeleteSection" class="field hidden"><p id="pipelineDeleteHint" class="muted"></p><label for="pipelineDeleteTarget" data-pipeline-label="moveTo"><span data-ui-copy="Move deals to">Move deals to</span></label><select id="pipelineDeleteTarget"></select></div><div id="pipelineFormError" class="form-error"></div><div class="modal-actions"><button type="button" class="btn btn-danger btn-sm hidden" id="deletePipelineBtn" data-pipeline-label="remove"><span data-ui-copy="Delete pipeline">Delete pipeline</span></button><button type="button" class="btn btn-ghost" id="pipelineCancel" data-pipeline-label="cancel"><span data-ui-copy="Cancel">Cancel</span></button><button class="btn btn-primary" id="pipelineSave" data-pipeline-label="save"><span data-ui-copy="Save pipeline">Save pipeline</span></button></div></form></div></div>
 <script src="/js/pipelines.js"></script>
 <script src="/js/workspace-tools.js"></script>
+<script src="/js/mobile-workspace.js"></script>
 <script src="/js/app.js"></script>
 </body>
 </html>
