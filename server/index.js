@@ -51,6 +51,7 @@ app.use(express.json({ limit: "50mb" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/contacts", contactRoutes);
+app.use("/api/business-cards",require("./routes/business-cards"));
 app.use("/api/offers", offerRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/analytics",require("./routes/analytics"));

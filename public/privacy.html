@@ -395,6 +395,13 @@
             nadawcy oraz kontekst biznesowy. Nie umieszczaj w tych polach
             informacji, których nie chcesz przekazać do tej funkcji.
           </p>
+          <p>Skanowanie wizytówki jest opcjonalne i uruchamiane przez użytkownika.
+            Wybrane zdjęcie przesyłamy do OpenAI wyłącznie w celu odczytania danych kontaktowych.
+            Klyo nie zapisuje zdjęcia w bazie ani w plikach; odczytane dane zapisuje jako kontakt
+            w wybranej przestrzeni. Nieczytelne dane wymagają sprawdzenia przed zapisem.
+            Skaner przechowuje identyfikator operacji, skrót zdjęcia i powiązanie kontaktu,
+            aby zapobiegać duplikatom i ograniczać liczbę żądań. Dane przekazywane do OpenAI
+            podlegają zasadom przetwarzania tego dostawcy.</p>
           <p>
             Dostęp człowieka do danych Google jest ograniczony do sytuacji
             dozwolonych przez zasady Google, takich jak konkretna pomoc
@@ -507,7 +514,7 @@
             Google Calendar i Google Drive, zgodnie z sekcją 5.
           </li>
           <li>
-            <strong>OpenAI</strong> — szkice wiadomości tworzone na Twoje
+            <strong>OpenAI</strong> — odczyt wizytówek i szkice wiadomości tworzone na Twoje
             polecenie; zakres przekazywanych pól opisuje sekcja 5.4.
           </li>
         </ul>
@@ -746,6 +753,12 @@
             name and business context. Do not put information in those fields
             that you do not want to submit to that feature.
           </p>
+          <p>Business card scanning is optional and initiated by the user. The selected
+            photo is sent to OpenAI only to read contact details. Klyo does not store the photo
+            in its database or files; extracted details are saved as a contact in the selected
+            workspace. Unclear details must be checked before saving. The scanner stores an
+            operation ID, image hash and contact reference to prevent duplicates and limit
+            requests. Data sent to OpenAI is subject to that provider's data processing policies.</p>
           <p>
             Human access to Google data is limited to uses permitted by Google's
             policy, such as specific assistance with your consent, security
@@ -857,7 +870,7 @@
             Calendar and Google Drive, as described in section 5.
           </li>
           <li>
-            <strong>OpenAI</strong> — email drafts generated at your request;
+            <strong>OpenAI</strong> — business card reading and email drafts generated at your request;
             section 5.4 lists the submitted fields.
           </li>
         </ul>

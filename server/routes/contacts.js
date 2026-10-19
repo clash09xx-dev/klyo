@@ -127,70 +127,16 @@ function buildFullName(first, last, fallback) {
   return (fallback || "").trim();
 }
 
-// POST /api/contacts — create
-router.post("/", requireEditor, async (req, res) => {
-  const {
-    first_name, last_name, full_name, email, phone, company, marketing_theme, status, notes,
-    owner_id, company_id, title, is_decision_maker,
-    tags, secondary_email, secondary_phone, website, linkedin, instagram, facebook, twitter,
-    city, country, state, postal_code, address, customer_type, priority, lead_source,
-    department, preferred_language, telegram, internal_notes,
-  } = req.body || {};
-
-  const derivedFullName = buildFullName(first_name, last_name, full_name);
-  if (!derivedFullName) {
-    return res.status(400).json({ error: "First name is required." });
-  }
-
-  try {
-    await assertWithinLimit(req.user.workspace_id, "contacts");
-  } catch (err) {
-    if (err instanceof LimitExceededError) return res.status(403).json({ error: err.message, code: "LIMIT_EXCEEDED" });
-    throw err;
-  }
-
-  const finalStatus = VALID_STATUSES.includes(status) ? status : "lead";
-  const firstName = (first_name || "").trim() || derivedFullName.split(" ")[0];
-  const lastName = (last_name || "").trim() || (derivedFullName.includes(" ") ? derivedFullName.split(" ").slice(1).join(" ") : null);
-  const normalizedTags = Array.isArray(tags) ? tags.map(t => String(t).trim()).filter(Boolean) : [];
-
-  await validateContactLinks(req.user,company_id,owner_id||req.user.id);
-  const companyUnit=await require('../services/commercial').validateUnit(db,req.user.workspace_id,req.body.company_unit_id,company_id);
-  const custom=await F.validate(db,req.user.workspace_id,'contact',req.body.custom_fields);
-  const result = await db.query(
-    `INSERT INTO contacts (
-       workspace_id, full_name, first_name, last_name, email, phone, company, marketing_theme, status, notes,
-       owner_id, company_id, title, is_decision_maker,
-       tags, secondary_email, secondary_phone, website, linkedin, instagram, facebook, twitter,
-       city, country, state, postal_code, address, customer_type, priority, lead_source,
-       department, preferred_language, telegram, internal_notes, custom_fields, company_unit_id
-     ) VALUES (
-       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
-       $11,$12,$13,$14,
-       $15,$16,$17,$18,$19,$20,$21,$22,
-       $23,$24,$25,$26,$27,$28,$29,$30,
-       $31,$32,$33,$34,$35,$36
-     ) RETURNING *`,
-    [
-      req.user.workspace_id, derivedFullName, firstName||null, lastName||null,
-      email?.trim()||null, phone?.trim()||null, company?.trim()||null,
-      marketing_theme?.trim()||null, finalStatus, notes?.trim()||null,
-      owner_id||req.user.id, company_id||null, title?.trim()||null, Boolean(is_decision_maker),
-      normalizedTags,
-      secondary_email?.trim()||null, secondary_phone?.trim()||null,
-      website?.trim()||null, linkedin?.trim()||null, instagram?.trim()||null,
-      facebook?.trim()||null, twitter?.trim()||null,
-      city?.trim()||null, country?.trim()||null, state?.trim()||null,
-      postal_code?.trim()||null, address?.trim()||null,
-      customer_type?.trim()||null, priority?.trim()||"medium", lead_source?.trim()||null,
-      department?.trim()||null, preferred_language?.trim()||null,
-      telegram?.trim()||null, internal_notes?.trim()||null,JSON.stringify(custom),companyUnit,
-    ]
-  );
-
-  const contact = result.rows[0];
-  await logActivity(req.user.workspace_id, contact.id, req.user.id, "contact_created", `${req.user.name} added this contact.`);
-  res.status(201).json({ contact });
+// Shared creation keeps scanned, quick and full contacts subject to the same validation.
+router.post("/",requireEditor,async(req,res)=>{
+ const client=await db.pool.connect();
+ try{
+  await client.query('BEGIN');
+  await client.query("SELECT pg_advisory_xact_lock(hashtext($1))",['contact-create:'+req.user.workspace_id]);
+  const contact=await require('../services/contactCreation').createContact(req.user,req.body,client);
+  await client.query('COMMIT');res.status(201).json({contact});
+ }catch(e){await client.query('ROLLBACK');if(e.code==='LIMIT_EXCEEDED')return res.status(403).json({error:e.message,code:e.code});throw e;}
+ finally{client.release();}
 });
 
 // GET /api/contacts/:id — one contact, with activity + offers + quotes + purchases
