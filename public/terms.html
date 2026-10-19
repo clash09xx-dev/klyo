@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -34,6 +34,7 @@
   footer a { color: #6b7280; text-decoration: none; }
   footer a:hover { color: #111; }
   [data-lang] { display: none; }
+  [data-lang="en"] { display: block; }
 </style>
 <link rel="icon" href="/icons/klyo-labs.ico" sizes="16x16 32x32 48x48">
 <link rel="icon" href="/icons/klyo-labs-96.png" type="image/png" sizes="96x96">
@@ -170,14 +171,15 @@
   <hr />
   <footer>
     <a href="/">← Klyo</a>
-    <a href="/privacy" data-lang-text='{"pl":"Polityka Prywatności","en":"Privacy Policy"}'>Polityka Prywatności</a>
+    <a href="/privacy" data-lang-text='{"pl":"Polityka Prywatności","en":"Privacy Policy"}'>Privacy Policy</a>
     <span style="margin-left:auto;">© 2026 Klyo</span>
   </footer>
 </div>
 
 <script>
   function setLang(lang) {
-    localStorage.setItem("klyo_lang", lang);
+    lang = lang === "pl" ? "pl" : "en";
+    try { localStorage.setItem("klyo_lang", lang); } catch {}
     document.querySelectorAll("[data-lang]").forEach(el => {
       el.style.display = el.dataset.lang === lang ? "block" : "none";
     });
@@ -187,7 +189,9 @@
     document.querySelector("[data-lang-text]").textContent = JSON.parse(document.querySelector("[data-lang-text]").dataset.langText)[lang];
     document.documentElement.lang = lang;
   }
-  const lang = localStorage.getItem("klyo_lang") || (navigator.language.startsWith("pl") ? "pl" : "en");
+  let savedLang; try { savedLang = localStorage.getItem("klyo_lang"); } catch {}
+  const requested = new URLSearchParams(location.search).get("lang");
+  const lang = ["pl", "en"].includes(requested) ? requested : ["pl", "en"].includes(savedLang) ? savedLang : navigator.language.startsWith("pl") ? "pl" : "en";
   setLang(lang);
 </script>
 </body>

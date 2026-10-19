@@ -40,7 +40,7 @@ const { chromium, webkit } = require("playwright");
             structure,
             p.key + ": English and Polish share the same component tree",
           );
-          for (const width of [1440, 768, 390, 360]) {
+          for (const width of [1440, 768, 390, 360, 320]) {
             await page.setViewportSize({ width, height: 1000 });
             assert.ok(
               await page.evaluate(
@@ -52,9 +52,11 @@ const { chromium, webkit } = require("playwright");
           await page.setViewportSize({ width: 1440, height: 1000 });
           if (["home", "features", "why", "customization"].includes(p.key)) {
             if (["features", "why"].includes(p.key)) {
-              for (const img of await page.locator('.product-chapter img').all()) {
+              for (const img of await page
+                .locator(".product-chapter img")
+                .all()) {
                 await img.scrollIntoViewIfNeeded();
-                await img.evaluate(el => el.decode());
+                await img.evaluate((el) => el.decode());
               }
               await page.evaluate(() => scrollTo(0, 0));
             }
@@ -141,6 +143,9 @@ const { chromium, webkit } = require("playwright");
               await page.locator(`#${tab}-preview`).isVisible(),
               true,
             );
+            await page
+              .locator(`#${tab}-preview img`)
+              .evaluate((img) => img.decode());
             assert.equal(
               await page
                 .locator(`#${tab}-preview img`)
@@ -177,7 +182,7 @@ const { chromium, webkit } = require("playwright");
         assert.deepEqual(errors, []);
         console.log(
           name +
-            ": EN/PL component parity for all 14 pages, 360/390/768/1440 bounds, localized interactive demos, screenshot tabs and feature library PASS",
+            ": EN/PL component parity for all 14 pages, 320/360/390/768/1440 bounds, localized interactive demos, screenshot tabs and feature library PASS",
         );
       } finally {
         await browser.close();

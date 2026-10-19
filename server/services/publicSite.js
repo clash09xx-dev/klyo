@@ -9,7 +9,8 @@ const latinFont = fontSources.find(
 const pages = require("../content/publicPages"),
   { TIERS, TIER_ORDER } = require("../config/tiers");
 const PublicLanguage = require("./publicLanguage");
-const brandIcons = "<link rel=\"icon\" href=\"/icons/klyo-labs.ico\" sizes=\"16x16 32x32 48x48\">\n<link rel=\"icon\" href=\"/icons/klyo-labs-96.png\" type=\"image/png\" sizes=\"96x96\">\n<link rel=\"icon\" href=\"/icons/klyo-labs.svg\" type=\"image/svg+xml\" sizes=\"any\">\n<link rel=\"apple-touch-icon\" href=\"/icons/klyo-labs-180.png\" sizes=\"180x180\">\n<link rel=\"mask-icon\" href=\"/icons/klyo-labs-mask.svg\" color=\"#1b2027\">";
+const brandIcons =
+  '<link rel="icon" href="/icons/klyo-labs.ico" sizes="16x16 32x32 48x48">\n<link rel="icon" href="/icons/klyo-labs-96.png" type="image/png" sizes="96x96">\n<link rel="icon" href="/icons/klyo-labs.svg" type="image/svg+xml" sizes="any">\n<link rel="apple-touch-icon" href="/icons/klyo-labs-180.png" sizes="180x180">\n<link rel="mask-icon" href="/icons/klyo-labs-mask.svg" color="#1b2027">';
 const compression = require("compression");
 const publicCompression = compression({
   threshold: 1024,
@@ -98,14 +99,28 @@ function picture(p, lang) {
       : p.image === "a4-designer"
         ? "Klyo PDF quote template designer with an A4 canvas, client fields and pricing table"
         : "Klyo CRM interface with personal workspace settings";
-  return `<figure class="seo-product-shot page-width"><picture><source type="image/webp" srcset="/images/${p.image}.webp 1x, /images/${p.image}@2x.webp 2x"><img src="/images/${p.image}.png" width="1440" height="1000" loading="lazy" decoding="async" alt="${esc(alt)}"></picture><figcaption>${lang === "pl" ? "Rzeczywisty interfejs Klyo · przykładowe dane" : "Actual Klyo interface · fictional sample data"}</figcaption></figure>`;
+  const dimensions =
+    p.image === "personal-settings"
+      ? [900, 986]
+      : p.image === "personal-workspace"
+        ? [1440, 820]
+        : [1440, 1000];
+  const loading =
+    p.key === "quotes"
+      ? 'loading="eager" fetchpriority="high"'
+      : 'loading="lazy"';
+  return `<figure class="seo-product-shot page-width"><picture><source type="image/webp" srcset="/images/${p.image}.webp 1x, /images/${p.image}@2x.webp 2x"><img src="/images/${p.image}.png" width="${dimensions[0]}" height="${dimensions[1]}" ${loading} decoding="async" alt="${esc(alt)}"></picture><figcaption>${lang === "pl" ? "Rzeczywisty interfejs Klyo · przykładowe dane" : "Actual Klyo interface · fictional sample data"}</figcaption></figure>`;
+}
+function quoteSamples(lang) {
+  const pl = lang === "pl";
+  return `<section class="seo-samples page-width"><p class="eyebrow">${pl ? "SPRAWDŹ GOTOWY DOKUMENT" : "SEE THE FINISHED DOCUMENT"}</p><h2>${pl ? "Otwórz przykładową ofertę PDF." : "Open a sample PDF quote."}</h2><p>${pl ? "Zobacz układ, tabelę cen i warunki w rzeczywistym pliku przed założeniem konta. Oba dokumenty są po angielsku i zawierają fikcyjne dane demonstracyjne." : "Inspect the layout, pricing table and terms in an actual file before creating an account. Both documents are in English and contain fictional demonstration data."}</p><div class="hero-actions"><a class="button button-dark" href="/examples/klyo-proposal.pdf">${pl ? "Przykładowa oferta (PDF, EN)" : "Sample proposal (PDF, EN)"} ↗</a><a class="button button-outline" href="/examples/klyo-custom-a4.pdf">${pl ? "Własny układ A4 (PDF, EN)" : "Custom A4 layout (PDF, EN)"} ↗</a></div></section>`;
 }
 function template(p, lang) {
   const n = lang === "pl" ? 1 : 0,
     pl = lang === "pl",
     sections = pl ? p.sections : p.sectionsEn,
     faqs = pl ? p.faqs : p.faqsEn;
-  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/css/landing.css"><link rel="stylesheet" href="/css/marketing-pages.css"><link rel="icon" href="/favicon.svg" type="image/svg+xml"></head><body class="marketing-page">${navigation(p, lang)}<main id="main-content"><section class="marketing-hero page-width"><p class="eyebrow">KLYO LABS · ${pl ? "TWÓJ CRM" : "YOUR CRM"}</p><h1>${esc(p.headings?.[n] || p.heading)}</h1><p>${esc(p.intros?.[n] || p.intro)}</p><div class="hero-actions"><a class="button button-lime" href="/signup">${pl ? "Wypróbuj przez 7 dni" : "Start a 7-day trial"} ↗</a><a class="button button-outline" href="${get("pricing")[lang]}">${pl ? "Porównaj plany" : "Compare plans"}</a></div><p class="trial-note">${pl ? "Wymagana metoda płatności · Anuluj przed odnowieniem" : "Payment method required · Cancel before renewal"}</p></section>${picture(p, lang)}${p.key === "pricing" || p.key === "home" ? `<section class="pricing-section page-width" id="pricing"><h2>${pl ? "Plany CRM dla jednej osoby i zespołów" : "CRM plans for individuals and teams"}</h2><div class="pricing-grid" data-server-rendered="true">${pricing(lang)}</div><p class="pricing-footnote">${pl ? "USD za przestrzeń na miesiąc. 7 dni próbnych; metoda płatności wymagana. Abonament odnawia się automatycznie — anuluj w Ustawieniach przed odnowieniem, aby uniknąć opłaty." : "USD per workspace per month. 7-day trial; payment method required. Subscription renews automatically; cancel in Settings before renewal to avoid a charge."}</p></section>` : ""}<section class="seo-sections page-width">${sections.map(([h, t, k]) => `<article><h2>${esc(h)}</h2><p>${esc(t)}</p>${k ? `<a href="${get(k)[lang]}">${labels[lang][k]} ↗</a>` : ""}</article>`).join("")}</section>${faqs ? `<section class="seo-faq page-width"><h2>${pl ? "Pytania i odpowiedzi" : "Questions and answers"}</h2>${faqs.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}</section>` : ""}<section class="marketing-cta page-width"><h2>${pl ? "Ułóż pracę po swojemu." : "Build a workspace around your work."}</h2><a class="button button-dark" href="/signup">${pl ? "Rozpocznij 7-dniowy test" : "Start a 7-day trial"} ↗</a><p>${pl ? "Metoda płatności wymagana. Integracje wymagają konfiguracji i uprawnień dostawcy." : "Payment method required. Integrations require provider configuration and authorization."}</p></section></main>${footer(lang)}</body></html>`;
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/css/landing.css"><link rel="stylesheet" href="/css/marketing-pages.css"><link rel="icon" href="/favicon.svg" type="image/svg+xml"></head><body class="marketing-page">${navigation(p, lang)}<main id="main-content"><section class="marketing-hero page-width"><p class="eyebrow">KLYO LABS · ${pl ? "TWÓJ CRM" : "YOUR CRM"}</p><h1>${esc(p.headings?.[n] || p.heading)}</h1><p>${esc(p.intros?.[n] || p.intro)}</p><div class="hero-actions"><a class="button button-lime" href="/signup">${pl ? "Wypróbuj przez 7 dni" : "Start a 7-day trial"} ↗</a><a class="button button-outline" href="${get("pricing")[lang]}">${pl ? "Porównaj plany" : "Compare plans"}</a></div><p class="trial-note">${pl ? "Wymagana metoda płatności · Anuluj przed odnowieniem" : "Payment method required · Cancel before renewal"}</p></section>${picture(p, lang)}${p.key === "quotes" ? quoteSamples(lang) : ""}${p.key === "pricing" || p.key === "home" ? `<section class="pricing-section page-width" id="pricing"><h2>${pl ? "Plany CRM dla jednej osoby i zespołów" : "CRM plans for individuals and teams"}</h2><div class="pricing-grid" data-server-rendered="true">${pricing(lang)}</div><p class="pricing-footnote">${pl ? "USD za przestrzeń na miesiąc. 7 dni próbnych; metoda płatności wymagana. Abonament odnawia się automatycznie — anuluj w Ustawieniach przed odnowieniem, aby uniknąć opłaty." : "USD per workspace per month. 7-day trial; payment method required. Subscription renews automatically; cancel in Settings before renewal to avoid a charge."}</p></section>` : ""}<section class="seo-sections page-width">${sections.map(([h, t, k]) => `<article><h2>${esc(h)}</h2><p>${esc(t)}</p>${k ? `<a href="${get(k)[lang]}">${labels[lang][k]} ↗</a>` : ""}</article>`).join("")}</section>${faqs ? `<section class="seo-faq page-width"><h2>${pl ? "Pytania i odpowiedzi" : "Questions and answers"}</h2>${faqs.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}</section>` : ""}<section class="marketing-cta page-width"><h2>${pl ? "Ułóż pracę po swojemu." : "Build a workspace around your work."}</h2><a class="button button-dark" href="/signup">${pl ? "Rozpocznij 7-dniowy test" : "Start a 7-day trial"} ↗</a><p>${pl ? "Metoda płatności wymagana. Integracje wymagają konfiguracji i uprawnień dostawcy." : "Payment method required. Integrations require provider configuration and authorization."}</p></section></main>${footer(lang)}</body></html>`;
 }
 function structured(p, lang) {
   const n = lang === "pl" ? 1 : 0,
@@ -222,8 +237,9 @@ function decorate(source, p, lang) {
         : tag,
     )
     .replace(/<link\b[^>]*>/gi, (tag) =>
-      /\brel\s*=\s*["'](?:canonical|alternate|icon|shortcut icon|apple-touch-icon|mask-icon)["']/i.test(tag) ||
-      /https:\/\/(?:fonts.googleapis.com|fonts.gstatic.com)/i.test(tag)
+      /\brel\s*=\s*["'](?:canonical|alternate|icon|shortcut icon|apple-touch-icon|mask-icon)["']/i.test(
+        tag,
+      ) || /https:\/\/(?:fonts.googleapis.com|fonts.gstatic.com)/i.test(tag)
         ? ""
         : tag,
     )
@@ -234,7 +250,8 @@ function decorate(source, p, lang) {
   );
   html = html.replace(
     "</head>",
-    brandIcons + metadata(p, lang) +
+    brandIcons +
+      metadata(p, lang) +
       `<script type="application/json" id="public-runtime-copy">${json(lang === "pl" ? PublicLanguage.runtime : {})}</script></head>`,
   );
   if (p.file) {
@@ -294,6 +311,15 @@ function render(p, lang) {
     );
   return rendered.get(key);
 }
+const guides = [
+  "/docs/calendar-setup",
+  "/docs/sharepoint-setup",
+  "/docs/sms-security",
+  "/docs/communications-setup",
+  "/docs/sales-and-operations",
+  "/docs/visual-workspace",
+  "/docs/account-access",
+];
 const aliases = {
   "/index.html": "/",
   "/index": "/",
@@ -309,6 +335,7 @@ const aliases = {
   "/app.html": "/app",
   "/onboarding.html": "/onboarding",
 };
+for (const guide of guides) aliases[guide + ".html"] = guide;
 function headers(req, res, next) {
   if (
     /^\/(?:api|app|q)(?:\/|$|\.html$)/i.test(req.path) ||
@@ -328,7 +355,9 @@ router.use((req, res, next) => {
     normalized = lower === "/" ? "/" : lower.replace(/\/+$/, "");
   const preferred =
     aliases[normalized] ||
-    (pages.some((p) => p.en === normalized || p.pl === normalized)
+    (pages.some((p) => p.en === normalized || p.pl === normalized) ||
+    guides.includes(normalized) ||
+    ["/privacy", "/terms"].includes(normalized)
       ? normalized
       : null);
   if (preferred && preferred !== req.path)
@@ -355,6 +384,9 @@ router.use((req, res, next) => {
     .type("html")
     .send(render(p, lang));
 });
+router.get(guides, (req, res) =>
+  res.sendFile(path.join(root, req.path + ".html")),
+);
 router.get("/sitemap.xml", (_, res) =>
   res
     .type("application/xml")

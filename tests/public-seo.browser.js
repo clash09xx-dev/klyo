@@ -72,6 +72,16 @@ const assert = require("node:assert/strict"),
             viewport: { width: 390, height: 844 },
           }),
           plain = await nojs.newPage();
+        await plain.goto(f.base + "/terms");
+        assert.equal(await plain.locator("html").getAttribute("lang"), "en");
+        assert.equal(
+          await plain.locator('[data-lang="en"] h1').isVisible(),
+          true,
+        );
+        assert.equal(
+          await plain.locator('[data-lang="pl"] h1').isVisible(),
+          false,
+        );
         await plain.goto(f.base + "/pricing");
         assert.equal(await plain.locator(".price-card").count(), 4);
         assert.match(

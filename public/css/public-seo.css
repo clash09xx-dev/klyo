@@ -5,13 +5,16 @@ body[data-public-page]:not([data-public-page="home"]) {
   --miy-orange: #e9eee3;
   --orange: #4b6c29;
 }
-body[data-public-page]:not([data-public-page="home"]) .flagship-card:nth-child(2),
+body[data-public-page]:not([data-public-page="home"])
+  .flagship-card:nth-child(2),
 body[data-public-page]:not([data-public-page="home"]) .why-stories article,
 body[data-public-page]:not([data-public-page="home"]) .capability-grid article {
   background: #f8faf5;
   border-top-color: #bfd8a1;
 }
-body[data-public-page]:not([data-public-page="home"]) .canvas-illustration article:nth-child(n) {
+body[data-public-page]:not([data-public-page="home"])
+  .canvas-illustration
+  article:nth-child(n) {
   border-color: #7d985c;
   box-shadow: 5px 6px 0 #d8e3cd;
 }
@@ -26,7 +29,11 @@ body[data-public-page]:not([data-public-page="home"]) .service-example > span {
   background: #e6efd9;
   color: #435b29;
 }
-.site-nav { min-height: 80px; height: auto; padding-block: 18px; }
+.site-nav {
+  min-height: 80px;
+  height: auto;
+  padding-block: 18px;
+}
 .seo-language {
   display: flex;
   align-items: center;
@@ -253,5 +260,58 @@ body[data-public-page]:not([data-public-page="home"]) .service-example > span {
   }
   .seo-related {
     padding-block: 34px;
+  }
+}
+
+/* Let visitors inspect the exported document before creating an account. */
+.seo-samples {
+  padding-block: 12px 48px;
+}
+.seo-samples h2 {
+  font-size: clamp(25px, 3vw, 36px);
+  margin: 12px 0 18px;
+  letter-spacing: -0.6px;
+}
+.seo-samples > p:not(.eyebrow) {
+  max-width: 800px;
+  color: #58616a;
+  line-height: 1.75;
+  font-size: 16px;
+}
+@media (max-width: 850px) {
+  .seo-language a {
+    width: 44px;
+    height: 44px;
+  }
+  .site-nav .nav-center > a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+@media (max-width: 600px) {
+  .site-nav .nav-actions {
+    flex-wrap: wrap;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .questions-section > *,
+  .questions-list {
+    min-width: 0;
+  }
+  .questions-list summary {
+    overflow-wrap: anywhere;
+  }
+  .questions-section h2 br {
+    display: initial;
+  }
+  .canvas-illustration {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+  }
+  .canvas-illustration article {
+    min-width: 0;
+    padding: 18px 10px;
+    overflow-wrap: anywhere;
   }
 }
