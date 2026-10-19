@@ -158,7 +158,7 @@ const KlyoCloudFiles = (() => {
         const b = document.createElement("button");
         b.className = "btn btn-ghost";
         b.textContent =
-          (f.folder ? "▸ " : "📄 ") +
+          (f.folder ? "▸ " : "▤ ") +
           f.name +
           (f.folder ? "" : " · " + size(f.size));
         b.onclick = async () => {

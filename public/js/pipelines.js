@@ -244,7 +244,7 @@ const KlyoPipelines = (() => {
   }
   function companyGroup(company, parent, children = []) {
     g("companyGroup").innerHTML =
-      `<div class="section-title">${h(l("group"))}</div>${parent ? `<p class="company-parent">${h(l("parent"))}: <button type="button" class="btn btn-ghost btn-sm" data-company-link="${parent.id}">${h(parent.name)} ↗</button></p>` : ""}<div class="company-group-heading"><strong>${h(l("children"))} <span class="muted">${children.length}</span></strong><button type="button" class="btn btn-ghost btn-sm" id="addSubCompanyBtn" ${editor() ? "" : "disabled"}>+ ${h(l("addChild"))}</button></div><div class="company-children">${children.length ? children.map((c) => `<button type="button" class="company-child" data-company-link="${c.id}"><span>${h(c.name)}</span><span>↗</span></button>`).join("") : `<p class="muted">${h(l("noChildren"))}</p>`}</div>`;
+      `<div class="section-title">${h(l("group"))}</div>${parent ? `<p class="company-parent">${h(l("parent"))}: <button type="button" class="btn btn-ghost btn-sm" data-company-link="${parent.id}">${h(parent.name)} ↗︎</button></p>` : ""}<div class="company-group-heading"><strong>${h(l("children"))} <span class="muted">${children.length}</span></strong><button type="button" class="btn btn-ghost btn-sm" id="addSubCompanyBtn" ${editor() ? "" : "disabled"}>+ ${h(l("addChild"))}</button></div><div class="company-children">${children.length ? children.map((c) => `<button type="button" class="company-child" data-company-link="${c.id}"><span>${h(c.name)}</span><span>↗︎</span></button>`).join("") : `<p class="muted">${h(l("noChildren"))}</p>`}</div>`;
     g("companyGroup")
       .querySelectorAll("[data-company-link]")
       .forEach((button) =>

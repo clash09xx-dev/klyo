@@ -1010,7 +1010,7 @@ function renderCalendar() {
     cell.innerHTML = `<div style="font-size:12px; font-weight:${isToday ? "700" : "500"}; color:${isToday ? "var(--accent)" : "var(--text-faint)"}; margin-bottom:4px;">${day}</div>` +
       dayEvents.map(ev => `
         <div data-event-id="${escapeHtml(String(ev.id))}" title="${escapeHtml((ev.external?ev.provider+" · ":"")+ev.title)}" style="background:${/^#[a-f0-9]{6}$/i.test(ev.color)?ev.color:"#6366f1"}22; border-left:3px solid ${/^#[a-f0-9]{6}$/i.test(ev.color)?ev.color:"#6366f1"}; padding:2px 5px; border-radius:3px; margin-bottom:2px; font-size:11px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-          ${ev.external?"↗ ":KlyoCalendar.hasChanges(ev.id)?"↻ ":""}${ev.all_day?(KlyoI18n.getLang()==="pl"?"Cały dzień":KlyoCopy.text("All day")):new Date(ev.start_at).toLocaleTimeString(KlyoI18n.getLang() === "pl" ? "pl-PL" : "en-GB", {hour:"2-digit",minute:"2-digit"})} ${escapeHtml(ev.title)}
+          ${ev.external?"↗︎ ":KlyoCalendar.hasChanges(ev.id)?"↻ ":""}${ev.all_day?(KlyoI18n.getLang()==="pl"?"Cały dzień":KlyoCopy.text("All day")):new Date(ev.start_at).toLocaleTimeString(KlyoI18n.getLang() === "pl" ? "pl-PL" : "en-GB", {hour:"2-digit",minute:"2-digit"})} ${escapeHtml(ev.title)}
         </div>`).join("");
 
     cell.addEventListener("click", (e) => {
@@ -1920,7 +1920,7 @@ async function openPanel(id) {
   els.panelEmail.textContent = contact.email || "—";
   els.panelPhone.textContent = contact.phone || "—";
   els.panelCompany.textContent = (contact.company_name || contact.company)
-    ? `${contact.company_name || contact.company}${contact.title ? ` (${contact.title})` : ""}${contact.is_decision_maker ? " ★" : ""}`
+    ? `${contact.company_name || contact.company}${contact.title ? ` (${contact.title})` : ""}${contact.is_decision_maker ? " ★︎" : ""}`
     : "—";
   els.panelTheme.textContent = contact.marketing_theme || "—";
   els.panelCreated.textContent = formatDate(contact.created_at);

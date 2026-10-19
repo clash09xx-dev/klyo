@@ -33,3 +33,16 @@ Tests: `tests/business-cards.test.js`, `tests/mobile-workspace.browser.js`.
 Use a disposable `TEST_DATABASE_URL` and the established Playwright environment.
 Browser tests stub extraction; the release also tested real vision on a synthetic
 card without creating a production contact or sending any email/SMS.
+
+The extraction prompt requests compact JSON and omits absent fields; parsing
+still supplies empty strings for missing fields. Image resolution, high-detail
+vision, ambiguity checks, permissions, quotas and duplicate protection remain
+unchanged. One synthetic-card measurement fell from 2.8 s to 1.6 s; this is a
+diagnostic observation, not a latency guarantee for real photos.
+
+Public pages have a visible mobile Log in link and an accessible expanding Menu.
+Phone Make It Yours interaction tests are in `tests/mobile-designer.browser.js`:
+Chromium uses actual touch events; WebKit verifies pointer interaction at mobile
+viewport sizes. Both cover compact controls, movement, resizing, undo/redo,
+separate mobile persistence, presets, shortcuts and EN/PL landing navigation.
+These browser checks do not substitute for inspection on a physical iPhone.

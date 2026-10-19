@@ -59,3 +59,9 @@ test('scanning creates contacts safely with retries, workspace isolation, quotas
   assert.equal((await scan('over-quota')).status,429);
  }finally{cards.extract=original;await f.close();}
 });
+
+test('compact extraction can omit missing fields without inventing contact data',()=>{
+ const r=cards.parse('{"is_business_card":true,"clearly_readable":true,"first_name":"Alex","email":"alex@example.test"}');
+ assert.equal(r.readable,true);
+ for(const key of ['last_name','phone','company','title','website','address','city','postal_code','country'])assert.equal(r.contact[key],'');
+});

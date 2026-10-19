@@ -30,7 +30,7 @@
       grid.innerHTML = tiers
         .map(
           (t) =>
-            `<article class="price-card" data-plan="${escape(t.key)}"><h3>${escape(t.label)}</h3><p class="price-tagline">${escape(t.tagline)}</p><div class="price-amount"><strong>$${escape(t.price)}</strong><span>USD / month</span></div><a class="button button-outline" href="/signup">Start free trial ↗</a><ul><li><b>${escape(count(t.maxSeats))}</b> ${t.maxSeats === 1 ? "user" : "users"}</li><li><b>${escape(count(t.maxContacts))}</b> contacts</li><li><b>${escape(count(t.maxAiDraftsPerMonth))}</b> AI email drafts / month</li></ul><p class="price-included">Custom A4 PDFs · price-list imports<br>Sales pipelines · SharePoint files<br>Personal colours &amp; layout</p></article>`,
+            `<article class="price-card" data-plan="${escape(t.key)}"><h3>${escape(t.label)}</h3><p class="price-tagline">${escape(t.tagline)}</p><div class="price-amount"><strong>$${escape(t.price)}</strong><span>USD / month</span></div><a class="button button-outline" href="/signup">Start free trial ↗︎</a><ul><li><b>${escape(count(t.maxSeats))}</b> ${t.maxSeats === 1 ? "user" : "users"}</li><li><b>${escape(count(t.maxContacts))}</b> contacts</li><li><b>${escape(count(t.maxAiDraftsPerMonth))}</b> AI email drafts / month</li></ul><p class="price-included">Custom A4 PDFs · price-list imports<br>Sales pipelines · SharePoint files<br>Personal colours &amp; layout</p></article>`,
         )
         .join("");
     } catch {

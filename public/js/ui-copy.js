@@ -1497,7 +1497,7 @@ window.KlyoCopy = (() => {
     "Stage added": "Dodano etap",
     "Stage deleted": "Usunięto etap",
     "Start date/time is required.": "Podaj datę i godzinę rozpoczęcia.",
-    "Start free trial ↗": "Rozpocznij okres próbny ↗",
+    "Start free trial ↗︎": "Rozpocznij okres próbny ↗︎",
     "Starting stages": "Początkowe etapy",
     "Stronger contrast": "Wyższy kontrast",
     Studio: "Projektant",

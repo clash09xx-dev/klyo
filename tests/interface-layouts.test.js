@@ -74,3 +74,18 @@ test("interface preferences reject invalid geometry, permissions, identifiers an
   assert.equal(result.is_platform_admin, undefined);
   assert.equal(result.layout.ui.module_groups.platform, undefined);
 });
+
+test('phone layout persists independently and rejects unsafe or oversized geometry', () => {
+ const p=P.defaults('day'),desktop=P.clone(p.layout.dashboard);
+ p.layout.ui.mobile.dashboard_order=['goal','metrics',...P.DASHBOARD.filter(x=>!['goal','metrics'].includes(x))];
+ p.layout.ui.mobile.dashboard_heights.goal=420;
+ p.layout.ui.mobile.pages.pipeline={order:['records','summary','heading','toolbar'],heights:{records:500}};
+ const result=P.normalize(p,true);
+ assert.deepEqual(result.layout.dashboard,desktop);
+ assert.equal(result.layout.ui.mobile.dashboard_order[0],'goal');
+ assert.equal(result.layout.ui.mobile.dashboard_heights.goal,420);
+ assert.deepEqual(result.layout.ui.mobile.pages.pipeline,p.layout.ui.mobile.pages.pipeline);
+ assert.deepEqual(P.normalize(result,true),result);
+ for(const mobile of [{dashboard_order:['delete_everything']},{dashboard_heights:{goal:99999}},{pages:{platform:{}}},{pages:{pipeline:{heights:{records:-1}}}}])
+  assert.throws(()=>P.normalize({layout:{ui:{mobile}}},true));
+});

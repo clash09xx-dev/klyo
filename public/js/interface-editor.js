@@ -375,13 +375,18 @@ const KlyoInterface = (() => {
       }))
       .filter((x) => x.node);
   }
+  function dashboardChanged(widgets, mobile, snap) {
+    change(p => {
+      p.layout.dashboard = widgets;
+      p.layout.ui.mobile = mobile;
+      p.layout.dashboard_snap = snap;
+    });
+  }
   function applyCurrentPage() {
     if (!applied) return;
     const view = document.body.dataset.view,
       root = pageRoot(view);
-    if (editing) KlyoDashboard.embed(draft, (widgets) => {
-      change(p=>{p.layout.dashboard=widgets;p.layout.dashboard_snap=draft.layout.dashboard_snap;});
-    });
+    if (editing) KlyoDashboard.embed(draft, dashboardChanged);
     if (!root) return;
     const config = applied.ui.pages[view],
       items = parts(view);
@@ -410,7 +415,7 @@ const KlyoInterface = (() => {
       if (editing && !tools) {
         tools = document.createElement("div");
         tools.className = "miy-part-tools";
-        tools.innerHTML = `<button type="button" draggable="true" data-part-grip="${item.id}" aria-label="${h(l("Drag panel", "Przeciągnij panel"))}">⠿ ${h(l(...partNames[item.id]))}</button>${button("↑", `data-part-move="${item.id}" data-step="-1" aria-label="${h(l("Move up", "Przesuń w górę"))}"`)}${button("↓", `data-part-move="${item.id}" data-step="1" aria-label="${h(l("Move down", "Przesuń w dół"))}"`)}${button("↔", `data-part-size="${item.id}" aria-label="${h(l("Toggle half or full width", "Zmień szerokość panelu"))}"`)}${item.id !== "records" ? button("×", `data-part-hide="${item.id}" aria-label="${h(l("Hide panel", "Ukryj panel"))}"`) : ""}`;
+        tools.innerHTML = `<button type="button" draggable="true" data-part-grip="${item.id}" aria-label="${h(l("Drag panel", "Przeciągnij panel"))}">⠿ ${h(l(...partNames[item.id]))}</button>${button("↑", `data-part-move="${item.id}" data-step="-1" aria-label="${h(l("Move up", "Przesuń w górę"))}"`)}${button("↓", `data-part-move="${item.id}" data-step="1" aria-label="${h(l("Move down", "Przesuń w dół"))}"`)}${button("↔︎", `data-part-size="${item.id}" aria-label="${h(l("Toggle half or full width", "Zmień szerokość panelu"))}"`)}${item.id !== "records" ? button("×", `data-part-hide="${item.id}" aria-label="${h(l("Hide panel", "Ukryj panel"))}"`) : ""}`;
         item.node.prepend(tools);
         tools.onclick = (e) => {
           const b = e.target.closest("button");
@@ -447,6 +452,12 @@ const KlyoInterface = (() => {
       if(editing && !resize){resize=document.createElement("button");resize.type="button";resize.className="miy-panel-resize";resize.setAttribute("aria-label",l("Resize panel","Zmień rozmiar panelu"));resize.textContent="◢";item.node.append(resize);}
       if(resize)resize.onpointerdown=e=>startPanelGesture(e,item,view,"resize");
       if(!editing)resize?.remove();
+    }
+    const mobile = applied.ui.mobile.pages[view];
+    root.classList.toggle('miy-mobile-arranged', Boolean(mobile));
+    for (const {id, node} of items) {
+      node.style.setProperty('--miy-mobile-order', (mobile?.order || config?.order || items.map(x=>x.id)).indexOf(id));
+      node.style.setProperty('--miy-mobile-height', mobile?.heights[id] ? mobile.heights[id] + 'px' : 'auto');
     }
     positionPanels(root,config,items);
   }
@@ -485,7 +496,7 @@ const KlyoInterface = (() => {
   function preview() {
     draft = P.normalize(draft, true);
     KlyoCustomize.preview(draft);
-    if (editing) KlyoDashboard.embed(draft,widgets=>change(p=>{p.layout.dashboard=widgets;p.layout.dashboard_snap=draft.layout.dashboard_snap;}));
+    if (editing) KlyoDashboard.embed(draft, dashboardChanged);
   }
   function open(preset) {
     if (KlyoDashboard.isEditing() && !editing) {
@@ -507,23 +518,25 @@ const KlyoInterface = (() => {
     if (preset) draft = P.useInterface(draft, preset);
     g("appearanceModalOverlay").classList.add("hidden");
     editing = true;
+    document.body.dataset.mobileNav = 'closed';
     history = [];
     future = [];
     document.body.classList.add("interface-editing");
     const dock = document.createElement("aside");
     dock.id = "interfaceEditor";
     dock.setAttribute("aria-label", "Make It Yours");
+    dock.dataset.collapsed = String(matchMedia('(max-width:980px)').matches);
     document.body.append(dock);
-    KlyoDashboard.embed(draft,widgets=>change(p=>{p.layout.dashboard=widgets;p.layout.dashboard_snap=draft.layout.dashboard_snap;}));
+    KlyoDashboard.embed(draft, dashboardChanged);
     render();
     preview();
     regionTools();
     g("interfaceEditor").querySelector('[data-editor-tab="page"]').click();
-    g("interfaceEditor").querySelector("button").focus();
+    g(matchMedia("(max-width:980px)").matches ? "miyMobileToggle" : "miyCancel").focus({preventScroll:true});
   }
   function render() {
     g("interfaceEditor").innerHTML =
-      `<header><div><span class="miy-eyebrow">${l("WORKSPACE DESIGNER", "EDYTOR PRZESTRZENI")}</span><h2 class="miy-wordmark">Make It Yours</h2></div>${button("×", `id="miyCancel" aria-label="${h(l("Cancel editing", "Anuluj edycję"))}"`)}</header><p class="miy-editor-note">${l("Arrange the actual app. Outlined regions are editable; record editing is paused.", "Układasz prawdziwą aplikację. Obramowane obszary możesz zmieniać; edycja danych jest wstrzymana.")}</p><nav class="miy-editor-tabs" aria-label="${l("Editor sections", "Sekcje edytora")}">${[
+      `<header><div><span class="miy-eyebrow">${l("WORKSPACE DESIGNER", "EDYTOR PRZESTRZENI")}</span><h2 class="miy-wordmark">Make It Yours</h2></div>${button(l("Controls", "Opcje"), 'id="miyMobileToggle" aria-expanded="false"', 'btn btn-ghost btn-sm')}${button("×", `id="miyCancel" aria-label="${h(l("Cancel editing", "Anuluj edycję"))}"`)}</header><p class="miy-editor-note">${l("Arrange the actual app. Outlined regions are editable; record editing is paused.", "Układasz prawdziwą aplikację. Obramowane obszary możesz zmieniać; edycja danych jest wstrzymana.")}</p><nav class="miy-editor-tabs" aria-label="${l("Editor sections", "Sekcje edytora")}">${[
         ["structure", "Layout", "Układ"],
         ["modules", "Tools", "Narzędzia"],
         ["page", "This page", "Ta strona"],
@@ -547,6 +560,12 @@ const KlyoInterface = (() => {
         .join(
           "",
         )}</select></label><div id="miyPageControls"></div></section><section data-editor-panel="shortcuts" hidden><h3>${l("Actions where you need them", "Akcje pod ręką")}</h3><p>${l("Drag a shortcut into a highlighted zone, or select its position below.", "Przeciągnij skrót do podświetlonego obszaru lub wybierz położenie poniżej.")}</p><div id="miyShortcutControls"></div><div id="miyShortcutShelf"></div></section></div><div id="miyEditorError" role="alert"></div><footer>${button("↶", `id="miyUndo" aria-label="${l("Undo", "Cofnij")}"`)}${button("↷", `id="miyRedo" aria-label="${l("Redo", "Ponów")}"`)}${button(l("Reset", "Przywróć"), 'id="miyReset"')}${button(l("Cancel", "Anuluj"), 'id="miyCancelBottom"')}${button(l("Save layout", "Zapisz układ"), 'id="miySave"', "btn btn-primary")}</footer>`;
+    g("miyMobileToggle").onclick = () => {
+      const dock = g('interfaceEditor'), collapsed = dock.dataset.collapsed !== 'true';
+      dock.dataset.collapsed = String(collapsed);
+      g('miyMobileToggle').setAttribute('aria-expanded', String(!collapsed));
+      g('miyMobileToggle').textContent = collapsed ? l('Controls', 'Opcje') : l('Back to canvas', 'Wróć do układu');
+    };
     g("miyCancel").onclick = g("miyCancelBottom").onclick = cancel;
     g("miySave").onclick = save;
     g("miyUndo").onclick = () => {
@@ -630,6 +649,7 @@ const KlyoInterface = (() => {
     g("miyPageSelect").onchange = (e) => {
       switchView(e.target.value);
       renderPageControls();
+      if (matchMedia('(max-width:980px)').matches && g('interfaceEditor').dataset.collapsed !== 'true') g('miyMobileToggle').click();
     };
     renderDynamic();
     dropZones();
@@ -1005,7 +1025,7 @@ const KlyoInterface = (() => {
       if (b?.dataset.pageMove)
         change((p) =>
           move(
-            pageConfig(p, view).order,
+            (KlyoTouchLayout.isPhone() ? (p.layout.ui.mobile.pages[view] ||= {order:parts(view).map(x=>x.id), heights:{}}) : pageConfig(p, view)).order,
             b.dataset.pageMove,
             Number(b.dataset.step),
           ),
@@ -1014,7 +1034,10 @@ const KlyoInterface = (() => {
     g("miyPanelSnap").value=draft.layout.dashboard_snap;
     g("miyPanelSnap").onchange=e=>change(p=>p.layout.dashboard_snap=e.target.value);
     g("miyResetPage").onclick = () =>
-      change((p) => delete p.layout.ui.pages[view]);
+      change((p) => {
+        if (KlyoTouchLayout.isPhone()) delete p.layout.ui.mobile.pages[view];
+        else delete p.layout.ui.pages[view];
+      });
   }
   function dropZones() {
     document.querySelectorAll(".miy-drop-zone").forEach((n) => n.remove());
@@ -1201,7 +1224,18 @@ const KlyoInterface = (() => {
   }
   function startPanelGesture(e,item,view,kind="move") {
     if(!editing || e.button!==0 || e.target.closest(".miy-part-tools button:not([data-part-grip])") || (kind==="move" && e.target.closest(".miy-panel-resize")))return;
-    if(innerWidth<=800)return;
+    if (KlyoTouchLayout.isPhone()) {
+      if (kind === 'move' && !e.target.closest('[data-part-grip]')) return;
+      KlyoTouchLayout.start(e, {
+        container:pageRoot(view), item:item.node, selector:':scope > .miy-page-part', key:'miyPart', resize:kind === 'resize',
+        commit:({order, height}) => change(p => {
+          const mobile = p.layout.ui.mobile.pages[view] ||= {order:parts(view).map(x=>x.id), heights:{}};
+          if (order) mobile.order = [...order, ...mobile.order.filter(key=>!order.includes(key))];
+          if (height) mobile.heights[item.id] = height;
+        }),
+      });
+      return;
+    }
     e.preventDefault();e.stopPropagation();
     const root=pageRoot(view),initial=panelGeometry(view),original=initial[item.id];
     if(!original)return;
@@ -1270,6 +1304,7 @@ const KlyoInterface = (() => {
   }
 
   function finish() {
+    KlyoTouchLayout.cancel();
     canvasCancel?.();
     editing = false;
     KlyoDashboard.unembed();

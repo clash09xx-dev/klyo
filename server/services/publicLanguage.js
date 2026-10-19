@@ -83,7 +83,7 @@ const runtimeKeys = [
   "Right menu",
   "Compact",
   "Comfortable",
-  "Try this theme ↗",
+  "Try this theme ↗︎",
   "Motion",
   "Paused",
   "Pause animations",

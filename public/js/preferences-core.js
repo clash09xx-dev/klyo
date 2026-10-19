@@ -166,6 +166,7 @@
       section_names: {},
       closed_sections: [],
       pages: {},
+      mobile: { dashboard_order: [...DASHBOARD], dashboard_heights: {}, pages: {} },
       saved: [],
     };
   }
@@ -760,6 +761,20 @@
           };
         }
       }
+    }
+    // Phone geometry is bounded independently from the desktop canvas.
+    const mobile = object(ui.mobile, "mobile layout");
+    target.mobile.dashboard_order = list(mobile.dashboard_order, DASHBOARD, DASHBOARD, "mobile widget order", true);
+    const mobileHeights = object(mobile.dashboard_heights, "mobile widget heights");
+    for (const id of DASHBOARD) if (mobileHeights[id] !== undefined)
+      target.mobile.dashboard_heights[id] = coordinate(mobileHeights[id], 160, 1800, 320, "mobile widget height");
+    for (const [page, raw] of Object.entries(object(mobile.pages, "mobile pages"))) {
+      if (!Object.hasOwn(PAGE_PARTS, page)) { fail("Choose a supported mobile page."); continue; }
+      const value = object(raw, "mobile page"), parts = Object.keys(PAGE_PARTS[page]), heights = object(value.heights, "mobile panel heights");
+      const next = {order: list(value.order, parts, parts, "mobile panel order", true), heights: {}};
+      for (const id of parts) if (heights[id] !== undefined)
+        next.heights[id] = coordinate(heights[id], 100, 1800, 320, "mobile panel height");
+      target.mobile.pages[page] = next;
     }
     if (ui.saved !== undefined) {
       if (

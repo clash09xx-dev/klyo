@@ -285,7 +285,7 @@ const KlyoFiles = (() => {
             data.items
               .map(
                 (i) =>
-                  `<button class="doc-folder" data-picker-item="${esc(i.id)}">${i.folder ? "▸" : "↗"} ${esc(i.name)} ${i.folder ? "" : "· " + size(i.size)}</button>`,
+                  `<button class="doc-folder" data-picker-item="${esc(i.id)}">${i.folder ? "▸" : "↗︎"} ${esc(i.name)} ${i.folder ? "" : "· " + size(i.size)}</button>`,
               )
               .join(""),
           );

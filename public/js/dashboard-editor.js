@@ -124,7 +124,12 @@ const KlyoDashboard = (() => {
         "widget-selected",
         editing && card.dataset.widgetId === selectedId,
       );
-      if (w) height = Math.max(height, applyPosition(card, w));
+      if (w) {
+        height = Math.max(height, applyPosition(card, w));
+        const mobile = layout.ui.mobile;
+        card.style.setProperty('--miy-mobile-order', mobile.dashboard_order.indexOf(w.id));
+        card.style.setProperty('--miy-mobile-height', mobile.dashboard_heights[w.id] ? mobile.dashboard_heights[w.id] + 'px' : 'auto');
+      }
     }
     grid.style.height = height + "px";
     const empty = grid.querySelector(".dashboard-empty");
@@ -172,7 +177,7 @@ const KlyoDashboard = (() => {
       card.className = "dashboard-widget";
       card.dataset.widgetId = id;
       card.hidden = !w;
-      card.innerHTML = `<header data-organizer-control><strong>${h(title(id))}</strong><div class="widget-organize"><button type="button" data-move-widget="left" aria-label="${l("Move left", "Przesuń w lewo")}">←</button><button type="button" data-move-widget="up" aria-label="${l("Move up", "Przesuń w górę")}">↑</button><button type="button" data-move-widget="right" aria-label="${l("Move right", "Przesuń w prawo")}">→</button><button type="button" data-move-widget="down" aria-label="${l("Move down", "Przesuń w dół")}">↓</button><button type="button" data-size-widget="-1" aria-label="${l("Narrower", "Węższe")}">−</button><button type="button" data-size-widget="1" aria-label="${l("Wider", "Szersze")}">＋</button><button type="button" data-remove-widget aria-label="${l("Remove widget", "Usuń element")}">×</button></div></header><div class="dashboard-widget-body"></div><button type="button" class="widget-resize" data-organizer-control aria-label="${l("Resize widget", "Zmień rozmiar elementu")}">◢</button>`;
+      card.innerHTML = `<header data-organizer-control><button type="button" class="widget-mobile-grip" aria-label="${l("Drag widget", "Przeciągnij element")}"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="8" cy="5" r="1.5"/><circle cx="16" cy="5" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="16" cy="12" r="1.5"/><circle cx="8" cy="19" r="1.5"/><circle cx="16" cy="19" r="1.5"/></svg></button><strong>${h(title(id))}</strong><div class="widget-organize"><button type="button" data-move-widget="left" aria-label="${l("Move left", "Przesuń w lewo")}">←</button><button type="button" data-move-widget="up" aria-label="${l("Move up", "Przesuń w górę")}">↑</button><button type="button" data-move-widget="right" aria-label="${l("Move right", "Przesuń w prawo")}">→</button><button type="button" data-move-widget="down" aria-label="${l("Move down", "Przesuń w dół")}">↓</button><button type="button" data-size-widget="-1" aria-label="${l("Narrower", "Węższe")}">−</button><button type="button" data-size-widget="1" aria-label="${l("Wider", "Szersze")}">＋</button><button type="button" data-remove-widget aria-label="${l("Remove widget", "Usuń element")}">×</button></div></header><div class="dashboard-widget-body"></div><button type="button" class="widget-resize" data-organizer-control aria-label="${l("Resize widget", "Zmień rozmiar elementu")}">◢</button>`;
       if (w) applyPosition(card, w);
       grid.append(card);
       if (node) {
@@ -303,7 +308,7 @@ const KlyoDashboard = (() => {
       beforeRender();
       if (r) reconcile(r, new URLSearchParams(q));
     } else arrange();
-    if (embedded) embedded(P.clone(draft.layout.dashboard));
+    if (embedded) embedded(P.clone(draft.layout.dashboard), P.clone(draft.layout.ui.mobile), draft.layout.dashboard_snap);
     if (editing) renderCatalog();
   }
   function adjust(id, change) {
@@ -373,13 +378,22 @@ const KlyoDashboard = (() => {
     else arrange();
   }
   function startGesture(e, card, id, kind) {
-    if (
-      !editing ||
-      e.button !== 0 ||
-      matchMedia("(max-width:800px)").matches ||
-      e.target.closest(".widget-organize")
-    )
+    if (!editing || e.button !== 0 || e.target.closest(".widget-organize")) return;
+    if (KlyoTouchLayout.isPhone()) {
+      selectedId = id;
+      refreshInspector();
+      if (kind === 'move' && !e.target.closest('.widget-mobile-grip')) return;
+      KlyoTouchLayout.start(e, {
+        container:grid, item:card, selector:':scope > [data-widget-id]', key:'widgetId', resize:kind === 'resize',
+        commit:({order, height}) => {
+          const mobile = draft.layout.ui.mobile;
+          if (order) mobile.dashboard_order = [...order, ...mobile.dashboard_order.filter(key => !order.includes(key))];
+          if (height) mobile.dashboard_heights[id] = height;
+          update();
+        },
+      });
       return;
+    }
     e.preventDefault();
     selectedId = id;
     arrange();
@@ -765,7 +779,7 @@ const KlyoDashboard = (() => {
   }
   function embed(value, notify) {
     embedded = notify;
-    draft = value;
+    draft = P.clone(value);
     editing = true;
     document.body.classList.add("dashboard-editing");
     if (!selectedId || !item(selectedId,draft.layout)) selectedId=draft.layout.dashboard[0]?.id || null;
@@ -773,14 +787,15 @@ const KlyoDashboard = (() => {
   }
   function unembed() {
     if (!embedded) return;
+    KlyoTouchLayout.cancel();
     finishGesture(true); embedded=null; editing=false;
     document.body.classList.remove("dashboard-editing");
     arrange();
   }
   function controls(container) {
-    container.innerHTML=`<div id="dashboardOrganizer" class="miy-embedded-dashboard"><p>${l("Grab anywhere on a widget. Drag its corner to resize. All charts remain available below.","Chwyć dowolne miejsce elementu. Przeciągnij róg, aby zmienić rozmiar. Wszystkie wykresy są dostępne poniżej.")}</p><label>${l("Placement","Układanie")}<select id="organizerSnap"><option value="magnetic">${l("Magnetic guides","Prowadnice magnetyczne")}</option><option value="grid">${l("Grid","Siatka")}</option><option value="free">${l("Free placement","Bez siatki")}</option></select></label><p id="inspectorEmpty">${l("Select a widget","Wybierz element")}</p><fieldset id="widgetInspector"><legend id="inspectorTitle"></legend><label>${l("Tilt","Nachylenie")} <output id="widgetTiltValue"></output><input data-placement="tilt" type="range" min="-6" max="6" step=".5"></label><button type="button" id="widgetStraighten" class="btn btn-ghost">${l("Straighten","Wyprostuj")}</button></fieldset><h3>${l("Add charts & features","Dodaj wykresy i funkcje")}</h3><div id="widgetCatalog"></div><button type="button" id="organizerReset" class="btn btn-ghost">${l("Restore all default charts","Przywróć domyślne wykresy")}</button></div>`;
+    container.innerHTML=`<div id="dashboardOrganizer" class="miy-embedded-dashboard"><p>${KlyoTouchLayout.isPhone() ? l("Drag a dotted handle to change the order. Drag the lower corner to change height. Phone placement is saved separately from desktop.", "Przeciągnij uchwyt z kropkami, aby zmienić kolejność. Przeciągnij dolny róg, aby zmienić wysokość. Układ telefonu zapisuje się oddzielnie od komputera.") : l("Grab anywhere on a widget. Drag its corner to resize. All charts remain available below.","Chwyć dowolne miejsce elementu. Przeciągnij róg, aby zmienić rozmiar. Wszystkie wykresy są dostępne poniżej.")}</p><label>${l("Placement","Układanie")}<select id="organizerSnap"><option value="magnetic">${l("Magnetic guides","Prowadnice magnetyczne")}</option><option value="grid">${l("Grid","Siatka")}</option><option value="free">${l("Free placement","Bez siatki")}</option></select></label><p id="inspectorEmpty">${l("Select a widget","Wybierz element")}</p><fieldset id="widgetInspector"><legend id="inspectorTitle"></legend><label>${l("Tilt","Nachylenie")} <output id="widgetTiltValue"></output><input data-placement="tilt" type="range" min="-6" max="6" step=".5"></label><button type="button" id="widgetStraighten" class="btn btn-ghost">${l("Straighten","Wyprostuj")}</button></fieldset><h3>${l("Add charts & features","Dodaj wykresy i funkcje")}</h3><div id="widgetCatalog"></div><button type="button" id="organizerReset" class="btn btn-ghost">${l("Restore all default charts","Przywróć domyślne wykresy")}</button></div>`;
     g("organizerSnap").value=draft.layout.dashboard_snap;
-    g("organizerSnap").onchange=e=>{draft.layout.dashboard_snap=e.target.value;embedded?.(P.clone(draft.layout.dashboard));};
+    g("organizerSnap").onchange=e=>{draft.layout.dashboard_snap=e.target.value;embedded?.(P.clone(draft.layout.dashboard), P.clone(draft.layout.ui.mobile), draft.layout.dashboard_snap);};
     g("widgetInspector").oninput=e=>{if(e.target.dataset.placement)adjust(selectedId,{tilt:Number(e.target.value)});};
     g("widgetStraighten").onclick=()=>adjust(selectedId,{tilt:0});
     g("organizerReset").onclick=()=>{draft.layout.dashboard=P.defaultDashboard();update(true);};
