@@ -21,8 +21,12 @@ const assert = require("node:assert/strict"),
         '<!doctype html><html><head></head><body><nav class="nav"><a data-view="history">History</a></nav><section id="productsView"><div class="view-toolbar"></div></section><section id="filesView"></section></body></html>',
       );
       await page
-        .addStyleTag({ path: path.resolve("public/css/styles.css") })
+        .addStyleTag({ path: path.resolve("public/css/style.css") })
         .catch(() => {});
+      await page.addStyleTag({
+        path: path.resolve("public/css/document-tools.css"),
+      });
+      await page.addStyleTag({ path: path.resolve("public/css/personalize.css") });
       await page.addStyleTag({
         path: path.resolve("public/css/communications.css"),
       });
@@ -105,6 +109,8 @@ const assert = require("node:assert/strict"),
           },
           post: async (p, b) => {
             fixtureCalls.push(["POST", p, b]);
+            if (p === "/communications/connect/microsoft_mail")
+              return { url: "#connected-" + b.account_type };
             if (p.endsWith("/attachments/sync"))
               return {
                 attachments: [{ id: 1, name: "specification.pdf", size: 1000 }],
@@ -155,6 +161,9 @@ const assert = require("node:assert/strict"),
       await page.evaluate(async () => {
         KlyoCommunications.init();
         KlyoCloudFiles.init();
+        document
+          .querySelectorAll("section.hidden")
+          .forEach((n) => n.classList.remove("hidden"));
         await KlyoCommunications.onView("inbox");
       });
       assert.equal(await page.locator("[data-view=inbox]").count(), 1);
@@ -198,6 +207,56 @@ const assert = require("node:assert/strict"),
           .evaluate((e) => e.getBoundingClientRect().width <= innerWidth),
         true,
       );
+      await page.keyboard.press("Escape");
+      for (const lang of ["en", "pl"]) {
+        await page.evaluate((lang) => {
+          window.KlyoI18n = { getLang: () => lang };
+          document.documentElement.dataset.theme = lang === 'en' ? 'blanc' : 'graphite';
+        }, lang);
+        for (const type of ["organization", "personal"]) {
+          await page.locator("#commConnect").click();
+          const dialog = page.locator(".doc-dialog");
+          assert.ok(
+            await dialog
+              .getByText(
+                lang === "pl"
+                  ? "Osobiste Outlook.com / Hotmail"
+                  : "Personal Outlook.com / Hotmail",
+                { exact: true },
+              )
+              .isVisible(),
+          );
+          if (lang === "en" && type === "personal")
+            await page.screenshot({
+              path: "/private/tmp/klyo-ms-mail-" + name + ".png",
+            });
+          await dialog.locator('input[value="' + type + '"]').check();
+          await dialog.locator('button[type="submit"]').click();
+          await page.waitForFunction(
+            (type) => location.hash === "#connected-" + type,
+            type,
+          );
+          assert.equal(
+            await page.evaluate(
+              () =>
+                fixtureCalls
+                  .filter(
+                    (x) =>
+                      x[0] === "POST" &&
+                      x[1] === "/communications/connect/microsoft_mail",
+                  )
+                  .at(-1)[2].account_type,
+            ),
+            type,
+          );
+          assert.ok(
+            await dialog.evaluate(
+              (e) => e.getBoundingClientRect().width <= innerWidth,
+            ),
+          );
+          await page.keyboard.press("Escape");
+        }
+      }
       assert.deepEqual(errors, []);
       console.log(
         name +

@@ -142,3 +142,31 @@
 .comm-view [data-message]:hover {
   background: var(--bg-hover);
 }
+
+.doc-content .comm-account-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-height: 48px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.doc-content .comm-account-choice:has(:checked) {
+  border-color: var(--accent-1);
+  background: var(--bg-soft);
+}
+.doc-content .comm-account-choice input[type="radio"] {
+  appearance: auto;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--accent-1);
+}
+.comm-account-form > button {
+  min-height: 44px;
+}

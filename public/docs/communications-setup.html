@@ -100,6 +100,9 @@
         support ticket.
       </p>
       <h2>Microsoft 365 inbox</h2>
+      <p>Choose <strong>Work or school Microsoft 365</strong> or <strong>Personal Outlook.com / Hotmail</strong> before Microsoft sign-in. The work option requires your actual organization account. The personal option requires an Outlook mailbox; using a Gmail address to sign in to Microsoft does not connect Gmail mail.</p>
+      <p>For personal Outlook, the operator must set the existing Entra application's <strong>Authentication → Supported account types</strong> to <strong>Accounts in any organizational directory and personal Microsoft accounts</strong>. Keep all existing Web callback URIs and the organizational tenant setting. Klyo selects the account-specific authority. Personal connections request only <code>Mail.Read</code> and offline access, without shared-mailbox access.</p>
+
       <p>
         Use the same Microsoft Entra application configured for SharePoint, but
         add a <strong>Web</strong> redirect URI:
@@ -376,6 +379,9 @@
         przez czat ani zgłoszenia do pomocy.
       </p>
       <h2>Skrzynka Microsoft 365</h2>
+      <p>Przed logowaniem wybierz <strong>Służbowe lub szkolne Microsoft 365</strong> albo <strong>Osobiste Outlook.com / Hotmail</strong>. Dla konta służbowego podaj właściwy adres organizacji. Konto osobiste musi mieć skrzynkę Outlook; logowanie do Microsoft adresem Gmail nie podłącza poczty Gmail.</p>
+      <p>Aby włączyć osobisty Outlook, operator wybiera w istniejącej aplikacji Entra: <strong>Authentication → Supported account types → Accounts in any organizational directory and personal Microsoft accounts</strong>. Zachowaj wszystkie adresy powrotu Web i ustawienie dzierżawy organizacji. Klyo wybiera właściwą ścieżkę dla danego konta. Osobiste połączenie prosi tylko o <code>Mail.Read</code> i dostęp offline, bez dostępu do skrzynek współdzielonych.</p>
+
       <p>
         Użyj aplikacji Microsoft Entra przygotowanej dla SharePoint i dodaj
         adres przekierowania typu Web:

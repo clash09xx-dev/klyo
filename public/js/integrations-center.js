@@ -60,14 +60,14 @@ const KlyoIntegrations = (() => {
     },
     {
       id: "microsoft_mail",
-      name: "Microsoft 365 Inbox",
+      name: "Outlook / Microsoft 365 Inbox",
       category: "email",
       kind: "private",
       mark: "M",
       color: "#d26733",
       description: [
-        "Connect your inbox. Link correspondence to CRM records or configure a shared mailbox.",
-        "Połącz skrzynkę i przypisuj korespondencję do CRM. Możesz też dodać skrzynkę współdzieloną.",
+        "Connect a work Microsoft 365 or personal Outlook inbox. Shared mailboxes require a work account.",
+        "Połącz służbową skrzynkę Microsoft 365 lub osobistą Outlook. Skrzynki współdzielone wymagają konta służbowego.",
       ],
     },
     {
