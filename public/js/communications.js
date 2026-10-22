@@ -45,23 +45,45 @@ const KlyoCommunications = (() => {
     return c.account_name || "Microsoft 365";
   }
   async function connect(provider) {
-    if (
-      provider === "microsoft_mail" &&
-      !confirm(
-        KlyoModuleI18n.pick(
-          "Connect your private Microsoft 365 mailbox? Your inbox stays private. Messages from known CRM contacts are added to shared record correspondence. RFQ rules publish matching messages to the workspace. No messages will be sent automatically.",
-        ),
-      )
-    )
+    if (provider !== "microsoft_mail") {
+      const r = await API.post("/communications/connect/" + provider, {});
+      location.assign(r.url);
       return;
-    const r = await API.post("/communications/connect/" + provider, {});
-    location.assign(r.url);
+    }
+    const pick = KlyoModuleI18n.pick;
+    const d = dialog(
+      pick("Connect Outlook / Microsoft 365", "Połącz Outlook / Microsoft 365"),
+      `
+      <p>${esc(pick("Choose the type of mailbox you want to read in Klyo.", "Wybierz typ skrzynki, którą chcesz czytać w Klyo."))}</p>
+      <form class="comm-account-form">
+        <label class="comm-account-choice"><input type="radio" name="account_type" value="organization" checked> ${esc(pick("Work or school Microsoft 365", "Służbowe lub szkolne Microsoft 365"))}</label>
+        <p>${esc(pick("Use your organization's Microsoft account. Shared mailboxes remain available.", "Użyj konta Microsoft swojej organizacji. Dostępne są też skrzynki współdzielone."))}</p>
+        <label class="comm-account-choice"><input type="radio" name="account_type" value="personal"> ${esc(pick("Personal Outlook.com / Hotmail", "Osobiste Outlook.com / Hotmail"))}</label>
+        <p>${esc(pick("Use a personal Microsoft account with an Outlook mailbox. Signing in to Microsoft with a Gmail address does not connect Gmail mail.", "Użyj osobistego konta Microsoft ze skrzynką Outlook. Logowanie do Microsoft adresem Gmail nie podłącza poczty Gmail."))}</p>
+        <p>${KlyoModuleI18n.label("Your mailbox is private. Linked correspondence appears on CRM records.")} ${esc(pick("Messages from known CRM contacts are linked to shared records. RFQ rules publish matching messages to the workspace. No messages will be sent automatically.", "Wiadomości znanych kontaktów trafiają do współdzielonych rekordów CRM. Reguły RFQ udostępniają pasujące wiadomości w przestrzeni. Żadne wiadomości nie będą wysyłane automatycznie."))}</p>
+        <button type="submit" class="btn btn-primary">${esc(pick("Continue to Microsoft", "Przejdź do Microsoft"))}</button>
+      </form>`,
+    );
+    d.find("form").onsubmit = async (e) => {
+      e.preventDefault();
+      const submit = e.target.querySelector('[type="submit"]');
+      submit.disabled = true;
+      try {
+        const r = await API.post("/communications/connect/microsoft_mail", {
+          account_type: e.target.elements.account_type.value,
+        });
+        location.assign(r.url);
+      } catch (error) {
+        d.error(error);
+        submit.disabled = false;
+      }
+    };
   }
   async function inbox() {
     const s = await getStatus(),
       cs = s.connections.filter((c) => c.provider === "microsoft_mail"),
       v = document.getElementById("inboxView");
-    v.innerHTML = `<div class="comm-toolbar"><div><h2>${KlyoModuleI18n.label("Microsoft 365 inbox")}</h2><p>${KlyoModuleI18n.label("Your mailbox is private. Linked correspondence appears on CRM records.")}</p></div><button class="btn btn-primary" id="commConnect">${KlyoModuleI18n.label("Connect Microsoft 365")}</button></div>${!s.providers.find((x) => x.provider === "microsoft_mail")?.configured ? `<div class="comm-notice">${KlyoModuleI18n.label("Microsoft sign-in needs administrator setup.")} <a href="/docs/communications-setup" target="_blank">${KlyoModuleI18n.label("Setup guide")}</a></div>` : ""}<div class="comm-connections">${cs.map((c) => `<div><strong>${esc(connectionLabel(c))}</strong> <small>${c.synced_at ? KlyoModuleI18n.label("Synced") + " " + esc(new Date(c.synced_at).toLocaleString()) : KlyoModuleI18n.pick("Not synced yet")}</small> <button class="btn btn-ghost btn-sm" data-sync-mail="${c.id}">${KlyoModuleI18n.label("Sync now")}</button><button class="btn btn-ghost btn-sm" data-shared-mail="${c.id}">${KlyoModuleI18n.label("Shared mailbox")}</button><button class="btn btn-ghost btn-sm" data-disconnect-mail="${c.id}">${KlyoModuleI18n.label("Disconnect")}</button>${c.sync_error ? `<p role="alert">${esc(c.sync_error)}</p>` : ""}</div>`).join("")}</div><div class="comm-toolbar"><input class="input" id="commSearch" type="search" placeholder="${KlyoModuleI18n.pick("Search subject or sender")}"><span id="commPaging"></span></div><div id="commMessages"></div>`;
+    v.innerHTML = `<div class="comm-toolbar"><div><h2>${esc(KlyoModuleI18n.pick("Outlook / Microsoft 365 inbox", "Skrzynka Outlook / Microsoft 365"))}</h2><p>${KlyoModuleI18n.label("Your mailbox is private. Linked correspondence appears on CRM records.")}</p></div><button class="btn btn-primary" id="commConnect">${KlyoModuleI18n.label("Connect Microsoft 365")}</button></div>${!s.providers.find((x) => x.provider === "microsoft_mail")?.configured ? `<div class="comm-notice">${KlyoModuleI18n.label("Microsoft sign-in needs administrator setup.")} <a href="/docs/communications-setup" target="_blank">${KlyoModuleI18n.label("Setup guide")}</a></div>` : ""}<div class="comm-connections">${cs.map((c) => `<div><strong>${esc(connectionLabel(c))}</strong> <small>${c.synced_at ? KlyoModuleI18n.label("Synced") + " " + esc(new Date(c.synced_at).toLocaleString()) : KlyoModuleI18n.pick("Not synced yet")}</small> <button class="btn btn-ghost btn-sm" data-sync-mail="${c.id}">${KlyoModuleI18n.label("Sync now")}</button><button class="btn btn-ghost btn-sm" data-shared-mail="${c.id}">${KlyoModuleI18n.label("Shared mailbox")}</button><button class="btn btn-ghost btn-sm" data-disconnect-mail="${c.id}">${KlyoModuleI18n.label("Disconnect")}</button>${c.sync_error ? `<p role="alert">${esc(c.sync_error)}</p>` : ""}</div>`).join("")}</div><div class="comm-toolbar"><input class="input" id="commSearch" type="search" placeholder="${KlyoModuleI18n.pick("Search subject or sender")}"><span id="commPaging"></span></div><div id="commMessages"></div>`;
     v.querySelector("#commConnect").onclick = call(() =>
       connect("microsoft_mail"),
     );

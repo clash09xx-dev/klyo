@@ -56,7 +56,12 @@ router.get("/oauth/:provider/callback", async (req, res) => {
       (p !== "microsoft_mail" && account.owner_user_id !== pending.user_id)
     )
       throw invalid("Workspace access changed.");
-    const r = await C.exchange(p, req.query.code, S.decrypt(pending.verifier));
+    const r = await C.exchange(
+      p,
+      req.query.code,
+      S.decrypt(pending.verifier),
+      pending.account_type,
+    );
     const old = (
       await db.query(
         "SELECT id,account_id FROM communication_connections WHERE workspace_id=$1 AND user_id=$2 AND provider=$3 AND mailbox=''",
@@ -68,7 +73,7 @@ router.get("/oauth/:provider/callback", async (req, res) => {
         old.id,
       ]);
     await db.query(
-      "INSERT INTO communication_connections(workspace_id,user_id,provider,credentials,account_name,account_id) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(workspace_id,user_id,provider,mailbox) DO UPDATE SET credentials=EXCLUDED.credentials,account_name=EXCLUDED.account_name,account_id=EXCLUDED.account_id,sync_error=NULL",
+      "INSERT INTO communication_connections(workspace_id,user_id,provider,credentials,account_name,account_id,account_type) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(workspace_id,user_id,provider,mailbox) DO UPDATE SET credentials=EXCLUDED.credentials,account_name=EXCLUDED.account_name,account_id=EXCLUDED.account_id,account_type=EXCLUDED.account_type,sync_error=NULL",
       [
         pending.workspace_id,
         pending.user_id,
@@ -76,6 +81,7 @@ router.get("/oauth/:provider/callback", async (req, res) => {
         r.credentials,
         r.account_name,
         r.account_id,
+        r.account_type || "organization",
       ],
     );
     res.redirect(
@@ -99,7 +105,7 @@ router.get("/status", async (req, res) =>
     can_manage: !!(req.user.is_personal || req.user.is_team_owner),
     connections: (
       await db.query(
-        "SELECT id,provider,account_name,mailbox,root_id,root_name,folder_id,synced_at,sync_error FROM communication_connections WHERE workspace_id=$1 AND (provider<>'microsoft_mail' OR user_id=$2) ORDER BY id",
+        "SELECT id,provider,account_name,account_type,mailbox,root_id,root_name,folder_id,synced_at,sync_error FROM communication_connections WHERE workspace_id=$1 AND (provider<>'microsoft_mail' OR user_id=$2) ORDER BY id",
         [req.user.workspace_id, req.user.id],
       )
     ).rows,
@@ -113,6 +119,10 @@ router.get("/status", async (req, res) =>
 );
 router.post("/connect/:provider", requireEditor, async (req, res) => {
   const p = req.params.provider;
+  const type =
+    p === "microsoft_mail"
+      ? C.accountType(req.body.account_type)
+      : "organization";
   if (
     p !== "microsoft_mail" &&
     !req.user.is_personal &&
@@ -121,10 +131,10 @@ router.post("/connect/:provider", requireEditor, async (req, res) => {
     throw invalid("Only the owner can connect shared storage.", 403);
   const state = crypto.randomBytes(32).toString("hex"),
     verifier = crypto.randomBytes(48).toString("base64url"),
-    url = await C.authorize(p, state, verifier);
+    url = await C.authorize(p, state, verifier, type);
   await db.query("DELETE FROM communication_oauth WHERE expires_at<now()");
   await db.query(
-    "INSERT INTO communication_oauth(id,workspace_id,user_id,account_workspace_id,provider,verifier,expires_at) VALUES($1,$2,$3,$4,$5,$6,now()+interval '10 minutes')",
+    "INSERT INTO communication_oauth(id,workspace_id,user_id,account_workspace_id,provider,verifier,account_type,expires_at) VALUES($1,$2,$3,$4,$5,$6,$7,now()+interval '10 minutes')",
     [
       state,
       req.user.workspace_id,
@@ -132,6 +142,7 @@ router.post("/connect/:provider", requireEditor, async (req, res) => {
       req.account.workspace_id,
       p,
       S.encrypt(verifier),
+      type,
     ],
   );
   res.cookie(cookie(p), state, opts(p)).json({ url });
@@ -150,10 +161,15 @@ router.delete("/connections/:id", requireEditor, async (req, res) => {
   res.json({ ok: true });
 });
 router.post("/mail/:id/shared", requireEditor, async (req, res) => {
-  const conn = await C.connection(req.user, req.params.id, true),
-    mailbox = String(req.body.mailbox || "")
-      .trim()
-      .toLowerCase();
+  const conn = await C.connection(req.user, req.params.id, true);
+  if (conn.account_type === "personal")
+    throw invalid(
+      "Shared mailboxes require a Microsoft work or school account.",
+      400,
+    );
+  const mailbox = String(req.body.mailbox || "")
+    .trim()
+    .toLowerCase();
   if (
     !/^[a-z0-9.!#$%&'*+?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(mailbox) ||
     mailbox.length > 254

@@ -15,18 +15,35 @@ function configured(p) {
         ? !!(process.env.DROPBOX_CLIENT_ID && process.env.DROPBOX_CLIENT_SECRET)
         : false;
 }
-const scopes = (p) =>
+function accountType(value = "organization") {
+  if (!["organization", "personal"].includes(value))
+    throw invalid(
+      "Choose a work or school account, or a personal Outlook account.",
+    );
+  return value;
+}
+const scopes = (p, type = "organization") =>
   p === "microsoft_mail"
     ? [
         "https://graph.microsoft.com/Mail.Read",
-        "https://graph.microsoft.com/Mail.Read.Shared",
+        ...(accountType(type) === "organization"
+          ? ["https://graph.microsoft.com/Mail.Read.Shared"]
+          : []),
         "offline_access",
       ]
     : p === "google_drive"
       ? ["https://www.googleapis.com/auth/drive"]
       : ["files.metadata.read", "files.content.read", "files.content.write"];
-function msal() {
-  const c = S.config();
+function mailConfig(type = "organization") {
+  if (accountType(type) === "organization") return S.config();
+  return {
+    clientId: process.env.MICROSOFT_CLIENT_ID,
+    clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
+    authority: "https://login.microsoftonline.com/consumers",
+  };
+}
+function msal(type = "organization") {
+  const c = mailConfig(type);
   return new ConfidentialClientApplication({
     auth: {
       clientId: c.clientId,
@@ -38,7 +55,7 @@ function msal() {
     },
   });
 }
-async function authorize(p, state, verifier) {
+async function authorize(p, state, verifier, type = "organization") {
   if (!providers.includes(p) || !configured(p))
     throw invalid(
       "This provider needs administrator configuration. Read the integration setup guide.",
@@ -49,8 +66,8 @@ async function authorize(p, state, verifier) {
     .update(verifier)
     .digest("base64url");
   if (p === "microsoft_mail")
-    return msal().getAuthCodeUrl({
-      scopes: scopes(p),
+    return msal(type).getAuthCodeUrl({
+      scopes: scopes(p, type),
       redirectUri: redirect(p),
       state,
       codeChallenge: challenge,
@@ -96,13 +113,13 @@ async function request(url, options = {}) {
     );
   return r;
 }
-async function exchange(p, code, verifier) {
+async function exchange(p, code, verifier, type = "organization") {
   if (p === "microsoft_mail") {
-    const a = msal(),
+    const a = msal(type),
       r = await a.acquireTokenByCode({
         code,
         codeVerifier: verifier,
-        scopes: scopes(p),
+        scopes: scopes(p, type),
         redirectUri: redirect(p),
       });
     if (!r?.account) throw invalid("Microsoft account is unavailable.");
@@ -110,6 +127,7 @@ async function exchange(p, code, verifier) {
       credentials: S.encrypt(a.getTokenCache().serialize()),
       account_id: r.account.homeAccountId,
       account_name: r.account.username,
+      account_type: accountType(type),
     };
   }
   const g = p === "google_drive",
@@ -172,7 +190,7 @@ async function token(conn) {
       ).rows[0];
       if (!current || current.account_id !== conn.account_id)
         throw invalid("Microsoft account changed. Reconnect the mailbox.", 409);
-      const a = msal();
+      const a = msal(current.account_type);
       a.getTokenCache().deserialize(S.decrypt(current.credentials));
       const account = await a
         .getTokenCache()
@@ -182,7 +200,7 @@ async function token(conn) {
       try {
         r = await a.acquireTokenSilent({
           account,
-          scopes: scopes(conn.provider),
+          scopes: scopes(conn.provider, current.account_type),
         });
       } catch {
         throw invalid(
@@ -630,6 +648,8 @@ function start() {
 }
 module.exports = {
   providers,
+  accountType,
+  mailConfig,
   base,
   redirect,
   configured,

@@ -20,6 +20,17 @@ Sync runs roughly once per minute while the server is running. **Sync now** star
 
 Only the Team owner (or Personal owner) can configure inbound rules. Connect the mailbox, then open **RFQ register → Inbound rules**. Choose the mail folder, optional subject fragment and sender domain, assignee, pipeline/stage and SLA in minutes. Saving activates the rule for **future incoming messages only**. Each matching message creates at most one request, opportunity and response task. The request shows an exact deadline and live remaining/overdue time. Mark **responded** manually to stop its timer; this does not send an email. Remove the rule to stop new requests. Rules cannot assign people or pipelines from a different workspace. Folders can be routed using Outlook's own mail rules; Klyo does not alter your mailbox's rules.
 
+### Personal Outlook accounts and the repeating account picker
+
+**Connect Microsoft 365** now asks for the mailbox type before opening Microsoft:
+
+- **Work or school Microsoft 365** preserves the configured organizational tenant and delegated `Mail.Read` / `Mail.Read.Shared` permissions. Use the actual work or school account, not a personal Microsoft login with the same or a Gmail address.
+- **Personal Outlook.com / Hotmail** uses Microsoft's `consumers` authority and only `Mail.Read` plus offline access. It never requests shared-mailbox access. It requires an actual Outlook mailbox; a Gmail address used as a Microsoft account alias does not connect Gmail mail.
+
+To enable the personal option, open the existing app in **Microsoft Entra → App registrations → Klyo → Authentication → Supported account types** and select **Accounts in any organizational directory and personal Microsoft accounts** (`AzureADandPersonalMicrosoftAccount`). Keep the existing Web callback URI, client secret and organizational tenant setting. Klyo chooses the appropriate authority per connection; no global tenant change is needed. An organizational-only app registration will reject personal accounts even with correct Klyo code.
+
+The selected type is bound to the single-use OAuth state, persisted with the encrypted connection and used for token refresh. Existing connections default to the organizational type. Shared mailbox controls and APIs are unavailable for personal connections. Microsoft consent remains explicit; the choice does not itself authorize mailbox access.
+
 ## Google Drive
 
 In Google Cloud Console enable **Google Drive API**, configure the OAuth consent screen, create a **Web application** OAuth client and add:
